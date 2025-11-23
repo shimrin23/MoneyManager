@@ -1,91 +1,61 @@
+# MoneyManager – AI-Powered Personal Financial Management System
 
+MoneyManager is a Personal Financial Management (PFM) system designed to function as a financial coach. It utilizes Google Gemini AI to analyze spending behavior, identify risks, and provide actionable financial insights.
 
+## Key Features
 
-# 💰 MoneyManager (AI-Powered PFM)
+* **AI Financial Analyst:** Integrates with the Google Gemini API to analyze transaction patterns and generate natural-language financial advice.
+* **Financial Health Score:** A 0–100 scoring system based on liquidity, debt, and spending consistency.
+* **Bank Sync Simulation:** Simulates multi-source transaction syncing across accounts and credit cards.
+* **Risk Assessment:** Automatically identifies high-risk spending and recommends debt repayment strategies such as Snowball or Avalanche.
+* **Secure Architecture:** Uses environment variables for secure API key and configuration management.
 
-MoneyManager is a dynamic Personal Financial Management (PFM) system designed to act as a personal financial coach. Unlike traditional banking apps that just show history, MoneyManager uses **Generative AI (Google Gemini)** to analyze spending habits, predict risks, and offer actionable financial advice.
+## Tech Stack
 
-## 🚀 Key Features
-
-* **🤖 AI Financial Analyst:** Integrated with **Google Gemini API** to analyze transaction patterns and generate natural language advice.
-* **📊 Financial Health Score:** innovative 0-100 scoring system based on liquidity, debt, and spending consistency.
-* **🔄 Bank Sync Simulation:** Simulates fetching transaction data from multiple financial sources (Accounts, Credit Cards).
-* **🛡️ Risk Assessment:** automatically flags high-risk spending behavior and suggests "Snowball" or "Avalanche" debt repayment strategies.
-* **🔒 Secure Architecture:** Environment variable management for API security.
-
-## 🛠️ Tech Stack
-
-* **Frontend:** React.js (Planned), Tailwind CSS
+* **Frontend:** React.js (planned), Tailwind CSS
 * **Backend:** Node.js, Express.js
 * **Language:** TypeScript
 * **Database:** MongoDB
 * **AI Engine:** Google Gemini 1.5 Flash
 * **Tools:** Dotenv, Mongoose
 
-## ⚙️ Installation & Setup
-
-Follow these steps to get the project running on your local machine.
+## Installation and Setup
 
 ### 1. Clone the Repository
-```bash
-git clone [https://github.com/shimrin23/MoneyManager.git](https://github.com/shimrin23/MoneyManager.git)
-cd MoneyManager
-````
 
-### 2\. Install Dependencies
+```bash
+git clone https://github.com/shimrin23/MoneyManager.git
+cd MoneyManager
+```
+
+### 2. Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 3\. Configure Environment Variables (IMPORTANT)
+### 3. Configure Environment Variables
 
-This project uses environmental variables for security. You will not find a `.env` file in the repo.
-
-1.  Locate the `.env.example` file in the root directory.
-2.  Create a new file named `.env`.
-3.  Copy the contents of `.env.example` into `.env`.
-4.  Fill in your specific keys:
-
-<!-- end list -->
+Create a `.env` file in the root directory and include:
 
 ```env
-# Inside your new .env file:
 PORT=5000
 MONGO_URI=mongodb://localhost:27017/moneymanager
 GEMINI_API_KEY=your_google_gemini_api_key_here
 ```
 
-*\> **Note:** You can get a free Gemini API key from [Google AI Studio](https://aistudio.google.com/).*
-
-### 4\. Run the Application
+### 4. Run the Application
 
 ```bash
-# Run in development mode
 npm run dev
 ```
 
-## 🔮 Roadmap
+## Roadmap
 
-  - [x] Backend Setup & Database Connection
-  - [x] Transaction Data Sync
-  - [x] AI Agent Integration (Gemini)
-  - [ ] React Frontend Dashboard
-  - [ ] Cash Flow Forecasting Charts
-  - [ ] Debt Repayment Simulator
+* [x] Backend setup and database connection
+* [x] Transaction data synchronization
+* [x] AI agent integration (Gemini)
+* [ ] React frontend dashboard
+* [ ] Cash flow forecasting charts
+* [ ] Debt repayment simulator
 
-
-
-
-### How to update this on GitHub:
-1.  Go to your project folder in VS Code.
-2.  Open (or create) the `README.md` file.
-3.  Delete whatever is currently there and paste the text above.
-4.  Save the file.
-5.  Open **GitHub Desktop**.
-6.  You will see `README.md` in the "Changes" list.
-7.  Type a summary like "Update README with installation instructions".
-8.  Click **Commit to main** -> **Push origin**.
-
-Now, refresh your GitHub page, and it will look professional!
-```
