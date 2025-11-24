@@ -34,39 +34,49 @@ export const Signup = () => {
                 <h2>Create Account</h2>
                 <p className="text-muted">Start your financial journey today</p>
 
-                {error && <div className="alert-error">{error}</div>}
+                {error && <div className="alert-error">⚠️ {error}</div>}
 
                 <form onSubmit={handleSignup} className="auth-form">
                     <div className="form-group">
-                        <label>Full Name</label>
+                        <label htmlFor="name">Full Name</label>
                         <input 
+                            id="name"
                             type="text" 
                             value={name}
                             onChange={e => setName(e.target.value)} 
                             required 
                             placeholder="John Doe"
+                            disabled={loading}
+                            autoComplete="name"
                         />
                     </div>
 
                     <div className="form-group">
-                        <label>Email</label>
+                        <label htmlFor="email">Email</label>
                         <input 
+                            id="email"
                             type="email" 
                             value={email}
                             onChange={e => setEmail(e.target.value)} 
                             required 
                             placeholder="user@example.com"
+                            disabled={loading}
+                            autoComplete="email"
                         />
                     </div>
                     
                     <div className="form-group">
-                        <label>Password</label>
+                        <label htmlFor="password">Password</label>
                         <input 
+                            id="password"
                             type="password" 
                             value={password}
                             onChange={e => setPassword(e.target.value)} 
                             required 
                             placeholder="••••••"
+                            disabled={loading}
+                            autoComplete="new-password"
+                            minLength={6}
                         />
                     </div>
 

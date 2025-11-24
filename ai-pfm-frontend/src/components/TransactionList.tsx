@@ -41,21 +41,37 @@ export const TransactionList = () => {
                 <h2>Recent Transactions</h2>
                 <button className="secondary-btn" onClick={syncBank}>🔄 Sync Bank</button>
             </div>
-            <table>
-                <thead>
-                    <tr><th>Date</th><th>Desc</th><th>Category</th><th>Amount</th></tr>
-                </thead>
-                <tbody>
-                    {transactions.map((t) => (
-                        <tr key={t._id} className={t.type}>
-                            <td>{new Date(t.date).toLocaleDateString()}</td>
-                            <td>{t.description}</td>
-                            <td>{t.category}</td>
-                            <td className="amount">${t.amount}</td>
+            
+            <div className="table-container">
+                <table className="responsive-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th>Amount</th>
                         </tr>
-                    ))}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {transactions.map((t) => (
+                            <tr key={t._id} className={t.type}>
+                                <td data-label="Date">
+                                    {new Date(t.date).toLocaleDateString()}
+                                </td>
+                                <td data-label="Description" className="description-cell">
+                                    <span className="description-text">{t.description}</span>
+                                </td>
+                                <td data-label="Category">
+                                    <span className="category-tag">{t.category}</span>
+                                </td>
+                                <td data-label="Amount" className="amount">
+                                    {t.type === 'income' ? '+' : '-'}Rs. {t.amount.toLocaleString()}
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     );
 };

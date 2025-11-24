@@ -169,7 +169,13 @@
     font-size: 1rem;
     transition: all 0.3s ease;
     background: white;
+    color: #333;
     box-sizing: border-box;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: #888;
 }
 
 .form-group input:focus,
@@ -178,6 +184,7 @@
     outline: none;
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(103, 126, 234, 0.1);
+    color: #333;
 }
 
 .form-group textarea {
@@ -514,13 +521,19 @@
     font-size: 1.1rem;
     transition: all 0.3s ease;
     background: white;
+    color: #333;
     box-sizing: border-box;
+}
+
+.search-input::placeholder {
+    color: #888;
 }
 
 .search-input:focus {
     outline: none;
     border-color: #667eea;
     box-shadow: 0 0 0 3px rgba(103, 126, 234, 0.1);
+    color: #333;
 }
 
 .faq-list {
@@ -837,14 +850,30 @@
     font-size: 1.1rem;
 }
 
-/* Responsive Design */
+/* Comprehensive Responsive Design */
+@media (max-width: 1024px) {
+    .guides-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    
+    .contact-options {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+    }
+    
+    .resource-links {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+}
+
 @media (max-width: 768px) {
     .profile-page,
     .account-settings-page,
     .notifications-page,
     .help-page,
     .settings-page {
-        padding: 15px;
+        padding: 10px;
     }
 
     .profile-header,
@@ -854,14 +883,7 @@
     .settings-header {
         padding: 20px;
         margin-bottom: 20px;
-    }
-
-    .profile-header h1,
-    .account-header h1,
-    .notifications-header h1,
-    .help-header h1,
-    .settings-header h1 {
-        font-size: 2rem;
+        border-radius: 15px;
     }
 
     .profile-content,
@@ -870,6 +892,7 @@
     .help-content,
     .settings-content {
         padding: 25px;
+        border-radius: 15px;
     }
 
     .profile-navigation,
@@ -877,18 +900,24 @@
     .notifications-navigation,
     .help-navigation,
     .settings-navigation {
-        flex-direction: column;
-        gap: 5px;
+        padding: 8px;
+        margin-bottom: 20px;
     }
 
     .nav-btn {
-        text-align: center;
         padding: 12px 20px;
+        font-size: 0.9rem;
     }
 
     .avatar-section {
         flex-direction: column;
         text-align: center;
+        gap: 15px;
+    }
+
+    .avatar-actions {
+        width: 100%;
+        align-items: center;
     }
 
     .contact-options {
@@ -897,19 +926,239 @@
 
     .guides-grid {
         grid-template-columns: 1fr;
+        gap: 15px;
     }
 
     .settings-actions {
         flex-direction: column;
+        gap: 10px;
     }
 
     .setting-toggle {
         flex-direction: column;
         align-items: flex-start;
         gap: 10px;
+        padding: 15px;
+    }
+
+    .setting-toggle input[type="checkbox"] {
+        align-self: flex-end;
     }
 
     .resource-links {
         grid-template-columns: 1fr;
+    }
+
+    .notification-header {
+        flex-wrap: wrap;
+        gap: 5px;
+    }
+
+    .notification-actions {
+        flex-wrap: wrap;
+    }
+
+    .faq-question {
+        padding: 15px;
+        font-size: 1rem;
+    }
+
+    .faq-answer {
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .profile-page,
+    .account-settings-page,
+    .notifications-page,
+    .help-page,
+    .settings-page {
+        padding: 5px;
+    }
+
+    .profile-header,
+    .account-header,
+    .notifications-header,
+    .help-header,
+    .settings-header {
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 12px;
+    }
+
+    .profile-content,
+    .account-content,
+    .notifications-content,
+    .help-content,
+    .settings-content {
+        padding: 15px;
+        border-radius: 12px;
+    }
+
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger,
+    .btn-warning {
+        padding: 12px 20px;
+        font-size: 0.9rem;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .avatar-preview {
+        width: 80px;
+        height: 80px;
+        font-size: 1.5rem;
+    }
+
+    .qr-code-placeholder {
+        width: 150px;
+        height: 150px;
+        font-size: 1rem;
+        margin: 15px auto;
+    }
+
+    .notification-item {
+        padding: 15px;
+    }
+
+    .notification-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .notification-actions button {
+        width: 100%;
+        padding: 10px;
+    }
+
+    .search-input {
+        padding: 15px;
+    }
+
+    .guide-card {
+        padding: 20px;
+    }
+
+    .contact-method {
+        padding: 20px;
+    }
+
+    .support-ticket-form {
+        padding: 20px;
+    }
+
+    .form-section h3 {
+        font-size: 1.1rem;
+    }
+
+    .settings-section h3 {
+        font-size: 1.1rem;
+    }
+
+    .two-factor-setup {
+        padding: 15px;
+    }
+
+    .danger-zone {
+        padding: 20px;
+    }
+
+    .privacy-info {
+        padding: 20px;
+    }
+    
+    .app-info {
+        padding: 15px;
+    }
+    
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+}
+
+/* Touch-friendly interactions for mobile */
+@media (max-width: 768px) {
+    .nav-btn,
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger,
+    .btn-warning,
+    .faq-question,
+    .notification-actions button,
+    .guide-btn,
+    .resource-link {
+        min-height: 44px;
+    }
+    
+    .setting-toggle input[type="checkbox"] {
+        min-width: 50px;
+        min-height: 25px;
+    }
+}
+
+/* Accessibility and Performance Enhancements */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Focus improvements for keyboard navigation */
+.nav-btn:focus,
+.btn-primary:focus,
+.btn-secondary:focus,
+.btn-danger:focus,
+.btn-warning:focus,
+.faq-question:focus,
+.guide-btn:focus,
+.resource-link:focus {
+    outline: 3px solid rgba(103, 126, 234, 0.5);
+    outline-offset: 2px;
+}
+
+/* Loading states for better UX */
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-danger:disabled,
+.btn-warning:disabled {
+    position: relative;
+    color: transparent;
+}
+
+.btn-primary:disabled::after,
+.btn-secondary:disabled::after,
+.btn-danger:disabled::after,
+.btn-warning:disabled::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* High DPI displays */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    .avatar-preview,
+    .qr-code-placeholder {
+        border-width: 2px;
     }
 }

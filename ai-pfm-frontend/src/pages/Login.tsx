@@ -40,28 +40,34 @@ export const Login = () => {
                 <h2>Sign In</h2>
                 <p className="text-muted">Welcome back to MoneyManager</p>
 
-                {error && <div className="alert-error">{error}</div>}
+                {error && <div className="alert-error">⚠️ {error}</div>}
 
                 <form onSubmit={handleLogin} className="auth-form">
                     <div className="form-group">
-                        <label>Email</label>
+                        <label htmlFor="email">Email</label>
                         <input 
+                            id="email"
                             type="email" 
                             value={email}
                             onChange={e => setEmail(e.target.value)} 
                             required 
                             placeholder="user@example.com"
+                            disabled={loading}
+                            autoComplete="email"
                         />
                     </div>
                     
                     <div className="form-group">
-                        <label>Password</label>
+                        <label htmlFor="password">Password</label>
                         <input 
+                            id="password"
                             type="password" 
                             value={password}
                             onChange={e => setPassword(e.target.value)} 
                             required 
                             placeholder="••••••"
+                            disabled={loading}
+                            autoComplete="current-password"
                         />
                     </div>
 
