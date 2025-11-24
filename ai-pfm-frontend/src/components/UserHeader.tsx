@@ -105,62 +105,143 @@ export const UserHeader = () => {
                     <div className="dropdown-divider"></div>
 
                     <div className="dropdown-menu-items">
-                        <div 
-                            className="dropdown-item" 
-                            onClick={() => {
-                                setShowDropdown(false);
-                                navigate('/profile');
-                            }}
-                        >
-                            <span className="item-icon">👤</span>
-                            <span className="item-text">Edit Profile</span>
-                        </div>
-
-                        <div 
-                            className="dropdown-item"
-                            onClick={() => {
-                                setShowDropdown(false);
-                                navigate('/settings');
-                            }}
-                        >
-                            <span className="item-icon">⚙️</span>
-                            <span className="item-text">Account Settings</span>
-                        </div>
-
-                        <div 
-                            className="dropdown-item"
-                            onClick={() => {
-                                setShowDropdown(false);
-                                navigate('/notifications');
-                            }}
-                        >
-                            <span className="item-icon">🔔</span>
-                            <span className="item-text">Notifications</span>
-                        </div>
-
-                        <div 
-                            className="dropdown-item"
-                            onClick={() => {
-                                setShowDropdown(false);
-                                navigate('/help');
-                            }}
-                        >
-                            <span className="item-icon">❓</span>
-                            <span className="item-text">Help & Support</span>
+                        {/* Quick Navigation */}
+                        <div className="menu-section">
+                            <div className="menu-section-title">Navigation</div>
+                            <div 
+                                className="dropdown-item dashboard-item" 
+                                onClick={() => {
+                                    setShowDropdown(false);
+                                    navigate('/dashboard');
+                                }}
+                            >
+                                <span className="item-icon">🏠</span>
+                                <span className="item-text">Dashboard</span>
+                            </div>
                         </div>
 
                         <div className="dropdown-divider"></div>
 
+                        {/* Account Management */}
+                        <div className="menu-section">
+                            <div className="menu-section-title">Account</div>
+                            <div 
+                                className="dropdown-item" 
+                                onClick={() => {
+                                    setShowDropdown(false);
+                                    navigate('/profile');
+                                }}
+                            >
+                                <span className="item-icon">👤</span>
+                                <span className="item-text">Edit Profile</span>
+                            </div>
+
+                            <div 
+                                className="dropdown-item"
+                                onClick={() => {
+                                    setShowDropdown(false);
+                                    navigate('/settings');
+                                }}
+                            >
+                                <span className="item-icon">⚙️</span>
+                                <span className="item-text">Account Settings</span>
+                            </div>
+
+                            <div 
+                                className="dropdown-item"
+                                onClick={() => {
+                                    setShowDropdown(false);
+                                    navigate('/notifications');
+                                }}
+                            >
+                                <span className="item-icon">🔔</span>
+                                <span className="item-text">Notifications</span>
+                            </div>
+                        </div>
+
+                        <div className="dropdown-divider"></div>
+
+                        {/* Settings & Support */}
+                        <div className="menu-section">
+                            <div className="menu-section-title">Support</div>
+                            <div 
+                                className="dropdown-item"
+                                onClick={() => {
+                                    setShowDropdown(false);
+                                    navigate('/help');
+                                }}
+                            >
+                                <span className="item-icon">❓</span>
+                                <span className="item-text">Help & Support</span>
+                            </div>
+                        </div>
+
+                        <div className="dropdown-divider"></div>
+
+                        {/* Financial Tools */}
+                        <div className="menu-section">
+                            <div className="menu-section-title">Financial Tools</div>
+
                         <div 
-                            className="dropdown-item logout-item" 
+                            className="dropdown-item"
                             onClick={() => {
                                 setShowDropdown(false);
-                                handleLogout();
+                                navigate('/financial-health');
                             }}
                         >
-                            <span className="item-icon">🚪</span>
-                            <span className="item-text">Sign Out</span>
-                            <span className="logout-shortcut">Ctrl+Q</span>
+                            <span className="item-icon">💚</span>
+                            <span className="item-text">Financial Health</span>
+                        </div>
+
+                        <div 
+                            className="dropdown-item"
+                            onClick={() => {
+                                setShowDropdown(false);
+                                navigate('/goals');
+                            }}
+                        >
+                            <span className="item-icon">🎯</span>
+                            <span className="item-text">Financial Goals</span>
+                        </div>
+
+                        <div 
+                            className="dropdown-item"
+                            onClick={() => {
+                                setShowDropdown(false);
+                                navigate('/loans');
+                            }}
+                        >
+                            <span className="item-icon">💳</span>
+                            <span className="item-text">Loans & Debt</span>
+                        </div>
+
+                            <div 
+                                className="dropdown-item"
+                                onClick={() => {
+                                    setShowDropdown(false);
+                                    navigate('/credit-cards');
+                                }}
+                            >
+                                <span className="item-icon">💎</span>
+                                <span className="item-text">Credit Cards</span>
+                            </div>
+                        </div>
+
+                        <div className="dropdown-divider"></div>
+
+                        {/* Logout Section */}
+                        <div className="menu-section logout-section">
+                            <div 
+                                className="dropdown-item logout-item" 
+                                onClick={() => {
+                                    setShowDropdown(false);
+                                    handleLogout();
+                                }}
+                            >
+                                <span className="item-icon">🚪</span>
+                                <span className="item-text">Sign Out</span>
+                                <span className="logout-shortcut">Ctrl+Q</span>
+                            </div>
                         </div>
                     </div>
                 </div>

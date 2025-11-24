@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.ts';
+import { FinancialNavigation } from './FinancialNavigation';
 
 export const Dashboard = () => {
     const [insight, setInsight] = useState<string>('');
@@ -84,6 +85,9 @@ export const Dashboard = () => {
                     </div>
                 )}
             </div>
+            
+            {/* Financial Navigation */}
+            <FinancialNavigation />
         </div>
     );
 };

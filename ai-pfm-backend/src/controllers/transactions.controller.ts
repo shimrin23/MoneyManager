@@ -4,14 +4,17 @@ import TransactionsService from '../services/transactions.service';
 import { FinancialAgent } from '../ai/agent'; // Import the agent
 import { BankingIntegration } from '../integrations/banking.integration'; // Import this
 import { AnalyticsService } from '../services/analytics.service'; // Ensure this is imported
+import { FinancialHealthService } from '../services/financial-health.service';
 
 export default class TransactionsController {
     private transactionsService: TransactionsService;
     private analyticsService: AnalyticsService; // Add this
+    private financialHealthService: FinancialHealthService;
 
     constructor() {
         this.transactionsService = new TransactionsService();
         this.analyticsService = new AnalyticsService(); // Initialize
+        this.financialHealthService = new FinancialHealthService();
     }
 
     // POST /api/transactions
@@ -115,28 +118,20 @@ export default class TransactionsController {
         }
     }
 
-    // GET /api/transactions/analysis
-    async getFinancialAnalysis(req: Request, res: Response) {
+    // GET /api/transactions/analysis - AI-powered financial analysis
+    async getFinancialAnalysis(req: AuthRequest, res: Response) {
         try {
-            // 1. Get recent transactions
-            const transactions = await this.transactionsService.findAll();
-            
-            if (transactions.length === 0) {
-                return res.json({ message: "Not enough data for AI analysis yet." });
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
             }
 
-            // 2. Ask the AI Agent to analyze them
-            const agent = new FinancialAgent();
-            const analysis = await agent.analyzeSpending(transactions);
-
-            res.json({ 
-                message: 'Analysis complete', 
-                ai_insight: analysis 
-            });
-
+            // Get AI-powered analysis
+            const analysis = await this.financialHealthService.getAIAnalysis(userId);
+            res.json({ analysis });
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'AI Analysis failed' });
+            console.error('Error getting AI analysis:', error);
+            res.status(500).json({ error: 'Failed to generate AI analysis' });
         }
     }
 
@@ -167,13 +162,19 @@ export default class TransactionsController {
 
     // --- ADD THIS NEW METHOD ---
     // GET /api/transactions/score
-    async getHealthScore(req: Request, res: Response) {
+    async getHealthScore(req: AuthRequest, res: Response) {
         try {
-            // Calculate (or fetch cached) score for demo_user
-            const score = await this.analyticsService.calculateHealthScore("demo_user");
-            res.json({ score });
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+
+            // Use enhanced financial health service
+            const healthData = await this.financialHealthService.getHealthReport(userId);
+            res.json(healthData);
         } catch (error) {
-            res.status(500).json({ error: 'Failed to calculate score' });
+            console.error('Error getting health score:', error);
+            res.status(500).json({ error: 'Failed to calculate health score' });
         }
     }
     // ---------------------------

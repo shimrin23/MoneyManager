@@ -13,8 +13,13 @@ import { AccountSettings } from './pages/AccountSettings';
 import { NotificationsPage } from './pages/NotificationsPage';
 import { HelpPage } from './pages/HelpPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { FinancialHealthPage } from './pages/FinancialHealthPage';
+import { GoalsPage } from './pages/GoalsPage';
+import { LoansPage } from './pages/LoansPage';
+import { CreditCardsPage } from './pages/CreditCardsPage';
 import './App.css';
 import './styles/UserPages.css';
+import './styles/FinancialPages.css';
 
 // FIX: Use React.ReactNode here
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -38,7 +43,19 @@ function App() {
             <header>
               <div className="header-content">
                 <h1>💰 MoneyManager</h1>
-                <UserHeader />
+                <div className="header-actions">
+                  <UserHeader />
+                  <button 
+                    className="btn-logout"
+                    onClick={() => {
+                      localStorage.removeItem('token');
+                      window.location.href = '/login';
+                    }}
+                    title="Sign Out"
+                  >
+                    🚪 Logout
+                  </button>
+                </div>
               </div>
             </header>
           )}
@@ -110,6 +127,42 @@ function App() {
               element={
                 <ProtectedRoute>
                   <SettingsPage />
+                </ProtectedRoute>
+              } 
+            />
+
+            <Route 
+              path="/financial-health" 
+              element={
+                <ProtectedRoute>
+                  <FinancialHealthPage />
+                </ProtectedRoute>
+              } 
+            />
+
+            <Route 
+              path="/goals" 
+              element={
+                <ProtectedRoute>
+                  <GoalsPage />
+                </ProtectedRoute>
+              } 
+            />
+
+            <Route 
+              path="/loans" 
+              element={
+                <ProtectedRoute>
+                  <LoansPage />
+                </ProtectedRoute>
+              } 
+            />
+
+            <Route 
+              path="/credit-cards" 
+              element={
+                <ProtectedRoute>
+                  <CreditCardsPage />
                 </ProtectedRoute>
               } 
             />
