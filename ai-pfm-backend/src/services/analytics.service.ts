@@ -1,4 +1,3 @@
-// src/services/analytics.service.ts
 import Transaction from '../schemas/transaction.schema';
 import FinancialHealth from '../schemas/financial_health.schema';
 
@@ -6,47 +5,37 @@ export class AnalyticsService {
     
     // Calculate and Save the score
     async calculateHealthScore(userId: string): Promise<number> {
-        // 1. Get all transactions for this user (Currently getting ALL for demo purposes)
-        // In a real app with login, you would filter: { userId: userId }
         const transactions = await Transaction.find(); 
         
-        // 2. Initialize variables
         let totalIncome = 0;
         let totalExpenses = 0;
         let loanPayments = 0;
         
-        // 3. Loop through transactions to sum up totals
         transactions.forEach(t => {
             if (t.type === 'income') {
                 totalIncome += t.amount;
             } else if (t.type === 'expense') {
                 totalExpenses += t.amount;
-                // Check if this expense is related to debt
                 if (t.category === 'Loan' || t.category === 'Debt') {
                     loanPayments += t.amount;
                 }
             }
         });
 
-        // 4. Calculate the Score Logic (0 to 100)
         let score = 100;
 
         if (totalIncome > 0) {
             const savingsRate = (totalIncome - totalExpenses) / totalIncome;
             const debtRatio = loanPayments / totalIncome;
-
-            // Logic: Start at 50. Add points for saving, subtract points for heavy debt.
             score = 50 + (savingsRate * 50) - (debtRatio * 50);
         } else {
-            score = 0; // No income = 0 score
+            score = 0; 
         }
 
-        // Clamp score between 0 and 100
         score = Math.max(0, Math.min(100, Math.round(score)));
 
-        // 5. Save the result to the FinancialHealth collection
         await FinancialHealth.findOneAndUpdate(
-            { userId: "demo_user" }, // Hardcoded user for MVP
+            { userId: "demo_user" }, 
             { 
                 score: score, 
                 metrics: { 
@@ -56,7 +45,7 @@ export class AnalyticsService {
                 },
                 riskLevel: score > 70 ? 'Low' : (score > 40 ? 'Medium' : 'High')
             },
-            { upsert: true, new: true } // Create if doesn't exist
+            { upsert: true, new: true }
         );
 
         return score;
@@ -66,5 +55,36 @@ export class AnalyticsService {
     async getScore(userId: string): Promise<number> {
         const health = await FinancialHealth.findOne({ userId: "demo_user" });
         return health ? health.score : 0;
+    }
+
+    // --- NEW METHOD WITH FIX ---
+    async getSubscriptions() {
+        const transactions = await Transaction.find();
+        
+        // Simple keyword detection (MVP approach)
+        const subscriptionKeywords = ['Netflix', 'Spotify', 'Apple', 'Gym', 'Prime', 'Zoom', 'Hulu'];
+        
+        const foundSubscriptions: any[] = [];
+        const seen = new Set();
+
+        transactions.forEach(t => {
+            // FIX: Use (t.description || '') to handle cases where description is missing
+            const desc = t.description || '';
+            
+            // Check if description matches a known subscription service
+            const match = subscriptionKeywords.find(k => desc.includes(k));
+            
+            // Prevent duplicates (only show unique subscriptions)
+            if (match && !seen.has(match)) {
+                foundSubscriptions.push({
+                    name: desc, // Use the actual description from the transaction
+                    amount: t.amount,
+                    risk: t.amount > 50 ? 'High' : 'Low' // Flag expensive subs
+                });
+                seen.add(match);
+            }
+        });
+
+        return foundSubscriptions;
     }
 }

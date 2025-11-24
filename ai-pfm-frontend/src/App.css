@@ -1,11 +1,280 @@
-:root { --bg: #0f172a; --card: #1e293b; --text: #e2e8f0; --accent: #3b82f6; }
-body { background: var(--bg); color: var(--text); font-family: sans-serif; margin: 0; min-height: 100vh; }
-.app-container { max-width: 800px; margin: 0 auto; padding: 2rem; }
-.card { background: var(--card); padding: 2rem; border-radius: 1rem; margin-bottom: 2rem; }
-button { background: var(--accent); color: white; border: none; padding: 0.8rem 1.5rem; border-radius: 0.5rem; cursor: pointer; font-weight: bold; }
-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+:root { 
+  --bg: #0f172a; 
+  --card: #1e293b; 
+  --text: #e2e8f0; 
+  --text-muted: #94a3b8;
+  --accent: #3b82f6; 
+  --success: #22c55e;
+  --danger: #ef4444;
+}
+
+body { 
+  background: var(--bg); 
+  color: var(--text); 
+  font-family: 'Inter', system-ui, sans-serif; 
+  margin: 0; 
+  min-height: 100vh; 
+}
+
+.app-container { 
+  max-width: 900px; 
+  margin: 0 auto; 
+  padding: 2rem; 
+}
+
+header { 
+  text-align: center; 
+  margin-bottom: 2rem; 
+}
+
+header h1 {
+  font-size: 2.5rem;
+  margin: 0;
+  background: linear-gradient(to right, #3b82f6, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Dashboard Grid Layout */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 2fr; /* Score is smaller, AI is wider */
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (max-width: 768px) {
+  .dashboard-grid { grid-template-columns: 1fr; }
+}
+
+.card { 
+  background: var(--card); 
+  padding: 2rem; 
+  border-radius: 1rem; 
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+}
+
+/* Score Circle Styles */
+.score-container {
+  display: flex;
+  justify-content: center;
+  margin: 1.5rem 0;
+}
+
+.score-circle {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  /* The gradient is handled inline in React */
+}
+
+.score-inner {
+  width: 120px;
+  height: 120px;
+  background: var(--card); /* Matches card bg to create donut effect */
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+.score-inner span {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: normal;
+}
+
+.score-label {
+  text-align: center;
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: 1rem;
+}
+
+/* AI & Button Styles */
+button { 
+  background: var(--accent); 
+  color: white; 
+  border: none; 
+  padding: 0.8rem 1.5rem; 
+  border-radius: 0.5rem; 
+  cursor: pointer; 
+  font-weight: bold; 
+  width: 100%;
+  font-size: 1rem;
+  transition: opacity 0.2s;
+}
+
+button:hover { opacity: 0.9; }
+button:disabled { opacity: 0.6; cursor: wait; }
+
+.ai-response-box { 
+  margin-top: 1.5rem; 
+  padding: 1rem; 
+  background: rgba(59, 130, 246, 0.1); 
+  border-left: 4px solid var(--accent); 
+  border-radius: 0.5rem;
+}
+
+/* Transaction List Styling */
+.header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.secondary-btn { background: transparent; border: 1px solid var(--text-muted); width: auto; }
+
+table { width: 100%; border-collapse: collapse; }
 td, th { padding: 1rem; text-align: left; border-bottom: 1px solid #334155; }
-.income .amount { color: #22c55e; }
-.expense .amount { color: #ef4444; }
-.header-row { display: flex; justify-content: space-between; align-items: center; }
-.ai-response-box { margin-top: 1.5rem; padding: 1rem; background: rgba(59, 130, 246, 0.1); border-left: 4px solid var(--accent); }
+th { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; }
+
+.income .amount { color: var(--success); }
+.expense .amount { color: var(--danger); }
+
+/* --- Subscription Card Styles --- */
+
+.sub-subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-top: -10px;
+  margin-bottom: 1.5rem;
+}
+
+.sub-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sub-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.2s;
+}
+
+.sub-item:last-child {
+  border-bottom: none;
+}
+
+.sub-icon {
+  width: 40px;
+  height: 40px;
+  background-color: var(--accent);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-right: 1rem;
+}
+
+.sub-details {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.sub-details strong {
+  font-size: 1rem;
+}
+
+.sub-amount {
+  font-weight: bold;
+  color: var(--text);
+}
+
+/* Badge for "High Risk" items */
+.badge-alert {
+  background-color: rgba(239, 68, 68, 0.2); /* Red background with transparency */
+  color: var(--danger);
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 1rem;
+  width: fit-content;
+  margin-top: 0.3rem;
+  border: 1px solid var(--danger);
+}
+/* Add to App.css */
+.content-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr; /* Transactions wide, Subs narrow */
+  gap: 1.5rem;
+}
+@media (max-width: 768px) {
+  .content-grid { grid-template-columns: 1fr; }
+}
+
+/* --- Subscription Card Styles --- */
+
+.sub-subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin-top: -10px;
+  margin-bottom: 1.5rem;
+}
+
+.sub-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sub-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.2s;
+}
+
+.sub-item:last-child {
+  border-bottom: none;
+}
+
+.sub-icon {
+  width: 40px;
+  height: 40px;
+  background-color: var(--accent);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-right: 1rem;
+}
+
+.sub-details {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.sub-details strong {
+  font-size: 1rem;
+}
+
+.sub-amount {
+  font-weight: bold;
+  color: var(--text);
+}
+
+/* Badge for "High Risk" items */
+.badge-alert {
+  background-color: rgba(239, 68, 68, 0.2); /* Red background with transparency */
+  color: var(--danger);
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 1rem;
+  width: fit-content;
+  margin-top: 0.3rem;
+  border: 1px solid var(--danger);
+}

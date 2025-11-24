@@ -2,12 +2,15 @@ import { Request, Response } from 'express';
 import TransactionsService from '../services/transactions.service';
 import { FinancialAgent } from '../ai/agent'; // Import the agent
 import { BankingIntegration } from '../integrations/banking.integration'; // Import this
+import { AnalyticsService } from '../services/analytics.service'; // Ensure this is imported
 
 export default class TransactionsController {
     private transactionsService: TransactionsService;
+    private analyticsService: AnalyticsService; // Add this
 
     constructor() {
         this.transactionsService = new TransactionsService();
+        this.analyticsService = new AnalyticsService(); // Initialize
     }
 
     // POST /api/transactions
@@ -145,6 +148,29 @@ export default class TransactionsController {
         } catch (error) {
             console.error(error);
             res.status(500).json({ error: 'Bank sync failed' });
+        }
+    }
+
+    // --- ADD THIS NEW METHOD ---
+    // GET /api/transactions/score
+    async getHealthScore(req: Request, res: Response) {
+        try {
+            // Calculate (or fetch cached) score for demo_user
+            const score = await this.analyticsService.calculateHealthScore("demo_user");
+            res.json({ score });
+        } catch (error) {
+            res.status(500).json({ error: 'Failed to calculate score' });
+        }
+    }
+    // ---------------------------
+
+    // GET /api/transactions/subscriptions
+    async getSubscriptions(req: Request, res: Response) {
+        try {
+            const subs = await this.analyticsService.getSubscriptions();
+            res.json({ subscriptions: subs });
+        } catch (error) {
+            res.status(500).json({ error: 'Failed to fetch subscriptions' });
         }
     }
 }

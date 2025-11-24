@@ -1,6 +1,7 @@
 import './App.css'
 import { Dashboard } from './components/Dashboard'
 import { TransactionList } from './components/TransactionList'
+import { Subscriptions } from './components/Subscriptions' // Import this
 
 function App() {
   return (
@@ -10,7 +11,12 @@ function App() {
       </header>
       <main>
         <Dashboard />
-        <TransactionList />
+        
+        {/* New Grid for List + Subs */}
+        <div className="content-grid">
+           <TransactionList />
+           <Subscriptions />
+        </div>
       </main>
     </div>
   )

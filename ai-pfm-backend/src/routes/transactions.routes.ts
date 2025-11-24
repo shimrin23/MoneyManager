@@ -9,6 +9,9 @@ const transactionsController = new TransactionsController();
 // POST /api/transactions
 router.post('/', transactionsController.createTransaction.bind(transactionsController));
 
+// GET /api/transactions/subscriptions
+router.get('/subscriptions', transactionsController.getSubscriptions.bind(transactionsController));
+
 // GET /api/transactions
 router.get('/', transactionsController.getAllTransactions.bind(transactionsController));
 
@@ -18,6 +21,9 @@ router.get('/analysis', transactionsController.getFinancialAnalysis.bind(transac
 // POST /api/transactions/sync
 router.post('/sync', transactionsController.syncBankAccount.bind(transactionsController));
 
+// GET /api/transactions/subscriptions
+router.get('/subscriptions', transactionsController.getSubscriptions.bind(transactionsController));
+
 // GET /api/transactions/:id
 router.get('/:id', transactionsController.getTransaction.bind(transactionsController));
 
@@ -26,5 +32,7 @@ router.put('/:id', transactionsController.updateTransaction.bind(transactionsCon
 
 // DELETE /api/transactions/:id
 router.delete('/:id', transactionsController.deleteTransaction.bind(transactionsController));
+
+router.get('/score', transactionsController.getHealthScore.bind(transactionsController));
 
 export default router;
