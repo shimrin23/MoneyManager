@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AuthRequest } from '../middlewares/authMiddleware';
 import TransactionsService from '../services/transactions.service';
 import { FinancialAgent } from '../ai/agent'; // Import the agent
 import { BankingIntegration } from '../integrations/banking.integration'; // Import this
@@ -14,14 +15,22 @@ export default class TransactionsController {
     }
 
     // POST /api/transactions
-    async createTransaction(req: Request, res: Response) {
+    async createTransaction(req: AuthRequest, res: Response) {
         try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+
             const transactionData = req.body;
             
             // Basic validation
             if (!transactionData.amount || !transactionData.category) {
                 return res.status(400).json({ error: 'Amount and Category are required' });
             }
+
+            // Add userId to transaction data
+            transactionData.userId = userId;
 
             // call the service to save to MongoDB
             const newTransaction = await this.transactionsService.create(transactionData);
@@ -87,9 +96,14 @@ export default class TransactionsController {
     }
 
     // GET /api/transactions
-    async getAllTransactions(req: Request, res: Response) {
+    async getAllTransactions(req: AuthRequest, res: Response) {
         try {
-            const transactions = await this.transactionsService.findAll();
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+
+            const transactions = await this.transactionsService.getAll(userId);
             
             res.json({ 
                 message: 'Transactions list', 
@@ -165,9 +179,14 @@ export default class TransactionsController {
     // ---------------------------
 
     // GET /api/transactions/subscriptions
-    async getSubscriptions(req: Request, res: Response) {
+    async getSubscriptions(req: AuthRequest, res: Response) {
         try {
-            const subs = await this.analyticsService.getSubscriptions();
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+
+            const subs = await this.analyticsService.getSubscriptions(userId);
             res.json({ subscriptions: subs });
         } catch (error) {
             res.status(500).json({ error: 'Failed to fetch subscriptions' });

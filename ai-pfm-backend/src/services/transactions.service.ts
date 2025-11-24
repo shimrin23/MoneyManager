@@ -13,9 +13,15 @@ export default class TransactionsService {
         return await Transaction.findById(id);
     }
 
-    // Get all transactions
-    async findAll(): Promise<ITransaction[]> {
-        return await Transaction.find().sort({ date: -1 }); // Sort by newest first
+    // Get all transactions for a user
+    async findAll(userId?: string): Promise<ITransaction[]> {
+        const filter = userId ? { userId } : {};
+        return await Transaction.find(filter).sort({ date: -1 }); // Sort by newest first
+    }
+
+    // Alias for backward compatibility
+    async getAll(userId?: string): Promise<ITransaction[]> {
+        return await this.findAll(userId);
     }
 
     // Update a transaction

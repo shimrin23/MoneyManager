@@ -1,8 +1,12 @@
 import { Router } from 'express';
 import TransactionsController from "../controllers/transactions.controller";
+import { authenticateToken } from '../middlewares/authMiddleware';
 
 const router = Router();
 const transactionsController = new TransactionsController();
+
+// Apply authentication middleware to all routes
+router.use(authenticateToken);
 
 // Base path is already /api/transactions defined in index.ts
 

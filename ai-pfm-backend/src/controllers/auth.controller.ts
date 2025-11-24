@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import { AuthRequest } from '../middlewares/authMiddleware';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../schemas/user.schema';
@@ -80,6 +81,32 @@ export default class AuthController {
         } catch (error) {
             console.error("Login Error:", error);
             res.status(500).json({ error: "Internal Server Error" });
+        }
+    }
+
+    // GET /api/auth/profile - Get user profile
+    async getProfile(req: AuthRequest, res: Response) {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+
+            const user = await User.findById(userId).select('-password');
+            if (!user) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            res.json({
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email
+                }
+            });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: 'Server Error' });
         }
     }
 }

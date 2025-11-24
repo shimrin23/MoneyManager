@@ -5,7 +5,7 @@ export class AnalyticsService {
     
     // Calculate and Save the score
     async calculateHealthScore(userId: string): Promise<number> {
-        const transactions = await Transaction.find(); 
+        const transactions = await Transaction.find({ userId }); 
         
         let totalIncome = 0;
         let totalExpenses = 0;
@@ -35,7 +35,7 @@ export class AnalyticsService {
         score = Math.max(0, Math.min(100, Math.round(score)));
 
         await FinancialHealth.findOneAndUpdate(
-            { userId: "demo_user" }, 
+            { userId: userId }, 
             { 
                 score: score, 
                 metrics: { 
@@ -53,13 +53,13 @@ export class AnalyticsService {
 
     // Helper to just get the current score
     async getScore(userId: string): Promise<number> {
-        const health = await FinancialHealth.findOne({ userId: "demo_user" });
+        const health = await FinancialHealth.findOne({ userId: userId });
         return health ? health.score : 0;
     }
 
     // --- NEW METHOD WITH FIX ---
-    async getSubscriptions() {
-        const transactions = await Transaction.find();
+    async getSubscriptions(userId: string) {
+        const transactions = await Transaction.find({ userId });
         
         // Simple keyword detection (MVP approach)
         const subscriptionKeywords = ['Netflix', 'Spotify', 'Apple', 'Gym', 'Prime', 'Zoom', 'Hulu'];

@@ -5,8 +5,16 @@ import { Signup } from './pages/Signup';
 import { Dashboard } from './components/Dashboard';
 import { TransactionList } from './components/TransactionList';
 import { Subscriptions } from './components/Subscriptions';
+import { AddTransactionForm } from './components/AddTransactionForm';
+import { UserHeader } from './components/UserHeader';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ProfilePage } from './pages/ProfilePage';
+import { AccountSettings } from './pages/AccountSettings';
+import { NotificationsPage } from './pages/NotificationsPage';
+import { HelpPage } from './pages/HelpPage';
+import { SettingsPage } from './pages/SettingsPage';
 import './App.css';
+import './styles/UserPages.css';
 
 // FIX: Use React.ReactNode here
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -26,9 +34,20 @@ function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <div className="app-container">
-          <header>
-            <h1>💰 MoneyManager</h1>
-          </header>
+          {isAuthenticated && (
+            <header>
+              <div className="header-content">
+                <h1>💰 MoneyManager</h1>
+                <UserHeader />
+              </div>
+            </header>
+          )}
+
+          {!isAuthenticated && (
+            <header>
+              <h1>💰 MoneyManager</h1>
+            </header>
+          )}
 
           <Routes>
             <Route path="/login" element={<Login />} />
@@ -41,6 +60,7 @@ function App() {
                   <main>
                     <Dashboard />
                     <div className="content-grid">
+                      <AddTransactionForm onTransactionAdded={() => window.location.reload()} />
                       <TransactionList />
                       <Subscriptions />
                     </div>

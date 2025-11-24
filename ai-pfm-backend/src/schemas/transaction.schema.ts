@@ -1,6 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface ITransaction extends Document {
+    userId: string;
     amount: number;
     category: string;
     date: Date;
@@ -10,6 +11,7 @@ export interface ITransaction extends Document {
 }
 
 const TransactionSchema: Schema = new Schema({
+    userId: { type: String, required: true },
     amount: { type: Number, required: true },
     category: { type: String, required: true },
     date: { type: Date, required: true, default: Date.now },
