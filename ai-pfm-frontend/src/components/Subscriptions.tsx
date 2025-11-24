@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { apiClient } from '../api/client';
+import { apiClient } from '../api/client.ts';
 
 interface Sub {
     name: string;

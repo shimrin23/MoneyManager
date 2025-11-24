@@ -14,7 +14,7 @@ const PORT: number = Number(config.port) || 3000;
 mongoose.connect(config.mongoUri)
     .then(() => {
         console.log('---------------------------------------');
-        console.log(' MongoDB Connected Successfully');
+        console.log('MongoDB Connected Successfully');
         console.log('---------------------------------------');
         
         // 2. Only start the server if DB connects
