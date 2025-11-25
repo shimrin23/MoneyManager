@@ -193,4 +193,55 @@ export default class TransactionsController {
             res.status(500).json({ error: 'Failed to fetch subscriptions' });
         }
     }
+
+    // POST /api/transactions/ai-research - AI-powered research assistant
+    async getAIResearch(req: AuthRequest, res: Response) {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+
+            const { question } = req.body;
+            if (!question) {
+                return res.status(400).json({ error: 'Question is required' });
+            }
+
+            // Initialize AI agent for research
+            const financialAgent = new FinancialAgent();
+            
+            // Get user's transaction context for personalized research
+            const userTransactions = await this.transactionsService.getAll(userId);
+            
+            // Create research prompt
+            const researchPrompt = `
+            You are a concise financial coach. Your answers must be brief, smart, and strictly formatted using bullet points. Do not write long paragraphs. Do not use markdown headers like '##'. Focus on actionable insights. Limit your response to a maximum of 3-4 key points.
+            
+            Question: ${question}
+            
+            User Context: The user has ${userTransactions.length} transactions on record.
+            
+            STRICT FORMAT REQUIREMENTS:
+            • Point 1: [direct answer to the question]
+            • Point 2: [key supporting information or insight]
+            • Point 3: [specific actionable recommendation]
+            • Point 4: [optional - only if absolutely critical]
+            
+            Keep each point under 25 words. Be specific and actionable. No markdown headers.
+            `;
+
+            // Use AI to generate research response
+            const research = await financialAgent.generateResearch(researchPrompt);
+            
+            res.json({ 
+                question,
+                research,
+                timestamp: new Date().toISOString()
+            });
+
+        } catch (error) {
+            console.error('Error generating AI research:', error);
+            res.status(500).json({ error: 'Failed to generate AI research response' });
+        }
+    }
 }

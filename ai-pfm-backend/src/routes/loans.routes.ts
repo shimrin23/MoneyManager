@@ -11,7 +11,7 @@ router.use(authenticateToken);
 // GET /api/loans - Get all loans for user
 router.get('/', async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user.userId;
+        const userId = (req as any).user.id;
         const loans = await Loan.find({ userId }).sort({ createdAt: -1 });
         res.json({ loans });
     } catch (error) {
@@ -23,7 +23,7 @@ router.get('/', async (req: Request, res: Response) => {
 // POST /api/loans - Create new loan
 router.post('/', async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user.userId;
+        const userId = (req as any).user.id;
         const { type, provider, totalAmount, remainingAmount, interestRate, monthlyInstallment, nextDueDate } = req.body;
 
         if (!type || !provider || !totalAmount || !interestRate || !monthlyInstallment || !nextDueDate) {
@@ -53,7 +53,7 @@ router.post('/', async (req: Request, res: Response) => {
 // PUT /api/loans/:id - Update loan
 router.put('/:id', async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user.userId;
+        const userId = (req as any).user.id;
         const { id } = req.params;
         const updates = req.body;
 
@@ -77,7 +77,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 // DELETE /api/loans/:id - Delete loan
 router.delete('/:id', async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user.userId;
+        const userId = (req as any).user.id;
         const { id } = req.params;
 
         const loan = await Loan.findOneAndDelete({ _id: id, userId });
@@ -92,10 +92,10 @@ router.delete('/:id', async (req: Request, res: Response) => {
     }
 });
 
-// POST /api/loans/:id/payment - Make loan payment
+// POST /api/loans/:id/payment - Record loan payment
 router.post('/:id/payment', async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user.userId;
+        const userId = (req as any).user.id;
         const { id } = req.params;
         const { amount } = req.body;
 
@@ -131,7 +131,7 @@ router.post('/:id/payment', async (req: Request, res: Response) => {
 // GET /api/loans/strategies - Get debt payoff strategies
 router.get('/strategies', async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user.userId;
+        const userId = (req as any).user.id;
         const loans = await Loan.find({ userId, status: 'Active' });
 
         if (loans.length === 0) {

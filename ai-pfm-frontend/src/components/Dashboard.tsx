@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.ts';
-import { FinancialNavigation } from './FinancialNavigation';
 
 export const Dashboard = () => {
     const [insight, setInsight] = useState<string>('');
@@ -30,13 +29,18 @@ export const Dashboard = () => {
         setLoadingAI(true);
         try {
             const response = await apiClient.get('/transactions/analysis');
-            setInsight(response.data.ai_insight);
+            setInsight(response.data.analysis);
         } catch (error) {
             console.error(error);
             setInsight("Failed to contact the AI Financial Advisor.");
         } finally {
             setLoadingAI(false);
         }
+    };
+
+    // 3. Clear AI Insight
+    const clearInsight = () => {
+        setInsight('');
     };
 
     // Helper to determine color based on score
@@ -47,47 +51,66 @@ export const Dashboard = () => {
     };
 
     return (
-        <div className="dashboard-grid">
-            {/* CARD 1: Financial Health Score */}
-            <div className="card score-card">
-                <h2>Financial Health</h2>
-                <div className="score-container">
-                    <div 
-                        className="score-circle"
-                        style={{
-                            background: `conic-gradient(${getScoreColor(score)} ${score * 3.6}deg, #334155 0deg)`
-                        }}
-                    >
-                        <div className="score-inner">
-                            {loadingScore ? "..." : score}
-                            <span>/ 100</span>
+        <div className="page-container">
+            <div className="page-header">
+                <h1>📊 Dashboard</h1>
+                <p className="page-subtitle">Your financial overview at a glance</p>
+            </div>
+
+            <div className="content-grid">
+                {/* Financial Health Score Card */}
+                <div className="card health-score-card">
+                    <h3>💚 Financial Health Score</h3>
+                    <div className="score-display">
+                        <div 
+                            className="score-circle"
+                            style={{
+                                background: `conic-gradient(${getScoreColor(score)} ${score * 3.6}deg, rgba(255,255,255,0.1) 0deg)`
+                            }}
+                        >
+                            <span className="score-number">{loadingScore ? "..." : score}</span>
+                            <span className="score-label">/ 100</span>
+                        </div>
+                        <div className="score-status">
+                            <span className="status-text">
+                                {score >= 70 ? "Excellent 🎉" : score >= 40 ? "Needs Work ⚠️" : "Critical 🚨"}
+                            </span>
+                            <p className="status-description">
+                                {score >= 70 ? "Great financial habits!" : 
+                                 score >= 40 ? "Room for improvement" : "Immediate attention needed"}
+                            </p>
                         </div>
                     </div>
                 </div>
-                <p className="score-label">
-                    {score >= 70 ? "Excellent 🎉" : score >= 40 ? "Needs Work ⚠️" : "Critical 🚨"}
-                </p>
-            </div>
 
-            {/* CARD 2: AI Advisor */}
-            <div className="card ai-card">
-                <h2>🤖 AI Financial Coach</h2>
-                <p>Get personalized advice based on your health score & spending.</p>
-                
-                <button onClick={fetchAIAnalysis} disabled={loadingAI}>
-                    {loadingAI ? "Analyzing..." : "Ask the Coach"}
-                </button>
-
-                {insight && (
-                    <div className="ai-response-box">
-                        <h3>💡 Coach's Insight:</h3>
-                        <p style={{ whiteSpace: 'pre-line' }}>{insight}</p>
+                {/* AI Financial Coach Card */}
+                <div className="card ai-analysis-card">
+                    <h3>🤖 AI Financial Coach</h3>
+                    <p className="coach-description">Get personalized insights based on your spending patterns and financial goals</p>
+                    
+                    <div className="ai-content">
+                        {insight ? (
+                            <div className="analysis-text">
+                                <div className="analysis-header">
+                                    <h4>💡 Coach's Insight:</h4>
+                                    <button className="modal-close" onClick={clearInsight}>×</button>
+                                </div>
+                                <p>{insight}</p>
+                            </div>
+                        ) : (
+                            <p>Click below to get AI-powered financial insights</p>
+                        )}
                     </div>
-                )}
+                    
+                    <button 
+                        className="btn-secondary"
+                        onClick={fetchAIAnalysis} 
+                        disabled={loadingAI}
+                    >
+                        {loadingAI ? "🤔 Analyzing..." : "💡 Ask the Coach"}
+                    </button>
+                </div>
             </div>
-            
-            {/* Financial Navigation */}
-            <FinancialNavigation />
         </div>
     );
 };

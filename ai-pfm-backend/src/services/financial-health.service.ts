@@ -3,13 +3,13 @@ import FinancialHealth from '../schemas/financial_health.schema';
 import Goal from '../schemas/goal.schema';
 import Loan from '../schemas/loan.schema';
 import CreditCard from '../schemas/creditcard.schema';
-// import { LLMService } from '../ai/llm'; // Commented out for now
+import { FinancialAgent } from '../ai/agent'; // Import the real AI agent
 
 export class FinancialHealthService {
-    // private llmService: LLMService;
+    private financialAgent: FinancialAgent;
 
     constructor() {
-        // this.llmService = new LLMService(); // Commented out for now
+        this.financialAgent = new FinancialAgent();
     }
 
     // Enhanced health score calculation
@@ -186,41 +186,24 @@ export class FinancialHealthService {
         }
     }
 
-    // Get AI-powered financial analysis
+    // Get AI-powered financial analysis using real Gemini AI
     async getAIAnalysis(userId: string): Promise<string> {
         try {
-            const [transactions, health, goals, loans, creditCards] = await Promise.all([
-                Transaction.find({ userId }).sort({ date: -1 }).limit(50),
-                this.getHealthReport(userId),
-                Goal.find({ userId }),
-                Loan.find({ userId }),
-                CreditCard.find({ userId })
-            ]);
-
-            // For now, return a simple analysis based on the data
-            const totalTransactions = transactions.length;
-            const recentExpenses = transactions.filter(t => t.type === 'expense').length;
-            const recentIncome = transactions.filter(t => t.type === 'income').length;
+            // Get recent transactions for AI analysis
+            const transactions = await Transaction.find({ userId }).sort({ date: -1 }).limit(100);
             
-            let analysis = `Based on your recent financial activity:\n\n`;
-            analysis += `• You have ${totalTransactions} recent transactions\n`;
-            analysis += `• Your current health score is ${health.score}/100 (${health.riskLevel} risk)\n`;
-            analysis += `• You have ${goals.length} financial goals\n`;
-            analysis += `• You have ${loans.filter(l => l.status === 'Active').length} active loans\n`;
-            analysis += `• You have ${creditCards.length} credit cards\n\n`;
-            
-            if (health.score >= 80) {
-                analysis += `Excellent financial health! Keep up the good work with your savings and debt management.`;
-            } else if (health.score >= 60) {
-                analysis += `Good financial health with room for improvement. Consider increasing your savings rate.`;
-            } else {
-                analysis += `Your financial health needs attention. Focus on reducing debt and building an emergency fund.`;
+            if (transactions.length === 0) {
+                return "I notice you don't have any transactions yet. Start by adding some transactions to get personalized AI-powered insights about your spending patterns and financial health!";
             }
 
-            return analysis;
+            // Use the real AI agent to analyze spending patterns
+            console.log('🤖 Generating AI analysis using Gemini...');
+            const aiAnalysis = await this.financialAgent.analyzeSpending(transactions);
+            
+            return aiAnalysis;
         } catch (error) {
             console.error('Error generating AI analysis:', error);
-            return 'Unable to generate AI analysis at this time. Please try again later.';
+            return 'I\'m currently having trouble analyzing your financial data. Please try again in a moment.';
         }
     }
 }

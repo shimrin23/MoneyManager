@@ -11,7 +11,7 @@ router.use(authenticateToken);
 // GET /api/goals - Get all goals for user
 router.get('/', async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user.userId;
+        const userId = (req as any).user.id;
         const goals = await Goal.find({ userId }).sort({ createdAt: -1 });
         res.json({ goals });
     } catch (error) {
@@ -23,7 +23,7 @@ router.get('/', async (req: Request, res: Response) => {
 // POST /api/goals - Create new goal
 router.post('/', async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user.userId;
+        const userId = (req as any).user.id;
         const { title, targetAmount, currentAmount, deadline } = req.body;
 
         if (!title || !targetAmount || !deadline) {
@@ -50,7 +50,7 @@ router.post('/', async (req: Request, res: Response) => {
 // PUT /api/goals/:id - Update goal
 router.put('/:id', async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user.userId;
+        const userId = (req as any).user.id;
         const { id } = req.params;
         const updates = req.body;
 
@@ -74,7 +74,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 // DELETE /api/goals/:id - Delete goal
 router.delete('/:id', async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user.userId;
+        const userId = (req as any).user.id;
         const { id } = req.params;
 
         const goal = await Goal.findOneAndDelete({ _id: id, userId });
@@ -92,7 +92,7 @@ router.delete('/:id', async (req: Request, res: Response) => {
 // POST /api/goals/:id/progress - Add progress to goal
 router.post('/:id/progress', async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user.userId;
+        const userId = (req as any).user.id;
         const { id } = req.params;
         const { amount } = req.body;
 

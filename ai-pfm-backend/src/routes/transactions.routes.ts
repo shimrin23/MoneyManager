@@ -22,6 +22,9 @@ router.get('/', transactionsController.getAllTransactions.bind(transactionsContr
 // GET /api/transactions/analysis
 router.get('/analysis', transactionsController.getFinancialAnalysis.bind(transactionsController));
 
+// POST /api/transactions/ai-research
+router.post('/ai-research', transactionsController.getAIResearch.bind(transactionsController));
+
 // POST /api/transactions/sync
 router.post('/sync', transactionsController.syncBankAccount.bind(transactionsController));
 

@@ -11,7 +11,7 @@ router.use(authenticateToken);
 // GET /api/credit-cards - Get all credit cards for user
 router.get('/', async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user.userId;
+        const userId = (req as any).user.id;
         const cards = await CreditCard.find({ userId }).sort({ createdAt: -1 });
         
         // Calculate available limit for each card
@@ -33,7 +33,7 @@ router.get('/', async (req: Request, res: Response) => {
 // POST /api/credit-cards - Create new credit card
 router.post('/', async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user.userId;
+        const userId = (req as any).user.id;
         const { cardName, provider, creditLimit, currentBalance, minPaymentDue, dueDate, statementDate } = req.body;
 
         if (!cardName || !provider || !creditLimit || !dueDate) {
@@ -65,7 +65,7 @@ router.post('/', async (req: Request, res: Response) => {
 // PUT /api/credit-cards/:id - Update credit card
 router.put('/:id', async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user.userId;
+        const userId = (req as any).user.id;
         const { id } = req.params;
         const updates = req.body;
 
@@ -99,7 +99,7 @@ router.put('/:id', async (req: Request, res: Response) => {
 // DELETE /api/credit-cards/:id - Delete credit card
 router.delete('/:id', async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user.userId;
+        const userId = (req as any).user.id;
         const { id } = req.params;
 
         const card = await CreditCard.findOneAndDelete({ _id: id, userId });
@@ -114,10 +114,10 @@ router.delete('/:id', async (req: Request, res: Response) => {
     }
 });
 
-// POST /api/credit-cards/:id/payment - Make credit card payment
+// POST /api/credit-cards/:id/payment - Record credit card payment
 router.post('/:id/payment', async (req: Request, res: Response) => {
     try {
-        const userId = (req as any).user.userId;
+        const userId = (req as any).user.id;
         const { id } = req.params;
         const { amount } = req.body;
 

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client.ts';
+import { DatePicker } from '../components/DatePicker';
 
 interface UserProfile {
     id: string;
@@ -147,12 +148,12 @@ export const ProfilePage = () => {
                             </div>
 
                             <div className="form-group">
-                                <label>Date of Birth</label>
-                                <input
-                                    type="date"
-                                    name="dateOfBirth"
+                                <DatePicker
+                                    label="Date of Birth"
                                     value={profile.dateOfBirth || ''}
-                                    onChange={handleInputChange}
+                                    onChange={(date: string) => setProfile(prev => ({ ...prev, dateOfBirth: date }))}
+                                    maxDate={new Date().toISOString().split('T')[0]} // Can't select future dates
+                                    placeholder="Select your date of birth"
                                 />
                             </div>
                         </div>

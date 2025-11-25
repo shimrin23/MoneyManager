@@ -38,19 +38,20 @@ export class FinancialAgent {
             ${FINANCIAL_ADVISOR_PROMPT}
             
             -------------------------------------------------------------
-            CONTEXT:
-            The user's Calculated Financial Health Score is: ${healthScore} / 100.
-            (Scale: 0-39 = Critical, 40-69 = Needs Improvement, 70-100 = Healthy).
+            FINANCIAL HEALTH SCORE: ${healthScore}/100
+            (Scale: 0-39 = Critical, 40-69 = Needs Improvement, 70-100 = Healthy)
             -------------------------------------------------------------
             
             TRANSACTION SUMMARY:
             ${JSON.stringify(summary, null, 2)}
 
-            INSTRUCTIONS:
-            1. Start by acknowledging their Financial Health Score.
-            2. If the score is low (<50), explain WHY based on the data (e.g., high debt, low savings).
-            3. If the score is high (>70), congratulate them.
-            4. Provide actionable advice to improve the score.
+            STRICT INSTRUCTIONS:
+            1. Give me exactly 3-4 bullet points maximum
+            2. Use • symbol for each point
+            3. No long paragraphs - keep each point under 25 words
+            4. Focus only on the most critical insights
+            5. Be specific and actionable
+            6. Do not use markdown headers (##, ###, etc.)
             `;
 
             // Step D: Send to Gemini
@@ -59,6 +60,19 @@ export class FinancialAgent {
         } catch (error) {
             console.error("Error in analyzeSpending flow:", error);
             return "I am currently unable to analyze your finances. Please try again later.";
+        }
+    }
+
+    /**
+     * Public method for general AI research and financial questions
+     */
+    async generateResearch(prompt: string): Promise<string> {
+        try {
+            console.log("🔬 AI Research Mode - Connecting to Gemini...");
+            return await this.callLLM(prompt);
+        } catch (error) {
+            console.error("Research AI Error:", error);
+            return "I'm currently unable to provide research assistance. Please try again later.";
         }
     }
 

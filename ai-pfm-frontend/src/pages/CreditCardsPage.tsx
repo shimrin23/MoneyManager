@@ -17,10 +17,42 @@ export const CreditCardsPage = () => {
     const [cards, setCards] = useState<CreditCard[]>([]);
     const [loading, setLoading] = useState(true);
     const [showAddForm, setShowAddForm] = useState(false);
+    const [newCard, setNewCard] = useState<CreditCard>({
+        cardName: '',
+        provider: '',
+        creditLimit: 0,
+        currentBalance: 0,
+        availableLimit: 0,
+        minPaymentDue: 0,
+        dueDate: '',
+        statementDate: ''
+    });
 
     useEffect(() => {
         fetchCreditCards();
     }, []);
+
+    const handleCreateCard = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const response = await apiClient.post('/credit-cards', newCard);
+            setCards([...cards, response.data.card]);
+            setNewCard({
+                cardName: '',
+                provider: '',
+                creditLimit: 0,
+                currentBalance: 0,
+                availableLimit: 0,
+                minPaymentDue: 0,
+                dueDate: '',
+                statementDate: ''
+            });
+            setShowAddForm(false);
+        } catch (error) {
+            console.error('Error creating credit card:', error);
+            alert('Failed to create credit card. Please try again.');
+        }
+    };
 
     const fetchCreditCards = async () => {
         try {
@@ -96,6 +128,101 @@ export const CreditCardsPage = () => {
                     + Add Card
                 </button>
             </div>
+
+            {showAddForm && (
+                <div className="card form-card">
+                    <h3>Add New Credit Card</h3>
+                    <form onSubmit={handleCreateCard} className="credit-card-form">
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Card Name</label>
+                                <input
+                                    type="text"
+                                    value={newCard.cardName}
+                                    onChange={(e) => setNewCard({...newCard, cardName: e.target.value})}
+                                    placeholder="e.g., Visa Platinum"
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Provider</label>
+                                <select
+                                    value={newCard.provider}
+                                    onChange={(e) => setNewCard({...newCard, provider: e.target.value})}
+                                    required
+                                >
+                                    <option value="">Select Provider</option>
+                                    <option value="Commercial Bank">Commercial Bank</option>
+                                    <option value="Sampath Bank">Sampath Bank</option>
+                                    <option value="HNB">Hatton National Bank</option>
+                                    <option value="BOC">Bank of Ceylon</option>
+                                    <option value="DFCC">DFCC Bank</option>
+                                    <option value="Nations Trust">Nations Trust Bank</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Credit Limit (LKR)</label>
+                                <input
+                                    type="number"
+                                    value={newCard.creditLimit}
+                                    onChange={(e) => setNewCard({...newCard, creditLimit: Number(e.target.value)})}
+                                    placeholder="500000"
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Current Balance (LKR)</label>
+                                <input
+                                    type="number"
+                                    value={newCard.currentBalance}
+                                    onChange={(e) => setNewCard({...newCard, currentBalance: Number(e.target.value)})}
+                                    placeholder="75000"
+                                />
+                            </div>
+                        </div>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Minimum Payment Due (LKR)</label>
+                                <input
+                                    type="number"
+                                    value={newCard.minPaymentDue}
+                                    onChange={(e) => setNewCard({...newCard, minPaymentDue: Number(e.target.value)})}
+                                    placeholder="7500"
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Payment Due Date</label>
+                                <input
+                                    type="date"
+                                    value={newCard.dueDate}
+                                    onChange={(e) => setNewCard({...newCard, dueDate: e.target.value})}
+                                    required
+                                />
+                            </div>
+                        </div>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Statement Date</label>
+                                <input
+                                    type="date"
+                                    value={newCard.statementDate}
+                                    onChange={(e) => setNewCard({...newCard, statementDate: e.target.value})}
+                                />
+                            </div>
+                        </div>
+                        <div className="form-actions">
+                            <button type="button" className="btn-secondary" onClick={() => setShowAddForm(false)}>
+                                Cancel
+                            </button>
+                            <button type="submit" className="btn-primary">
+                                Add Card
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
 
             {/* Credit Overview */}
             <div className="credit-overview-grid">

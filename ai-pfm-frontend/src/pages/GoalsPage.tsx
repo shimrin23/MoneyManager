@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
+import { DatePicker } from '../components/DatePicker';
 
 interface Goal {
     _id?: string;
@@ -135,12 +136,13 @@ export const GoalsPage = () => {
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Target Date</label>
-                                <input
-                                    type="date"
+                                <DatePicker
+                                    label="Target Deadline"
                                     value={newGoal.deadline}
-                                    onChange={(e) => setNewGoal({...newGoal, deadline: e.target.value})}
+                                    onChange={(date) => setNewGoal({...newGoal, deadline: date})}
                                     required
+                                    minDate={new Date().toISOString().split('T')[0]} // Can't select past dates
+                                    placeholder="Select target date"
                                 />
                             </div>
                         </div>

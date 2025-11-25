@@ -1,6 +1,7 @@
 // Add Transaction Form Component
 import { useState } from 'react';
 import { apiClient } from '../api/client.ts';
+import { DatePicker } from './DatePicker';
 
 interface TransactionFormProps {
     onTransactionAdded: () => void;
@@ -177,13 +178,13 @@ export const AddTransactionForm = ({ onTransactionAdded }: TransactionFormProps)
 
                 {/* Date */}
                 <div className="form-group">
-                    <label>Date</label>
-                    <input
-                        type="date"
-                        name="date"
+                    <DatePicker
+                        label="Date"
                         value={formData.date}
-                        onChange={handleInputChange}
+                        onChange={(date) => setFormData(prev => ({ ...prev, date }))}
                         required
+                        maxDate={new Date().toISOString().split('T')[0]} // Can't select future dates
+                        placeholder="Select transaction date"
                     />
                 </div>
 

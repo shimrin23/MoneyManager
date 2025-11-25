@@ -26,6 +26,17 @@ export const LoansPage = () => {
     const [strategies, setStrategies] = useState<DebtStrategy[]>([]);
     const [selectedStrategy, setSelectedStrategy] = useState<string>('snowball');
     const [loading, setLoading] = useState(true);
+    const [showAddForm, setShowAddForm] = useState(false);
+    const [newLoan, setNewLoan] = useState<Loan>({
+        type: 'Personal',
+        provider: '',
+        totalAmount: 0,
+        remainingAmount: 0,
+        interestRate: 0,
+        monthlyInstallment: 0,
+        nextDueDate: '',
+        status: 'Active'
+    });
 
     useEffect(() => {
         fetchLoans();
@@ -97,6 +108,28 @@ export const LoansPage = () => {
         return colors[status as keyof typeof colors] || 'text-gray-600';
     };
 
+    const handleCreateLoan = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const response = await apiClient.post('/loans', newLoan);
+            setLoans([...loans, response.data.loan]);
+            setNewLoan({
+                type: 'Personal',
+                provider: '',
+                totalAmount: 0,
+                remainingAmount: 0,
+                interestRate: 0,
+                monthlyInstallment: 0,
+                nextDueDate: '',
+                status: 'Active'
+            });
+            setShowAddForm(false);
+        } catch (error) {
+            console.error('Error creating loan:', error);
+            alert('Failed to create loan. Please try again.');
+        }
+    };
+
     const getLoanTypeIcon = (type: string) => {
         const icons = {
             Personal: '👤',
@@ -112,9 +145,114 @@ export const LoansPage = () => {
     return (
         <div className="page-container">
             <div className="page-header">
-                <h1>💳 Loans & Debt Management</h1>
-                <p className="page-subtitle">Manage your debts and plan optimal payoff strategies</p>
+                <div>
+                    <h1>🏦 Loans & Debt</h1>
+                    <p className="page-subtitle">Manage your loans and optimize debt repayment</p>
+                </div>
+                <button 
+                    className="btn-primary"
+                    onClick={() => setShowAddForm(!showAddForm)}
+                >
+                    + Add Loan
+                </button>
             </div>
+
+            {showAddForm && (
+                <div className="card form-card">
+                    <h3>Add New Loan</h3>
+                    <form onSubmit={handleCreateLoan} className="loan-form">
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Loan Type</label>
+                                <select
+                                    value={newLoan.type}
+                                    onChange={(e) => setNewLoan({...newLoan, type: e.target.value as 'Personal' | 'Home' | 'Lease' | 'Pawning'})}
+                                    required
+                                >
+                                    <option value="Personal">Personal Loan</option>
+                                    <option value="Home">Home Loan</option>
+                                    <option value="Lease">Vehicle Lease</option>
+                                    <option value="Pawning">Pawning</option>
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Provider/Bank</label>
+                                <input
+                                    type="text"
+                                    value={newLoan.provider}
+                                    onChange={(e) => setNewLoan({...newLoan, provider: e.target.value})}
+                                    placeholder="e.g., Commercial Bank"
+                                    required
+                                />
+                            </div>
+                        </div>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Total Amount (LKR)</label>
+                                <input
+                                    type="number"
+                                    value={newLoan.totalAmount}
+                                    onChange={(e) => setNewLoan({...newLoan, totalAmount: Number(e.target.value)})}
+                                    placeholder="1000000"
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Remaining Amount (LKR)</label>
+                                <input
+                                    type="number"
+                                    value={newLoan.remainingAmount}
+                                    onChange={(e) => setNewLoan({...newLoan, remainingAmount: Number(e.target.value)})}
+                                    placeholder="800000"
+                                    required
+                                />
+                            </div>
+                        </div>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Interest Rate (%)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    value={newLoan.interestRate}
+                                    onChange={(e) => setNewLoan({...newLoan, interestRate: Number(e.target.value)})}
+                                    placeholder="12.5"
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Monthly Installment (LKR)</label>
+                                <input
+                                    type="number"
+                                    value={newLoan.monthlyInstallment}
+                                    onChange={(e) => setNewLoan({...newLoan, monthlyInstallment: Number(e.target.value)})}
+                                    placeholder="50000"
+                                    required
+                                />
+                            </div>
+                        </div>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Next Due Date</label>
+                                <input
+                                    type="date"
+                                    value={newLoan.nextDueDate}
+                                    onChange={(e) => setNewLoan({...newLoan, nextDueDate: e.target.value})}
+                                    required
+                                />
+                            </div>
+                        </div>
+                        <div className="form-actions">
+                            <button type="button" className="btn-secondary" onClick={() => setShowAddForm(false)}>
+                                Cancel
+                            </button>
+                            <button type="submit" className="btn-primary">
+                                Add Loan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
 
             {/* Debt Overview */}
             <div className="debt-overview-grid">
