@@ -321,30 +321,57 @@ export const CreditCardsPage = () => {
                 })}
             </div>
 
-            {/* Quick Tips */}
-            <div className="card tips-card">
-                <h3>💡 Credit Card Tips</h3>
-                <div className="tips-grid">
-                    <div className="tip-item">
-                        <span className="tip-icon">🎯</span>
-                        <div className="tip-content">
-                            <h4>Keep utilization below 30%</h4>
-                            <p>Lower credit utilization improves your credit score</p>
+            {/* Action Recommendations */}
+            <div className="card actions-card">
+                <h3>🚀 Smart Actions</h3>
+                <div className="actions-grid">
+                    <div className="action-item">
+                        <div className="action-content">
+                            <span className="action-icon">🎯</span>
+                            <div className="action-text">
+                                <h4>High Utilization Detected</h4>
+                                <p>You're at 78% utilization. Reduce to improve credit score.</p>
+                            </div>
                         </div>
+                        <button className="action-btn primary">
+                            💳 Pay LKR 15,000 Now
+                        </button>
                     </div>
-                    <div className="tip-item">
-                        <span className="tip-icon">⏰</span>
-                        <div className="tip-content">
-                            <h4>Pay on time, every time</h4>
-                            <p>Set up auto-pay to avoid late fees and protect your credit</p>
+                    <div className="action-item">
+                        <div className="action-content">
+                            <span className="action-icon">⏰</span>
+                            <div className="action-text">
+                                <h4>Payment Due Soon</h4>
+                                <p>Avoid late fees with automatic payments.</p>
+                            </div>
                         </div>
+                        <button className="action-btn secondary">
+                            🔄 Set Auto-Pay
+                        </button>
                     </div>
-                    <div className="tip-item">
-                        <span className="tip-icon">💰</span>
-                        <div className="tip-content">
-                            <h4>Pay more than minimum</h4>
-                            <p>Reduce interest charges by paying above the minimum</p>
+                    <div className="action-item">
+                        <div className="action-content">
+                            <span className="action-icon">💰</span>
+                            <div className="action-text">
+                                <h4>Interest Charges Growing</h4>
+                                <p>Pay extra to save LKR 2,400 in interest this month.</p>
+                            </div>
                         </div>
+                        <button className="action-btn success">
+                            📈 Pay LKR 5,000 Extra
+                        </button>
+                    </div>
+                    <div className="action-item">
+                        <div className="action-content">
+                            <span className="action-icon">🔔</span>
+                            <div className="action-text">
+                                <h4>Spending Alert</h4>
+                                <p>Set limits to prevent overspending on categories.</p>
+                            </div>
+                        </div>
+                        <button className="action-btn warning">
+                            ⚠️ Set Spending Alerts
+                        </button>
                     </div>
                 </div>
             </div>

@@ -17,6 +17,8 @@ import { FinancialHealthPage } from './pages/FinancialHealthPage';
 import { GoalsPage } from './pages/GoalsPage';
 import { LoansPage } from './pages/LoansPage';
 import { CreditCardsPage } from './pages/CreditCardsPage';
+import { SubscriptionsPage } from './pages/SubscriptionsPage';
+import { SmartBudgetsPage } from './pages/SmartBudgetsPage';
 import './App.css';
 import './styles/UserPages.css';
 import './styles/FinancialPages.css';
@@ -89,6 +91,14 @@ function App() {
                   <a href="/credit-cards" className="nav-item">
                     <span className="nav-icon">💳</span>
                     Cards
+                  </a>
+                  <a href="/subscriptions" className="nav-item">
+                    <span className="nav-icon">🔄</span>
+                    Subscriptions
+                  </a>
+                  <a href="/smart-budgets" className="nav-item">
+                    <span className="nav-icon">🧠</span>
+                    Smart Budgets
                   </a>
                 </div>
               </nav>
@@ -237,6 +247,28 @@ function App() {
                   <ProtectedRoute>
                     <main className="page-content">
                       <CreditCardsPage />
+                    </main>
+                  </ProtectedRoute>
+                } 
+              />
+
+              <Route 
+                path="/subscriptions" 
+                element={
+                  <ProtectedRoute>
+                    <main className="page-content">
+                      <SubscriptionsPage />
+                    </main>
+                  </ProtectedRoute>
+                } 
+              />
+
+              <Route 
+                path="/smart-budgets" 
+                element={
+                  <ProtectedRoute>
+                    <main className="page-content">
+                      <SmartBudgetsPage />
                     </main>
                   </ProtectedRoute>
                 } 

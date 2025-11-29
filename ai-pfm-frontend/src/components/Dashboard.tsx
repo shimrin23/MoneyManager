@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.ts';
+import { CashFlowForecast } from './CashFlowForecast';
 
 export const Dashboard = () => {
     const [insight, setInsight] = useState<string>('');
@@ -82,6 +83,9 @@ export const Dashboard = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Cash Flow Forecast Card */}
+                <CashFlowForecast />
 
                 {/* AI Financial Coach Card */}
                 <div className="card ai-analysis-card">
