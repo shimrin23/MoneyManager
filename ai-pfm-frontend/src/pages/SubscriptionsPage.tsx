@@ -19,6 +19,16 @@ export const SubscriptionsPage = () => {
     const [loading, setLoading] = useState(true);
     const [showAddForm, setShowAddForm] = useState(false);
     const [totalMonthlyCost, setTotalMonthlyCost] = useState(0);
+    const [newSubscription, setNewSubscription] = useState<Subscription>({
+        name: '',
+        provider: '',
+        amount: 0,
+        frequency: 'monthly',
+        nextPayment: '',
+        category: '',
+        isActive: true,
+        isZombie: false
+    });
 
     useEffect(() => {
         fetchSubscriptions();
@@ -27,93 +37,64 @@ export const SubscriptionsPage = () => {
     const fetchSubscriptions = async () => {
         try {
             const response = await apiClient.get('/subscriptions');
-            setSubscriptions(response.data.subscriptions || []);
-            calculateMonthlyCost(response.data.subscriptions || []);
+            const data = response.data;
+            
+            setSubscriptions(data.subscriptions || []);
+            setTotalMonthlyCost(data.summary?.totalMonthlyCost || 0);
         } catch (error) {
             console.error('Failed to fetch subscriptions:', error);
-            // Mock data for demo
-            const mockSubs = [
-                {
-                    _id: '1',
-                    name: 'Netflix Premium',
-                    provider: 'Netflix',
-                    amount: 1500,
-                    frequency: 'monthly' as const,
-                    nextPayment: '2025-12-15',
-                    category: 'Entertainment',
-                    isActive: true,
-                    lastUsed: '2025-11-20',
-                    isZombie: false
-                },
-                {
-                    _id: '2',
-                    name: 'Spotify Family',
-                    provider: 'Spotify',
-                    amount: 800,
-                    frequency: 'monthly' as const,
-                    nextPayment: '2025-12-10',
-                    category: 'Entertainment',
-                    isActive: true,
-                    lastUsed: '2025-11-25',
-                    isZombie: false
-                },
-                {
-                    _id: '3',
-                    name: 'Gym Membership',
-                    provider: 'FitLife Gym',
-                    amount: 4500,
-                    frequency: 'monthly' as const,
-                    nextPayment: '2025-12-05',
-                    category: 'Health',
-                    isActive: true,
-                    lastUsed: '2025-08-15', // 3+ months ago = zombie
-                    isZombie: true
-                },
-                {
-                    _id: '4',
-                    name: 'Adobe Creative Cloud',
-                    provider: 'Adobe',
-                    amount: 3200,
-                    frequency: 'monthly' as const,
-                    nextPayment: '2025-12-20',
-                    category: 'Software',
-                    isActive: true,
-                    lastUsed: '2025-07-10', // 3+ months ago = zombie
-                    isZombie: true
-                }
-            ];
-            setSubscriptions(mockSubs);
-            calculateMonthlyCost(mockSubs);
+            setSubscriptions([]);
+            setTotalMonthlyCost(0);
         } finally {
             setLoading(false);
         }
     };
 
-    const calculateMonthlyCost = (subs: Subscription[]) => {
-        const total = subs.reduce((sum, sub) => {
-            const monthlyCost = sub.frequency === 'yearly' ? sub.amount / 12 : sub.amount;
-            return sum + monthlyCost;
-        }, 0);
-        setTotalMonthlyCost(total);
-    };
-
     const handleCancelSubscription = async (id: string) => {
         try {
             await apiClient.delete(`/subscriptions/${id}`);
-            const updatedSubs = subscriptions.filter(sub => sub._id !== id);
-            setSubscriptions(updatedSubs);
-            calculateMonthlyCost(updatedSubs);
+            // Refresh the subscription list
+            await fetchSubscriptions();
         } catch (error) {
             console.error('Failed to cancel subscription:', error);
-            // For demo, just remove from UI
-            const updatedSubs = subscriptions.filter(sub => sub._id !== id);
-            setSubscriptions(updatedSubs);
-            calculateMonthlyCost(updatedSubs);
+            alert('Failed to cancel subscription. Please try again.');
         }
     };
 
     const handleFindAlternative = (subscription: Subscription) => {
         alert(`Finding cheaper alternatives to ${subscription.name}...`);
+    };
+
+    const handleCreateSubscription = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            // Validation
+            if (!newSubscription.name || !newSubscription.provider || !newSubscription.amount || !newSubscription.nextPayment) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            await apiClient.post('/subscriptions', newSubscription);
+            
+            // Reset form
+            setNewSubscription({
+                name: '',
+                provider: '',
+                amount: 0,
+                frequency: 'monthly',
+                nextPayment: '',
+                category: '',
+                isActive: true,
+                isZombie: false
+            });
+            setShowAddForm(false);
+            
+            // Refresh subscription list
+            await fetchSubscriptions();
+        } catch (error) {
+            console.error('Failed to create subscription:', error);
+            alert('Failed to create subscription. Please try again.');
+        }
     };
 
     const activeSubs = subscriptions.filter(sub => sub.isActive);
@@ -127,9 +108,115 @@ export const SubscriptionsPage = () => {
     return (
         <div className="page-container">
             <div className="page-header">
-                <h1>🔄 Subscriptions & Recurring</h1>
-                <p className="page-subtitle">Manage your recurring payments and subscriptions</p>
+                <div>
+                    <h1>🔄 Subscriptions & Recurring</h1>
+                    <p className="page-subtitle">Manage your recurring payments and subscriptions</p>
+                </div>
+                <button 
+                    className="btn-primary"
+                    onClick={() => setShowAddForm(!showAddForm)}
+                >
+                    + Add Subscription
+                </button>
             </div>
+
+            {/* Add Subscription Form */}
+            {showAddForm && (
+                <div className="card form-card">
+                    <h3>Add New Subscription</h3>
+                    <form onSubmit={handleCreateSubscription} className="subscription-form">
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Service Name</label>
+                                <input
+                                    type="text"
+                                    value={newSubscription.name}
+                                    onChange={(e) => setNewSubscription({...newSubscription, name: e.target.value})}
+                                    placeholder="e.g., Netflix Premium"
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Provider</label>
+                                <input
+                                    type="text"
+                                    value={newSubscription.provider}
+                                    onChange={(e) => setNewSubscription({...newSubscription, provider: e.target.value})}
+                                    placeholder="e.g., Netflix"
+                                    required
+                                />
+                            </div>
+                        </div>
+                        
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Amount (LKR)</label>
+                                <input
+                                    type="number"
+                                    value={newSubscription.amount || ''}
+                                    onChange={(e) => setNewSubscription({...newSubscription, amount: Number(e.target.value)})}
+                                    placeholder="1500"
+                                    min="0"
+                                    step="0.01"
+                                    required
+                                />
+                            </div>
+                            <div className="form-group">
+                                <label>Frequency</label>
+                                <select
+                                    value={newSubscription.frequency}
+                                    onChange={(e) => setNewSubscription({...newSubscription, frequency: e.target.value as 'monthly' | 'yearly'})}
+                                    required
+                                >
+                                    <option value="monthly">Monthly</option>
+                                    <option value="yearly">Yearly</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>Category</label>
+                                <select
+                                    value={newSubscription.category}
+                                    onChange={(e) => setNewSubscription({...newSubscription, category: e.target.value})}
+                                    required
+                                >
+                                    <option value="">Select Category</option>
+                                    <option value="Entertainment">Entertainment</option>
+                                    <option value="Software">Software</option>
+                                    <option value="Health">Health & Fitness</option>
+                                    <option value="Education">Education</option>
+                                    <option value="News">News & Media</option>
+                                    <option value="Gaming">Gaming</option>
+                                    <option value="Music">Music</option>
+                                    <option value="Cloud Storage">Cloud Storage</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label>Next Payment Date</label>
+                                <input
+                                    type="date"
+                                    value={newSubscription.nextPayment}
+                                    onChange={(e) => setNewSubscription({...newSubscription, nextPayment: e.target.value})}
+                                    min={new Date().toISOString().split('T')[0]}
+                                    required
+                                />
+                            </div>
+                        </div>
+                        
+                        <div className="form-actions">
+                            <button type="button" className="btn-secondary" onClick={() => setShowAddForm(false)}>
+                                Cancel
+                            </button>
+                            <button type="submit" className="btn-primary">
+                                Add Subscription
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            )}
 
             {/* Summary Cards */}
             <div className="subscriptions-summary">
@@ -173,8 +260,15 @@ export const SubscriptionsPage = () => {
                             <p>You have {zombieSubs.length} subscriptions you haven't used in 3+ months. Cancel them to save LKR {savings.toLocaleString()}/month.</p>
                         </div>
                     </div>
-                    <button className="alert-action" onClick={() => {
-                        zombieSubs.forEach(sub => handleCancelSubscription(sub._id!));
+                    <button className="alert-action" onClick={async () => {
+                        try {
+                            const zombieIds = zombieSubs.map(sub => sub._id!);
+                            await apiClient.post('/subscriptions/bulk-cancel', { subscriptionIds: zombieIds });
+                            await fetchSubscriptions();
+                        } catch (error) {
+                            console.error('Failed to cancel zombie subscriptions:', error);
+                            alert('Failed to cancel subscriptions. Please try again.');
+                        }
                     }}>
                         💀 Cancel All Zombies
                     </button>
