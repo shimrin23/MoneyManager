@@ -7,6 +7,9 @@ export interface IGoal extends Document {
     currentAmount: number;
     deadline: Date;
     status: 'In Progress' | 'Completed' | 'Paused';
+    category?: string; // e.g., "Travel", "Education", "Personal"
+    priority?: 'High' | 'Medium' | 'Low';
+    description?: string;
 }
 
 const GoalSchema: Schema = new Schema({
@@ -15,7 +18,10 @@ const GoalSchema: Schema = new Schema({
     targetAmount: { type: Number, required: true },
     currentAmount: { type: Number, default: 0 },
     deadline: { type: Date, required: true },
-    status: { type: String, enum: ['In Progress', 'Completed', 'Paused'], default: 'In Progress' }
+    status: { type: String, enum: ['In Progress', 'Completed', 'Paused'], default: 'In Progress' },
+    category: { type: String, default: 'Personal' },
+    priority: { type: String, enum: ['High', 'Medium', 'Low'], default: 'Medium' },
+    description: { type: String, default: '' }
 }, { timestamps: true });
 
 export default mongoose.model<IGoal>('Goal', GoalSchema);
