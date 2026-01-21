@@ -134,21 +134,9 @@ function App() {
                 path="/dashboard" 
                 element={
                   <ProtectedRoute>
-                    <>
-                      <main className="page-content">
-                        <Dashboard />
-                        
-                        {/* Transaction and Subscription sections */}
-                        <div className="content-grid">
-                          <div className="card full-width">
-                            <TransactionList />
-                          </div>
-                          <div className="card">
-                            <Subscriptions />
-                          </div>
-                        </div>
-                      </main>
-                    </>
+                    <main className="page-content">
+                      <Dashboard />
+                    </main>
                   </ProtectedRoute>
                 } 
               />

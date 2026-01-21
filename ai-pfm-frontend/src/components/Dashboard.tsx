@@ -9,7 +9,9 @@ export const Dashboard = () => {
     // New State for Score
     const [score, setScore] = useState<number>(0);
     const [loadingScore, setLoadingScore] = useState<boolean>(true);
-
+    // State for transactions
+    const [transactions, setTransactions] = useState<any[]>([]);
+    const [loadingTransactions, setLoadingTransactions] = useState<boolean>(true);
     // 1. Fetch Score on Load
     useEffect(() => {
         const fetchScore = async () => {
@@ -25,7 +27,22 @@ export const Dashboard = () => {
         fetchScore();
     }, []);
 
-    // 2. Fetch AI Insight
+    // 2. Fetch Recent Transactions
+    useEffect(() => {
+        const fetchTransactions = async () => {
+            try {
+                const response = await apiClient.get('/transactions');
+                setTransactions(response.data.slice(0, 5)); // Get latest 5
+            } catch (error) {
+                console.error("Failed to fetch transactions", error);
+            } finally {
+                setLoadingTransactions(false);
+            }
+        };
+        fetchTransactions();
+    }, []);
+
+    // 3. Fetch AI Insight
     const fetchAIAnalysis = async () => {
         setLoadingAI(true);
         try {
@@ -39,7 +56,7 @@ export const Dashboard = () => {
         }
     };
 
-    // 3. Clear AI Insight
+    // 4. Clear AI Insight
     const clearInsight = () => {
         setInsight('');
     };
@@ -51,16 +68,35 @@ export const Dashboard = () => {
         return 'var(--danger)';              // Red
     };
 
+    // Helper to format date
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    // Helper to format amount
+    const formatAmount = (amount: number, type: string) => {
+        const formatted = new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD'
+        }).format(Math.abs(amount));
+        return type === 'expense' ? `-${formatted}` : `+${formatted}`;
+    };
+
     return (
         <div className="page-container">
             <div className="page-header">
-                <h1>📊 Dashboard</h1>
-                <p className="page-subtitle">Your financial overview at a glance</p>
+                <div>
+                    <h1>Welcome back!</h1>
+                    <p className="page-subtitle">Your financial overview at a glance</p>
+                </div>
             </div>
 
-            <div className="content-grid">
-                {/* Financial Health Score Card */}
-                <div className="card health-score-card">
+            <div className="dashboard-layout" style={{ padding: '1.5rem', maxWidth: '100%' }}>
+                {/* Top Row: Health Score & Cash Flow */}
+                <div className="dashboard-top-row">
+                    {/* Financial Health Score Card */}
+                    <div className="card health-score-card">
                     <h3>💚 Financial Health Score</h3>
                     <div className="score-display">
                         <div 
@@ -84,8 +120,9 @@ export const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* Cash Flow Forecast Card */}
-                <CashFlowForecast />
+                    {/* Cash Flow Forecast Card */}
+                    <CashFlowForecast />
+                </div>
 
                 {/* AI Financial Coach Card */}
                 <div className="card ai-analysis-card">
@@ -107,12 +144,78 @@ export const Dashboard = () => {
                     </div>
                     
                     <button 
-                        className="btn-secondary"
+                        className="btn-coach"
                         onClick={fetchAIAnalysis} 
                         disabled={loadingAI}
                     >
                         {loadingAI ? "🤔 Analyzing..." : "💡 Ask the Coach"}
                     </button>
+                </div>
+
+                {/* Recent Transactions Card */}
+                <div className="card transactions-card">
+                    <div className="transactions-header">
+                        <h3>Recent Transactions</h3>
+                        <button className="btn-sync">
+                            <span>🔄</span>
+                            <span>Sync Bank</span>
+                        </button>
+                    </div>
+                    
+                    <div className="transactions-table-container">
+                        <table className="transactions-table">
+                            <thead>
+                                <tr>
+                                    <th>DATE</th>
+                                    <th>DESCRIPTION</th>
+                                    <th>CATEGORY</th>
+                                    <th className="text-right">AMOUNT</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {loadingTransactions ? (
+                                    <tr>
+                                        <td colSpan={4} className="text-center">Loading transactions...</td>
+                                    </tr>
+                                ) : transactions.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={4} className="text-center">
+                                            No transactions yet. Add your first transaction to get started.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    transactions.map((transaction) => (
+                                        <tr key={transaction.id}>
+                                            <td>{formatDate(transaction.date)}</td>
+                                            <td>{transaction.description}</td>
+                                            <td>
+                                                <span className="category-badge">
+                                                    {transaction.category}
+                                                </span>
+                                            </td>
+                                            <td className={`text-right ${transaction.type === 'expense' ? 'text-danger' : 'text-success'}`}>
+                                                {formatAmount(transaction.amount, transaction.type)}
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                {/* Recurring Subscriptions Card */}
+                <div className="card subscriptions-card">
+                    <div className="subscriptions-content">
+                        <div className="subscriptions-icon">📅</div>
+                        <div className="subscriptions-info">
+                            <h3>Recurring Subscriptions</h3>
+                            <p>Detected from your transaction history.</p>
+                        </div>
+                        <div className="subscriptions-status">
+                            <p>No subscriptions found.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

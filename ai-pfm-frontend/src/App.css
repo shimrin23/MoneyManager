@@ -3186,3 +3186,347 @@ button:disabled { opacity: 0.6; cursor: wait; }
     gap: 0.5rem;
   }
 }
+
+/* Dashboard Layout Styles */
+.dashboard-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+  max-width: 100%;
+}
+
+.dashboard-top-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+/* Health Score Card - More Compact */
+.health-score-card {
+  min-height: 280px !important;
+}
+
+.health-score-card .score-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem 0;
+}
+
+.health-score-card .score-circle {
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.health-score-card .score-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  display: block;
+}
+
+.health-score-card .score-label {
+  font-size: 1rem;
+  color: var(--text-muted);
+  display: block;
+}
+
+.health-score-card .score-status {
+  text-align: center;
+}
+
+.health-score-card .status-text {
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.health-score-card .status-description {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* AI Analysis Card - More Compact */
+.ai-analysis-card {
+  min-height: auto !important;
+}
+
+.ai-analysis-card h3 {
+  margin-bottom: 0.75rem;
+}
+
+.ai-analysis-card .coach-description {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.ai-analysis-card .ai-content {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  min-height: 60px;
+  margin-bottom: 1rem;
+}
+
+.ai-analysis-card .analysis-text {
+  color: var(--text);
+}
+
+.ai-analysis-card .analysis-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.ai-analysis-card .analysis-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  color: var(--accent);
+}
+
+@media (max-width: 1024px) {
+  .dashboard-top-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Transactions Card Styles */
+.transactions-card {
+  width: 100%;
+  min-height: auto !important;
+}
+
+.transactions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  gap: 1rem;
+  width: 100%;
+}
+
+.transactions-header h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  flex: 0 1 auto;
+}
+
+.btn-sync {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.4rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
+  flex-shrink: 0;
+  min-width: auto;
+  height: 36px;
+  width: auto;
+}
+
+.btn-sync span {
+  display: inline-flex;
+  align-items: center;
+}
+
+.btn-sync:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.transactions-table-container {
+  overflow-x: auto;
+  border-radius: 0.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.transactions-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.transactions-table thead th {
+  text-align: left;
+  padding: 0.875rem 1rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.transactions-table tbody td {
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.transactions-table tbody tr {
+  transition: background 0.2s ease;
+}
+
+.transactions-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.transactions-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.text-center {
+  text-align: center;
+  padding: 2.5rem 1rem !important;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-danger {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.text-success {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.category-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  background: rgba(59, 130, 246, 0.15);
+  color: var(--accent);
+  border-radius: 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+/* Subscriptions Card Styles */
+.subscriptions-card {
+  width: 100%;
+  min-height: auto !important;
+}
+
+.subscriptions-content {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.5rem;
+}
+
+.subscriptions-icon {
+  font-size: 2.25rem;
+  background: rgba(59, 130, 246, 0.15);
+  padding: 1rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 3.5rem;
+  height: 3.5rem;
+}
+
+.subscriptions-info {
+  flex: 1;
+}
+
+.subscriptions-info h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.subscriptions-info p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.subscriptions-status {
+  text-align: right;
+  padding-right: 0.5rem;
+}
+
+.subscriptions-status p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* AI Coach Button */
+.btn-coach {
+  width: 100%;
+  background: linear-gradient(135deg, var(--accent) 0%, #7c3aed 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  margin-top: 0;
+}
+
+.btn-coach:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-coach:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Card Base Styling */
+.card {
+  background: var(--card);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+}
