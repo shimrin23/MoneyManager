@@ -363,7 +363,7 @@ export const LoansPage = () => {
             {loans.length === 0 && (
                 <div className="empty-state">
                     <div className="empty-icon">💳</div>
-                    <h3>No Loans Found</h3>
+                    <h3> Loans are not Found</h3>
                     <p>You don't have any active loans. Great job managing your finances!</p>
                 </div>
             )}

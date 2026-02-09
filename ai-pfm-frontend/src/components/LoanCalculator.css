@@ -1,0 +1,403 @@
+/* Loan Calculator */
+.loan-calculator {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.loan-calculator h2 {
+    font-size: 1.875rem;
+    color: #e2e8f0;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.calculator-form {
+    background: #1e293b;
+    padding: 2rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.calculator-result {
+    background: #1e293b;
+    padding: 2rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Result Cards */
+.result-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.result-cards .card {
+    text-align: center;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+}
+
+.result-cards .card:nth-child(2) {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.result-cards .card:nth-child(3) {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.result-cards .label {
+    font-size: 0.875rem;
+    opacity: 0.9;
+    margin-bottom: 0.5rem;
+}
+
+.result-cards .value {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+/* Schedule Preview */
+.schedule-preview {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background-color: #0f172a;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.schedule-preview h3 {
+    margin-top: 0;
+    color: #e2e8f0;
+    margin-bottom: 1rem;
+}
+
+.schedule-preview table {
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+/* Full Schedule */
+.full-schedule {
+    background: #1e293b;
+    padding: 2rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.full-schedule h3 {
+    font-size: 1.5rem;
+    color: #e2e8f0;
+    margin-bottom: 1.5rem;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    justify-content: flex-end;
+}
+
+@media (max-width: 640px) {
+    .action-buttons {
+        flex-direction: column-reverse;
+    }
+
+    .action-buttons button {
+        width: 100%;
+    }
+}
+
+/* Repayment Schedule */
+.repayment-schedule {
+    padding: 2rem 0;
+}
+
+.schedule-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.schedule-header h2 {
+    font-size: 1.875rem;
+    color: #e2e8f0;
+    margin: 0;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.filter-buttons .btn-small {
+    background-color: #334155;
+    color: #e2e8f0;
+}
+
+.filter-buttons .btn-small.active {
+    background-color: #3b82f6;
+    color: white;
+}
+
+.schedule-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 640px) {
+    .schedule-summary {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Debt Payoff Strategies */
+.debt-payoff-strategies {
+    padding: 2rem 0;
+}
+
+.debt-payoff-strategies h2 {
+    font-size: 1.875rem;
+    color: #e2e8f0;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    color: #94a3b8;
+    margin-bottom: 2rem;
+}
+
+.strategies-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+@media (max-width: 768px) {
+    .strategies-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.strategy-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.strategy-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.strategy-header h3 {
+    font-size: 1.25rem;
+    margin: 0;
+    color: #e2e8f0;
+}
+
+.method-badge {
+    font-size: 1.5rem;
+}
+
+.description {
+    color: #94a3b8;
+    margin: 1rem 0;
+    font-size: 0.875rem;
+}
+
+.strategy-details {
+    display: grid;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    padding: 1.5rem;
+    background-color: #0f172a;
+    border-radius: 0.5rem;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+}
+
+.detail-item.highlight {
+    padding: 0.75rem;
+    background-color: rgba(59, 130, 246, 0.15);
+    border-radius: 0.5rem;
+    border-left: 3px solid #3b82f6;
+}
+
+.payment-order {
+    margin: 1rem 0;
+    flex-grow: 1;
+}
+
+.payment-order h4 {
+    margin: 0 0 0.75rem 0;
+    color: #e2e8f0;
+    font-size: 0.875rem;
+}
+
+.payment-order ol {
+    margin: 0;
+    padding-left: 1.5rem;
+    color: #94a3b8;
+    font-size: 0.875rem;
+}
+
+.payment-order li {
+    margin-bottom: 0.5rem;
+}
+
+.strategy-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.info-box {
+    padding: 1.5rem;
+    background-color: #0f172a;
+    border-radius: 0.75rem;
+    border-left: 4px solid #3b82f6;
+}
+
+.info-box h4 {
+    margin: 0 0 0.75rem 0;
+    color: #e2e8f0;
+}
+
+.info-box p {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+/* Loan Alerts */
+.loan-alerts {
+    margin-bottom: 2rem;
+}
+
+.loan-alerts h2 {
+    font-size: 1.5rem;
+    color: #e2e8f0;
+    margin-bottom: 1.5rem;
+}
+
+.alert-success {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background-color: rgba(34, 197, 94, 0.15);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    color: #4ade80;
+}
+
+.alert-success span {
+    font-size: 1.5rem;
+}
+
+.alerts-container {
+    display: grid;
+    gap: 1rem;
+}
+
+.alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1.25rem;
+    border-radius: 0.75rem;
+    border-left: 4px solid;
+    position: relative;
+    padding-right: 3rem;
+}
+
+.alert-high {
+    background-color: rgba(239, 68, 68, 0.15);
+    border-left-color: #dc2626;
+    color: #fca5a5;
+}
+
+.alert-medium {
+    background-color: rgba(251, 191, 36, 0.15);
+    border-left-color: #f59e0b;
+    color: #fbbf24;
+}
+
+.alert-low {
+    background-color: rgba(59, 130, 246, 0.15);
+    border-left-color: #3b82f6;
+    color: #93c5fd;
+}
+
+.alert-icon {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.alert-content {
+    flex-grow: 1;
+}
+
+.alert-message {
+    margin: 0 0 0.25rem 0;
+    font-weight: 500;
+}
+
+.alert-type {
+    display: block;
+    font-size: 0.75rem;
+    opacity: 0.7;
+}
+
+.alert-badge {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 0.25rem 0.5rem;
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 0.25rem;
+    text-transform: uppercase;
+}
+
+.alert-dismiss {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 1.25rem;
+    padding: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0.5;
+    transition: opacity 0.3s;
+}
+
+.alert-dismiss:hover {
+    opacity: 1;
+}
