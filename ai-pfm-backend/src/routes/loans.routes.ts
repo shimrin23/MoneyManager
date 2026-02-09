@@ -1,12 +1,133 @@
 import { Router } from 'express';
 import { Request, Response } from 'express';
 import Loan from '../schemas/loan.schema';
+import User from '../schemas/user.schema';
+import LoanService from '../services/loan.service';
 import { authenticateToken } from '../middlewares/authMiddleware';
 
 const router = Router();
 
 // Apply authentication middleware to all routes
 router.use(authenticateToken);
+
+// POST /api/loans/calculate-emi - Calculate EMI
+router.post('/calculate-emi', async (req: Request, res: Response) => {
+    try {
+        const { principal, annualInterestRate, tenureMonths } = req.body;
+
+        if (!principal || annualInterestRate === undefined || !tenureMonths) {
+            return res.status(400).json({ error: 'Principal, interest rate, and tenure are required' });
+        }
+
+        const result = LoanService.calculateEMI({
+            principal: Number(principal),
+            annualInterestRate: Number(annualInterestRate),
+            tenureMonths: Number(tenureMonths)
+        });
+
+        res.json(result);
+    } catch (error: any) {
+        console.error('Error calculating EMI:', error);
+        res.status(400).json({ error: error.message || 'Failed to calculate EMI' });
+    }
+});
+
+// POST /api/loans/repayment-schedule - Get repayment schedule
+router.post('/repayment-schedule', async (req: Request, res: Response) => {
+    try {
+        const { principal, annualInterestRate, tenureMonths, startDate } = req.body;
+
+        if (!principal || annualInterestRate === undefined || !tenureMonths) {
+            return res.status(400).json({ error: 'Principal, interest rate, and tenure are required' });
+        }
+
+        const schedule = LoanService.generateRepaymentSchedule(
+            Number(principal),
+            Number(annualInterestRate),
+            Number(tenureMonths),
+            startDate ? new Date(startDate) : new Date()
+        );
+
+        res.json({ schedule });
+    } catch (error: any) {
+        console.error('Error generating schedule:', error);
+        res.status(400).json({ error: error.message || 'Failed to generate schedule' });
+    }
+});
+
+// GET /api/loans/debt-payoff-strategies - Get debt payoff strategies
+router.get('/debt-payoff-strategies', async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user.id;
+        const loans = await Loan.find({ userId, status: 'Active' });
+
+        if (loans.length === 0) {
+            return res.json({ strategies: [] });
+        }
+
+        const snowball = LoanService.calculateSnowballStrategy(loans);
+        const avalanche = LoanService.calculateAvalancheStrategy(loans);
+
+        const strategies = [
+            {
+                name: 'Debt Snowball',
+                description: 'Pay off smallest debts first for psychological wins',
+                ...snowball
+            },
+            {
+                name: 'Debt Avalanche',
+                description: 'Pay off highest interest rates first to save money',
+                ...avalanche
+            }
+        ];
+
+        res.json({ strategies });
+    } catch (error) {
+        console.error('Error calculating strategies:', error);
+        res.status(500).json({ error: 'Failed to calculate strategies' });
+    }
+});
+
+// GET /api/loans/loan-to-income-ratio - Calculate debt-to-income ratio
+router.get('/loan-to-income-ratio', async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user.id;
+        const loans = await Loan.find({ userId, status: 'Active' });
+
+        const user = await User.findById(userId);
+        const monthlyIncome = user?.monthlyIncome || 50000;
+
+        const totalMonthlyEMI = loans.reduce((sum, loan) => sum + loan.monthlyInstallment, 0);
+        const ratio = LoanService.calculateLoanToIncomeRatio(totalMonthlyEMI, monthlyIncome);
+
+        res.json({
+            totalMonthlyEMI,
+            monthlyIncome,
+            ...ratio
+        });
+    } catch (error) {
+        console.error('Error calculating ratio:', error);
+        res.status(500).json({ error: 'Failed to calculate ratio' });
+    }
+});
+
+// GET /api/loans/ai-insights - Get AI-powered loan insights
+router.get('/ai-insights', async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user.id;
+        const loans = await Loan.find({ userId });
+
+        const user = await User.findById(userId);
+        const monthlyIncome = user?.monthlyIncome || 50000;
+
+        const insights = LoanService.generateLoanInsights(loans, monthlyIncome);
+
+        res.json({ insights });
+    } catch (error) {
+        console.error('Error generating insights:', error);
+        res.status(500).json({ error: 'Failed to generate insights' });
+    }
+});
 
 // GET /api/loans - Get all loans for user
 router.get('/', async (req: Request, res: Response) => {
@@ -20,26 +141,53 @@ router.get('/', async (req: Request, res: Response) => {
     }
 });
 
-// POST /api/loans - Create new loan
+// POST /api/loans - Create new loan with auto-calculated values
 router.post('/', async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user.id;
-        const { type, provider, totalAmount, remainingAmount, interestRate, monthlyInstallment, nextDueDate } = req.body;
+        const { type, provider, principal, interestRate, tenure, startDate, customNotes } = req.body;
 
-        if (!type || !provider || !totalAmount || !interestRate || !monthlyInstallment || !nextDueDate) {
-            return res.status(400).json({ error: 'All loan fields are required' });
+        if (!type || !provider || !principal || interestRate === undefined || !tenure) {
+            return res.status(400).json({ error: 'Type, provider, principal, interest rate, and tenure are required' });
         }
+
+        // Calculate EMI
+        const emiResult = LoanService.calculateEMI({
+            principal: Number(principal),
+            annualInterestRate: Number(interestRate),
+            tenureMonths: Number(tenure)
+        });
+
+        // Generate repayment schedule
+        const scheduleStartDate = startDate ? new Date(startDate) : new Date();
+        const paymentSchedule = LoanService.generateRepaymentSchedule(
+            Number(principal),
+            Number(interestRate),
+            Number(tenure),
+            scheduleStartDate
+        );
+
+        // Calculate dates
+        const endDate = new Date(scheduleStartDate);
+        endDate.setMonth(endDate.getMonth() + Number(tenure));
 
         const newLoan = new Loan({
             userId,
             type,
             provider,
-            totalAmount: Number(totalAmount),
-            remainingAmount: Number(remainingAmount) || Number(totalAmount),
+            principal: Number(principal),
+            totalAmount: emiResult.totalPayable,
+            remainingAmount: emiResult.totalPayable,
             interestRate: Number(interestRate),
-            monthlyInstallment: Number(monthlyInstallment),
-            nextDueDate: new Date(nextDueDate),
-            status: 'Active'
+            tenure: Number(tenure),
+            monthlyInstallment: emiResult.monthlyEMI,
+            totalInterest: emiResult.totalInterest,
+            startDate: scheduleStartDate,
+            nextDueDate: new Date(scheduleStartDate.getTime() + 30 * 24 * 60 * 60 * 1000),
+            endDate,
+            status: 'Active',
+            paymentSchedule,
+            customNotes
         });
 
         await newLoan.save();
@@ -97,7 +245,7 @@ router.post('/:id/payment', async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user.id;
         const { id } = req.params;
-        const { amount } = req.body;
+        const { amount, paidDate } = req.body;
 
         if (!amount || amount <= 0) {
             return res.status(400).json({ error: 'Valid payment amount is required' });
@@ -110,12 +258,23 @@ router.post('/:id/payment', async (req: Request, res: Response) => {
 
         loan.remainingAmount = Math.max(loan.remainingAmount - Number(amount), 0);
         
+        // Update payment schedule
+        if (loan.paymentSchedule && loan.paymentSchedule.length > 0) {
+            for (let i = 0; i < loan.paymentSchedule.length; i++) {
+                if (!loan.paymentSchedule[i].paid) {
+                    loan.paymentSchedule[i].paid = true;
+                    loan.paymentSchedule[i].paidDate = paidDate ? new Date(paidDate) : new Date();
+                    break;
+                }
+            }
+        }
+        
         // Auto-close if fully paid
         if (loan.remainingAmount === 0) {
             loan.status = 'Closed';
         }
 
-        // Update next due date (simple logic - add 1 month)
+        // Update next due date
         const nextDue = new Date(loan.nextDueDate);
         nextDue.setMonth(nextDue.getMonth() + 1);
         loan.nextDueDate = nextDue;
@@ -128,69 +287,120 @@ router.post('/:id/payment', async (req: Request, res: Response) => {
     }
 });
 
-// GET /api/loans/strategies - Get debt payoff strategies
-router.get('/strategies', async (req: Request, res: Response) => {
+// GET /api/loans/:id/alerts - Get loan alerts
+router.get('/:id/alerts', async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user.id;
-        const loans = await Loan.find({ userId, status: 'Active' });
+        const { id } = req.params;
 
-        if (loans.length === 0) {
-            return res.json({ strategies: [] });
+        const loan = await Loan.findOne({ _id: id, userId });
+        if (!loan) {
+            return res.status(404).json({ error: 'Loan not found' });
         }
 
-        // Calculate Debt Snowball (smallest balance first)
-        const snowballLoans = [...loans].sort((a, b) => a.remainingAmount - b.remainingAmount);
-        const snowballMonths = calculatePayoffTime(snowballLoans, 'snowball');
-        const snowballInterest = calculateTotalInterest(snowballLoans, snowballMonths);
+        // Get user income for alert calculation
+        const user = await User.findById(userId);
+        const monthlyIncome = user?.monthlyIncome || 50000;
 
-        // Calculate Debt Avalanche (highest interest first)
-        const avalancheLoans = [...loans].sort((a, b) => b.interestRate - a.interestRate);
-        const avalancheMonths = calculatePayoffTime(avalancheLoans, 'avalanche');
-        const avalancheInterest = calculateTotalInterest(avalancheLoans, avalancheMonths);
-
-        const strategies = [
-            {
-                name: 'Debt Snowball',
-                description: 'Pay off smallest debts first for psychological wins',
-                timeToPayoff: snowballMonths,
-                totalInterest: snowballInterest,
-                totalPayoff: loans.reduce((sum, loan) => sum + loan.remainingAmount, 0)
-            },
-            {
-                name: 'Debt Avalanche',
-                description: 'Pay off highest interest rate debts first to save money',
-                timeToPayoff: avalancheMonths,
-                totalInterest: avalancheInterest,
-                totalPayoff: loans.reduce((sum, loan) => sum + loan.remainingAmount, 0)
-            }
-        ];
-
-        res.json({ strategies });
+        const alerts = await LoanService.generateLoanAlerts(loan, monthlyIncome);
+        res.json({ alerts });
     } catch (error) {
-        console.error('Error calculating strategies:', error);
-        res.status(500).json({ error: 'Failed to calculate strategies' });
+        console.error('Error generating alerts:', error);
+        res.status(500).json({ error: 'Failed to generate alerts' });
     }
 });
 
-// Helper functions
-function calculatePayoffTime(loans: any[], strategy: string): number {
-    // Simplified calculation - in reality this would be more complex
-    const totalDebt = loans.reduce((sum, loan) => sum + loan.remainingAmount, 0);
-    const totalMonthlyPayments = loans.reduce((sum, loan) => sum + loan.monthlyInstallment, 0);
-    
-    if (totalMonthlyPayments === 0) return 0;
-    
-    // Basic estimate
-    return Math.ceil(totalDebt / totalMonthlyPayments);
-}
+// POST /api/loans/:id/simulate-increased-emi - Simulate increased EMI
+router.post('/:id/simulate-increased-emi', async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user.id;
+        const { id } = req.params;
+        const { increasedEMI } = req.body;
 
-function calculateTotalInterest(loans: any[], months: number): number {
-    // Simplified interest calculation
-    return loans.reduce((total, loan) => {
-        const monthlyRate = loan.interestRate / 100 / 12;
-        const interest = loan.remainingAmount * monthlyRate * months * 0.5; // Approximate
-        return total + interest;
-    }, 0);
-}
+        const loan = await Loan.findOne({ _id: id, userId });
+        if (!loan) {
+            return res.status(404).json({ error: 'Loan not found' });
+        }
+
+        if (!increasedEMI || increasedEMI <= loan.monthlyInstallment) {
+            return res.status(400).json({ error: 'Increased EMI must be greater than current EMI' });
+        }
+
+        const simulation = LoanService.simulateIncreaseEMI(
+            loan.principal,
+            loan.interestRate,
+            loan.monthlyInstallment,
+            Number(increasedEMI),
+            loan.tenure
+        );
+
+        res.json(simulation);
+    } catch (error) {
+        console.error('Error simulating increased EMI:', error);
+        res.status(500).json({ error: 'Failed to simulate increased EMI' });
+    }
+});
+
+// POST /api/loans/:id/simulate-lump-sum - Simulate lump sum payment
+router.post('/:id/simulate-lump-sum', async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user.id;
+        const { id } = req.params;
+        const { lumpSumAmount, monthToApply } = req.body;
+
+        const loan = await Loan.findOne({ _id: id, userId });
+        if (!loan) {
+            return res.status(404).json({ error: 'Loan not found' });
+        }
+
+        if (!lumpSumAmount || lumpSumAmount <= 0) {
+            return res.status(400).json({ error: 'Valid lump sum amount is required' });
+        }
+
+        const simulation = LoanService.simulateLumpSumPayment(
+            loan.principal,
+            loan.interestRate,
+            loan.monthlyInstallment,
+            Number(lumpSumAmount),
+            Number(monthToApply) || 1,
+            loan.tenure
+        );
+
+        res.json(simulation);
+    } catch (error) {
+        console.error('Error simulating lump sum:', error);
+        res.status(500).json({ error: 'Failed to simulate lump sum payment' });
+    }
+});
+
+// POST /api/loans/:id/simulate-refinance - Simulate refinancing
+router.post('/:id/simulate-refinance', async (req: Request, res: Response) => {
+    try {
+        const userId = (req as any).user.id;
+        const { id } = req.params;
+        const { newInterestRate } = req.body;
+
+        const loan = await Loan.findOne({ _id: id, userId });
+        if (!loan) {
+            return res.status(404).json({ error: 'Loan not found' });
+        }
+
+        if (!newInterestRate === undefined || newInterestRate < 0) {
+            return res.status(400).json({ error: 'Valid new interest rate is required' });
+        }
+
+        const simulation = LoanService.simulateRefinancing(
+            loan.principal,
+            loan.interestRate,
+            Number(newInterestRate),
+            loan.tenure
+        );
+
+        res.json(simulation);
+    } catch (error) {
+        console.error('Error simulating refinance:', error);
+        res.status(500).json({ error: 'Failed to simulate refinancing' });
+    }
+});
 
 export default router;
