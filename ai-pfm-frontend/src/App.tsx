@@ -15,7 +15,7 @@ import { HelpPage } from './pages/HelpPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { FinancialHealthPage } from './pages/FinancialHealthPage';
 import { GoalsPage } from './pages/GoalsPage';
-import { LoansPage } from './pages/LoansPage';
+import LoansPage from './components/LoansPage';
 import { CreditCardsPage } from './pages/CreditCardsPage';
 import { SubscriptionsPage } from './pages/SubscriptionsPage';
 import { SmartBudgetsPage } from './pages/SmartBudgetsPage';
