@@ -4,6 +4,7 @@ export interface IUser extends Document {
   name: string;
   email: string;
   passwordHash: string;
+  monthlyIncome?: number; // For loan-to-income ratio calculations
 
   // Enhanced fields for BRD compliance
   pfmOptIn?: boolean; // Quick flag for PFM feature access
@@ -23,6 +24,7 @@ const UserSchema: Schema = new Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     passwordHash: { type: String, required: true },
+    monthlyIncome: { type: Number, default: 50000 }, // Default income for loan calculations
 
     // Enhanced fields
     pfmOptIn: { type: Boolean, default: false, index: true },
