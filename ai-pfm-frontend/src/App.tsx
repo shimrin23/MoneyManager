@@ -3,8 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-do
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Dashboard } from './components/Dashboard';
-import { TransactionList } from './components/TransactionList';
-import { Subscriptions } from './components/Subscriptions';
 import { AddTransactionForm } from './components/AddTransactionForm';
 import { UserHeader } from './components/UserHeader';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -37,6 +35,10 @@ function App() {
   const isAuthenticated = !!localStorage.getItem('token');
   const [showAddTransactionModal, setShowAddTransactionModal] = useState(false);
   const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    const savedTheme = localStorage.getItem('theme');
+    return savedTheme === 'light' ? 'light' : 'dark';
+  });
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth > 768);
   
@@ -62,6 +64,11 @@ function App() {
     };
   }, []);
 
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
   const handleSidebarToggle = () => {
     setIsSidebarOpen((prev) => !prev);
   };
@@ -70,6 +77,10 @@ function App() {
     if (window.innerWidth <= 768) {
       setIsSidebarOpen(false);
     }
+  };
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
   const AddTransactionModal = () => (
@@ -169,7 +180,7 @@ function App() {
                   >
                     <span className="header-ai-icon" aria-hidden="true">🤖</span>
                   </button>
-                  <UserHeader />
+                  <UserHeader theme={theme} onToggleTheme={toggleTheme} />
                 </div>
               </header>
             </>
@@ -341,3 +352,4 @@ function App() {
 }
 
 export default App;
+

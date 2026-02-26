@@ -121,7 +121,7 @@ export const FinancialHealthPage = () => {
                         <div 
                             className="score-circle"
                             style={{
-                                background: `conic-gradient(${getScoreColor(health.score)} ${health.score * 3.6}deg, rgba(255,255,255,0.1) 0deg)`
+                                background: `conic-gradient(${getScoreColor(health.score)} ${health.score * 3.6}deg, var(--border) 0deg)`
                             }}
                         >
                             <span className="score-number">{health.score}</span>

@@ -24,7 +24,6 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   className = ""
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [displayDate, setDisplayDate] = useState('');
   const [inputValue, setInputValue] = useState('');
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const containerRef = useRef<HTMLDivElement>(null);
@@ -33,11 +32,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     if (value) {
       const date = new Date(value);
       const formatted = formatDisplayDate(date);
-      setDisplayDate(formatted);
       setInputValue(formatted);
       setCurrentMonth(date);
     } else {
-      setDisplayDate('');
       setInputValue('');
     }
   }, [value]);
@@ -107,6 +104,13 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     }
   };
 
+  const isWithinDateRange = (date: Date): boolean => {
+    const selectedDate = formatInputDate(date);
+    if (minDate && selectedDate < minDate) return false;
+    if (maxDate && selectedDate > maxDate) return false;
+    return true;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const input = e.target.value;
     
@@ -117,7 +121,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     // Try to parse the input as a complete date
     if (formatted.length === 10) { // DD-MM-YYYY complete
       const parsedDate = parseInputDate(formatted);
-      if (parsedDate) {
+      if (parsedDate && isWithinDateRange(parsedDate)) {
         const formattedDate = formatInputDate(parsedDate);
         onChange(formattedDate);
         setCurrentMonth(parsedDate);
@@ -138,10 +142,12 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
   const handleDateSelect = (day: number) => {
     const selectedDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+    if (!isWithinDateRange(selectedDate)) {
+      return;
+    }
     const formattedDate = formatInputDate(selectedDate);
     onChange(formattedDate);
     const displayFormatted = formatDisplayDate(selectedDate);
-    setDisplayDate(displayFormatted);
     setInputValue(displayFormatted);
     setIsOpen(false);
   };
@@ -317,10 +323,12 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               className="today-btn"
               onClick={() => {
                 const today = new Date();
+                if (!isWithinDateRange(today)) {
+                  return;
+                }
                 const formattedDate = formatInputDate(today);
                 onChange(formattedDate);
                 const displayFormatted = formatDisplayDate(today);
-                setDisplayDate(displayFormatted);
                 setInputValue(displayFormatted);
                 setIsOpen(false);
               }}
@@ -332,7 +340,6 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               className="clear-btn"
               onClick={() => {
                 onChange('');
-                setDisplayDate('');
                 setInputValue('');
                 setIsOpen(false);
               }}

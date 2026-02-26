@@ -9,7 +9,12 @@ interface User {
     email: string;
 }
 
-export const UserHeader = () => {
+interface UserHeaderProps {
+    theme: 'dark' | 'light';
+    onToggleTheme: () => void;
+}
+
+export const UserHeader = ({ theme, onToggleTheme }: UserHeaderProps) => {
     const [user, setUser] = useState<User | null>(null);
     const [showDropdown, setShowDropdown] = useState(false);
     const navigate = useNavigate();
@@ -130,7 +135,7 @@ export const UserHeader = () => {
                                 <span className="item-text">Account Settings</span>
                             </div>
 
-                            <div 
+                                                        <div 
                                 className="dropdown-item"
                                 onClick={() => {
                                     setShowDropdown(false);
@@ -139,6 +144,30 @@ export const UserHeader = () => {
                             >
                                 <span className="item-icon">🔔</span>
                                 <span className="item-text">Notifications</span>
+                            </div>
+
+                            <div className="dropdown-item" onClick={onToggleTheme}>
+                                <span className="item-icon theme-mode-icon">
+                                    {theme === 'dark' ? (
+                                        <svg className="theme-mode-svg" viewBox="0 0 24 24" aria-hidden="true">
+                                            <circle cx="12" cy="12" r="9" fill="none" strokeWidth="1.8" />
+                                            <path
+                                                d="M15.8 8.2a5.6 5.6 0 1 0 0 7.6 4.2 4.2 0 1 1 0-7.6Z"
+                                                fill="none"
+                                                strokeWidth="1.9"
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                            />
+                                        </svg>
+                                    ) : (
+                                        <svg className="theme-mode-svg" viewBox="0 0 24 24" aria-hidden="true">
+                                            <circle cx="12" cy="12" r="9" fill="none" strokeWidth="1.8" />
+                                            <circle cx="12" cy="12" r="2.6" fill="none" strokeWidth="1.8" />
+                                            <path d="M12 6.2v1.8M12 16v1.8M6.2 12H8M16 12h1.8M8 8l1.3 1.3M14.7 14.7L16 16M8 16l1.3-1.3M14.7 9.3L16 8" fill="none" strokeWidth="1.8" strokeLinecap="round" />
+                                        </svg>
+                                    )}
+                                </span>
+                                <span className="item-text">Theme Mode</span>
                             </div>
                         </div>
 
@@ -181,3 +210,5 @@ export const UserHeader = () => {
         </div>
     );
 };
+
+
