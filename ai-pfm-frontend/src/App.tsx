@@ -1,5 +1,5 @@
-import React, { useState } from 'react'; 
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react'; 
+import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Dashboard } from './components/Dashboard';
@@ -35,12 +35,39 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 function App() {
   const isAuthenticated = !!localStorage.getItem('token');
   const [showAddTransactionModal, setShowAddTransactionModal] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth > 768);
   
   console.log('App component rendering, isAuthenticated:', isAuthenticated);
 
   const handleTransactionAdded = () => {
     setShowAddTransactionModal(false);
     window.location.reload();
+  };
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobileView = window.innerWidth <= 768;
+      setIsMobile(mobileView);
+      setIsSidebarOpen(!mobileView);
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  const handleSidebarToggle = () => {
+    setIsSidebarOpen((prev) => !prev);
+  };
+
+  const handleNavLinkClick = () => {
+    if (window.innerWidth <= 768) {
+      setIsSidebarOpen(false);
+    }
   };
 
   const AddTransactionModal = () => (
@@ -66,42 +93,60 @@ function App() {
         <div className="app-container">
           {isAuthenticated && (
             <>
-              <nav className="side-navigation">
+              <nav className={`side-navigation ${isMobile && isSidebarOpen ? 'open' : ''}`}>
                 <div className="sidebar-header">
                   <h1 className="sidebar-logo">💰 MoneyManager</h1>
                 </div>
                 <div className="nav-section">
                   <div className="nav-title">NAVIGATION</div>
-                  <a href="/dashboard" className="nav-item dashboard-item">
+                  <NavLink to="/dashboard" onClick={handleNavLinkClick} className={({ isActive }) => `nav-item${isActive ? ' dashboard-item' : ''}`}>
                     <span className="nav-icon">📊</span>
                     Dashboard
-                  </a>
-                  <a href="/financial-health" className="nav-item">
+                  </NavLink>
+                  <NavLink to="/financial-health" onClick={handleNavLinkClick} className={({ isActive }) => `nav-item${isActive ? ' dashboard-item' : ''}`}>
                     <span className="nav-icon">🏥</span>
                     Health
-                  </a>
-                  <a href="/goals" className="nav-item">
+                  </NavLink>
+                  <NavLink to="/goals" onClick={handleNavLinkClick} className={({ isActive }) => `nav-item${isActive ? ' dashboard-item' : ''}`}>
                     <span className="nav-icon">🎯</span>
                     Goals
-                  </a>
-                  <a href="/loans" className="nav-item">
+                  </NavLink>
+                  <NavLink to="/loans" onClick={handleNavLinkClick} className={({ isActive }) => `nav-item${isActive ? ' dashboard-item' : ''}`}>
                     <span className="nav-icon">🏦</span>
                     Loans
-                  </a>
-                  <a href="/credit-cards" className="nav-item">
+                  </NavLink>
+                  <NavLink to="/credit-cards" onClick={handleNavLinkClick} className={({ isActive }) => `nav-item${isActive ? ' dashboard-item' : ''}`}>
                     <span className="nav-icon">💳</span>
                     Cards
-                  </a>
-                  <a href="/subscriptions" className="nav-item">
+                  </NavLink>
+                  <NavLink to="/subscriptions" onClick={handleNavLinkClick} className={({ isActive }) => `nav-item${isActive ? ' dashboard-item' : ''}`}>
                     <span className="nav-icon">🔄</span>
                     Subscriptions
-                  </a>
-                  <a href="/smart-budgets" className="nav-item">
+                  </NavLink>
+                  <NavLink to="/smart-budgets" onClick={handleNavLinkClick} className={({ isActive }) => `nav-item${isActive ? ' dashboard-item' : ''}`}>
                     <span className="nav-icon">🧠</span>
                     Smart Budgets
-                  </a>
+                  </NavLink>
                 </div>
               </nav>
+              {isMobile && isSidebarOpen && (
+                <button
+                  type="button"
+                  className="sidebar-overlay"
+                  onClick={() => setIsSidebarOpen(false)}
+                  aria-label="Close sidebar overlay"
+                />
+              )}
+              {isMobile && (
+                <button
+                  type="button"
+                  className={`sidebar-toggle ${isSidebarOpen ? 'open' : ''}`}
+                  onClick={handleSidebarToggle}
+                  aria-label={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+                >
+                  {isSidebarOpen ? '<' : '>'}
+                </button>
+              )}
               <header className="top-header">
                 <div className="header-welcome">
                   <span className="welcome-text">Welcome back!</span>
