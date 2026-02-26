@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
+import { AIAssistant } from '../components/AIAssistant';
 
 interface HealthMetrics {
     score: number;
@@ -19,6 +20,7 @@ interface PeerBenchmark {
 }
 
 export const FinancialHealthPage = () => {
+    const [aiOpen, setAiOpen] = useState(false);
     const [health, setHealth] = useState<HealthMetrics>({
         score: 0,
         riskLevel: 'Medium',
@@ -28,12 +30,10 @@ export const FinancialHealthPage = () => {
         recommendations: []
     });
     const [loading, setLoading] = useState(true);
-    const [aiAnalysis, setAiAnalysis] = useState('');
     const [peerBenchmarks, setPeerBenchmarks] = useState<PeerBenchmark[]>([]);
 
     useEffect(() => {
         fetchHealthScore();
-        fetchAIAnalysis();
         fetchPeerBenchmarks();
     }, []);
 
@@ -48,13 +48,8 @@ export const FinancialHealthPage = () => {
         }
     };
 
-    const fetchAIAnalysis = async () => {
-        try {
-            const response = await apiClient.get('/transactions/analysis');
-            setAiAnalysis(response.data.analysis);
-        } catch (error) {
-            console.error('Error fetching AI analysis:', error);
-        }
+    const openAIAssistant = () => {
+        setAiOpen(true);
     };
 
     const fetchPeerBenchmarks = async () => {
@@ -163,28 +158,6 @@ export const FinancialHealthPage = () => {
                     </div>
                 </div>
 
-                {/* AI Analysis */}
-                <div className="card ai-analysis-card full-width">
-                    <h3>🤖 AI Financial Coach Analysis</h3>
-                    <div className="ai-content">
-                        {aiAnalysis ? (
-                            <div className="analysis-text">
-                                {aiAnalysis.split('\n').map((line, index) => (
-                                    <p key={index}>{line}</p>
-                                ))}
-                            </div>
-                        ) : (
-                            <p>Getting AI analysis of your financial patterns...</p>
-                        )}
-                    </div>
-                    <button 
-                        className="btn-secondary"
-                        onClick={fetchAIAnalysis}
-                    >
-                        🔄 Refresh AI Analysis
-                    </button>
-                </div>
-
                 {/* Recommendations */}
                 {health.recommendations && health.recommendations.length > 0 && (
                     <div className="card recommendations-card full-width">
@@ -258,6 +231,12 @@ export const FinancialHealthPage = () => {
                     </div>
                 </div>
             </div>
+            <div className="ask-ai-bar">
+                <button className="ask-ai-button" onClick={openAIAssistant}>
+                    🤖 Ask AI
+                </button>
+            </div>
+            <AIAssistant open={aiOpen} onOpenChange={setAiOpen} />
         </div>
     );
 };

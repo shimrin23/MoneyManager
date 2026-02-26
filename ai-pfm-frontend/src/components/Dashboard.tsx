@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.ts';
 import { CashFlowForecast } from './CashFlowForecast';
+import { AIAssistant } from './AIAssistant';
 
 export const Dashboard = () => {
-    const [insight, setInsight] = useState<string>('');
-    const [loadingAI, setLoadingAI] = useState<boolean>(false);
-    
+    const [aiOpen, setAiOpen] = useState(false);
     // New State for Score
     const [score, setScore] = useState<number>(0);
     const [loadingScore, setLoadingScore] = useState<boolean>(true);
@@ -41,25 +40,6 @@ export const Dashboard = () => {
         };
         fetchTransactions();
     }, []);
-
-    // 3. Fetch AI Insight
-    const fetchAIAnalysis = async () => {
-        setLoadingAI(true);
-        try {
-            const response = await apiClient.get('/transactions/analysis');
-            setInsight(response.data.analysis);
-        } catch (error) {
-            console.error(error);
-            setInsight("Failed to contact the AI Financial Advisor.");
-        } finally {
-            setLoadingAI(false);
-        }
-    };
-
-    // 4. Clear AI Insight
-    const clearInsight = () => {
-        setInsight('');
-    };
 
     // Helper to determine color based on score
     const getScoreColor = (s: number) => {
@@ -122,34 +102,6 @@ export const Dashboard = () => {
 
                     {/* Cash Flow Forecast Card */}
                     <CashFlowForecast />
-                </div>
-
-                {/* AI Financial Coach Card */}
-                <div className="card ai-analysis-card">
-                    <h3>🤖 AI Financial Coach</h3>
-                    <p className="coach-description">Get personalized insights based on your spending patterns and financial goals</p>
-                    
-                    <div className="ai-content">
-                        {insight ? (
-                            <div className="analysis-text">
-                                <div className="analysis-header">
-                                    <h4>💡 Coach's Insight:</h4>
-                                    <button className="modal-close" onClick={clearInsight}>×</button>
-                                </div>
-                                <p>{insight}</p>
-                            </div>
-                        ) : (
-                            <p>Click below to get AI-powered financial insights</p>
-                        )}
-                    </div>
-                    
-                    <button 
-                        className="btn-coach"
-                        onClick={fetchAIAnalysis} 
-                        disabled={loadingAI}
-                    >
-                        {loadingAI ? "🤔 Analyzing..." : "💡 Ask the Coach"}
-                    </button>
                 </div>
 
                 {/* Recent Transactions Card */}
@@ -218,6 +170,16 @@ export const Dashboard = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Ask AI Button Bar */}
+            <div className="ask-ai-bar">
+                <button className="ask-ai-button" onClick={() => setAiOpen(true)}>
+                    🤖 Ask AI
+                </button>
+            </div>
+
+            {/* AI Assistant Modal */}
+            <AIAssistant open={aiOpen} onOpenChange={setAiOpen} />
         </div>
     );
 };
