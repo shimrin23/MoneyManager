@@ -20,7 +20,7 @@
 
 .page-header h1 {
     font-size: 2rem;
-    color: #e2e8f0;
+    color: var(--text);
     margin: 0;
 }
 
@@ -29,7 +29,7 @@
     display: flex;
     gap: 0.5rem;
     margin-bottom: 2rem;
-    border-bottom: 2px solid #e5e7eb;
+    border-bottom: 2px solid var(--border);
     overflow-x: auto;
     padding-bottom: 0;
 }
@@ -39,7 +39,7 @@
     background: none;
     border: none;
     border-bottom: 3px solid transparent;
-    color: #94a3b8;
+    color: var(--text-muted);
     cursor: pointer;
     font-weight: 500;
     transition: all 0.3s ease;
@@ -56,7 +56,7 @@
 }
 
 .tab-content {
-    background: #1e293b;
+    background: var(--card);
     border-radius: 0.75rem;
     padding: 2rem;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
@@ -85,10 +85,10 @@
 }
 
 .overview-section {
-    background: #1e293b;
+    background: var(--card);
     padding: 1.5rem;
     border-radius: 0.75rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border);
 }
 
 @media (min-width: 1024px) {
@@ -104,13 +104,13 @@
     justify-content: center;
     height: 50vh;
     font-size: 1.125rem;
-    color: #94a3b8;
+    color: var(--text-muted);
 }
 
 /* Empty State */
 .empty-state {
     text-align: center;
-    color: #94a3b8;
+    color: var(--text-muted);
     padding: 2rem;
     font-size: 1rem;
 }
@@ -157,12 +157,12 @@
 }
 
 .btn-secondary {
-    background-color: #334155;
-    color: #e2e8f0;
+    background-color: var(--card-hover);
+    color: var(--text);
 }
 
 .btn-secondary:hover:not(:disabled) {
-    background-color: #475569;
+    background-color: var(--card);
 }
 
 .btn-danger {
@@ -204,12 +204,12 @@
     border-radius: 0.5rem;
     cursor: pointer;
     background-color: rgba(255, 255, 255, 0.05);
-    color: #e2e8f0;
+    color: var(--text);
     transition: all 0.3s ease;
 }
 
 .btn-header-icon:hover {
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--border);
     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
 }
 
@@ -235,21 +235,21 @@ table {
 }
 
 table thead {
-    background-color: #0f172a;
+    background-color: var(--card-hover);
 }
 
 table th {
     padding: 0.75rem;
     text-align: left;
     font-weight: 600;
-    color: #e2e8f0;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    color: var(--text);
+    border-bottom: 2px solid var(--border);
 }
 
 table td {
     padding: 0.75rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    color: #e2e8f0;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
 }
 
 table tr:hover {
@@ -303,7 +303,7 @@ table tr:hover {
 .form-group label {
     margin-bottom: 0.5rem;
     font-weight: 500;
-    color: #e2e8f0;
+    color: var(--text);
     font-size: 0.875rem;
 }
 
@@ -311,12 +311,12 @@ table tr:hover {
 .form-group select,
 .form-group textarea {
     padding: 0.75rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border);
     border-radius: 0.5rem;
     font-size: 0.875rem;
     font-family: inherit;
-    background-color: #0f172a;
-    color: #e2e8f0;
+    background-color: var(--card-hover);
+    color: var(--text);
 }
 
 .form-group input:focus,
@@ -334,7 +334,7 @@ table tr:hover {
 
 .help-text {
     font-size: 0.75rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     margin-top: 0.25rem;
 }
 
@@ -346,8 +346,8 @@ table tr:hover {
 .insight-card,
 .detail-card,
 .summary-card {
-    background: #1e293b;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--card);
+    border: 1px solid var(--border);
     border-radius: 0.75rem;
     padding: 1.5rem;
     transition: all 0.3s ease;
@@ -378,13 +378,13 @@ table tr:hover {
 .card-header h3 {
     margin: 0;
     font-size: 1.125rem;
-    color: #e2e8f0;
+    color: var(--text);
 }
 
 .provider {
     font-size: 0.75rem;
-    color: #94a3b8;
-    background-color: #0f172a;
+    color: var(--text-muted);
+    background-color: var(--card-hover);
     padding: 0.25rem 0.5rem;
     border-radius: 0.5rem;
     width: fit-content;
@@ -409,13 +409,13 @@ table tr:hover {
 }
 
 .info-row .label {
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.875rem;
 }
 
 .info-row .value {
     font-weight: 600;
-    color: #e2e8f0;
+    color: var(--text);
     font-size: 1rem;
 }
 
@@ -436,7 +436,7 @@ table tr:hover {
 .progress-bar {
     width: 100%;
     height: 8px;
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: var(--border);
     border-radius: 9999px;
     overflow: hidden;
     margin-top: 1rem;
@@ -456,7 +456,7 @@ table tr:hover {
 
 .active-loans h2 {
     font-size: 1.5rem;
-    color: #e2e8f0;
+    color: var(--text);
     margin-bottom: 1.5rem;
 }
 
@@ -488,6 +488,7 @@ table tr:hover {
 
 .card .label {
     font-size: 0.875rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     margin-bottom: 0.5rem;
 }
+

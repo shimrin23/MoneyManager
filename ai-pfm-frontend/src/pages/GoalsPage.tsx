@@ -17,7 +17,6 @@ interface Goal {
 export const GoalsPage = () => {
     const [goals, setGoals] = useState<Goal[]>([]);
     const [showForm, setShowForm] = useState(false);
-    const [selectedGoal, setSelectedGoal] = useState<Goal | null>(null);
     const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
     const [showDetailsModal, setShowDetailsModal] = useState(false);
     const [newGoal, setNewGoal] = useState<Goal>({
@@ -119,8 +118,6 @@ export const GoalsPage = () => {
     const getGoalRiskStatus = (currentAmount: number, targetAmount: number, deadline: string) => {
         const progress = getProgressPercentage(currentAmount, targetAmount);
         const daysRemaining = Math.ceil((new Date(deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-        const expectedProgress = (100 * (Math.max(0, -daysRemaining) / Math.max(1, Math.ceil((new Date(deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24 * 30))))) || 0;
-
         // Calculate what progress should be by now
         const totalDays = Math.ceil((new Date(deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
         const initialDate = new Date(deadline);
@@ -258,7 +255,7 @@ export const GoalsPage = () => {
                                     <span style={{ fontSize: '24px' }}>{getCategoryIcon(goal.category)}</span>
                                     <div>
                                         <h3 style={{ margin: 0 }}>{goal.title}</h3>
-                                        {goal.priority && <small style={{ color: '#666' }}>Priority: {goal.priority}</small>}
+                                        {goal.priority && <small style={{ color: 'var(--text-muted)' }}>Priority: {goal.priority}</small>}
                                     </div>
                                 </div>
                                 <span className={`status-badge ${goal.status.toLowerCase().replace(' ', '-')}`}>
@@ -289,17 +286,17 @@ export const GoalsPage = () => {
 
                             {/* Smart Goal Metrics */}
                             <div style={{
-                                backgroundColor: '#f8f9fa',
+                                backgroundColor: 'var(--card-hover)',
                                 padding: '12px',
                                 borderRadius: '6px',
                                 marginBottom: '12px',
                                 fontSize: '14px'
                             }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                    <span style={{ color: '#1f2937', fontWeight: '600' }}><strong>Monthly Required:</strong> {formatCurrency(monthlyRequired)}</span>
+                                    <span style={{ color: 'var(--text)', fontWeight: '600' }}><strong>Monthly Required:</strong> {formatCurrency(monthlyRequired)}</span>
                                     <span style={{ color: '#059669', fontWeight: '600' }}><strong>{riskStatus.icon} Status:</strong> {riskStatus.status}</span>
                                 </div>
-                                <div style={{ color: '#374151', fontSize: '13px', fontWeight: '500' }}>
+                                <div style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: '500' }}>
                                     📅 {new Date(goal.deadline).toLocaleDateString('en-LK')}
                                 </div>
                             </div>
@@ -370,7 +367,7 @@ export const GoalsPage = () => {
                     zIndex: 1000
                 }}>
                     <div style={{
-                        backgroundColor: 'white',
+                        backgroundColor: 'var(--card)',
                         borderRadius: '12px',
                         padding: '24px',
                         maxWidth: '600px',
@@ -439,7 +436,7 @@ export const GoalsPage = () => {
                                     value={editingGoal.description || ''}
                                     onChange={(e) => setEditingGoal({...editingGoal, description: e.target.value})}
                                     placeholder="Why is this goal important to you?"
-                                    style={{ minHeight: '80px', padding: '8px', borderRadius: '6px', border: '1px solid #ddd' }}
+                                    style={{ minHeight: '80px', padding: '8px', borderRadius: '6px', border: '1px solid var(--border)' }}
                                 />
                             </div>
 

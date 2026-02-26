@@ -432,13 +432,13 @@ export const SubscriptionsPage = () => {
 
             {/* Feature 6: Subscription Trend Analytics */}
             <div style={{
-                background: '#f3f4f6',
-                border: '2px solid #d1d5db',
+                background: 'var(--card-hover)',
+                border: '2px solid var(--border)',
                 padding: '20px',
                 borderRadius: '8px',
                 marginBottom: '20px'
             }}>
-                <h3 style={{ marginTop: '0', marginBottom: '16px', color: '#1f2937' }}>📊 6-Month Spending Trend</h3>
+                <h3 style={{ marginTop: '0', marginBottom: '16px', color: 'var(--text)' }}>📊 6-Month Spending Trend</h3>
                 <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', height: '120px' }}>
                     {trends.map((trend, idx) => (
                         <div key={idx} style={{ textAlign: 'center' }}>
@@ -449,7 +449,7 @@ export const SubscriptionsPage = () => {
                                 marginBottom: '8px',
                                 minWidth: '30px'
                             }}></div>
-                            <div style={{ fontSize: '11px', color: '#374151', fontWeight: '500' }}>{trend.month}</div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '500' }}>{trend.month}</div>
                         </div>
                     ))}
                 </div>
@@ -528,14 +528,14 @@ export const SubscriptionsPage = () => {
             <div className="subscriptions-list">
                 {activeSubs.map((subscription) => {
                     const usageStatus = getUsageStatus(subscription);
-                    const { insight, alternatives } = getAIInsight(subscription);
+                    const { insight } = getAIInsight(subscription);
                     const renewalRisk = getRenewalRisk(subscription);
                     const monthlyAmount = subscription.frequency === 'yearly' ? subscription.amount / 12 : subscription.amount;
                     
                     return (
                         <div key={subscription._id} style={{
-                            background: 'white',
-                            border: renewalRisk.risk ? '2px solid #ef4444' : '1px solid #e5e7eb',
+                            background: 'var(--card)',
+                            border: renewalRisk.risk ? '2px solid #ef4444' : '1px solid var(--border)',
                             borderRadius: '12px',
                             padding: '20px',
                             marginBottom: '16px',
@@ -560,7 +560,7 @@ export const SubscriptionsPage = () => {
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
                                 <div>
                                     <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '600' }}>{subscription.name}</h4>
-                                    <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#374151' }}>{subscription.provider}</p>
+                                    <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: 'var(--text-muted)' }}>{subscription.provider}</p>
                                 </div>
                                 <div style={{
                                     background: usageStatus.status === 'Actively Used' ? '#dcfce7' : usageStatus.status === 'Rarely Used' ? '#fef3c7' : '#fee2e2',
@@ -575,7 +575,7 @@ export const SubscriptionsPage = () => {
                             </div>
 
                             {/* Usage Info - Feature 2 */}
-                            <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: '#374151' }}>
+                            <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: 'var(--text-muted)' }}>
                                 {usageStatus.label}
                             </p>
 
@@ -584,23 +584,23 @@ export const SubscriptionsPage = () => {
                                 display: 'flex',
                                 justifyContent: 'space-between',
                                 padding: '16px',
-                                background: '#e5e7eb',
+                                background: 'var(--card-hover)',
                                 borderRadius: '8px',
                                 marginBottom: '12px',
-                                border: '1px solid #d1d5db'
+                                border: '1px solid var(--border)'
                             }}>
                                 <div>
-                                    <div style={{ fontSize: '14px', color: '#1f2937', marginBottom: '4px', fontWeight: '600' }}>Cost</div>
-                                    <div style={{ fontSize: '18px', fontWeight: '700', color: '#111827' }}>LKR {monthlyAmount.toLocaleString()}</div>
-                                    <div style={{ fontSize: '12px', color: '#374151', fontWeight: '600' }}>/month</div>
+                                    <div style={{ fontSize: '14px', color: 'var(--text)', marginBottom: '4px', fontWeight: '600' }}>Cost</div>
+                                    <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text)' }}>LKR {monthlyAmount.toLocaleString()}</div>
+                                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '600' }}>/month</div>
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '14px', color: '#1f2937', marginBottom: '4px', fontWeight: '600' }}>Category</div>
-                                    <div style={{ fontSize: '15px', fontWeight: '700', color: '#111827' }}>{subscription.category}</div>
+                                    <div style={{ fontSize: '14px', color: 'var(--text)', marginBottom: '4px', fontWeight: '600' }}>Category</div>
+                                    <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text)' }}>{subscription.category}</div>
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '14px', color: '#1f2937', marginBottom: '4px', fontWeight: '600' }}>Next Renewal</div>
-                                    <div style={{ fontSize: '15px', fontWeight: '700', color: '#111827' }}>{new Date(subscription.nextPayment).toLocaleDateString('en-LK')}</div>
+                                    <div style={{ fontSize: '14px', color: 'var(--text)', marginBottom: '4px', fontWeight: '600' }}>Next Renewal</div>
+                                    <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text)' }}>{new Date(subscription.nextPayment).toLocaleDateString('en-LK')}</div>
                                 </div>
                             </div>
 
@@ -719,7 +719,7 @@ export const SubscriptionsPage = () => {
                     zIndex: 1000
                 }}>
                     <div style={{
-                        background: 'white',
+                        background: 'var(--card)',
                         borderRadius: '12px',
                         padding: '24px',
                         maxWidth: '500px',
@@ -737,7 +737,7 @@ export const SubscriptionsPage = () => {
                                         <div>
                                             <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px' }}>
                                                 <thead>
-                                                    <tr style={{ borderBottom: '2px solid #e5e7eb' }}>
+                                                    <tr style={{ borderBottom: '2px solid var(--border)' }}>
                                                         <th style={{ textAlign: 'left', padding: '8px', fontWeight: '600' }}>Alternative</th>
                                                         <th style={{ textAlign: 'center', padding: '8px', fontWeight: '600' }}>Price</th>
                                                         <th style={{ textAlign: 'right', padding: '8px', fontWeight: '600' }}>Savings</th>
@@ -745,10 +745,10 @@ export const SubscriptionsPage = () => {
                                                 </thead>
                                                 <tbody>
                                                     {alternatives.map((alt, idx) => (
-                                                        <tr key={idx} style={{ borderBottom: '1px solid #f3f4f6' }}>
+                                                        <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
                                                             <td style={{ padding: '12px 8px' }}>
                                                                 <div style={{ fontWeight: '500' }}>{alt.name}</div>
-                                                                <div style={{ fontSize: '12px', color: '#666' }}>{alt.provider}</div>
+                                                                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{alt.provider}</div>
                                                             </td>
                                                             <td style={{ textAlign: 'center', padding: '12px 8px', fontWeight: '600' }}>
                                                                 LKR {alt.price.toLocaleString()}
@@ -781,8 +781,8 @@ export const SubscriptionsPage = () => {
                                                     style={{
                                                         flex: 1,
                                                         padding: '10px',
-                                                        background: '#e5e7eb',
-                                                        color: '#1f2937',
+                                                        background: 'var(--card-hover)',
+                                                        color: 'var(--text)',
                                                         border: 'none',
                                                         borderRadius: '6px',
                                                         cursor: 'pointer',
@@ -819,7 +819,7 @@ export const SubscriptionsPage = () => {
                     zIndex: 1000
                 }}>
                     <div style={{
-                        background: 'white',
+                        background: 'var(--card)',
                         borderRadius: '12px',
                         padding: '24px',
                         maxWidth: '500px',
@@ -852,7 +852,7 @@ export const SubscriptionsPage = () => {
                                 style={{
                                     width: '100%',
                                     padding: '8px',
-                                    border: '1px solid #e5e7eb',
+                                    border: '1px solid var(--border)',
                                     borderRadius: '6px',
                                     fontSize: '14px'
                                 }}
@@ -886,8 +886,8 @@ export const SubscriptionsPage = () => {
                                 style={{
                                     flex: 1,
                                     padding: '10px',
-                                    background: '#e5e7eb',
-                                    color: '#1f2937',
+                                    background: 'var(--card-hover)',
+                                    color: 'var(--text)',
                                     border: 'none',
                                     borderRadius: '6px',
                                     cursor: 'pointer',

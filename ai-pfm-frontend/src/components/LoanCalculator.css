@@ -6,23 +6,23 @@
 
 .loan-calculator h2 {
     font-size: 1.875rem;
-    color: #e2e8f0;
+    color: var(--text);
     margin-bottom: 1.5rem;
     text-align: center;
 }
 
 .calculator-form {
-    background: #1e293b;
+    background: var(--card);
     padding: 2rem;
     border-radius: 0.75rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border);
 }
 
 .calculator-result {
-    background: #1e293b;
+    background: var(--card);
     padding: 2rem;
     border-radius: 0.75rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border);
 }
 
 /* Result Cards */
@@ -64,14 +64,14 @@
 .schedule-preview {
     margin: 2rem 0;
     padding: 1.5rem;
-    background-color: #0f172a;
+    background-color: var(--card-hover);
     border-radius: 0.75rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border);
 }
 
 .schedule-preview h3 {
     margin-top: 0;
-    color: #e2e8f0;
+    color: var(--text);
     margin-bottom: 1rem;
 }
 
@@ -82,15 +82,15 @@
 
 /* Full Schedule */
 .full-schedule {
-    background: #1e293b;
+    background: var(--card);
     padding: 2rem;
     border-radius: 0.75rem;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border);
 }
 
 .full-schedule h3 {
     font-size: 1.5rem;
-    color: #e2e8f0;
+    color: var(--text);
     margin-bottom: 1.5rem;
 }
 
@@ -126,7 +126,7 @@
 
 .schedule-header h2 {
     font-size: 1.875rem;
-    color: #e2e8f0;
+    color: var(--text);
     margin: 0;
 }
 
@@ -136,8 +136,8 @@
 }
 
 .filter-buttons .btn-small {
-    background-color: #334155;
-    color: #e2e8f0;
+    background-color: var(--card-hover);
+    color: var(--text);
 }
 
 .filter-buttons .btn-small.active {
@@ -165,12 +165,12 @@
 
 .debt-payoff-strategies h2 {
     font-size: 1.875rem;
-    color: #e2e8f0;
+    color: var(--text);
     margin-bottom: 0.5rem;
 }
 
 .subtitle {
-    color: #94a3b8;
+    color: var(--text-muted);
     margin-bottom: 2rem;
 }
 
@@ -203,7 +203,7 @@
 .strategy-header h3 {
     font-size: 1.25rem;
     margin: 0;
-    color: #e2e8f0;
+    color: var(--text);
 }
 
 .method-badge {
@@ -211,7 +211,7 @@
 }
 
 .description {
-    color: #94a3b8;
+    color: var(--text-muted);
     margin: 1rem 0;
     font-size: 0.875rem;
 }
@@ -221,7 +221,7 @@
     gap: 1rem;
     margin: 1.5rem 0;
     padding: 1.5rem;
-    background-color: #0f172a;
+    background-color: var(--card-hover);
     border-radius: 0.5rem;
 }
 
@@ -244,14 +244,14 @@
 
 .payment-order h4 {
     margin: 0 0 0.75rem 0;
-    color: #e2e8f0;
+    color: var(--text);
     font-size: 0.875rem;
 }
 
 .payment-order ol {
     margin: 0;
     padding-left: 1.5rem;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.875rem;
 }
 
@@ -265,24 +265,24 @@
     gap: 2rem;
     margin-top: 2rem;
     padding-top: 2rem;
-    border-top: 2px solid rgba(255, 255, 255, 0.1);
+    border-top: 2px solid var(--border);
 }
 
 .info-box {
     padding: 1.5rem;
-    background-color: #0f172a;
+    background-color: var(--card-hover);
     border-radius: 0.75rem;
     border-left: 4px solid #3b82f6;
 }
 
 .info-box h4 {
     margin: 0 0 0.75rem 0;
-    color: #e2e8f0;
+    color: var(--text);
 }
 
 .info-box p {
     margin: 0;
-    color: #94a3b8;
+    color: var(--text-muted);
     font-size: 0.875rem;
     line-height: 1.5;
 }
@@ -294,7 +294,7 @@
 
 .loan-alerts h2 {
     font-size: 1.5rem;
-    color: #e2e8f0;
+    color: var(--text);
     margin-bottom: 1.5rem;
 }
 
@@ -401,3 +401,4 @@
 .alert-dismiss:hover {
     opacity: 1;
 }
+
