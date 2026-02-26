@@ -170,14 +170,6 @@ export const Dashboard = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Ask AI Button Bar */}
-            <div className="ask-ai-bar">
-                <button className="ask-ai-button" onClick={() => setAiOpen(true)}>
-                    🤖 Ask AI
-                </button>
-            </div>
-
             {/* AI Assistant Modal */}
             <AIAssistant open={aiOpen} onOpenChange={setAiOpen} />
         </div>

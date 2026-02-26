@@ -48,10 +48,6 @@ export const FinancialHealthPage = () => {
         }
     };
 
-    const openAIAssistant = () => {
-        setAiOpen(true);
-    };
-
     const fetchPeerBenchmarks = async () => {
         try {
             const response = await apiClient.get('/financial-health/peer-benchmarks');
@@ -230,11 +226,6 @@ export const FinancialHealthPage = () => {
                         </div>
                     </div>
                 </div>
-            </div>
-            <div className="ask-ai-bar">
-                <button className="ask-ai-button" onClick={openAIAssistant}>
-                    🤖 Ask AI
-                </button>
             </div>
             <AIAssistant open={aiOpen} onOpenChange={setAiOpen} />
         </div>

@@ -19,6 +19,7 @@ import LoansPage from './components/LoansPage';
 import { CreditCardsPage } from './pages/CreditCardsPage';
 import { SubscriptionsPage } from './pages/SubscriptionsPage';
 import { SmartBudgetsPage } from './pages/SmartBudgetsPage';
+import { AIAssistant } from './components/AIAssistant';
 import './App.css';
 import './styles/UserPages.css';
 import './styles/FinancialPages.css';
@@ -35,6 +36,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 function App() {
   const isAuthenticated = !!localStorage.getItem('token');
   const [showAddTransactionModal, setShowAddTransactionModal] = useState(false);
+  const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth <= 768);
   const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth > 768);
   
@@ -157,6 +159,15 @@ function App() {
                     onClick={() => setShowAddTransactionModal(true)}
                   >
                     + New Transaction
+                  </button>
+                  <button
+                    type="button"
+                    className="header-ai-icon-button"
+                    aria-label="Open AI Assistant"
+                    title="AI Assistant"
+                    onClick={() => setIsAiAssistantOpen(true)}
+                  >
+                    <span className="header-ai-icon" aria-hidden="true">🤖</span>
                   </button>
                   <UserHeader />
                 </div>
@@ -317,6 +328,9 @@ function App() {
               />
             </Routes>
           </div>
+          {isAuthenticated && (
+            <AIAssistant open={isAiAssistantOpen} onOpenChange={setIsAiAssistantOpen} />
+          )}
           
           {/* Global Add Transaction Modal */}
           {showAddTransactionModal && <AddTransactionModal />}
