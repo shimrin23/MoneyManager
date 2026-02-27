@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-do
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Dashboard } from './components/Dashboard';
+import { TransactionList } from './components/TransactionList';
 import { AddTransactionForm } from './components/AddTransactionForm';
 import { UserHeader } from './components/UserHeader';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -116,6 +117,10 @@ function App() {
                     <span className="nav-icon">📊</span>
                     Dashboard
                   </NavLink>
+                  <NavLink to="/transactions" onClick={handleNavLinkClick} className={({ isActive }) => `nav-item${isActive ? ' dashboard-item' : ''}`}>
+                    <span className="nav-icon">Tx</span>
+                    Transactions
+                  </NavLink>
                   <NavLink to="/financial-health" onClick={handleNavLinkClick} className={({ isActive }) => `nav-item${isActive ? ' dashboard-item' : ''}`}>
                     <span className="nav-icon">🏥</span>
                     Health
@@ -203,6 +208,17 @@ function App() {
                   <ProtectedRoute>
                     <main className="page-content">
                       <Dashboard />
+                    </main>
+                  </ProtectedRoute>
+                } 
+              />
+
+              <Route 
+                path="/transactions" 
+                element={
+                  <ProtectedRoute>
+                    <main className="page-content">
+                      <TransactionList />
                     </main>
                   </ProtectedRoute>
                 } 
@@ -352,4 +368,5 @@ function App() {
 }
 
 export default App;
+
 
