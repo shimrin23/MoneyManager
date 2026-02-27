@@ -31,7 +31,7 @@ export const Dashboard = () => {
         const fetchTransactions = async () => {
             try {
                 const response = await apiClient.get('/transactions');
-                setTransactions(response.data.slice(0, 5)); // Get latest 5
+                setTransactions((response.data?.data ?? []).slice(0, 5)); // Get latest 5
             } catch (error) {
                 console.error("Failed to fetch transactions", error);
             } finally {
@@ -137,7 +137,7 @@ export const Dashboard = () => {
                                     </tr>
                                 ) : (
                                     transactions.map((transaction) => (
-                                        <tr key={transaction.id}>
+                                        <tr key={transaction._id || transaction.id}>
                                             <td>{formatDate(transaction.date)}</td>
                                             <td>{transaction.description}</td>
                                             <td>
