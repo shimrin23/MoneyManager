@@ -107,9 +107,9 @@ export const FinancialHealthPage = () => {
     if (loading) return <div className="loading">Analyzing your financial health...</div>;
 
     return (
-        <div className="page-container">
+        <div className="page-container financial-health-page">
             <div className="page-header">
-                <h1>💊 Financial Health</h1>
+                <h1>Financial Health</h1>
                 <p className="page-subtitle">AI-powered insights into your financial wellness</p>
             </div>
 
@@ -157,7 +157,7 @@ export const FinancialHealthPage = () => {
                 {/* Recommendations */}
                 {health.recommendations && health.recommendations.length > 0 && (
                     <div className="card recommendations-card full-width">
-                        <h3>💡 Personalized Recommendations</h3>
+                        <h3>Personalized Recommendations</h3>
                         <ul className="recommendations-list">
                             {health.recommendations.map((rec, index) => (
                                 <li key={index} className="recommendation-item">
@@ -171,7 +171,7 @@ export const FinancialHealthPage = () => {
 
                 {/* Peer Benchmarking */}
                 <div className="card peer-benchmarks-card full-width">
-                    <h3>📊 How You Compare to Peers</h3>
+                    <h3>How You Compare to Peers</h3>
                     <p className="benchmark-subtitle">Based on users with similar income levels</p>
                     <div className="benchmarks-grid">
                         {peerBenchmarks.map((benchmark, index) => (

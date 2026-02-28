@@ -89,14 +89,11 @@ function App() {
       <div className="modal-content" onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h2 className="modal-title">Add New Transaction</h2>
-          <button 
-            className="modal-close" 
-            onClick={() => setShowAddTransactionModal(false)}
-          >
-            ×
-          </button>
         </div>
-        <AddTransactionForm onTransactionAdded={handleTransactionAdded} />
+        <AddTransactionForm
+          onTransactionAdded={handleTransactionAdded}
+          onCancel={() => setShowAddTransactionModal(false)}
+        />
       </div>
     </div>
   );

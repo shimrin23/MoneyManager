@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { getLocalDateString, parseLocalDateString } from '../utils/date';
 
 interface DatePickerProps {
   value: string;
@@ -30,10 +31,14 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
   useEffect(() => {
     if (value) {
-      const date = new Date(value);
-      const formatted = formatDisplayDate(date);
-      setInputValue(formatted);
-      setCurrentMonth(date);
+      const parsedDate = parseInputDate(value);
+      if (parsedDate) {
+        const formatted = formatDisplayDate(parsedDate);
+        setInputValue(formatted);
+        setCurrentMonth(parsedDate);
+      } else {
+        setInputValue('');
+      }
     } else {
       setInputValue('');
     }
@@ -58,7 +63,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   };
 
   const formatInputDate = (date: Date): string => {
-    return date.toISOString().split('T')[0];
+    return getLocalDateString(date);
   };
 
   const parseInputDate = (input: string): Date | null => {
@@ -81,8 +86,15 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     // Try YYYY-MM-DD format
     const yyyymmdd = input.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
     if (yyyymmdd) {
-      const date = new Date(input);
-      if (!isNaN(date.getTime())) return date;
+      const normalizedInput = `${yyyymmdd[1]}-${yyyymmdd[2].padStart(2, '0')}-${yyyymmdd[3].padStart(2, '0')}`;
+      const parsed = parseLocalDateString(normalizedInput);
+      if (parsed) return parsed;
+    }
+
+    // Fallback for ISO timestamps (e.g., from backend)
+    const fallbackDate = new Date(input);
+    if (!isNaN(fallbackDate.getTime())) {
+      return fallbackDate;
     }
 
     return null;
@@ -132,9 +144,13 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   const handleInputBlur = () => {
     // If input is invalid, revert to the last valid value
     if (value) {
-      const date = new Date(value);
-      const formatted = formatDisplayDate(date);
-      setInputValue(formatted);
+      const parsedDate = parseInputDate(value);
+      if (parsedDate) {
+        const formatted = formatDisplayDate(parsedDate);
+        setInputValue(formatted);
+      } else {
+        setInputValue('');
+      }
     } else {
       setInputValue('');
     }
@@ -221,7 +237,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
   const isSelected = (dayObj: any): boolean => {
     if (!dayObj.isCurrentMonth || !value) return false;
-    const selectedDate = new Date(value);
+    const selectedDate = parseInputDate(value);
+    if (!selectedDate) return false;
     return (
       dayObj.day === selectedDate.getDate() &&
       currentMonth.getMonth() === selectedDate.getMonth() &&
