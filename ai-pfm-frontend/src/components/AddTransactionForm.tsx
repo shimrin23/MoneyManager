@@ -2,18 +2,21 @@
 import { useState } from 'react';
 import { apiClient } from '../api/client.ts';
 import { DatePicker } from './DatePicker';
+import { getLocalDateString } from '../utils/date';
 
 interface TransactionFormProps {
     onTransactionAdded: () => void;
+    onCancel?: () => void;
 }
 
-export const AddTransactionForm = ({ onTransactionAdded }: TransactionFormProps) => {
+export const AddTransactionForm = ({ onTransactionAdded, onCancel }: TransactionFormProps) => {
+    const today = getLocalDateString();
     const [formData, setFormData] = useState({
         amount: '',
         category: '',
         description: '',
         type: 'expense' as 'income' | 'expense',
-        date: new Date().toISOString().split('T')[0] // Today's date
+        date: today
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -78,7 +81,7 @@ export const AddTransactionForm = ({ onTransactionAdded }: TransactionFormProps)
                 category: '',
                 description: '',
                 type: 'expense',
-                date: new Date().toISOString().split('T')[0]
+                date: getLocalDateString()
             });
 
             // Notify parent component
@@ -183,19 +186,28 @@ export const AddTransactionForm = ({ onTransactionAdded }: TransactionFormProps)
                         value={formData.date}
                         onChange={(date) => setFormData(prev => ({ ...prev, date }))}
                         required
-                        maxDate={new Date().toISOString().split('T')[0]} // Can't select future dates
+                        maxDate={getLocalDateString()} // Can't select future dates
                         placeholder="Select transaction date"
                     />
                 </div>
 
-                {/* Submit Button */}
-                <button
-                    type="submit"
-                    className="btn-primary"
-                    disabled={loading}
-                >
-                    {loading ? 'Adding...' : `Add ${formData.type === 'expense' ? 'Expense' : 'Income'}`}
-                </button>
+                <div className="transaction-form-actions">
+                    <button
+                        type="button"
+                        className="secondary-btn cancel-btn"
+                        onClick={onCancel}
+                        disabled={loading}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        className="btn-primary submit-btn"
+                        disabled={loading}
+                    >
+                        {loading ? 'Adding...' : `Add ${formData.type === 'expense' ? 'Expense' : 'Income'}`}
+                    </button>
+                </div>
             </form>
         </div>
     );

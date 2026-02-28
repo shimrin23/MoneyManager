@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
 import { DatePicker } from '../components/DatePicker';
+import { getLocalDateString } from '../utils/date';
 
 interface Goal {
     _id?: string;
@@ -225,7 +226,7 @@ export const GoalsPage = () => {
                                     value={newGoal.deadline}
                                     onChange={(date) => setNewGoal({...newGoal, deadline: date})}
                                     required
-                                    minDate={new Date().toISOString().split('T')[0]} // Can't select past dates
+                                    minDate={getLocalDateString()} // Can't select past dates
                                     placeholder="Select target date"
                                 />
                             </div>
@@ -466,7 +467,7 @@ export const GoalsPage = () => {
                                     value={editingGoal.deadline}
                                     onChange={(date) => setEditingGoal({...editingGoal, deadline: date})}
                                     required
-                                    minDate={new Date().toISOString().split('T')[0]}
+                                    minDate={getLocalDateString()}
                                 />
                             </div>
 
