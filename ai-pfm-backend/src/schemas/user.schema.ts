@@ -5,6 +5,18 @@ export interface IUser extends Document {
   email: string;
   passwordHash: string;
   monthlyIncome?: number; // For loan-to-income ratio calculations
+  bankAccounts?: Array<{
+    accountId: string;
+    instrumentType?:
+      | "savings"
+      | "current"
+      | "credit_card"
+      | "fixed_deposit"
+      | "loan"
+      | "lease"
+      | "pawning";
+    isActive?: boolean;
+  }>;
 
   // Enhanced fields for BRD compliance
   pfmOptIn?: boolean; // Quick flag for PFM feature access
@@ -25,6 +37,25 @@ const UserSchema: Schema = new Schema(
     email: { type: String, required: true, unique: true },
     passwordHash: { type: String, required: true },
     monthlyIncome: { type: Number, default: 50000 }, // Default income for loan calculations
+    bankAccounts: [
+      {
+        accountId: { type: String, required: true },
+        instrumentType: {
+          type: String,
+          enum: [
+            "savings",
+            "current",
+            "credit_card",
+            "fixed_deposit",
+            "loan",
+            "lease",
+            "pawning",
+          ],
+          default: "savings",
+        },
+        isActive: { type: Boolean, default: true },
+      },
+    ],
 
     // Enhanced fields
     pfmOptIn: { type: Boolean, default: false, index: true },

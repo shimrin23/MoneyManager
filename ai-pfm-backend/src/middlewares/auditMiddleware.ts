@@ -33,7 +33,7 @@ export interface AuditMetadata {
 export const createAuditLog = async (
   userId: string | undefined,
   metadata: AuditMetadata,
-  request: Request,
+  request?: Request,
   status: "success" | "failure" | "warning" = "success",
   error?: any,
 ): Promise<void> => {
@@ -46,11 +46,11 @@ export const createAuditLog = async (
       status,
       severity: metadata.severity || "low",
       requestMetadata: {
-        ipAddress: request.ip || request.socket.remoteAddress,
-        userAgent: request.headers["user-agent"],
-        endpoint: request.path,
-        method: request.method,
-        requestId: (request as any).requestId,
+        ipAddress: request?.ip || request?.socket.remoteAddress,
+        userAgent: request?.headers["user-agent"],
+        endpoint: request?.path,
+        method: request?.method,
+        requestId: request ? (request as any).requestId : undefined,
       },
       changes: metadata.changes,
       error: error

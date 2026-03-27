@@ -1,22 +1,29 @@
 import { schedule } from 'node-cron';
-import { BankingIntegration } from '../integrations/banking.integration';
-// import { TransactionRepository } from '../repositories/transaction.repository'; 
+import transactionSyncService from '../services/transaction-sync.service';
 
-const bankingIntegration = new BankingIntegration();
-// const transactionRepository = new TransactionRepository();
+const DAILY_SYNC_CRON = process.env.BANK_SYNC_CRON || '0 0 * * *';
+const SYNC_ENABLED = process.env.BANK_SYNC_ENABLED !== 'false';
 
-schedule('0 0 * * *', async () => {
-    console.log(' Running scheduled daily bank sync...');
-    try {
-        // Use the class instance method
-        const bankData = await bankingIntegration.fetchAccountData('SOME_ACCOUNT_ID');
-        
-        console.log('Scheduled sync fetched data:', bankData);
-        
-        // TODO: Add logic here to save to your repository
-        // await transactionRepository.syncTransactions(bankData);
-        
-    } catch (error) {
-        console.error(' Scheduled sync failed:', error);
-    }
-});
+if (SYNC_ENABLED) {
+    schedule(DAILY_SYNC_CRON, async () => {
+        console.log('Running scheduled daily transaction sync...');
+        try {
+            const summary = await transactionSyncService.syncAllConsentedUsers();
+            console.log('Scheduled transaction sync completed:', {
+                usersProcessed: summary.usersProcessed,
+                usersSkipped: summary.usersSkipped,
+                usersFailed: summary.usersFailed,
+                accountsProcessed: summary.accountsProcessed,
+                inserted: summary.inserted,
+                updated: summary.updated,
+                failedAccounts: summary.failedAccounts,
+            });
+        } catch (error) {
+            console.error('Scheduled transaction sync failed:', error);
+        }
+    });
+
+    console.log(`Transaction sync scheduler enabled with cron: ${DAILY_SYNC_CRON}`);
+} else {
+    console.log('Transaction sync scheduler is disabled via BANK_SYNC_ENABLED=false');
+}
