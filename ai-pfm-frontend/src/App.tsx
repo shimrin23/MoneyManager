@@ -33,7 +33,8 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 function App() {
-  const isAuthenticated = !!localStorage.getItem('token');
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
+  const isAuthenticated = !!token;
   const [showAddTransactionModal, setShowAddTransactionModal] = useState(false);
   const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
@@ -49,6 +50,20 @@ function App() {
     setShowAddTransactionModal(false);
     window.location.reload();
   };
+
+  useEffect(() => {
+    const syncTokenFromStorage = () => setToken(localStorage.getItem('token'));
+
+    // NOTE: `storage` fires for changes from other tabs; `auth-changed` is a custom
+    // event we dispatch for same-tab login/logout flows.
+    window.addEventListener('storage', syncTokenFromStorage);
+    window.addEventListener('auth-changed', syncTokenFromStorage as EventListener);
+
+    return () => {
+      window.removeEventListener('storage', syncTokenFromStorage);
+      window.removeEventListener('auth-changed', syncTokenFromStorage as EventListener);
+    };
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
