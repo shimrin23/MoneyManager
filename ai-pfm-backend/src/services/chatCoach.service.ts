@@ -27,7 +27,7 @@ export class ChatCoachService {
 
     if (!this.apiKey) {
       throw new Error(
-        "❌ GEMINI_API_KEY is missing from environment variables",
+        " GEMINI_API_KEY is missing from environment variables",
       );
     }
   }
