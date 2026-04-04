@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from "uuid";
+import { randomUUID } from "crypto";
 import { ChatSession, ChatMessage, MessageRole } from "../types/chat.types";
 
 /**
@@ -17,7 +17,7 @@ export class ChatSessionService {
 
   createSession(userId: string): ChatSession {
     const session: ChatSession = {
-      sessionId: uuidv4(),
+      sessionId: randomUUID(),
       userId,
       messages: [],
       createdAt: new Date().toISOString(),
@@ -44,7 +44,7 @@ export class ChatSessionService {
     if (!session) throw new Error(`Session ${sessionId} not found`);
 
     const message: ChatMessage = {
-      id: uuidv4(),
+      id: randomUUID(),
       role,
       content,
       timestamp: new Date().toISOString(),

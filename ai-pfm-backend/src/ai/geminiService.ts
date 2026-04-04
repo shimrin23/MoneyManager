@@ -22,7 +22,7 @@ export class GeminiService {
 
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY || "";
-    this.model = process.env.GEMINI_MODEL || "gemini-1.5-pro";
+    this.model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
     this.maxTokens = Number(process.env.GEMINI_MAX_TOKENS) || 1024;
     this.temperature = Number(process.env.GEMINI_TEMPERATURE) || 0.7;
     this.apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
