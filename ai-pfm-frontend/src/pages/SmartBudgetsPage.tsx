@@ -188,8 +188,8 @@ export const SmartBudgetsPage = () => {
             <div className="card" style={{ marginBottom: '1.5rem' }}>
                 <h3>📊 Spending Trends</h3>
                 <div className="charts-grid">
-                    <BarChart data={budgets} />
-                    <PieChart data={budgets} />
+                    <BarChart data={chartData} />
+                    <PieChart data={chartData} />
                 </div>
             </div>
 
