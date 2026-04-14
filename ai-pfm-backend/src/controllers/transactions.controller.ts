@@ -2,9 +2,10 @@ import { Request, Response } from 'express';
 import { AuthRequest } from '../middlewares/authMiddleware';
 import TransactionsService from '../services/transactions.service';
 import { FinancialAgent } from '../ai/agent'; // Import the agent
-import { BankingIntegration } from '../integrations/banking.integration'; // Import this
 import { AnalyticsService } from '../services/analytics.service'; // Ensure this is imported
 import { FinancialHealthService } from '../services/financial-health.service';
+import transactionSyncService from '../services/transaction-sync.service';
+import { getBankingIntegrationRuntimeConfig } from '../integrations/banking.integration';
 
 export default class TransactionsController {
     private transactionsService: TransactionsService;
@@ -136,27 +137,85 @@ export default class TransactionsController {
     }
 
     // POST /api/transactions/sync
-    async syncBankAccount(req: Request, res: Response) {
+    async syncBankAccount(req: AuthRequest, res: Response) {
         try {
-            const bank = new BankingIntegration();
-            const newTransactions = await bank.fetchRecentTransactions();
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
 
-            // Save each transaction to the database using your existing Service
-            const savedTransactions = [];
-            for (const data of newTransactions) {
-                const saved = await this.transactionsService.create(data);
-                savedTransactions.push(saved);
+            const sourceAccounts = req.body?.sourceAccounts;
+            const result = await transactionSyncService.syncUser(userId, {
+                sourceAccounts: Array.isArray(sourceAccounts) ? sourceAccounts : undefined,
+                manualTrigger: true,
+            });
+
+            if (!result.consented) {
+                return res.status(403).json({
+                    error: 'PFM consent required',
+                    message: 'Grant PFM analysis consent before running transaction sync',
+                    consentType: 'pfm_analysis',
+                });
             }
 
             res.json({ 
-                message: 'Sync complete', 
-                transactions_added: savedTransactions.length,
-                data: savedTransactions
+                message: 'Sync complete',
+                data: result,
             });
 
+        } catch (error: any) {
+            console.error('Bank sync failed:', error);
+            res.status(500).json({
+                error: 'Bank sync failed',
+                message: error?.message || 'Unknown sync error',
+            });
+        }
+    }
+
+    // GET /api/transactions/sync/status
+    async getSyncStatus(req: AuthRequest, res: Response) {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+
+            const status = await transactionSyncService.getUserSyncStatus(userId);
+            res.json({ data: status });
         } catch (error) {
-            console.error(error);
-            res.status(500).json({ error: 'Bank sync failed' });
+            console.error('Error getting sync status:', error);
+            res.status(500).json({ error: 'Failed to fetch sync status' });
+        }
+    }
+
+    // GET /api/transactions/sync/health
+    async getSyncHealth(req: AuthRequest, res: Response) {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+
+            const bankingConfig = getBankingIntegrationRuntimeConfig();
+            const schedulerEnabled = process.env.BANK_SYNC_ENABLED !== 'false';
+            const schedulerCron = process.env.BANK_SYNC_CRON || '0 0 * * *';
+
+            res.status(200).json({
+                service: 'transaction-sync',
+                status: 'ok',
+                scheduler: {
+                    enabled: schedulerEnabled,
+                    cron: schedulerCron,
+                },
+                bankingIntegration: bankingConfig,
+                timestamp: new Date().toISOString(),
+            });
+        } catch (error) {
+            console.error('Error getting sync health:', error);
+            res.status(500).json({
+                error: 'Failed to fetch sync health',
+                message: (error as any)?.message || 'Unknown error',
+            });
         }
     }
 

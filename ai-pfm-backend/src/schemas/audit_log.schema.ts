@@ -98,7 +98,7 @@ const AuditLogSchema: Schema = new Schema(
       stack: String,
     },
     metadata: Schema.Types.Mixed,
-    timestamp: { type: Date, default: Date.now, index: true },
+    timestamp: { type: Date, default: Date.now },
   },
   {
     timestamps: false, // Using custom timestamp field

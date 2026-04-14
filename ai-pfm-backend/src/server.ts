@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import app from './index'; 
 import config from './config'; 
 import dotenv from 'dotenv';
+import './jobs/sync.bank';
 
 // Load env vars
 dotenv.config();
