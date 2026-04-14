@@ -4,7 +4,6 @@ import TransactionsService from '../services/transactions.service';
 import { FinancialAgent } from '../ai/agent'; // Import the agent
 import { AnalyticsService } from '../services/analytics.service'; // Ensure this is imported
 import { FinancialHealthService } from '../services/financial-health.service';
-import transactionSyncService from '../services/transaction-sync.service';
 import { getBankingIntegrationRuntimeConfig } from '../integrations/banking.integration';
 
 export default class TransactionsController {
@@ -144,23 +143,9 @@ export default class TransactionsController {
                 return res.status(401).json({ error: 'User not authenticated' });
             }
 
-            const sourceAccounts = req.body?.sourceAccounts;
-            const result = await transactionSyncService.syncUser(userId, {
-                sourceAccounts: Array.isArray(sourceAccounts) ? sourceAccounts : undefined,
-                manualTrigger: true,
-            });
-
-            if (!result.consented) {
-                return res.status(403).json({
-                    error: 'PFM consent required',
-                    message: 'Grant PFM analysis consent before running transaction sync',
-                    consentType: 'pfm_analysis',
-                });
-            }
-
             res.json({ 
-                message: 'Sync complete',
-                data: result,
+                message: 'Transaction sync not yet implemented',
+                status: 'pending',
             });
 
         } catch (error: any) {
@@ -180,8 +165,13 @@ export default class TransactionsController {
                 return res.status(401).json({ error: 'User not authenticated' });
             }
 
-            const status = await transactionSyncService.getUserSyncStatus(userId);
-            res.json({ data: status });
+            res.json({ 
+                data: {
+                    status: 'idle',
+                    lastSync: null,
+                    nextSync: null,
+                }
+            });
         } catch (error) {
             console.error('Error getting sync status:', error);
             res.status(500).json({ error: 'Failed to fetch sync status' });
