@@ -8,13 +8,13 @@ export interface IAuditLog extends Document {
   userId?: string;
   action: string; // e.g., 'RECOMMENDATION_CREATED', 'CONSENT_GRANTED', 'TRANSACTION_PROCESSED'
   resourceType:
-    | "transaction"
-    | "recommendation"
-    | "consent"
-    | "user"
-    | "goal"
-    | "loan"
-    | "admin_config";
+  | "transaction"
+  | "recommendation"
+  | "consent"
+  | "user"
+  | "goal"
+  | "loan"
+  | "admin_config";
   resourceId?: string;
   status: "success" | "failure" | "warning";
   severity: "low" | "medium" | "high" | "critical";

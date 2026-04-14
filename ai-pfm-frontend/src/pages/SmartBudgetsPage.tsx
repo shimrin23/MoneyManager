@@ -16,6 +16,54 @@ interface Budget {
     };
 }
 
+const BarChart = ({ data }: { data: { category: string; value: number }[] }) => {
+    const max = Math.max(...data.map(d => d.value), 1);
+    return (
+        <div className="bar-chart">
+            {data.map((d) => (
+                <div key={d.category} className="bar-row">
+                    <span className="bar-label">{d.category}</span>
+                    <div className="bar-track">
+                        <div className="bar-fill" style={{ width: `${(d.value / max) * 100}%` }} />
+                    </div>
+                    <span className="bar-value">LKR {d.value.toLocaleString()}</span>
+                </div>
+            ))}
+        </div>
+    );
+};
+
+const PieChart = ({ data }: { data: { category: string; value: number }[] }) => {
+    const total = data.reduce((sum, d) => sum + d.value, 0) || 1;
+    let cumulative = 0;
+    const segments = data.map((d) => {
+        const start = cumulative;
+        cumulative += d.value / total * 100;
+        const end = cumulative;
+        return { category: d.category, start, end };
+    });
+
+    const gradient = segments
+        .map((seg, idx) => `${pieColors[idx % pieColors.length]} ${seg.start}% ${seg.end}%`)
+        .join(', ');
+
+    return (
+        <div className="pie-chart">
+            <div className="pie" style={{ background: `conic-gradient(${gradient})` }} />
+            <div className="pie-legend">
+                {segments.map((s, idx) => (
+                    <div key={s.category} className="legend-row">
+                        <span className="legend-swatch" style={{ background: pieColors[idx % pieColors.length] }} />
+                        <span>{s.category}</span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
+const pieColors = ['#6ee7b7', '#fbbf24', '#60a5fa', '#f87171', '#a78bfa', '#34d399'];
+
 export const SmartBudgetsPage = () => {
     const [budgets, setBudgets] = useState<Budget[]>([]);
     const [loading, setLoading] = useState(true);
@@ -123,6 +171,8 @@ export const SmartBudgetsPage = () => {
         alert(`Setting spending alert for ${category}...`);
     };
 
+    const chartData = budgets.map((b) => ({ category: b.category, value: b.spentAmount }));
+
     if (loading) {
         return <div className="loading-spinner">Loading smart budgets...</div>;
     }
@@ -132,6 +182,15 @@ export const SmartBudgetsPage = () => {
             <div className="page-header">
                 <h1>🧠 Smart Budgets</h1>
                 <p className="page-subtitle">AI-generated budgets based on your income and spending patterns</p>
+            </div>
+
+            {/* Spending Trends Charts */}
+            <div className="card" style={{ marginBottom: '1.5rem' }}>
+                <h3>📊 Spending Trends</h3>
+                <div className="charts-grid">
+                    <BarChart data={chartData} />
+                    <PieChart data={chartData} />
+                </div>
             </div>
 
             {/* Budget Summary */}
@@ -209,15 +268,15 @@ export const SmartBudgetsPage = () => {
                                 )}
                             </div>
                         </div>
-                        
+
                         <div className="budget-progress">
                             <div className="progress-bar">
-                                <div 
+                                <div
                                     className={`progress-fill ${budget.isOverBudget ? 'over' : ''}`}
                                     style={{ width: `${Math.min(budget.percentageUsed, 100)}%` }}
                                 ></div>
                                 {budget.percentageUsed > 100 && (
-                                    <div 
+                                    <div
                                         className="progress-overflow"
                                         style={{ width: `${budget.percentageUsed - 100}%` }}
                                     ></div>
@@ -231,34 +290,34 @@ export const SmartBudgetsPage = () => {
                                 </span>
                             </div>
                         </div>
-                        
+
                         <div className="budget-details">
                             <div className="remaining">
                                 <span className={budget.remainingAmount >= 0 ? 'positive' : 'negative'}>
-                                    {budget.remainingAmount >= 0 ? 'Remaining' : 'Over by'}: 
+                                    {budget.remainingAmount >= 0 ? 'Remaining' : 'Over by'}:
                                     LKR {Math.abs(budget.remainingAmount).toLocaleString()}
                                 </span>
                             </div>
                             <div className="trends">
                                 <span className={`trend ${budget.trends.change > 0 ? 'up' : 'down'}`}>
-                                    {budget.trends.change > 0 ? '📈' : '📉'} 
+                                    {budget.trends.change > 0 ? '📈' : '📉'}
                                     {Math.abs(budget.trends.change).toFixed(1)}% vs last month
                                 </span>
                             </div>
                         </div>
-                        
+
                         <div className="ai-recommendation">
                             <p>💡 <strong>AI Recommendation:</strong> {budget.aiRecommendation}</p>
                         </div>
-                        
+
                         <div className="budget-actions">
-                            <button 
+                            <button
                                 className="action-btn primary"
                                 onClick={() => handleOptimizeBudget(budget.category)}
                             >
                                 🎯 Optimize
                             </button>
-                            <button 
+                            <button
                                 className="action-btn secondary"
                                 onClick={() => handleSetAlert(budget.category)}
                             >
