@@ -10,7 +10,10 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-describe("Admin Configuration API - Integration Tests", () => {
+// Skip integration tests in CI environment (no MongoDB available)
+const describeIntegration = process.env.CI ? describe.skip : describe;
+
+describeIntegration("Admin Configuration API - Integration Tests", () => {
   // Test data
   let testConfigId: string;
   const testConfig: Partial<IAdminConfig> = {
