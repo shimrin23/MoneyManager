@@ -156,6 +156,7 @@ class MockTransactionModel {
     let upsertedCount = 0;
     let modifiedCount = 0;
     let matchedCount = 0;
+    let recurringOps = 0;
 
     for (const op of operations) {
       const filter = op.updateOne.filter;
@@ -178,8 +179,10 @@ class MockTransactionModel {
         });
         upsertedCount += 1;
       }
+      if (updateSet && updateSet.isRecurring) recurringOps += 1;
     }
 
+    // recurringOps debug removed
     return {
       upsertedCount,
       modifiedCount,
@@ -281,6 +284,7 @@ jest.mock("../../src/schemas/subscription.schema", () => ({
   default: {
     async findOneAndUpdate(filter: any, update: any, options: any) {
       const provider = filter.provider;
+      // subscription upsert called (mock)
       let existing = subscriptions.find((s) => s.userId === filter.userId && s.provider === provider);
       if (!existing) {
         existing = { _id: `sub-${subscriptions.length + 1}`, userId: filter.userId, provider };
@@ -346,6 +350,8 @@ describe("Transaction Sync Flow Integration", () => {
       .send({ sourceAccounts: ["ACC-INT-001"] });
 
     expect(firstSyncResponse.status).toBe(200);
+
+    
 
     // Verify transactions were inserted into the mocked transaction store
     expect(transactions.length).toBeGreaterThan(0);
