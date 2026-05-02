@@ -2,6 +2,10 @@ import AdminConfig, { IAdminConfig } from "../schemas/admin_config.schema";
 import { createAuditLog } from "../middlewares/auditMiddleware";
 import { Request } from "express";
 
+type CreateConfigInput = Omit<Partial<IAdminConfig>, "configType"> & {
+  configType?: IAdminConfig["configType"] | string;
+};
+
 /**
  * Admin Configuration Service - BRD Section 2.4 (Administrative Portal Controls)
  * Manages system-wide configurations for PFM features
@@ -11,7 +15,7 @@ export class AdminConfigService {
    * Create a new configuration
    */
   async createConfig(
-    configData: Partial<IAdminConfig>,
+    configData: CreateConfigInput,
     createdBy: string,
     request?: Request,
   ): Promise<IAdminConfig> {
@@ -215,9 +219,9 @@ export class AdminConfigService {
    */
   async getConfigHistory(
     configKey: string,
-  ): Promise<IAdminConfig["previousVersions"]> {
+  ): Promise<NonNullable<IAdminConfig["previousVersions"]>> {
     const config = await AdminConfig.findOne({ configKey });
-    return config?.previousVersions || [];
+    return (config?.previousVersions || []) as NonNullable<IAdminConfig["previousVersions"]>;
   }
 
   /**
