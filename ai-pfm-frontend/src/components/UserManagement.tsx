@@ -313,9 +313,7 @@ export const UserManagement = () => {
                                     <div className="role-selector">
                                         <select
                                             value={selectedUser.status}
-                                            onChange={(e) =>
-                                                handleToggleStatus(selectedUser.id, selectedUser.status)
-                                            }
+                                            onChange={() => handleToggleStatus(selectedUser.id, selectedUser.status)}
                                             disabled={actionLoading}
                                         >
                                             <option value="active">Active</option>
