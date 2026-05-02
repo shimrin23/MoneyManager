@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18]
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install backend deps
+        working-directory: ai-pfm-backend
+        run: npm ci
+
+      - name: Backend build
+        working-directory: ai-pfm-backend
+        run: npm run build --if-present
+
+      - name: Backend tests
+        working-directory: ai-pfm-backend
+        run: npm test
+
+      - name: Install frontend deps
+        working-directory: ai-pfm-frontend
+        run: npm ci
+
+      - name: Frontend build
+        working-directory: ai-pfm-frontend
+        run: npm run build --if-present
+
+      - name: Secret scan (trufflehog)
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          extra_args: --only-verified

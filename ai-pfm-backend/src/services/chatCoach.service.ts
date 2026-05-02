@@ -8,6 +8,19 @@ import {
   formatChatHistory,
 } from "../ai/prompts/chatCoach.prompt";
 import { ChatSessionService } from "./chatSession.service";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+function isPlaceholderGeminiKey(apiKey: string): boolean {
+  const normalizedKey = apiKey.trim().toLowerCase();
+  return (
+    normalizedKey.length === 0 ||
+    normalizedKey.startsWith("your_") ||
+    normalizedKey.includes("api_key_here") ||
+    normalizedKey.includes("gemini_api_key_here")
+  );
+}
 
 export class ChatCoachService {
   private readonly apiKey: string;
@@ -19,15 +32,15 @@ export class ChatCoachService {
 
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY || "";
-    this.model = process.env.GEMINI_MODEL || "gemini-1.5-pro";
+    this.model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
     this.maxTokens = Number(process.env.GEMINI_MAX_TOKENS) || 1024;
     this.temperature = Number(process.env.GEMINI_TEMPERATURE) || 0.7;
     this.apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
     this.sessionService = new ChatSessionService();
 
-    if (!this.apiKey) {
+    if (isPlaceholderGeminiKey(this.apiKey)) {
       throw new Error(
-        "❌ GEMINI_API_KEY is missing from environment variables",
+        "GEMINI_API_KEY is missing or still set to a placeholder. Add a valid Gemini API key to ai-pfm-backend/.env and restart the backend.",
       );
     }
   }
@@ -89,8 +102,19 @@ export class ChatCoachService {
 
     if (!response.ok) {
       const error = await response.json();
+      const message = error?.error?.message || response.statusText;
+
+      if (
+        String(message).includes("API key not valid") ||
+        error?.error?.status === "API_KEY_INVALID"
+      ) {
+        throw new Error(
+          "Gemini rejected the API key. Check ai-pfm-backend/.env and set GEMINI_API_KEY to a valid Google Gemini key, then restart the backend.",
+        );
+      }
+
       throw new Error(
-        `Gemini API Error: ${error?.error?.message || response.statusText}`,
+        `Gemini API Error: ${message}`,
       );
     }
 

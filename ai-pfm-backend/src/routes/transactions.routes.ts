@@ -28,6 +28,12 @@ router.get(
   transactionsController.getAllTransactions.bind(transactionsController),
 );
 
+// GET /api/transactions/score
+router.get(
+  "/score",
+  transactionsController.getHealthScore.bind(transactionsController),
+);
+
 // GET /api/transactions/analysis
 router.get(
   "/analysis",
@@ -40,6 +46,18 @@ router.get(
   transactionsController.getSimulatedFeed.bind(transactionsController),
 );
 
+// GET /api/transactions/sync/status
+router.get(
+  "/sync/status",
+  transactionsController.getSyncStatus.bind(transactionsController),
+);
+
+// GET /api/transactions/sync/health
+router.get(
+  "/sync/health",
+  transactionsController.getSyncHealth.bind(transactionsController),
+);
+
 // POST /api/transactions/ai-research
 router.post(
   "/ai-research",
@@ -50,18 +68,6 @@ router.post(
 router.post(
   "/sync",
   transactionsController.syncBankAccount.bind(transactionsController),
-);
-
-// GET /api/transactions/subscriptions
-router.get(
-  "/subscriptions",
-  transactionsController.getSubscriptions.bind(transactionsController),
-);
-
-// GET /api/transactions/score
-router.get(
-  "/score",
-  transactionsController.getHealthScore.bind(transactionsController),
 );
 
 // GET /api/transactions/:id

@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { AuthRequest } from "../middlewares/authMiddleware";
 import TransactionsService from "../services/transactions.service";
 import { FinancialAgent } from "../ai/agent"; // Import the agent
-import { BankingIntegration } from "../integrations/banking.integration"; // Import this
+import { BankingIntegration, getBankingIntegrationRuntimeConfig } from "../integrations/banking.integration";
 import { AnalyticsService } from "../services/analytics.service"; // Ensure this is imported
 import { FinancialHealthService } from "../services/financial-health.service";
 import { SimulatedBankFeedService } from "../services/simulated-bank-feed.service";
@@ -33,10 +33,21 @@ export default class TransactionsController {
       const transactionData = req.body;
 
       // Basic validation
-      if (!transactionData.amount || !transactionData.category) {
+      if (
+        transactionData.amount === undefined ||
+        transactionData.amount === null ||
+        !transactionData.category
+      ) {
         return res
           .status(400)
           .json({ error: "Amount and Category are required" });
+      }
+
+      if (
+        typeof transactionData.amount !== "number" ||
+        !Number.isFinite(transactionData.amount)
+      ) {
+        return res.status(400).json({ error: "Amount must be a finite number" });
       }
 
       // Add userId to transaction data
@@ -150,7 +161,7 @@ export default class TransactionsController {
   async syncBankAccount(req: Request, res: Response) {
     try {
       const authReq = req as AuthRequest;
-      const feed = this.bankFeedService.generateFeed({
+      const feed = await this.bankFeedService.generateFeed({
         userId: authReq.user?.id || "simulated-user",
         accountId: req.body?.accountId ? String(req.body.accountId) : undefined,
         accountName: req.body?.accountName
@@ -184,6 +195,58 @@ export default class TransactionsController {
     }
   }
 
+  // GET /api/transactions/sync/status
+  async getSyncStatus(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      res.json({
+        data: {
+          status: "idle",
+          lastSync: null,
+          nextSync: null,
+        },
+      });
+    } catch (error) {
+      console.error("Error getting sync status:", error);
+      res.status(500).json({ error: "Failed to fetch sync status" });
+    }
+  }
+
+  // GET /api/transactions/sync/health
+  async getSyncHealth(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const bankingConfig = getBankingIntegrationRuntimeConfig();
+      const schedulerEnabled = process.env.BANK_SYNC_ENABLED !== "false";
+      const schedulerCron = process.env.BANK_SYNC_CRON || "0 0 * * *";
+
+      res.status(200).json({
+        service: "transaction-sync",
+        status: "ok",
+        scheduler: {
+          enabled: schedulerEnabled,
+          cron: schedulerCron,
+        },
+        bankingIntegration: bankingConfig,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error("Error getting sync health:", error);
+      res.status(500).json({
+        error: "Failed to fetch sync health",
+        message: (error as any)?.message || "Unknown error",
+      });
+    }
+  }
+
   // GET /api/transactions/simulated-feed
   async getSimulatedFeed(req: AuthRequest, res: Response) {
     try {
@@ -192,7 +255,7 @@ export default class TransactionsController {
         return res.status(401).json({ error: "User not authenticated" });
       }
 
-      const feed = this.bankingIntegration.generateSimulatedFeed({
+      const feed = await this.bankingIntegration.generateSimulatedFeed({
         userId,
         accountId: req.query.accountId
           ? String(req.query.accountId)
@@ -216,7 +279,6 @@ export default class TransactionsController {
     }
   }
 
-  // --- ADD THIS NEW METHOD ---
   // GET /api/transactions/score
   async getHealthScore(req: AuthRequest, res: Response) {
     try {
@@ -235,7 +297,6 @@ export default class TransactionsController {
       res.status(500).json({ error: "Failed to calculate health score" });
     }
   }
-  // ---------------------------
 
   // GET /api/transactions/subscriptions
   async getSubscriptions(req: AuthRequest, res: Response) {

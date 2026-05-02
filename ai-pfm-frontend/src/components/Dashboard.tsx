@@ -31,7 +31,7 @@ export const Dashboard = () => {
         const fetchTransactions = async () => {
             try {
                 const response = await apiClient.get('/transactions');
-                setTransactions(response.data.slice(0, 5)); // Get latest 5
+                setTransactions((response.data?.data ?? []).slice(0, 5)); // Get latest 5
             } catch (error) {
                 console.error("Failed to fetch transactions", error);
             } finally {
@@ -46,6 +46,18 @@ export const Dashboard = () => {
         if (s >= 70) return 'var(--success)'; // Green
         if (s >= 40) return '#facc15';       // Yellow
         return 'var(--danger)';              // Red
+    };
+
+    const getStatusLabel = (s: number) => {
+        if (s >= 70) return 'Excellent';
+        if (s >= 40) return 'Needs Work';
+        return 'Critical';
+    };
+
+    const getRiskLevel = (s: number) => {
+        if (s >= 70) return 'Low';
+        if (s >= 40) return 'Medium';
+        return 'High';
     };
 
     // Helper to format date
@@ -72,33 +84,56 @@ export const Dashboard = () => {
                 </div>
             </div>
 
-            <div className="dashboard-layout" style={{ padding: '1.5rem', maxWidth: '100%' }}>
+            <div className="dashboard-layout dashboard-modern">
                 {/* Top Row: Health Score & Cash Flow */}
                 <div className="dashboard-top-row">
                     {/* Financial Health Score Card */}
                     <div className="card health-score-card">
-                    <h3>💚 Financial Health Score</h3>
-                    <div className="score-display">
-                        <div 
-                            className="score-circle"
-                            style={{
-                                background: `conic-gradient(${getScoreColor(score)} ${score * 3.6}deg, rgba(255,255,255,0.1) 0deg)`
-                            }}
-                        >
-                            <span className="score-number">{loadingScore ? "..." : score}</span>
-                            <span className="score-label">/ 100</span>
+                        <div className="score-card-header">
+                            <div className="score-card-icon">♡</div>
+                            <h3>Financial Health Score</h3>
                         </div>
-                        <div className="score-status">
-                            <span className="status-text">
-                                {score >= 70 ? "Excellent 🎉" : score >= 40 ? "Needs Work ⚠️" : "Critical 🚨"}
-                            </span>
-                            <p className="status-description">
-                                {score >= 70 ? "Great financial habits!" : 
-                                 score >= 40 ? "Room for improvement" : "Immediate attention needed"}
-                            </p>
+
+                        <div className="score-display">
+                            <div 
+                                className="score-circle"
+                                style={{
+                                    background: `conic-gradient(${getScoreColor(score)} ${score * 3.6}deg, rgba(71, 85, 105, 0.55) 0deg)`
+                                }}
+                            >
+                                <div className="score-inner">
+                                    <span className="score-number">{loadingScore ? "..." : score}</span>
+                                    <span className="score-label">/ 100</span>
+                                </div>
+                            </div>
+
+                            <div className="score-status">
+                                <span className={`status-text status-${getRiskLevel(score).toLowerCase()}`}>
+                                    <span className="status-dot">●</span>
+                                    {getStatusLabel(score)}
+                                </span>
+                                <p className="status-description">
+                                    {score >= 70 ? "Great financial habits" : 
+                                     score >= 40 ? "Room for improvement" : "Immediate attention needed"}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="score-stats-grid">
+                            <div className="score-stat-item">
+                                <span className="score-stat-value">—</span>
+                                <span className="score-stat-label">Savings</span>
+                            </div>
+                            <div className="score-stat-item">
+                                <span className="score-stat-value">{loadingScore ? '...' : `${score}%`}</span>
+                                <span className="score-stat-label">Score</span>
+                            </div>
+                            <div className="score-stat-item">
+                                <span className="score-stat-value">{getRiskLevel(score)}</span>
+                                <span className="score-stat-label">Risk</span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
                     {/* Cash Flow Forecast Card */}
                     <CashFlowForecast />
@@ -137,7 +172,7 @@ export const Dashboard = () => {
                                     </tr>
                                 ) : (
                                     transactions.map((transaction) => (
-                                        <tr key={transaction.id}>
+                                        <tr key={transaction._id || transaction.id}>
                                             <td>{formatDate(transaction.date)}</td>
                                             <td>{transaction.description}</td>
                                             <td>

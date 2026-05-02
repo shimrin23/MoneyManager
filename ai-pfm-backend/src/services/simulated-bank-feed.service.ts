@@ -391,7 +391,7 @@ export class SimulatedBankFeedService {
     const accountId =
       options.accountId || `acct-${this.slug(userId).slice(0, 8)}`;
     const accountName = options.accountName || "Primary Checking";
-    const currency = options.currency || "$";
+    const currency = options.currency || "USD";
     const seed =
       options.seed ||
       [

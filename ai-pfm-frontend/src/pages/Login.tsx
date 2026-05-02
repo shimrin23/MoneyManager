@@ -23,6 +23,7 @@ export const Login = () => {
             
             // Save Token
             localStorage.setItem('token', res.data.token);
+            window.dispatchEvent(new Event('auth-changed'));
             
             // Redirect to Dashboard
             navigate('/dashboard');
