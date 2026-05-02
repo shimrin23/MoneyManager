@@ -1102,3 +1102,469 @@
 [data-theme='light'] .financial-health-page .insight-content p {
     color: #475569;
 }
+
+/* Connect Bank Account UI Flow Styles */
+
+/* Stepper Component */
+.stepper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 0 1rem;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+    position: relative;
+}
+
+.step::after {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    z-index: 0;
+}
+
+.step:last-child::after {
+    display: none;
+}
+
+.step.active::after,
+.step:last-child.active::after {
+    background: var(--accent);
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    z-index: 1;
+    transition: all 0.3s ease;
+}
+
+.step.active .step-number {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+}
+
+.step-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-align: center;
+    max-width: 100px;
+}
+
+.step.active .step-label {
+    color: var(--text);
+    font-weight: 600;
+}
+
+/* Form Grid Layout */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-field span {
+    color: var(--text);
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-field input::placeholder,
+.form-field select::placeholder {
+    color: var(--text-muted);
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-field select {
+    cursor: pointer;
+    appearance: none;
+    padding-right: 2rem;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e2e8f0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25rem;
+}
+
+/* Button Actions Container */
+.actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.actions button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+
+.primary {
+    background: var(--accent);
+    color: white;
+    border: 1px solid var(--accent);
+}
+
+.primary:hover:not(:disabled) {
+    background: rgba(59, 130, 246, 0.8);
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+    transform: translateY(-2px);
+}
+
+.primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.secondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+.secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Progress Bar */
+.progress {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 1rem 0;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), rgba(59, 130, 246, 0.7));
+    border-radius: 3px;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+/* Confirmation Section */
+.form-grid > div:not(.actions) {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-grid > div:not(.actions) p {
+    color: var(--text);
+    margin: 0.5rem 0;
+    line-height: 1.6;
+}
+
+.form-grid > div:not(.actions) strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+/* Summary Section */
+.form-grid h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.3rem;
+    color: var(--text);
+}
+
+/* Responsive Stepper */
+@media (max-width: 768px) {
+    .stepper {
+        padding: 0;
+        gap: 0.5rem;
+    }
+
+    .step::after {
+        width: 100%;
+    }
+
+    .step-number {
+        width: 36px;
+        height: 36px;
+        font-size: 0.9rem;
+    }
+
+    .step-label {
+        font-size: 0.75rem;
+        max-width: 80px;
+    }
+
+    .actions {
+        flex-direction: column-reverse;
+    }
+
+    .actions button {
+        width: 100%;
+    }
+}
+
+/* Light mode Connect Bank Account styles */
+[data-theme='light'] .stepper {
+    padding: 0 1rem;
+}
+
+[data-theme='light'] .step-number {
+    background: rgba(15, 23, 42, 0.05);
+    color: #475569;
+    border-color: rgba(15, 23, 42, 0.15);
+}
+
+[data-theme='light'] .step.active .step-number {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
+}
+
+[data-theme='light'] .step-label {
+    color: #64748b;
+}
+
+[data-theme='light'] .step.active .step-label {
+    color: #0f172a;
+}
+
+[data-theme='light'] .form-field span {
+    color: #0f172a;
+}
+
+[data-theme='light'] .form-field input,
+[data-theme='light'] .form-field select,
+[data-theme='light'] .form-field textarea {
+    border-color: rgba(15, 23, 42, 0.15);
+    background: rgba(15, 23, 42, 0.03);
+    color: #0f172a;
+}
+
+[data-theme='light'] .form-field input::placeholder,
+[data-theme='light'] .form-field select::placeholder {
+    color: #94a3b8;
+}
+
+[data-theme='light'] .form-field input:focus,
+[data-theme='light'] .form-field select:focus,
+[data-theme='light'] .form-field textarea:focus {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.05);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+[data-theme='light'] .secondary {
+    border-color: rgba(15, 23, 42, 0.2);
+    color: #0f172a;
+}
+
+[data-theme='light'] .secondary:hover:not(:disabled) {
+    background: rgba(15, 23, 42, 0.05);
+    border-color: rgba(15, 23, 42, 0.3);
+}
+
+[data-theme='light'] .form-grid > div:not(.actions) p,
+[data-theme='light'] .form-grid > div:not(.actions) strong,
+[data-theme='light'] .form-grid h3 {
+    color: #0f172a;
+}
+
+/* Admin Dashboard page (route: /admin) */
+.admin-dashboard-page .admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.admin-dashboard-page .admin-stat-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 0.9rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.admin-dashboard-page .admin-stat-label {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.admin-dashboard-page .admin-stat-value {
+    color: var(--text);
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.admin-dashboard-page .admin-section {
+    padding: 1rem;
+}
+
+.admin-dashboard-page .admin-section-header {
+    margin-bottom: 0.75rem;
+}
+
+.admin-dashboard-page .admin-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+}
+
+.admin-dashboard-page .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 760px;
+}
+
+.admin-dashboard-page .admin-table th {
+    text-align: left;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    font-weight: 700;
+    padding: 0.85rem 0.9rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.admin-dashboard-page .admin-table td {
+    padding: 0.85rem 0.9rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    color: var(--text);
+    vertical-align: middle;
+}
+
+.admin-dashboard-page .admin-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.admin-dashboard-page .admin-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.admin-dashboard-page .admin-cell-strong {
+    font-weight: 600;
+}
+
+.admin-dashboard-page .admin-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+.admin-dashboard-page .admin-status-badge.is-success {
+    color: #16a34a;
+    background: rgba(22, 163, 74, 0.16);
+}
+
+.admin-dashboard-page .admin-status-badge.is-danger {
+    color: #dc2626;
+    background: rgba(220, 38, 38, 0.16);
+}
+
+.admin-dashboard-page .admin-action-btn {
+    min-width: 110px;
+}
+
+@media (max-width: 768px) {
+    .admin-dashboard-page .admin-section {
+        padding: 0.8rem;
+    }
+
+    .admin-dashboard-page .admin-table {
+        min-width: 680px;
+    }
+}
+
+[data-theme='light'] .admin-dashboard-page .admin-stat-card {
+    background: rgba(15, 23, 42, 0.03);
+    border-color: rgba(15, 23, 42, 0.12);
+}
+
+[data-theme='light'] .admin-dashboard-page .admin-table-wrapper {
+    border-color: rgba(15, 23, 42, 0.12);
+}
+
+[data-theme='light'] .admin-dashboard-page .admin-table th {
+    background: rgba(15, 23, 42, 0.03);
+    border-bottom-color: rgba(15, 23, 42, 0.12);
+}
+
+[data-theme='light'] .admin-dashboard-page .admin-table td {
+    border-bottom-color: rgba(15, 23, 42, 0.08);
+}
+
+[data-theme='light'] .admin-dashboard-page .admin-table tbody tr:hover {
+    background: rgba(15, 23, 42, 0.02);
+}
