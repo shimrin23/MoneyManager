@@ -6,6 +6,7 @@ import { BankingIntegration, getBankingIntegrationRuntimeConfig } from "../integ
 import { AnalyticsService } from "../services/analytics.service"; // Ensure this is imported
 import { FinancialHealthService } from "../services/financial-health.service";
 import { SimulatedBankFeedService } from "../services/simulated-bank-feed.service";
+import transactionSyncService from "../services/transaction-sync.service";
 
 export default class TransactionsController {
   private transactionsService: TransactionsService;
@@ -161,6 +162,12 @@ export default class TransactionsController {
   async syncBankAccount(req: Request, res: Response) {
     try {
       const authReq = req as AuthRequest;
+      // If caller supplied sourceAccounts (manual trigger), use the batch TransactionSyncService
+      if (req.body?.sourceAccounts && Array.isArray(req.body.sourceAccounts)) {
+        const userId = authReq.user?.id || String(authReq.user?.id || 'simulated-user');
+        const result = await transactionSyncService.syncUser(userId, { sourceAccounts: req.body.sourceAccounts, manualTrigger: true });
+        return res.json({ message: 'Sync complete', result });
+      }
       const feed = await this.bankFeedService.generateFeed({
         userId: authReq.user?.id || "simulated-user",
         accountId: req.body?.accountId ? String(req.body.accountId) : undefined,
