@@ -52,60 +52,113 @@ export const AdminDashboard = () => {
         await apiClient.patch(`/admin/config/${key}/toggle`).catch(() => undefined);
     };
 
+    const formatRole = (role: string) => {
+        if (role === 'ops') return 'Operations';
+        if (role === 'admin') return 'Admin';
+        return 'User';
+    };
+
     if (loading) return <div className="loading-spinner">Loading admin data...</div>;
 
     return (
-        <div className="page-container">
+        <div className="page-container admin-dashboard-page">
             <div className="page-header">
                 <h1>🛠️ Admin Dashboard</h1>
                 <p className="page-subtitle">Manage users, roles, and configuration with audit-friendly toggles.</p>
             </div>
 
-            <div className="card" style={{ marginBottom: '1.5rem' }}>
-                <div className="card-header">
-                    <h3>Users</h3>
+            <div className="admin-stats-grid">
+                <div className="admin-stat-card">
+                    <span className="admin-stat-label">Total Users</span>
+                    <span className="admin-stat-value">{users.length}</span>
                 </div>
-                <div className="table">
-                    <div className="table-head">
-                        <div>Name</div><div>Email</div><div>Role</div><div>Status</div><div>Actions</div>
-                    </div>
-                    {users.map((u) => (
-                        <div key={u.id} className="table-row">
-                            <div>{u.name}</div>
-                            <div>{u.email}</div>
-                            <div>{u.role}</div>
-                            <div><span className={`status-badge ${u.status === 'active' ? 'success' : 'danger'}`}>{u.status}</span></div>
-                            <div>
-                                <button className="secondary" onClick={() => toggleUser(u.id)}>
-                                    {u.status === 'active' ? 'Disable' : 'Enable'}
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+                <div className="admin-stat-card">
+                    <span className="admin-stat-label">Active Users</span>
+                    <span className="admin-stat-value">{users.filter((u) => u.status === 'active').length}</span>
+                </div>
+                <div className="admin-stat-card">
+                    <span className="admin-stat-label">Disabled Users</span>
+                    <span className="admin-stat-value">{users.filter((u) => u.status === 'disabled').length}</span>
+                </div>
+                <div className="admin-stat-card">
+                    <span className="admin-stat-label">Config Keys</span>
+                    <span className="admin-stat-value">{configs.length}</span>
                 </div>
             </div>
 
-            <div className="card">
-                <div className="card-header">
+            <div className="card admin-section" style={{ marginBottom: '1.5rem' }}>
+                <div className="card-header admin-section-header">
+                    <h3>Users</h3>
+                </div>
+                <div className="admin-table-wrapper">
+                    <table className="admin-table" aria-label="Users table">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {users.map((u) => (
+                                <tr key={u.id}>
+                                    <td className="admin-cell-strong">{u.name}</td>
+                                    <td>{u.email}</td>
+                                    <td>{formatRole(u.role)}</td>
+                                    <td>
+                                        <span className={`admin-status-badge ${u.status === 'active' ? 'is-success' : 'is-danger'}`}>
+                                            {u.status}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button className="secondary admin-action-btn" onClick={() => toggleUser(u.id)}>
+                                            {u.status === 'active' ? 'Disable' : 'Enable'}
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div className="card admin-section">
+                <div className="card-header admin-section-header">
                     <h3>Configuration</h3>
                 </div>
-                <div className="table">
-                    <div className="table-head">
-                        <div>Key</div><div>Type</div><div>Value</div><div>Status</div><div>Actions</div>
-                    </div>
-                    {configs.map((c) => (
-                        <div key={c.key} className="table-row">
-                            <div>{c.key}</div>
-                            <div>{c.type}</div>
-                            <div>{c.value}</div>
-                            <div><span className={`status-badge ${c.active ? 'success' : 'danger'}`}>{c.active ? 'active' : 'inactive'}</span></div>
-                            <div>
-                                <button className="secondary" onClick={() => toggleConfig(c.key)}>
-                                    {c.active ? 'Deactivate' : 'Activate'}
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+                <div className="admin-table-wrapper">
+                    <table className="admin-table" aria-label="Configuration table">
+                        <thead>
+                            <tr>
+                                <th>Key</th>
+                                <th>Type</th>
+                                <th>Value</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {configs.map((c) => (
+                                <tr key={c.key}>
+                                    <td className="admin-cell-strong">{c.key}</td>
+                                    <td>{c.type}</td>
+                                    <td>{c.value}</td>
+                                    <td>
+                                        <span className={`admin-status-badge ${c.active ? 'is-success' : 'is-danger'}`}>
+                                            {c.active ? 'active' : 'inactive'}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button className="secondary admin-action-btn" onClick={() => toggleConfig(c.key)}>
+                                            {c.active ? 'Deactivate' : 'Activate'}
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
