@@ -16,8 +16,13 @@ export const CashFlowForecast = () => {
         const fetchForecastData = async () => {
             try {
                 const response = await apiClient.get('/transactions/forecast');
-                setForecastData(response.data.forecast);
-                setDaysToZero(response.data.daysToZero);
+                const apiForecast = Array.isArray(response.data?.forecast) ? response.data.forecast : [];
+                setForecastData(apiForecast.map((day: any) => ({
+                    date: day.date,
+                    balance: Number(day.balance ?? day.predictedBalance ?? 0),
+                    predicted: Boolean(day.predicted ?? true)
+                })));
+                setDaysToZero(Number.isFinite(response.data?.daysToZero) ? response.data.daysToZero : null);
             } catch (error) {
                 console.error('Failed to fetch forecast data:', error);
                 // Mock data for demo
@@ -67,8 +72,9 @@ export const CashFlowForecast = () => {
     const minBalance = Math.min(...forecastData.map(d => d.balance));
 
     const getPointPosition = (index: number, balance: number) => {
-        const x = (index / (forecastData.length - 1)) * 100;
-        const y = 100 - ((balance - minBalance) / (maxBalance - minBalance)) * 80;
+        const denominator = Math.max(maxBalance - minBalance, 1);
+        const x = forecastData.length > 1 ? (index / (forecastData.length - 1)) * 100 : 50;
+        const y = 100 - ((balance - minBalance) / denominator) * 80;
         return { x, y };
     };
 
@@ -103,28 +109,28 @@ export const CashFlowForecast = () => {
                     </div>
                 )}
             </div>
-            
+
             <div className="forecast-chart">
                 <svg viewBox="0 0 100 100" className="forecast-svg">
                     {/* Grid lines */}
                     <defs>
                         <pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-                            <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5"/>
+                            <path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
                         </pattern>
                     </defs>
                     <rect width="100" height="100" fill="url(#grid)" />
-                    
+
                     {/* Zero line */}
-                    <line 
-                        x1="0" 
-                        y1={100 - ((-minBalance) / (maxBalance - minBalance)) * 80} 
-                        x2="100" 
-                        y2={100 - ((-minBalance) / (maxBalance - minBalance)) * 80}
-                        stroke="#ef4444" 
-                        strokeWidth="0.5" 
+                    <line
+                        x1="0"
+                        y1={100 - ((-minBalance) / Math.max(maxBalance - minBalance, 1)) * 80}
+                        x2="100"
+                        y2={100 - ((-minBalance) / Math.max(maxBalance - minBalance, 1)) * 80}
+                        stroke="#ef4444"
+                        strokeWidth="0.5"
                         strokeDasharray="2,2"
                     />
-                    
+
                     {/* Historical line */}
                     <path
                         d={createPathData(false)}
@@ -132,7 +138,7 @@ export const CashFlowForecast = () => {
                         stroke="#10b981"
                         strokeWidth="2"
                     />
-                    
+
                     {/* Predicted line */}
                     <path
                         d={createPathData(true)}
@@ -141,7 +147,7 @@ export const CashFlowForecast = () => {
                         strokeWidth="2"
                         strokeDasharray="4,4"
                     />
-                    
+
                     {/* Data points */}
                     {forecastData.map((point, index) => {
                         const { x, y } = getPointPosition(index, point.balance);
@@ -157,7 +163,7 @@ export const CashFlowForecast = () => {
                     })}
                 </svg>
             </div>
-            
+
             <div className="forecast-legend">
                 <div className="legend-item">
                     <div className="legend-color historical"></div>

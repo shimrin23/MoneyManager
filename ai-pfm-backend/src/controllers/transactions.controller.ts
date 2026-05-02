@@ -8,6 +8,7 @@ import { FinancialHealthService } from "../services/financial-health.service";
 import { SimulatedBankFeedService } from "../services/simulated-bank-feed.service";
 import transactionSyncService from "../services/transaction-sync.service";
 import SyncState from "../schemas/sync_state.schema";
+import { AdvancedAnalyticsService } from "../services/advanced-analytics.service";
 
 export default class TransactionsController {
   private transactionsService: TransactionsService;
@@ -15,6 +16,7 @@ export default class TransactionsController {
   private financialHealthService: FinancialHealthService;
   private bankFeedService: SimulatedBankFeedService;
   private bankingIntegration: BankingIntegration;
+  private advancedAnalyticsService: AdvancedAnalyticsService;
 
   constructor() {
     this.transactionsService = new TransactionsService();
@@ -22,6 +24,7 @@ export default class TransactionsController {
     this.financialHealthService = new FinancialHealthService();
     this.bankFeedService = new SimulatedBankFeedService();
     this.bankingIntegration = new BankingIntegration();
+    this.advancedAnalyticsService = new AdvancedAnalyticsService();
   }
 
   // POST /api/transactions
@@ -400,6 +403,51 @@ export default class TransactionsController {
       res
         .status(500)
         .json({ error: "Failed to generate AI research response" });
+    }
+  }
+
+  // GET /api/transactions/forecast
+  async getCashFlowForecast(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const forecasts = await this.advancedAnalyticsService.forecastCashFlow(userId, 30);
+      const forecast = forecasts.map((day) => ({
+        date: day.date,
+        balance: day.predictedBalance,
+        predicted: true,
+        riskLevel: day.riskLevel,
+        recommendedActions: day.recommendedActions,
+      }));
+
+      const daysToZero = forecast.findIndex((day) => day.balance <= 0);
+
+      res.json({
+        forecast,
+        daysToZero: daysToZero >= 0 ? daysToZero + 1 : null,
+      });
+    } catch (error) {
+      console.error("Error getting cash flow forecast:", error);
+      res.status(500).json({ error: "Failed to fetch cash flow forecast" });
+    }
+  }
+
+  // GET /api/transactions/peer-benchmarks
+  async getPeerBenchmarks(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const benchmarkData = await this.financialHealthService.getPeerBenchmarks(userId);
+      res.json(benchmarkData);
+    } catch (error) {
+      console.error("Error getting peer benchmarks:", error);
+      res.status(500).json({ error: "Failed to fetch peer benchmarks" });
     }
   }
 }

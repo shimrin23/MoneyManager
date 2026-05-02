@@ -58,6 +58,18 @@ router.get(
   transactionsController.getSyncHealth.bind(transactionsController),
 );
 
+// GET /api/transactions/forecast
+router.get(
+  "/forecast",
+  transactionsController.getCashFlowForecast.bind(transactionsController),
+);
+
+// GET /api/transactions/peer-benchmarks
+router.get(
+  "/peer-benchmarks",
+  transactionsController.getPeerBenchmarks.bind(transactionsController),
+);
+
 // POST /api/transactions/ai-research
 router.post(
   "/ai-research",

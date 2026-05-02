@@ -36,14 +36,14 @@ export const ConnectBankPage = () => {
     };
 
     return (
-        <div className="page-container">
+        <div className="page-container connect-bank-page">
             <div className="page-header">
-                <h1>🔗 Connect Bank Account</h1>
+                <h1 className="page-title">Connect Bank Account</h1>
                 <p className="page-subtitle">Securely link your bank to sync transactions and detect zombie subscriptions.</p>
             </div>
 
-            <div className="card" style={{ padding: '1.5rem' }}>
-                <div className="stepper">
+            <div className="card connect-bank-card">
+                <div className="stepper" aria-label="Connection steps">
                     {[1, 2, 3, 4].map((s) => (
                         <div key={s} className={`step ${step >= s ? 'active' : ''}`}>
                             <div className="step-number">{s}</div>
@@ -92,10 +92,11 @@ export const ConnectBankPage = () => {
 
                 {step === 3 && (
                     <div className="form-grid">
-                        <div>
-                            <p><strong>Bank:</strong> {selectedBank}</p>
-                            <p><strong>Data synced:</strong> last 90 days of transactions</p>
-                            <p><strong>Privacy:</strong> Read-only, securely stored.</p>
+                        <div className="connect-bank-summary">
+                            <h3 className="section-title">Review connection</h3>
+                            <p><span className="label-text">Bank</span><br />{selectedBank}</p>
+                            <p><span className="label-text">Data synced</span><br />Last 90 days of transactions</p>
+                            <p><span className="label-text">Privacy</span><br />Read-only, securely stored.</p>
                         </div>
                         <div className="actions">
                             <button className="secondary" onClick={back}>Back</button>
@@ -114,7 +115,7 @@ export const ConnectBankPage = () => {
                 {step === 4 && summary && (
                     <div className="form-grid">
                         <div>
-                            <h3>Import Summary</h3>
+                            <h3 className="section-title">Import Summary</h3>
                             <p>Imported transactions: {summary.imported}</p>
                             <p>Zombie subscriptions flagged: {summary.zombies}</p>
                         </div>

@@ -3,6 +3,7 @@ import FinancialHealth from '../schemas/financial_health.schema';
 import Goal from '../schemas/goal.schema';
 import Loan from '../schemas/loan.schema';
 import CreditCard from '../schemas/creditcard.schema';
+import User from '../schemas/user.schema';
 import { FinancialAgent } from '../ai/agent'; // Import the real AI agent
 
 export class FinancialHealthService {
@@ -15,19 +16,25 @@ export class FinancialHealthService {
     // Enhanced health score calculation
     async calculateComprehensiveHealthScore(userId: string): Promise<any> {
         try {
-            const [transactions, goals, loans, creditCards] = await Promise.all([
+            const [transactions, goals, loans, creditCards, user] = await Promise.all([
                 Transaction.find({ userId }),
                 Goal.find({ userId }),
                 Loan.find({ userId, status: 'Active' }),
-                CreditCard.find({ userId })
+                CreditCard.find({ userId }),
+                User.findById(userId).select('monthlyIncome')
             ]);
 
             // Calculate basic financial metrics
-            const metrics = this.calculateFinancialMetrics(transactions, loans, creditCards);
-            
+            const metrics = this.calculateFinancialMetrics(
+                transactions,
+                loans,
+                creditCards,
+                Number(user?.monthlyIncome ?? 0)
+            );
+
             // Calculate score based on multiple factors
             const score = this.calculateHealthScore(metrics, goals, loans, creditCards);
-            
+
             // Generate AI-powered recommendations
             const recommendations = await this.generateRecommendations(userId, metrics, score);
 
@@ -53,17 +60,26 @@ export class FinancialHealthService {
         }
     }
 
-    private calculateFinancialMetrics(transactions: any[], loans: any[], creditCards: any[]) {
+    private calculateFinancialMetrics(
+        transactions: any[],
+        loans: any[],
+        creditCards: any[],
+        monthlyIncomeBaseline: number
+    ) {
         const now = new Date();
         const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        
+
         // Recent transactions (last 30 days)
         const recentTransactions = transactions.filter(t => new Date(t.date) >= lastMonth);
-        
-        const totalIncome = recentTransactions
+
+        const transactionIncome = recentTransactions
             .filter(t => t.type === 'income')
             .reduce((sum, t) => sum + t.amount, 0);
-            
+
+        const totalIncome = transactionIncome > 0
+            ? transactionIncome
+            : monthlyIncomeBaseline;
+
         const totalExpenses = recentTransactions
             .filter(t => t.type === 'expense')
             .reduce((sum, t) => sum + t.amount, 0);
@@ -126,7 +142,7 @@ export class FinancialHealthService {
         const activeGoals = goals.filter(g => g.status === 'In Progress');
         if (activeGoals.length === 0) score -= 5;
         else {
-            const avgProgress = activeGoals.reduce((sum, goal) => 
+            const avgProgress = activeGoals.reduce((sum, goal) =>
                 sum + (goal.currentAmount / goal.targetAmount), 0) / activeGoals.length;
             if (avgProgress > 0.7) score += 10;
             else if (avgProgress > 0.4) score += 5;
@@ -168,20 +184,53 @@ export class FinancialHealthService {
     // Get comprehensive financial health report
     async getHealthReport(userId: string): Promise<any> {
         try {
-            const health = await FinancialHealth.findOne({ userId });
-            if (!health) {
-                return await this.calculateComprehensiveHealthScore(userId);
-            }
-
-            // Check if data is stale (older than 1 day)
-            const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-            if (health.lastUpdated < dayAgo) {
-                return await this.calculateComprehensiveHealthScore(userId);
-            }
-
-            return health;
+            // Recompute on demand so the score reflects current transactions, loans, and goals.
+            return await this.calculateComprehensiveHealthScore(userId);
         } catch (error) {
             console.error('Error getting health report:', error);
+            throw error;
+        }
+    }
+
+    async getPeerBenchmarks(userId: string): Promise<any> {
+        try {
+            const health = await this.getHealthReport(userId);
+            const metrics = health.metrics || {};
+
+            return {
+                benchmarks: [
+                    {
+                        category: 'Financial Health Score',
+                        userValue: Number(health.score ?? 0),
+                        peerAverage: 65,
+                        percentile: Math.max(5, Math.min(95, Number(health.score ?? 0))),
+                        comparison: Number(health.score ?? 0) >= 65 ? 'above' : 'below'
+                    },
+                    {
+                        category: 'Savings Rate',
+                        userValue: Number(((metrics.savingsRate ?? 0) * 100).toFixed(1)),
+                        peerAverage: 18,
+                        percentile: (metrics.savingsRate ?? 0) >= 0.18 ? 70 : 25,
+                        comparison: (metrics.savingsRate ?? 0) >= 0.18 ? 'above' : 'below'
+                    },
+                    {
+                        category: 'Debt-to-Income Ratio',
+                        userValue: Number(((metrics.debtToIncomeRatio ?? 0) * 100).toFixed(1)),
+                        peerAverage: 35,
+                        percentile: (metrics.debtToIncomeRatio ?? 0) <= 0.35 ? 75 : 30,
+                        comparison: (metrics.debtToIncomeRatio ?? 0) <= 0.35 ? 'below' : 'above'
+                    },
+                    {
+                        category: 'Liquidity Ratio',
+                        userValue: Number(((metrics.liquidityRatio ?? 0) * 100).toFixed(1)),
+                        peerAverage: 30,
+                        percentile: (metrics.liquidityRatio ?? 0) >= 0.3 ? 70 : 20,
+                        comparison: (metrics.liquidityRatio ?? 0) >= 0.3 ? 'above' : 'below'
+                    }
+                ]
+            };
+        } catch (error) {
+            console.error('Error getting peer benchmarks:', error);
             throw error;
         }
     }
@@ -191,7 +240,7 @@ export class FinancialHealthService {
         try {
             // Get recent transactions for AI analysis
             const transactions = await Transaction.find({ userId }).sort({ date: -1 }).limit(100);
-            
+
             if (transactions.length === 0) {
                 return "I notice you don't have any transactions yet. Start by adding some transactions to get personalized AI-powered insights about your spending patterns and financial health!";
             }
@@ -199,7 +248,7 @@ export class FinancialHealthService {
             // Use the real AI agent to analyze spending patterns
             console.log('🤖 Generating AI analysis using Gemini...');
             const aiAnalysis = await this.financialAgent.analyzeSpending(transactions);
-            
+
             return aiAnalysis;
         } catch (error) {
             console.error('Error generating AI analysis:', error);
