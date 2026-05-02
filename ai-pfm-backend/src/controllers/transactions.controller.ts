@@ -180,7 +180,14 @@ export default class TransactionsController {
       // Save each transaction to the database using your existing Service
       const savedTransactions = [];
       for (const data of newTransactions) {
-        const saved = await this.transactionsService.create(data);
+        const saved = await this.transactionsService.create({
+          ...data,
+          date: new Date(data.date),
+          recurringDueDate: data.recurringDueDate
+            ? new Date(data.recurringDueDate)
+            : undefined,
+          processedAt: new Date(data.processedAt),
+        });
         savedTransactions.push(saved);
       }
 
