@@ -63,7 +63,6 @@ describe.skip('Banking Integration Tests', () => {
     expect(response.status).toBe(500);
     expect(response.body).toHaveProperty('error');
   });
-  });
 });
 describe('BankingIntegration', () => {
   const integration = new BankingIntegration();
