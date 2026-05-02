@@ -355,7 +355,7 @@ export class TransactionSyncService {
         }
       } catch (e) {
         // non-fatal: log and continue
-        console.warn('[TransactionSyncService] failed to persist subscription', e?.message || e);
+        console.warn('[TransactionSyncService] failed to persist subscription', (e as any)?.message || String(e));
       }
 
       await SyncState.updateOne(
