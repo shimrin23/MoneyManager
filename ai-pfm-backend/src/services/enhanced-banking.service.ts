@@ -88,11 +88,29 @@ export class EnhancedBankingIntegration {
     }
 
     private detectRecurringPattern(merchant: string, amount: number): boolean {
-        // Check against known subscription services
-        const subscriptionKeywords = ['NETFLIX', 'SPOTIFY', 'AMAZON PRIME', 'ZOOM', 'OFFICE 365'];
-        return subscriptionKeywords.some(keyword => 
-            merchant.toUpperCase().includes(keyword)
-        );
+        if (!merchant) return false;
+
+        const upper = merchant.toUpperCase();
+
+        // Known subscription / recurring service keywords
+        const subscriptionKeywords = ['NETFLIX', 'SPOTIFY', 'AMAZON PRIME', 'ZOOM', 'OFFICE 365', 'HULU', 'DISNEY', 'APPLE MUSIC', 'GOOGLE PLAY', 'MICROSOFT'];
+
+        // Generic recurring indicators often seen in merchant descriptions
+        const recurringIndicators = ['SUBSCRIPTION', 'SUBS', 'AUTOPAY', 'RECURR', 'MONTHLY', 'ANNUAL', 'MEMBERSHIP', 'INSTALLMENT', 'RENT', 'BILL', 'SVC', 'SERVICE'];
+
+        if (subscriptionKeywords.some(k => upper.includes(k))) return true;
+        if (recurringIndicators.some(k => upper.includes(k))) return true;
+
+        // If merchant normalizes to a known recurring vendor, treat as recurring
+        if (Object.values(this.MERCHANT_NORMALIZATION).some(v => v.toUpperCase() === upper)) return true;
+
+        // Amount heuristic: many subscriptions are round amounts or end with .99/.00
+        if (amount && amount > 0 && amount < 50000) {
+            const cents = Math.round((Math.abs(amount) - Math.floor(Math.abs(amount))) * 100);
+            if (cents === 0 || cents === 99) return true;
+        }
+
+        return false;
     }
 
     private isIncomeTransaction(description: string, amount: number): boolean {
@@ -106,7 +124,7 @@ export class EnhancedBankingIntegration {
         let confidence = 0.5; // Base confidence
         
         if (this.MCC_CATEGORIES[mcc]) confidence += 0.3;
-        if (this.MERCHANT_NORMALIZATION[merchant.toUpperCase()]) confidence += 0.2;
+        if (merchant && this.MERCHANT_NORMALIZATION[merchant.toUpperCase()]) confidence += 0.2;
         
         return Math.min(confidence, 1.0);
     }
