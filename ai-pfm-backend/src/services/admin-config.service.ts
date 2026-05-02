@@ -3,7 +3,7 @@ import { createAuditLog } from "../middlewares/auditMiddleware";
 import { Request } from "express";
 
 type CreateConfigInput = Omit<Partial<IAdminConfig>, "configType"> & {
-  configType?: IAdminConfig["configType"] | string;
+  configType?: string;
 };
 
 /**
@@ -219,9 +219,9 @@ export class AdminConfigService {
    */
   async getConfigHistory(
     configKey: string,
-  ): Promise<NonNullable<IAdminConfig["previousVersions"]>> {
+  ): Promise<Array<{ version: string; value: any; modifiedAt: Date; modifiedBy: string }>> {
     const config = await AdminConfig.findOne({ configKey });
-    return (config?.previousVersions || []) as NonNullable<IAdminConfig["previousVersions"]>;
+    return (config?.previousVersions || []) as Array<{ version: string; value: any; modifiedAt: Date; modifiedBy: string }>;
   }
 
   /**
