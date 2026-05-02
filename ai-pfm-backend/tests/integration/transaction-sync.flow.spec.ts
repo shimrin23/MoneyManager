@@ -5,6 +5,9 @@ const consents: any[] = [];
 const transactions: any[] = [];
 const syncStates: any[] = [];
 
+// Ensure banking integration uses the built-in mock feed during tests
+process.env.BANKING_MOCK_ENABLED = 'true';
+
 const findUserByEmail = (email: string) => users.find((u) => u.email === email);
 
 class MockUserModel {
