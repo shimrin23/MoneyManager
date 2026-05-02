@@ -11,7 +11,7 @@ if (SYNC_ENABLED) {
             const summary = await transactionSyncService.syncAllConsentedUsers();
             console.log(
                 `Scheduled sync complete — users: ${summary.usersProcessed} processed, ${summary.usersFailed} failed; ` +
-                `transactions: ${summary.totalInserted} inserted, ${summary.totalUpdated} updated`
+                `transactions: ${summary.inserted} inserted, ${summary.updated} updated`
             );
         } catch (error) {
             console.error('Scheduled transaction sync failed:', error);
