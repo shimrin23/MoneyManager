@@ -1384,6 +1384,59 @@ button:disabled { opacity: 0.6; cursor: wait; }
   border-radius: 0.5rem;
 }
 .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.transaction-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.transactions-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.sync-mode-badge {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  padding: 0.3rem 0.62rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.sync-mode-badge.mock {
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.16);
+  border-color: rgba(245, 158, 11, 0.34);
+}
+.sync-mode-badge.real {
+  color: #0369a1;
+  background: rgba(14, 165, 233, 0.16);
+  border-color: rgba(14, 165, 233, 0.34);
+}
+.sync-mode-badge.unknown {
+  color: #64748b;
+  background: rgba(148, 163, 184, 0.15);
+  border-color: rgba(148, 163, 184, 0.3);
+}
+.consent-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+.consent-badge.granted {
+  color: #16a34a;
+  background: rgba(22, 163, 74, 0.16);
+  border-color: rgba(22, 163, 74, 0.35);
+}
+.consent-badge.missing {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.16);
+  border-color: rgba(220, 38, 38, 0.35);
+}
 .secondary-btn {
   background: transparent;
   color: var(--text);
@@ -1414,6 +1467,28 @@ button:disabled { opacity: 0.6; cursor: wait; }
   background: #e2e8f0;
   color: #64748b;
   border-color: #cbd5e1;
+}
+[data-theme='light'] .consent-badge.granted {
+  color: #15803d;
+  background: rgba(22, 163, 74, 0.12);
+  border-color: rgba(22, 163, 74, 0.3);
+}
+[data-theme='light'] .consent-badge.missing {
+  color: #b91c1c;
+  background: rgba(220, 38, 38, 0.1);
+  border-color: rgba(220, 38, 38, 0.28);
+}
+[data-theme='light'] .sync-mode-badge.mock {
+  color: #92400e;
+  background: rgba(245, 158, 11, 0.12);
+}
+[data-theme='light'] .sync-mode-badge.real {
+  color: #075985;
+  background: rgba(14, 165, 233, 0.12);
+}
+[data-theme='light'] .sync-mode-badge.unknown {
+  color: #475569;
+  background: rgba(148, 163, 184, 0.1);
 }
 .table-container {
   position: relative;

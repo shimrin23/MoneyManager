@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.ts';
+import axios from 'axios';
 import { CashFlowForecast } from './CashFlowForecast';
 import { AIAssistant } from './AIAssistant';
 
@@ -11,6 +12,45 @@ export const Dashboard = () => {
     // State for transactions
     const [transactions, setTransactions] = useState<any[]>([]);
     const [loadingTransactions, setLoadingTransactions] = useState<boolean>(true);
+    const [hasPFMConsent, setHasPFMConsent] = useState<boolean | null>(null);
+    const [syncing, setSyncing] = useState<boolean>(false);
+    const [syncMode, setSyncMode] = useState<'mock' | 'real' | 'unknown'>('unknown');
+
+    const fetchTransactions = async () => {
+        try {
+            const response = await apiClient.get('/transactions');
+            setTransactions((response.data?.data ?? []).slice(0, 5)); // Get latest 5
+        } catch (error) {
+            console.error("Failed to fetch transactions", error);
+        } finally {
+            setLoadingTransactions(false);
+        }
+    };
+
+    const fetchConsentStatus = async () => {
+        try {
+            const response = await apiClient.get('/consent/check/pfm_analysis');
+            setHasPFMConsent(!!response.data?.hasConsent);
+        } catch (error) {
+            console.error('Failed to fetch consent status', error);
+            setHasPFMConsent(false);
+        }
+    };
+
+    const fetchSyncHealth = async () => {
+        try {
+            const response = await apiClient.get('/transactions/sync/health');
+            const mode = response.data?.bankingIntegration?.mode;
+            if (mode === 'mock' || mode === 'real') {
+                setSyncMode(mode);
+                return;
+            }
+            setSyncMode('unknown');
+        } catch (error) {
+            console.error('Failed to fetch sync health', error);
+            setSyncMode('unknown');
+        }
+    };
     // 1. Fetch Score on Load
     useEffect(() => {
         const fetchScore = async () => {
@@ -28,18 +68,35 @@ export const Dashboard = () => {
 
     // 2. Fetch Recent Transactions
     useEffect(() => {
-        const fetchTransactions = async () => {
-            try {
-                const response = await apiClient.get('/transactions');
-                setTransactions((response.data?.data ?? []).slice(0, 5)); // Get latest 5
-            } catch (error) {
-                console.error("Failed to fetch transactions", error);
-            } finally {
-                setLoadingTransactions(false);
-            }
-        };
         fetchTransactions();
+        fetchConsentStatus();
+        fetchSyncHealth();
     }, []);
+
+    const syncBank = async () => {
+        if (!hasPFMConsent) {
+            alert('PFM consent is required. Use Transactions page to enable PFM Consent first.');
+            return;
+        }
+
+        try {
+            setSyncing(true);
+            await apiClient.post('/transactions/sync');
+            await fetchTransactions();
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                const apiMessage =
+                    error.response?.data?.message ||
+                    error.response?.data?.error ||
+                    error.response?.data?.details;
+                alert(apiMessage ? `Sync failed: ${apiMessage}` : 'Sync failed');
+            } else {
+                alert('Sync failed');
+            }
+        } finally {
+            setSyncing(false);
+        }
+    };
 
     // Helper to determine color based on score
     const getScoreColor = (s: number) => {
@@ -143,10 +200,20 @@ export const Dashboard = () => {
                 <div className="card transactions-card">
                     <div className="transactions-header">
                         <h3>Recent Transactions</h3>
-                        <button className="btn-sync">
-                            <span>🔄</span>
-                            <span>Sync Bank</span>
-                        </button>
+                        <div className="transactions-header-actions">
+                            <span className={`sync-mode-badge ${syncMode}`}>
+                                Sync Mode: {syncMode.toUpperCase()}
+                            </span>
+                            <button
+                                className="btn-sync"
+                                onClick={syncBank}
+                                disabled={syncing || hasPFMConsent === false}
+                                title={hasPFMConsent === false ? 'Enable consent in Transactions page first' : 'Sync latest bank transactions'}
+                            >
+                                <span>🔄</span>
+                                <span>{syncing ? 'Syncing...' : 'Sync Bank'}</span>
+                            </button>
+                        </div>
                     </div>
                     
                     <div className="transactions-table-container">
