@@ -1,5 +1,7 @@
 // Enhanced Banking Integration Service
 import axios from 'axios';
+import fs from 'fs';
+import path from 'path';
 import Transaction from '../schemas/transaction.schema';
 
 export class EnhancedBankingIntegration {
@@ -14,14 +16,33 @@ export class EnhancedBankingIntegration {
         '4121': 'Transport'
     };
 
-    private readonly MERCHANT_NORMALIZATION: Record<string, string> = {
-        'UBER': 'Uber',
-        'UBER LANKA': 'Uber',
-        'NETFLIX': 'Netflix',
-        'SPOTIFY': 'Spotify',
-        'AMAZON': 'Amazon',
-        'KEELLS': 'Keells Super'
-    };
+    private readonly MERCHANT_NORMALIZATION: Record<string, string> = this.loadMerchantNormalization();
+
+    private loadMerchantNormalization(): Record<string, string> {
+        try {
+            const cfgPath = path.join(__dirname, '..', 'config', 'merchant-normalization.json');
+            if (fs.existsSync(cfgPath)) {
+                const raw = fs.readFileSync(cfgPath, 'utf8');
+                const parsed = JSON.parse(raw);
+                const normalized: Record<string, string> = {};
+                for (const [k, v] of Object.entries(parsed)) {
+                    normalized[String(k).toUpperCase()] = String(v);
+                }
+                return normalized;
+            }
+        } catch (e) {
+            // ignore and fall back
+        }
+
+        return {
+            'UBER': 'Uber',
+            'UBER LANKA': 'Uber',
+            'NETFLIX': 'Netflix',
+            'SPOTIFY': 'Spotify',
+            'AMAZON': 'Amazon',
+            'KEELLS': 'Keells Super'
+        };
+    }
 
     /**
      * Enhanced transaction categorization using MCC codes and merchant normalization
