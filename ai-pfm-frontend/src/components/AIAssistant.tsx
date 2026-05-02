@@ -19,6 +19,8 @@ export const AIAssistant = ({ open = false, onOpenChange }: AIAssistantProps) =>
     const [messages, setMessages] = useState<Message[]>([]);
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+    const [sessionId] = useState(() => `session-${Date.now()}`);
+    const [userId] = useState(() => localStorage.getItem('userId') || `user-${Date.now()}`);
 
     useEffect(() => {
         setIsOpen(open);
@@ -57,23 +59,28 @@ export const AIAssistant = ({ open = false, onOpenChange }: AIAssistantProps) =>
         setLoading(true);
 
         try {
-            const response = await apiClient.post('/transactions/ai-research', { question: userMessage.content });
+            const response = await apiClient.post('/coach/chat', { 
+                userId,
+                sessionId,
+                message: question,
+                includeFinancialContext: false
+            });
             
             const aiMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 type: 'ai',
-                content: response.data.research,
+                content: response.data.data.message.content,
                 timestamp: new Date()
             };
             
             setMessages(prev => [...prev, aiMessage]);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error asking AI:', error);
             
             const errorMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 type: 'ai',
-                content: 'Sorry, I encountered an error while processing your question. Please try again.',
+                content: error?.response?.data?.error || 'Sorry, I encountered an error while processing your question. Please try again.',
                 timestamp: new Date()
             };
             
