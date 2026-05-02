@@ -4,6 +4,7 @@ const users: any[] = [];
 const consents: any[] = [];
 const transactions: any[] = [];
 const syncStates: any[] = [];
+const subscriptions: any[] = [];
 
 // Ensure banking integration uses the built-in mock feed during tests
 process.env.BANKING_MOCK_ENABLED = 'true';
@@ -258,6 +259,22 @@ jest.mock("../../src/schemas/transaction.schema", () => ({
   default: MockTransactionModel,
 }));
 
+jest.mock("../../src/schemas/subscription.schema", () => ({
+  __esModule: true,
+  default: {
+    async findOneAndUpdate(filter: any, update: any, options: any) {
+      const provider = filter.provider;
+      let existing = subscriptions.find((s) => s.userId === filter.userId && s.provider === provider);
+      if (!existing) {
+        existing = { _id: `sub-${subscriptions.length + 1}`, userId: filter.userId, provider };
+        subscriptions.push(existing);
+      }
+      if (update.$set) Object.assign(existing, update.$set);
+      return existing;
+    }
+  }
+}));
+
 jest.mock("../../src/schemas/sync_state.schema", () => ({
   __esModule: true,
   default: MockSyncStateModel,
@@ -271,6 +288,7 @@ describe("Transaction Sync Flow Integration", () => {
     consents.length = 0;
     transactions.length = 0;
     syncStates.length = 0;
+    subscriptions.length = 0;
   });
 
   it("runs signup -> consent -> sync -> verify dedupe", async () => {
@@ -319,6 +337,9 @@ describe("Transaction Sync Flow Integration", () => {
     // Verify at least one recurring transaction was detected and persisted
     const hasRecurring = transactions.some((t) => t.isRecurring || t.recurringFrequency);
     expect(hasRecurring).toBe(true);
+
+    // Verify a subscription record was created/updated
+    expect(subscriptions.length).toBeGreaterThan(0);
 
     const secondSyncResponse = await request(app)
       .post("/api/transactions/sync")

@@ -1,5 +1,6 @@
 import { createHash } from "crypto";
 import Transaction from "../schemas/transaction.schema";
+import Subscription from "../schemas/subscription.schema";
 import SyncState from "../schemas/sync_state.schema";
 import User from "../schemas/user.schema";
 import consentService from "./consent.service";
@@ -318,6 +319,44 @@ export class TransactionSyncService {
       const bulkResult = await Transaction.bulkWrite(operations, { ordered: false });
       const inserted = bulkResult.upsertedCount || 0;
       const updated = (bulkResult.modifiedCount || 0) + (bulkResult.matchedCount || 0) - inserted;
+
+      // Persist detected recurring subscriptions
+      try {
+        for (const op of operations) {
+          const setDoc = op.updateOne.update.$set;
+          if (setDoc && setDoc.isRecurring) {
+            const provider = setDoc.normalizedMerchant || setDoc.merchantName || "Unknown";
+            const amount = Math.abs(setDoc.amount || 0);
+            // Map frequency to subscription schema enum (monthly/yearly)
+            let freq: "monthly" | "yearly" = "monthly";
+            const rf = setDoc.recurringFrequency;
+            if (rf === "yearly") freq = "yearly";
+
+            const nextPayment = setDoc.recurringDueDate ? new Date(setDoc.recurringDueDate) : undefined;
+
+            await Subscription.findOneAndUpdate(
+              { userId: setDoc.userId, provider },
+              {
+                $set: {
+                  userId: setDoc.userId,
+                  name: provider,
+                  provider,
+                  amount,
+                  frequency: freq,
+                  nextPayment: nextPayment || new Date(),
+                  category: setDoc.category || "Other",
+                  isActive: true,
+                  lastUsed: setDoc.date || new Date(),
+                },
+              },
+              { upsert: true, new: true },
+            );
+          }
+        }
+      } catch (e) {
+        // non-fatal: log and continue
+        console.warn('[TransactionSyncService] failed to persist subscription', e?.message || e);
+      }
 
       await SyncState.updateOne(
         { userId, sourceAccount },
