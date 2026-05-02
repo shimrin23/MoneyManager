@@ -278,6 +278,8 @@ export class TransactionSyncService {
           merchantName,
           normalizedMerchant: enriched.normalizedMerchant,
           isRecurring: enriched.isRecurring,
+          recurringFrequency: (enriched as any).recurringFrequency,
+          recurringDueDate: (enriched as any).recurringDueDate,
           categoryConfidence: enriched.confidence,
           sourceAccount,
           ingestionType: "batch",

@@ -316,6 +316,10 @@ describe("Transaction Sync Flow Integration", () => {
     expect(transactions.length).toBeGreaterThan(0);
     const firstCount = transactions.length;
 
+    // Verify at least one recurring transaction was detected and persisted
+    const hasRecurring = transactions.some((t) => t.isRecurring || t.recurringFrequency);
+    expect(hasRecurring).toBe(true);
+
     const secondSyncResponse = await request(app)
       .post("/api/transactions/sync")
       .set("Authorization", `Bearer ${token}`)

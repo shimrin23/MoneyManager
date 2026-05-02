@@ -42,5 +42,7 @@ describe('EnhancedBankingIntegration', () => {
 
     const res = svc.categorizeTransaction(txn as any);
     expect(res.isRecurring).toBe(true);
+    expect(res.recurringFrequency).toBe('monthly');
+    expect(res.recurringDueDate).toBeDefined();
   });
 });

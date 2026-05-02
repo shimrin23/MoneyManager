@@ -51,6 +51,14 @@ export class EnhancedBankingIntegration {
         category: string;
         normalizedMerchant: string;
         isRecurring: boolean;
+        recurringFrequency?:
+            | "daily"
+            | "weekly"
+            | "biweekly"
+            | "monthly"
+            | "quarterly"
+            | "yearly";
+        recurringDueDate?: Date;
         confidence: number;
     } {
         const { mcc, merchantName, amount, description } = transaction;
@@ -61,8 +69,9 @@ export class EnhancedBankingIntegration {
         // 2. Merchant normalization
         const normalizedMerchant = this.normalizeMerchant(merchantName);
         
-        // 3. Recurring pattern detection
-        const isRecurring = this.detectRecurringPattern(normalizedMerchant, amount);
+        // 3. Recurring pattern detection (returns richer metadata)
+        const recurringMeta = this.detectRecurringPattern(normalizedMerchant, amount, description);
+        const isRecurring = !!recurringMeta?.isRecurring;
         
         // 4. Income detection
         if (this.isIncomeTransaction(description, amount)) {
@@ -73,7 +82,9 @@ export class EnhancedBankingIntegration {
             category,
             normalizedMerchant,
             isRecurring,
-            confidence: this.calculateCategoryConfidence(mcc, merchantName, description)
+            recurringFrequency: recurringMeta?.frequency,
+            recurringDueDate: recurringMeta?.nextDueDate,
+            confidence: this.calculateCategoryConfidence(mcc, merchantName, description),
         };
     }
 
@@ -87,10 +98,15 @@ export class EnhancedBankingIntegration {
         return merchantName;
     }
 
-    private detectRecurringPattern(merchant: string, amount: number): boolean {
-        if (!merchant) return false;
+    private detectRecurringPattern(merchant: string, amount: number, description?: string): {
+        isRecurring: boolean;
+        frequency?: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly';
+        nextDueDate?: Date;
+    } {
+        if (!merchant && !description) return { isRecurring: false };
 
-        const upper = merchant.toUpperCase();
+        const upperMerchant = (merchant || '').toUpperCase();
+        const upperDesc = (description || '').toUpperCase();
 
         // Known subscription / recurring service keywords
         const subscriptionKeywords = ['NETFLIX', 'SPOTIFY', 'AMAZON PRIME', 'ZOOM', 'OFFICE 365', 'HULU', 'DISNEY', 'APPLE MUSIC', 'GOOGLE PLAY', 'MICROSOFT'];
@@ -98,19 +114,49 @@ export class EnhancedBankingIntegration {
         // Generic recurring indicators often seen in merchant descriptions
         const recurringIndicators = ['SUBSCRIPTION', 'SUBS', 'AUTOPAY', 'RECURR', 'MONTHLY', 'ANNUAL', 'MEMBERSHIP', 'INSTALLMENT', 'RENT', 'BILL', 'SVC', 'SERVICE'];
 
-        if (subscriptionKeywords.some(k => upper.includes(k))) return true;
-        if (recurringIndicators.some(k => upper.includes(k))) return true;
+        // Frequency keywords
+        const monthlyKeywords = ['MONTHLY', 'MONTH'];
+        const weeklyKeywords = ['WEEKLY', 'WEEK'];
+        const yearlyKeywords = ['YEARLY', 'ANNUAL', 'YEAR'];
 
-        // If merchant normalizes to a known recurring vendor, treat as recurring
-        if (Object.values(this.MERCHANT_NORMALIZATION).some(v => v.toUpperCase() === upper)) return true;
+        let isRecurring = false;
+        let frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly' | undefined;
 
-        // Amount heuristic: many subscriptions are round amounts or end with .99/.00
-        if (amount && amount > 0 && amount < 50000) {
-            const cents = Math.round((Math.abs(amount) - Math.floor(Math.abs(amount))) * 100);
-            if (cents === 0 || cents === 99) return true;
+        if (subscriptionKeywords.some(k => upperMerchant.includes(k) || upperDesc.includes(k))) {
+            isRecurring = true;
         }
 
-        return false;
+        if (recurringIndicators.some(k => upperMerchant.includes(k) || upperDesc.includes(k))) {
+            isRecurring = true;
+        }
+
+        if (monthlyKeywords.some(k => upperMerchant.includes(k) || upperDesc.includes(k))) frequency = 'monthly';
+        else if (weeklyKeywords.some(k => upperMerchant.includes(k) || upperDesc.includes(k))) frequency = 'weekly';
+        else if (yearlyKeywords.some(k => upperMerchant.includes(k) || upperDesc.includes(k))) frequency = 'yearly';
+
+        // Amount heuristic: subscriptions often end with .99 or round numbers
+        if (!isRecurring && amount && Math.abs(amount) > 0 && Math.abs(amount) < 50000) {
+            const cents = Math.round((Math.abs(amount) - Math.floor(Math.abs(amount))) * 100);
+            if (cents === 0 || cents === 99) {
+                isRecurring = true;
+                if (!frequency) frequency = 'monthly'; // default guess
+            }
+        }
+
+        if (!isRecurring) return { isRecurring: false };
+
+        // Compute a simple next due date heuristic based on frequency
+        let nextDueDate: Date | undefined;
+        const now = new Date();
+        if (frequency === 'monthly') {
+            nextDueDate = new Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+        } else if (frequency === 'weekly') {
+            nextDueDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+        } else if (frequency === 'yearly') {
+            nextDueDate = new Date(now.getFullYear() + 1, now.getMonth(), now.getDate());
+        }
+
+        return { isRecurring, frequency, nextDueDate };
     }
 
     private isIncomeTransaction(description: string, amount: number): boolean {
