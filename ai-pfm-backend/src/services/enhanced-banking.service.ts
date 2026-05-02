@@ -193,6 +193,77 @@ export class EnhancedBankingIntegration {
         }
     }
 
+    /**
+     * Infer recurrence frequency and next due date from historical transactions
+     */
+    async inferRecurrenceFromHistory(userId: string, merchant: string, amount: number): Promise<{
+        frequency?: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly';
+        nextDueDate?: Date;
+    } | null> {
+        if (!userId || !merchant) return null;
+
+        try {
+            // Find recent transactions for this user and merchant
+            const candidates = await Transaction.find({
+                userId,
+                $or: [{ normalizedMerchant: merchant }, { merchantName: { $regex: merchant, $options: 'i' } }],
+            })
+                .sort({ date: -1 })
+                .limit(50)
+                .lean();
+
+            if (!candidates || candidates.length < 2) return null;
+
+            // Use amounts and dates to filter similar transactions
+            const similar = candidates.filter((t: any) => {
+                if (!t || typeof t.amount !== 'number') return false;
+                // amount similarity within 30%
+                const a = Math.abs(t.amount || 0);
+                const delta = Math.abs(a - Math.abs(amount || 0));
+                if (Math.max(a, Math.abs(amount || 0)) === 0) return false;
+                return delta / Math.max(a, Math.abs(amount || 0)) <= 0.3;
+            });
+
+            if (similar.length < 2) return null;
+
+            // Extract dates and compute day differences
+            const dates = similar
+                .map((t: any) => new Date(t.date))
+                .filter((d: Date) => !isNaN(d.getTime()))
+                .sort((a: Date, b: Date) => a.getTime() - b.getTime());
+
+            if (dates.length < 2) return null;
+
+            const diffs: number[] = [];
+            for (let i = 1; i < dates.length; i++) {
+                const d = Math.round((dates[i].getTime() - dates[i - 1].getTime()) / (24 * 3600 * 1000));
+                if (d > 0) diffs.push(d);
+            }
+
+            if (diffs.length === 0) return null;
+
+            // Median diff
+            diffs.sort((a, b) => a - b);
+            const mid = Math.floor(diffs.length / 2);
+            const median = diffs.length % 2 === 1 ? diffs[mid] : Math.round((diffs[mid - 1] + diffs[mid]) / 2);
+
+            let frequency: 'daily' | 'weekly' | 'biweekly' | 'monthly' | 'quarterly' | 'yearly' | undefined;
+            if (median <= 3) frequency = 'daily';
+            else if (median <= 10) frequency = 'weekly';
+            else if (median <= 20) frequency = 'biweekly';
+            else if (median <= 45) frequency = 'monthly';
+            else if (median <= 150) frequency = 'quarterly';
+            else frequency = 'yearly';
+
+            const lastDate = dates[dates.length - 1];
+            const nextDueDate = new Date(lastDate.getTime() + Math.round(median) * 24 * 3600 * 1000);
+
+            return { frequency, nextDueDate };
+        } catch (e) {
+            return null;
+        }
+    }
+
     private async saveTransactionWithEnrichment(transaction: any): Promise<void> {
         const enriched = this.categorizeTransaction(transaction);
         

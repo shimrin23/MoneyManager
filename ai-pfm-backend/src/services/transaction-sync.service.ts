@@ -234,69 +234,86 @@ export class TransactionSyncService {
         };
       }
 
-      const operations = bankTransactions.map((rawTxn: any) => {
-        const normalizedDate = new Date(rawTxn.date || Date.now());
-        const amount = Number(rawTxn.amount || 0);
-        const merchantName = String(rawTxn.merchantName || "");
-        const description = String(rawTxn.description || "");
-        const externalTransactionId = rawTxn.id || rawTxn.transactionId;
-        const syncKey = buildTransactionSyncKey({
-          userId,
-          sourceAccount,
-          externalTransactionId,
-          amount,
-          description,
-          merchantName,
-          date: normalizedDate,
-        });
+      // Build operations asynchronously so we can call history inference
+      const operations = await Promise.all(
+        bankTransactions.map(async (rawTxn: any) => {
+          const normalizedDate = new Date(rawTxn.date || Date.now());
+          const amount = Number(rawTxn.amount || 0);
+          const merchantName = String(rawTxn.merchantName || "");
+          const description = String(rawTxn.description || "");
+          const externalTransactionId = rawTxn.id || rawTxn.transactionId;
+          const syncKey = buildTransactionSyncKey({
+            userId,
+            sourceAccount,
+            externalTransactionId,
+            amount,
+            description,
+            merchantName,
+            date: normalizedDate,
+          });
 
-        const enriched = this.enrichmentService.categorizeTransaction({
-          ...rawTxn,
-          amount,
-          description,
-          merchantName,
-        });
+          const enriched = this.enrichmentService.categorizeTransaction({
+            ...rawTxn,
+            amount,
+            description,
+            merchantName,
+          });
 
-        const type =
-          rawTxn.type === "income" || rawTxn.type === "expense"
-            ? rawTxn.type
-            : amount >= 0
-              ? "income"
-              : "expense";
+          // Try to refine recurrence using historical transactions for the user
+          let histRecurrence: any = null;
+          if (enriched.isRecurring) {
+            try {
+              histRecurrence = await this.enrichmentService.inferRecurrenceFromHistory(
+                userId,
+                enriched.normalizedMerchant || merchantName,
+                amount,
+              );
+            } catch (e) {
+              histRecurrence = null;
+            }
+          }
 
-        const updateDoc = {
-          userId,
-          syncKey,
-          externalTransactionId,
-          amount: Math.abs(amount),
-          category: enriched.category || rawTxn.category || "Other",
-          date: normalizedDate,
-          description,
-          type,
-          mcc: rawTxn.mcc,
-          merchantId: rawTxn.merchantId,
-          merchantName,
-          normalizedMerchant: enriched.normalizedMerchant,
-          isRecurring: enriched.isRecurring,
-          recurringFrequency: (enriched as any).recurringFrequency,
-          recurringDueDate: (enriched as any).recurringDueDate,
-          categoryConfidence: enriched.confidence,
-          sourceAccount,
-          ingestionType: "batch",
-          processedAt: new Date(),
-        };
+          const type =
+            rawTxn.type === "income" || rawTxn.type === "expense"
+              ? rawTxn.type
+              : amount >= 0
+                ? "income"
+                : "expense";
 
-        return {
-          updateOne: {
-            filter: { userId, syncKey },
-            update: {
-              $set: updateDoc,
-              $setOnInsert: { createdAt: new Date() },
+          const updateDoc: any = {
+            userId,
+            syncKey,
+            externalTransactionId,
+            amount: Math.abs(amount),
+            category: enriched.category || rawTxn.category || "Other",
+            date: normalizedDate,
+            description,
+            type,
+            mcc: rawTxn.mcc,
+            merchantId: rawTxn.merchantId,
+            merchantName,
+            normalizedMerchant: enriched.normalizedMerchant,
+            isRecurring: enriched.isRecurring,
+            recurringFrequency: (histRecurrence && histRecurrence.frequency) || (enriched as any).recurringFrequency,
+            recurringDueDate: (histRecurrence && histRecurrence.nextDueDate) || (enriched as any).recurringDueDate,
+            categoryConfidence: enriched.confidence,
+            sourceAccount,
+            ingestionType: "batch",
+            processedAt: new Date(),
+          };
+
+          return {
+            updateOne: {
+              filter: { userId, syncKey },
+              update: {
+                $set: updateDoc,
+                $setOnInsert: { createdAt: new Date() },
+              },
+              upsert: true,
             },
-            upsert: true,
-          },
-        };
-      });
+          };
+        }),
+      );
 
       const bulkResult = await Transaction.bulkWrite(operations, { ordered: false });
       const inserted = bulkResult.upsertedCount || 0;
