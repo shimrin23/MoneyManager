@@ -82,6 +82,31 @@ export class FinancialAgent {
     }
 
     /**
+     * Categorize a single transaction using AI when rule-based confidence is low.
+     * Returns null if the API key is missing or the response cannot be parsed.
+     */
+    async categorizeTransaction(description: string, merchantName: string): Promise<{ category: string; confidence: number } | null> {
+        const VALID = ['Groceries', 'Dining', 'Transport', 'Entertainment', 'Utilities', 'Telecom', 'Fuel', 'ATM/Cash', 'Housing', 'Health', 'Income', 'Other'];
+        const prompt = `Categorize this bank transaction into exactly one category.
+Categories: ${VALID.join(', ')}
+Description: "${description}"
+Merchant: "${merchantName}"
+Respond with valid JSON only, no markdown: {"category": "...", "confidence": 0.0}
+confidence is a number between 0.0 and 1.0 representing how certain you are.`;
+        try {
+            const raw = await this.callLLM(prompt);
+            const cleaned = raw.replace(/```[a-z]*\n?/gi, '').trim();
+            const parsed = JSON.parse(cleaned);
+            if (VALID.includes(parsed.category) && typeof parsed.confidence === 'number') {
+                return { category: parsed.category, confidence: Math.min(1, Math.max(0, parsed.confidence)) };
+            }
+            return null;
+        } catch {
+            return null;
+        }
+    }
+
+    /**
      * Public method for general AI research and financial questions
      */
     async generateResearch(prompt: string): Promise<string> {
