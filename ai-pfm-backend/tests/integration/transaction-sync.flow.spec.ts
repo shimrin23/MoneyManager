@@ -131,6 +131,7 @@ class MockAuditLog {
 
 class MockTransactionModel {
   static async bulkWrite(operations: any[]) {
+    console.log('[MockTransactionModel] bulkWrite called, ops:', operations.length);
     let upsertedCount = 0;
     let modifiedCount = 0;
     let matchedCount = 0;
