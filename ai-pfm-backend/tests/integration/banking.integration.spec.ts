@@ -1,5 +1,5 @@
 import request from 'supertest';
-import app from '../../src/server'; // Adjust the import based on your server setup
+import app from '../../src/index'; // Use Express app exported from index
 import { mockBankingAPI } from '../mocks/bankingAPI.mock'; // Mocking external banking API
 
 describe('Banking Integration Tests', () => {

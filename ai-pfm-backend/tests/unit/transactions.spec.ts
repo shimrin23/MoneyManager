@@ -1,46 +1,44 @@
-import { TransactionsController } from '../../src/controllers/transactions.controller';
-import { TransactionsService } from '../../src/services/transactions.service';
+import TransactionsService from '../../src/services/transactions.service';
 
-describe('TransactionsController', () => {
-    let transactionsController: TransactionsController;
-    let transactionsService: TransactionsService;
+describe('TransactionsService (unit)', () => {
+    let svc: TransactionsService;
 
     beforeEach(() => {
-        transactionsService = new TransactionsService();
-        transactionsController = new TransactionsController(transactionsService);
+        svc = new TransactionsService();
     });
 
-    it('should create a transaction', async () => {
-        const transactionData = { amount: 100, description: 'Test transaction' };
-        jest.spyOn(transactionsService, 'createTransaction').mockResolvedValue(transactionData);
+    it('delegates create and returns created object', async () => {
+        const payload = { amount: 100, description: 'Test' } as any;
+        const spy = jest.spyOn(svc, 'create').mockResolvedValue(payload);
 
-        const result = await transactionsController.createTransaction(transactionData);
-        expect(result).toEqual(transactionData);
+        const res = await svc.create(payload);
+        expect(spy).toHaveBeenCalledWith(payload);
+        expect(res).toEqual(payload);
     });
 
-    it('should retrieve a transaction by ID', async () => {
-        const transactionId = '1';
-        const transactionData = { id: transactionId, amount: 100, description: 'Test transaction' };
-        jest.spyOn(transactionsService, 'getTransactionById').mockResolvedValue(transactionData);
+    it('findById delegates and returns data', async () => {
+        const expected = { _id: '1', amount: 50 } as any;
+        const spy = jest.spyOn(svc, 'findById').mockResolvedValue(expected);
 
-        const result = await transactionsController.getTransactionById(transactionId);
-        expect(result).toEqual(transactionData);
+        const res = await svc.findById('1');
+        expect(spy).toHaveBeenCalledWith('1');
+        expect(res).toEqual(expected);
     });
 
-    it('should update a transaction', async () => {
-        const transactionId = '1';
-        const updatedData = { amount: 150, description: 'Updated transaction' };
-        jest.spyOn(transactionsService, 'updateTransaction').mockResolvedValue(updatedData);
+    it('update delegates and returns updated', async () => {
+        const updated = { _id: '1', amount: 75 } as any;
+        const spy = jest.spyOn(svc, 'update').mockResolvedValue(updated);
 
-        const result = await transactionsController.updateTransaction(transactionId, updatedData);
-        expect(result).toEqual(updatedData);
+        const res = await svc.update('1', { amount: 75 } as any);
+        expect(spy).toHaveBeenCalled();
+        expect(res).toEqual(updated);
     });
 
-    it('should delete a transaction', async () => {
-        const transactionId = '1';
-        jest.spyOn(transactionsService, 'deleteTransaction').mockResolvedValue(true);
+    it('delete delegates and returns result', async () => {
+        const spy = jest.spyOn(svc, 'delete').mockResolvedValue({ deleted: true } as any);
 
-        const result = await transactionsController.deleteTransaction(transactionId);
-        expect(result).toBe(true);
+        const res = await svc.delete('1');
+        expect(spy).toHaveBeenCalledWith('1');
+        expect(res).toEqual({ deleted: true } as any);
     });
 });
