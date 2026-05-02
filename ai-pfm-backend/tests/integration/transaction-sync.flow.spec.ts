@@ -134,6 +134,23 @@ class MockAuditLog {
 }
 
 class MockTransactionModel {
+  data: any;
+  _id: string;
+
+  constructor(data: any) {
+    this.data = data;
+    this._id = `txn-${transactions.length + 1}`;
+  }
+
+  async save() {
+    const entry = {
+      _id: this._id,
+      ...this.data,
+    };
+    transactions.push(entry);
+    return entry;
+  }
+
   static async bulkWrite(operations: any[]) {
     console.log('[MockTransactionModel] bulkWrite called, ops:', operations.length);
     let upsertedCount = 0;
