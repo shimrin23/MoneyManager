@@ -5,25 +5,40 @@ import { AIAssistant } from './AIAssistant';
 
 export const Dashboard = () => {
     const [aiOpen, setAiOpen] = useState(false);
-    // New State for Score
     const [score, setScore] = useState<number>(0);
     const [loadingScore, setLoadingScore] = useState<boolean>(true);
-    // State for transactions
     const [transactions, setTransactions] = useState<any[]>([]);
     const [loadingTransactions, setLoadingTransactions] = useState<boolean>(true);
-    // 1. Fetch Score on Load
+
     useEffect(() => {
-        const fetchScore = async () => {
+        const refreshScore = async () => {
             try {
                 const response = await apiClient.get('/transactions/score');
-                setScore(response.data.score);
+                setScore(Number(response.data?.score ?? 0));
             } catch (error) {
-                console.error("Failed to fetch score", error);
+                console.error('Failed to fetch score', error);
             } finally {
                 setLoadingScore(false);
             }
         };
-        fetchScore();
+
+        refreshScore();
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                refreshScore();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        const intervalId = window.setInterval(() => {
+            refreshScore();
+        }, 30000);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.clearInterval(intervalId);
+        };
     }, []);
 
     // 2. Fetch Recent Transactions
@@ -41,12 +56,13 @@ export const Dashboard = () => {
         fetchTransactions();
     }, []);
 
-    // Helper to determine color based on score
-    const getScoreColor = (s: number) => {
-        if (s >= 70) return 'var(--success)'; // Green
-        if (s >= 40) return '#facc15';       // Yellow
-        return 'var(--danger)';              // Red
+    const getScoreStatus = (s: number) => {
+        if (s >= 70) return { label: 'Excellent 🎉', description: 'Great financial habits!' };
+        if (s >= 40) return { label: 'Needs Work ⚠️', description: 'Room for improvement' };
+        return { label: 'Critical 🚨', description: 'Immediate attention needed' };
     };
+
+    const scoreStatus = getScoreStatus(score);
 
     // Helper to format date
     const formatDate = (dateString: string) => {
@@ -77,28 +93,27 @@ export const Dashboard = () => {
                 <div className="dashboard-top-row">
                     {/* Financial Health Score Card */}
                     <div className="card health-score-card">
-                    <h3>💚 Financial Health Score</h3>
-                    <div className="score-display">
-                        <div 
-                            className="score-circle"
-                            style={{
-                                background: `conic-gradient(${getScoreColor(score)} ${score * 3.6}deg, rgba(255,255,255,0.1) 0deg)`
-                            }}
-                        >
-                            <span className="score-number">{loadingScore ? "..." : score}</span>
-                            <span className="score-label">/ 100</span>
-                        </div>
-                        <div className="score-status">
-                            <span className="status-text">
-                                {score >= 70 ? "Excellent 🎉" : score >= 40 ? "Needs Work ⚠️" : "Critical 🚨"}
-                            </span>
-                            <p className="status-description">
-                                {score >= 70 ? "Great financial habits!" : 
-                                 score >= 40 ? "Room for improvement" : "Immediate attention needed"}
-                            </p>
+                        <h3>💚 Financial Health Score</h3>
+                        <div className="score-display">
+                            <div
+                                className="score-circle"
+                                style={{
+                                    background: 'rgba(255,255,255,0.04)',
+                                    borderColor: 'var(--border)'
+                                }}
+                            >
+                                <span className="score-number">{loadingScore ? '...' : `${score}%`}</span>
+                            </div>
+                            <div className="score-status">
+                                <span className="status-text">
+                                    {scoreStatus.label}
+                                </span>
+                                <p className="status-description">
+                                    {scoreStatus.description}
+                                </p>
+                            </div>
                         </div>
                     </div>
-                </div>
 
                     {/* Cash Flow Forecast Card */}
                     <CashFlowForecast />
@@ -113,7 +128,7 @@ export const Dashboard = () => {
                             <span>Sync Bank</span>
                         </button>
                     </div>
-                    
+
                     <div className="transactions-table-container">
                         <table className="transactions-table">
                             <thead>

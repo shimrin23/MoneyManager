@@ -178,15 +178,15 @@ export const SmartBudgetsPage = () => {
     }
 
     return (
-        <div className="page-container">
+        <div className="page-container smart-budgets-page">
             <div className="page-header">
-                <h1>🧠 Smart Budgets</h1>
+                <h1 className="page-title">Smart Budgets</h1>
                 <p className="page-subtitle">AI-generated budgets based on your income and spending patterns</p>
             </div>
 
             {/* Spending Trends Charts */}
             <div className="card" style={{ marginBottom: '1.5rem' }}>
-                <h3>📊 Spending Trends</h3>
+                <h3 className="section-title">Spending Trends</h3>
                 <div className="charts-grid">
                     <BarChart data={chartData} />
                     <PieChart data={chartData} />
@@ -198,36 +198,36 @@ export const SmartBudgetsPage = () => {
                 <div className="summary-card">
                     <div className="summary-icon">💰</div>
                     <div className="summary-content">
-                        <h3>LKR {totalIncome.toLocaleString()}</h3>
-                        <p>Monthly Income</p>
+                        <h3 className="metric-value">LKR {totalIncome.toLocaleString()}</h3>
+                        <p className="metric-label">Monthly Income</p>
                     </div>
                 </div>
                 <div className="summary-card">
                     <div className="summary-icon">📊</div>
                     <div className="summary-content">
-                        <h3>LKR {totalAllocated.toLocaleString()}</h3>
-                        <p>Total Budgeted</p>
+                        <h3 className="metric-value">LKR {totalAllocated.toLocaleString()}</h3>
+                        <p className="metric-label">Total Budgeted</p>
                     </div>
                 </div>
                 <div className="summary-card">
                     <div className="summary-icon">⚖️</div>
                     <div className="summary-content">
-                        <h3>{Math.round((totalAllocated / totalIncome) * 100)}%</h3>
-                        <p>Income Allocated</p>
+                        <h3 className="metric-value">{Math.round((totalAllocated / totalIncome) * 100)}%</h3>
+                        <p className="metric-label">Income Allocated</p>
                     </div>
                 </div>
                 <div className="summary-card warning">
                     <div className="summary-icon">⚠️</div>
                     <div className="summary-content">
-                        <h3>{overBudgetCount}</h3>
-                        <p>Over Budget Categories</p>
+                        <h3 className="metric-value">{overBudgetCount}</h3>
+                        <p className="metric-label">Over Budget Categories</p>
                     </div>
                 </div>
             </div>
 
             {/* AI Budget Insights */}
             <div className="card ai-insights">
-                <h3>🤖 AI Budget Insights</h3>
+                <h3 className="section-title">AI Budget Insights</h3>
                 <div className="insights-grid">
                     <div className="insight-item critical">
                         <span className="insight-icon">🚨</span>
@@ -257,7 +257,7 @@ export const SmartBudgetsPage = () => {
                 {budgets.map((budget) => (
                     <div key={budget._id} className={`budget-card ${budget.isOverBudget ? 'over-budget' : ''}`}>
                         <div className="budget-header">
-                            <h4>{budget.category}</h4>
+                            <h4 className="section-title">{budget.category}</h4>
                             <div className="budget-status">
                                 {budget.isOverBudget ? (
                                     <span className="status-badge danger">Over Budget</span>

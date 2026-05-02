@@ -7,6 +7,10 @@
     padding: 2rem;
 }
 
+.connect-bank-page {
+    max-width: 960px;
+}
+
 .page-header {
     display: flex;
     justify-content: space-between;
@@ -27,6 +31,166 @@
     color: var(--text-muted);
     font-size: 1.1rem;
     margin: 0.5rem 0 0 0;
+}
+
+.connect-bank-page .page-header {
+    margin-bottom: 1.5rem;
+}
+
+.connect-bank-card {
+    padding: 1.75rem;
+    border-radius: 1.25rem;
+    background: linear-gradient(180deg, rgba(30, 41, 59, 0.92) 0%, rgba(15, 23, 42, 0.9) 100%);
+    border: 1px solid var(--border);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+}
+
+.connect-bank-page .stepper {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.85rem;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+}
+
+.connect-bank-page .step {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+    text-align: center;
+    color: var(--text-muted);
+}
+
+.connect-bank-page .step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 21px;
+    right: -45%;
+    width: 90%;
+    height: 2px;
+    background: rgba(148, 163, 184, 0.24);
+}
+
+.connect-bank-page .step.active {
+    color: var(--text);
+}
+
+.connect-bank-page .step.active:not(:last-child)::after {
+    background: linear-gradient(90deg, var(--accent), rgba(96, 165, 250, 0.25));
+}
+
+.connect-bank-page .step-number {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.04);
+    font-weight: 700;
+}
+
+.connect-bank-page .step.active .step-number {
+    background: linear-gradient(135deg, var(--accent), #60a5fa);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.28);
+}
+
+.connect-bank-page .step-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.connect-bank-page .form-grid {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.connect-bank-page .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.connect-bank-page .form-field span {
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.connect-bank-page .form-field input,
+.connect-bank-page .form-field select {
+    width: 100%;
+    padding: 0.95rem 1rem;
+    border-radius: 0.9rem;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text);
+    font: inherit;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.connect-bank-page .form-field input:focus,
+.connect-bank-page .form-field select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
+}
+
+.connect-bank-page .actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.connect-bank-page .actions .primary,
+.connect-bank-page .actions .secondary {
+    min-width: 140px;
+    padding: 0.85rem 1.2rem;
+    border-radius: 0.85rem;
+    font-weight: 700;
+}
+
+.connect-bank-page .progress {
+    height: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.connect-bank-page .progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), #60a5fa);
+    border-radius: inherit;
+    transition: width 0.35s ease;
+}
+
+.connect-bank-summary {
+    padding: 1rem 1.1rem;
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+}
+
+.connect-bank-summary p {
+    margin: 0.9rem 0 0;
+    color: var(--text);
+    line-height: 1.6;
+}
+
+.connect-bank-summary p:first-of-type {
+    margin-top: 0.75rem;
 }
 
 /* Grid Layouts */
@@ -105,12 +269,29 @@
     font-weight: 500;
 }
 
-.bg-green-100 { background: rgba(34, 197, 94, 0.1); }
-.text-green-800 { color: #22c55e; }
-.bg-yellow-100 { background: rgba(245, 158, 11, 0.1); }
-.text-yellow-800 { color: #f59e0b; }
-.bg-red-100 { background: rgba(239, 68, 68, 0.1); }
-.text-red-800 { color: #ef4444; }
+.bg-green-100 {
+    background: rgba(34, 197, 94, 0.1);
+}
+
+.text-green-800 {
+    color: #22c55e;
+}
+
+.bg-yellow-100 {
+    background: rgba(245, 158, 11, 0.1);
+}
+
+.text-yellow-800 {
+    color: #f59e0b;
+}
+
+.bg-red-100 {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.text-red-800 {
+    color: #ef4444;
+}
 
 /* Metrics */
 .metrics-card {
@@ -648,56 +829,57 @@
     .nav-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .nav-card {
         padding: 0.75rem;
     }
-    
+
     .nav-icon {
         font-size: 1.5rem;
     }
 }
+
 @media (max-width: 768px) {
     .page-container {
         padding: 1rem;
     }
-    
+
     .page-header {
         flex-direction: column;
         align-items: stretch;
     }
-    
+
     .form-row {
         grid-template-columns: 1fr;
     }
-    
+
     .debt-overview-grid,
     .credit-overview-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .strategies-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .goals-grid,
     .cards-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .loan-details {
         grid-template-columns: 1fr;
     }
-    
+
     .tips-grid {
         grid-template-columns: 1fr;
     }
-    
+
     .card-actions,
     .goal-actions {
         flex-direction: column;
     }
-    
+
     .form-actions {
         flex-direction: column-reverse;
     }
@@ -707,16 +889,16 @@
     .page-header h1 {
         font-size: 2rem;
     }
-    
+
     .amount-large {
         font-size: 1.5rem;
     }
-    
+
     .score-circle {
         width: 100px;
         height: 100px;
     }
-    
+
     .score-number {
         font-size: 2rem;
     }
@@ -792,19 +974,22 @@
     margin-bottom: 15px;
 }
 
-.user-value, .peer-value {
+.user-value,
+.peer-value {
     text-align: center;
     flex: 1;
 }
 
-.user-value .label, .peer-value .label {
+.user-value .label,
+.peer-value .label {
     display: block;
     color: var(--text-muted);
     font-size: 0.8rem;
     margin-bottom: 5px;
 }
 
-.user-value .value, .peer-value .value {
+.user-value .value,
+.peer-value .value {
     display: block;
     color: var(--text);
     font-size: 1.2rem;
@@ -883,6 +1068,14 @@
     line-height: 1.5;
 }
 
-[data-theme='light'] .text-green-800 { color: #166534; }
-[data-theme='light'] .text-yellow-800 { color: #92400e; }
-[data-theme='light'] .text-red-800 { color: #991b1b; }
+[data-theme='light'] .text-green-800 {
+    color: #166534;
+}
+
+[data-theme='light'] .text-yellow-800 {
+    color: #92400e;
+}
+
+[data-theme='light'] .text-red-800 {
+    color: #991b1b;
+}

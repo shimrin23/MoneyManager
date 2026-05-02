@@ -19,6 +19,46 @@ interface PeerBenchmark {
     comparison: 'above' | 'below' | 'average';
 }
 
+const normalizeHealthMetrics = (payload: any): HealthMetrics => ({
+    score: Number(payload?.score ?? 0),
+    riskLevel: payload?.riskLevel ?? 'Medium',
+    liquidityRatio: Number(payload?.metrics?.liquidityRatio ?? payload?.liquidityRatio ?? 0),
+    debtToIncomeRatio: Number(payload?.metrics?.debtToIncomeRatio ?? payload?.debtToIncomeRatio ?? 0),
+    savingsRate: Number(payload?.metrics?.savingsRate ?? payload?.savingsRate ?? 0),
+    recommendations: Array.isArray(payload?.recommendations) ? payload.recommendations : []
+});
+
+const buildPeerBenchmarks = (healthMetrics: HealthMetrics): PeerBenchmark[] => [
+    {
+        category: 'Financial Health Score',
+        userValue: healthMetrics.score,
+        peerAverage: 65,
+        percentile: Math.max(5, Math.min(95, healthMetrics.score)),
+        comparison: healthMetrics.score >= 65 ? 'above' : 'below'
+    },
+    {
+        category: 'Savings Rate',
+        userValue: Number((healthMetrics.savingsRate * 100).toFixed(1)),
+        peerAverage: 18,
+        percentile: healthMetrics.savingsRate >= 0.18 ? 70 : 25,
+        comparison: healthMetrics.savingsRate >= 0.18 ? 'above' : 'below'
+    },
+    {
+        category: 'Debt-to-Income Ratio',
+        userValue: Number((healthMetrics.debtToIncomeRatio * 100).toFixed(1)),
+        peerAverage: 35,
+        percentile: healthMetrics.debtToIncomeRatio <= 0.35 ? 75 : 30,
+        comparison: healthMetrics.debtToIncomeRatio <= 0.35 ? 'below' : 'above'
+    },
+    {
+        category: 'Liquidity Ratio',
+        userValue: Number((healthMetrics.liquidityRatio * 100).toFixed(1)),
+        peerAverage: 30,
+        percentile: healthMetrics.liquidityRatio >= 0.3 ? 70 : 20,
+        comparison: healthMetrics.liquidityRatio >= 0.3 ? 'above' : 'below'
+    }
+];
+
 export const FinancialHealthPage = () => {
     const [aiOpen, setAiOpen] = useState(false);
     const [health, setHealth] = useState<HealthMetrics>({
@@ -30,79 +70,84 @@ export const FinancialHealthPage = () => {
         recommendations: []
     });
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [peerBenchmarks, setPeerBenchmarks] = useState<PeerBenchmark[]>([]);
 
     useEffect(() => {
-        fetchHealthScore();
-        fetchPeerBenchmarks();
+        refreshHealthData();
+
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                refreshHealthData();
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        const intervalId = window.setInterval(() => {
+            refreshHealthData(false);
+        }, 30000);
+
+        return () => {
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+            window.clearInterval(intervalId);
+        };
     }, []);
 
-    const fetchHealthScore = async () => {
+    const refreshHealthData = async (showRefreshingState = true) => {
+        if (showRefreshingState) {
+            setRefreshing(true);
+        }
+
         try {
-            const response = await apiClient.get('/transactions/score');
-            setHealth(response.data);
+            const [scoreResponse, benchmarkResponse] = await Promise.all([
+                apiClient.get('/transactions/score'),
+                apiClient.get('/transactions/peer-benchmarks')
+            ]);
+
+            const normalized = normalizeHealthMetrics(scoreResponse.data);
+            setHealth(normalized);
+
+            const backendBenchmarks = benchmarkResponse.data?.benchmarks || [];
+            setPeerBenchmarks(backendBenchmarks);
         } catch (error) {
             console.error('Error fetching health score:', error);
+            const fallback = normalizeHealthMetrics({
+                score: 0,
+                riskLevel: 'Medium',
+                metrics: {
+                    liquidityRatio: 0,
+                    debtToIncomeRatio: 0,
+                    savingsRate: 0
+                },
+                recommendations: []
+            });
+            setHealth(fallback);
+            setPeerBenchmarks(buildPeerBenchmarks(fallback));
         } finally {
             setLoading(false);
-        }
-    };
-
-    const fetchPeerBenchmarks = async () => {
-        try {
-            const response = await apiClient.get('/financial-health/peer-benchmarks');
-            setPeerBenchmarks(response.data.benchmarks || []);
-        } catch (error) {
-            console.error('Error fetching peer benchmarks:', error);
-            // Mock data for demo
-            const mockBenchmarks: PeerBenchmark[] = [
-                {
-                    category: 'Financial Health Score',
-                    userValue: health.score,
-                    peerAverage: 65,
-                    percentile: 15,
-                    comparison: 'below'
-                },
-                {
-                    category: 'Savings Rate',
-                    userValue: health.savingsRate,
-                    peerAverage: 18,
-                    percentile: 25,
-                    comparison: 'below'
-                },
-                {
-                    category: 'Debt-to-Income Ratio',
-                    userValue: health.debtToIncomeRatio,
-                    peerAverage: 35,
-                    percentile: 85,
-                    comparison: 'above'
-                },
-                {
-                    category: 'Emergency Fund Months',
-                    userValue: 0.5,
-                    peerAverage: 3.2,
-                    percentile: 5,
-                    comparison: 'below'
-                }
-            ];
-            setPeerBenchmarks(mockBenchmarks);
+            setRefreshing(false);
         }
     };
 
     const getScoreColor = (score: number) => {
-        if (score >= 70) return '#10b981';
-        if (score >= 40) return '#f59e0b';
-        return '#ef4444';
+        if (score >= 70) return 'var(--success)';
+        if (score >= 40) return '#facc15';
+        return 'var(--danger)';
     };
 
-    const getRiskBadge = (level: string) => {
-        const colors = {
-            Low: 'bg-green-100 text-green-800',
-            Medium: 'bg-yellow-100 text-yellow-800',
-            High: 'bg-red-100 text-red-800'
-        };
-        return colors[level as keyof typeof colors] || colors.Medium;
+    const getScoreStatus = (score: number) => {
+        if (score >= 70) {
+            return { label: 'Excellent 🎉', description: 'Great financial habits!', badge: 'bg-green-100 text-green-800' };
+        }
+
+        if (score >= 40) {
+            return { label: 'Needs Work ⚠️', description: 'Room for improvement', badge: 'bg-yellow-100 text-yellow-800' };
+        }
+
+        return { label: 'Critical 🚨', description: 'Immediate attention needed', badge: 'bg-red-100 text-red-800' };
     };
+
+    const scoreStatus = getScoreStatus(health.score);
 
     if (loading) return <div className="loading">Analyzing your financial health...</div>;
 
@@ -111,6 +156,7 @@ export const FinancialHealthPage = () => {
             <div className="page-header">
                 <h1>💊 Financial Health</h1>
                 <p className="page-subtitle">AI-powered insights into your financial wellness</p>
+                {refreshing && <p className="page-subtitle">Refreshing live health data...</p>}
             </div>
 
             <div className="content-grid">
@@ -118,19 +164,21 @@ export const FinancialHealthPage = () => {
                 <div className="card health-score-card">
                     <h3>Your Financial Health Score</h3>
                     <div className="score-display">
-                        <div 
+                        <div
                             className="score-circle"
                             style={{
-                                background: `conic-gradient(${getScoreColor(health.score)} ${health.score * 3.6}deg, var(--border) 0deg)`
+                                background: 'rgba(255, 255, 255, 0.04)',
+                                borderColor: getScoreColor(health.score),
+                                boxShadow: `0 0 0 3px color-mix(in srgb, ${getScoreColor(health.score)} 18%, transparent)`
                             }}
                         >
-                            <span className="score-number">{health.score}</span>
-                            <span className="score-label">/ 100</span>
+                            <span className="score-number">{health.score}%</span>
                         </div>
                         <div className="risk-badge">
-                            <span className={`badge ${getRiskBadge(health.riskLevel)}`}>
-                                {health.riskLevel} Risk
+                            <span className={`badge ${scoreStatus.badge}`}>
+                                {scoreStatus.label}
                             </span>
+                            <p className="status-description">{scoreStatus.description}</p>
                         </div>
                     </div>
                 </div>
@@ -179,32 +227,32 @@ export const FinancialHealthPage = () => {
                                 <div className="benchmark-header">
                                     <h4>{benchmark.category}</h4>
                                     <span className={`comparison-badge ${benchmark.comparison}`}>
-                                        {benchmark.comparison === 'above' ? '📈 Above Average' : 
-                                         benchmark.comparison === 'below' ? '📉 Below Average' : '📊 Average'}
+                                        {benchmark.comparison === 'above' ? '📈 Above Average' :
+                                            benchmark.comparison === 'below' ? '📉 Below Average' : '📊 Average'}
                                     </span>
                                 </div>
                                 <div className="benchmark-values">
                                     <div className="user-value">
                                         <span className="label">You</span>
                                         <span className="value">{benchmark.userValue}
-                                            {benchmark.category.includes('Ratio') ? '%' : 
-                                             benchmark.category.includes('Rate') ? '%' : 
-                                             benchmark.category.includes('Score') ? '/100' : ''}
+                                            {benchmark.category.includes('Ratio') ? '%' :
+                                                benchmark.category.includes('Rate') ? '%' :
+                                                    benchmark.category.includes('Score') ? '/100' : ''}
                                         </span>
                                     </div>
                                     <div className="peer-value">
                                         <span className="label">Peer Average</span>
                                         <span className="value">{benchmark.peerAverage}
-                                            {benchmark.category.includes('Ratio') ? '%' : 
-                                             benchmark.category.includes('Rate') ? '%' : 
-                                             benchmark.category.includes('Score') ? '/100' : ''}
+                                            {benchmark.category.includes('Ratio') ? '%' :
+                                                benchmark.category.includes('Rate') ? '%' :
+                                                    benchmark.category.includes('Score') ? '/100' : ''}
                                         </span>
                                     </div>
                                 </div>
                                 <div className="percentile">
                                     <span>You're in the {benchmark.percentile}th percentile</span>
                                     <div className="percentile-bar">
-                                        <div 
+                                        <div
                                             className="percentile-fill"
                                             style={{ width: `${benchmark.percentile}%` }}
                                         ></div>

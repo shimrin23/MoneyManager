@@ -22,11 +22,20 @@ router.get('/', transactionsController.getAllTransactions.bind(transactionsContr
 // GET /api/transactions/analysis
 router.get('/analysis', transactionsController.getFinancialAnalysis.bind(transactionsController));
 
+// GET /api/transactions/forecast
+router.get('/forecast', transactionsController.getCashFlowForecast.bind(transactionsController));
+
 // POST /api/transactions/ai-research
 router.post('/ai-research', transactionsController.getAIResearch.bind(transactionsController));
 
 // POST /api/transactions/sync
 router.post('/sync', transactionsController.syncBankAccount.bind(transactionsController));
+
+// GET /api/transactions/score
+router.get('/score', transactionsController.getHealthScore.bind(transactionsController));
+
+// GET /api/transactions/peer-benchmarks
+router.get('/peer-benchmarks', transactionsController.getPeerBenchmarks.bind(transactionsController));
 
 // GET /api/transactions/subscriptions
 router.get('/subscriptions', transactionsController.getSubscriptions.bind(transactionsController));
@@ -39,7 +48,5 @@ router.put('/:id', transactionsController.updateTransaction.bind(transactionsCon
 
 // DELETE /api/transactions/:id
 router.delete('/:id', transactionsController.deleteTransaction.bind(transactionsController));
-
-router.get('/score', transactionsController.getHealthScore.bind(transactionsController));
 
 export default router;

@@ -5,16 +5,19 @@ import { FinancialAgent } from '../ai/agent'; // Import the agent
 import { BankingIntegration } from '../integrations/banking.integration'; // Import this
 import { AnalyticsService } from '../services/analytics.service'; // Ensure this is imported
 import { FinancialHealthService } from '../services/financial-health.service';
+import { AdvancedAnalyticsService } from '../services/advanced-analytics.service';
 
 export default class TransactionsController {
     private transactionsService: TransactionsService;
     private analyticsService: AnalyticsService; // Add this
     private financialHealthService: FinancialHealthService;
+    private advancedAnalyticsService: AdvancedAnalyticsService;
 
     constructor() {
         this.transactionsService = new TransactionsService();
         this.analyticsService = new AnalyticsService(); // Initialize
         this.financialHealthService = new FinancialHealthService();
+        this.advancedAnalyticsService = new AdvancedAnalyticsService();
     }
 
     // POST /api/transactions
@@ -26,7 +29,7 @@ export default class TransactionsController {
             }
 
             const transactionData = req.body;
-            
+
             // Basic validation
             if (!transactionData.amount || !transactionData.category) {
                 return res.status(400).json({ error: 'Amount and Category are required' });
@@ -37,10 +40,10 @@ export default class TransactionsController {
 
             // call the service to save to MongoDB
             const newTransaction = await this.transactionsService.create(transactionData);
-            
-            res.status(201).json({ 
-                message: 'Transaction created successfully', 
-                data: newTransaction 
+
+            res.status(201).json({
+                message: 'Transaction created successfully',
+                data: newTransaction
             });
 
         } catch (error) {
@@ -54,7 +57,7 @@ export default class TransactionsController {
         try {
             const { id } = req.params;
             const transaction = await this.transactionsService.findById(id);
-            
+
             if (!transaction) {
                 return res.status(404).json({ error: 'Transaction not found' });
             }
@@ -71,7 +74,7 @@ export default class TransactionsController {
             const { id } = req.params;
             const updates = req.body;
             const updatedTransaction = await this.transactionsService.update(id, updates);
-            
+
             if (!updatedTransaction) {
                 return res.status(404).json({ error: 'Transaction not found' });
             }
@@ -91,7 +94,7 @@ export default class TransactionsController {
             if (!deleted) {
                 return res.status(404).json({ error: 'Transaction not found' });
             }
-            
+
             res.status(200).json({ message: 'Transaction deleted' });
         } catch (error) {
             res.status(500).json({ error: 'Could not delete transaction' });
@@ -107,11 +110,11 @@ export default class TransactionsController {
             }
 
             const transactions = await this.transactionsService.getAll(userId);
-            
-            res.json({ 
-                message: 'Transactions list', 
-                count: transactions.length, 
-                data: transactions 
+
+            res.json({
+                message: 'Transactions list',
+                count: transactions.length,
+                data: transactions
             });
         } catch (error) {
             res.status(500).json({ error: 'Could not fetch transactions' });
@@ -135,21 +138,58 @@ export default class TransactionsController {
         }
     }
 
-    // POST /api/transactions/sync
-    async syncBankAccount(req: Request, res: Response) {
+    // GET /api/transactions/forecast
+    async getCashFlowForecast(req: AuthRequest, res: Response) {
         try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+
+            const forecasts = await this.advancedAnalyticsService.forecastCashFlow(userId, 30);
+            const forecast = forecasts.map((day) => ({
+                date: day.date,
+                balance: day.predictedBalance,
+                predicted: true,
+                riskLevel: day.riskLevel,
+                recommendedActions: day.recommendedActions
+            }));
+
+            const daysToZero = forecast.findIndex((day) => day.balance <= 0);
+
+            res.json({
+                forecast,
+                daysToZero: daysToZero >= 0 ? daysToZero + 1 : null
+            });
+        } catch (error) {
+            console.error('Error getting cash flow forecast:', error);
+            res.status(500).json({ error: 'Failed to fetch cash flow forecast' });
+        }
+    }
+
+    // POST /api/transactions/sync
+    async syncBankAccount(req: AuthRequest, res: Response) {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+
             const bank = new BankingIntegration();
             const newTransactions = await bank.fetchRecentTransactions();
 
             // Save each transaction to the database using your existing Service
             const savedTransactions = [];
             for (const data of newTransactions) {
-                const saved = await this.transactionsService.create(data);
+                const saved = await this.transactionsService.create({
+                    ...data,
+                    userId
+                });
                 savedTransactions.push(saved);
             }
 
-            res.json({ 
-                message: 'Sync complete', 
+            res.json({
+                message: 'Sync complete',
                 transactions_added: savedTransactions.length,
                 data: savedTransactions
             });
@@ -178,6 +218,22 @@ export default class TransactionsController {
         }
     }
     // ---------------------------
+
+    // GET /api/transactions/peer-benchmarks
+    async getPeerBenchmarks(req: AuthRequest, res: Response) {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+
+            const benchmarkData = await this.financialHealthService.getPeerBenchmarks(userId);
+            res.json(benchmarkData);
+        } catch (error) {
+            console.error('Error getting peer benchmarks:', error);
+            res.status(500).json({ error: 'Failed to fetch peer benchmarks' });
+        }
+    }
 
     // GET /api/transactions/subscriptions
     async getSubscriptions(req: AuthRequest, res: Response) {
@@ -209,10 +265,10 @@ export default class TransactionsController {
 
             // Initialize AI agent for research
             const financialAgent = new FinancialAgent();
-            
+
             // Get user's transaction context for personalized research
             const userTransactions = await this.transactionsService.getAll(userId);
-            
+
             // Create research prompt
             const researchPrompt = `
             You are a concise financial coach. Your answers must be brief, smart, and strictly formatted using bullet points. Do not write long paragraphs. Do not use markdown headers like '##'. Focus on actionable insights. Limit your response to a maximum of 3-4 key points.
@@ -232,8 +288,8 @@ export default class TransactionsController {
 
             // Use AI to generate research response
             const research = await financialAgent.generateResearch(researchPrompt);
-            
-            res.json({ 
+
+            res.json({
                 question,
                 research,
                 timestamp: new Date().toISOString()
