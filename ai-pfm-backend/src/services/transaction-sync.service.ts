@@ -326,6 +326,7 @@ export class TransactionSyncService {
           const setDoc = op.updateOne.update.$set;
           if (setDoc && setDoc.isRecurring) {
             const provider = setDoc.normalizedMerchant || setDoc.merchantName || "Unknown";
+                  console.info('[TransactionSyncService] persisting subscription', { userId: setDoc.userId, provider, isRecurring: setDoc.isRecurring });
             const amount = Math.abs(setDoc.amount || 0);
             // Map frequency to subscription schema enum (monthly/yearly)
             let freq: "monthly" | "yearly" = "monthly";
