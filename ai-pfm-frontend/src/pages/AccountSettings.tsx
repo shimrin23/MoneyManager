@@ -108,6 +108,7 @@ export const AccountSettings = () => {
                 try {
                     await apiClient.delete('/auth/account');
                     localStorage.removeItem('token');
+                    window.dispatchEvent(new Event('auth-changed'));
                     navigate('/login');
                 } catch (err) {
                     setError('Failed to delete account');

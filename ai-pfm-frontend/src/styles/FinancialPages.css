@@ -7,10 +7,6 @@
     padding: 2rem;
 }
 
-.connect-bank-page {
-    max-width: 960px;
-}
-
 .page-header {
     display: flex;
     justify-content: space-between;
@@ -31,166 +27,6 @@
     color: var(--text-muted);
     font-size: 1.1rem;
     margin: 0.5rem 0 0 0;
-}
-
-.connect-bank-page .page-header {
-    margin-bottom: 1.5rem;
-}
-
-.connect-bank-card {
-    padding: 1.75rem;
-    border-radius: 1.25rem;
-    background: linear-gradient(180deg, rgba(30, 41, 59, 0.92) 0%, rgba(15, 23, 42, 0.9) 100%);
-    border: 1px solid var(--border);
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
-}
-
-.connect-bank-page .stepper {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.85rem;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border);
-}
-
-.connect-bank-page .step {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.6rem;
-    text-align: center;
-    color: var(--text-muted);
-}
-
-.connect-bank-page .step:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    top: 21px;
-    right: -45%;
-    width: 90%;
-    height: 2px;
-    background: rgba(148, 163, 184, 0.24);
-}
-
-.connect-bank-page .step.active {
-    color: var(--text);
-}
-
-.connect-bank-page .step.active:not(:last-child)::after {
-    background: linear-gradient(90deg, var(--accent), rgba(96, 165, 250, 0.25));
-}
-
-.connect-bank-page .step-number {
-    width: 42px;
-    height: 42px;
-    border-radius: 999px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.04);
-    font-weight: 700;
-}
-
-.connect-bank-page .step.active .step-number {
-    background: linear-gradient(135deg, var(--accent), #60a5fa);
-    color: white;
-    border-color: transparent;
-    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.28);
-}
-
-.connect-bank-page .step-label {
-    font-size: 0.85rem;
-    font-weight: 600;
-    line-height: 1.35;
-}
-
-.connect-bank-page .form-grid {
-    display: grid;
-    gap: 1.25rem;
-}
-
-.connect-bank-page .form-field {
-    display: flex;
-    flex-direction: column;
-    gap: 0.55rem;
-}
-
-.connect-bank-page .form-field span {
-    font-size: 0.75rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    font-weight: 700;
-    color: var(--text-muted);
-}
-
-.connect-bank-page .form-field input,
-.connect-bank-page .form-field select {
-    width: 100%;
-    padding: 0.95rem 1rem;
-    border-radius: 0.9rem;
-    border: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.04);
-    color: var(--text);
-    font: inherit;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-.connect-bank-page .form-field input:focus,
-.connect-bank-page .form-field select:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
-}
-
-.connect-bank-page .actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-}
-
-.connect-bank-page .actions .primary,
-.connect-bank-page .actions .secondary {
-    min-width: 140px;
-    padding: 0.85rem 1.2rem;
-    border-radius: 0.85rem;
-    font-weight: 700;
-}
-
-.connect-bank-page .progress {
-    height: 10px;
-    background: rgba(255, 255, 255, 0.08);
-    border-radius: 999px;
-    overflow: hidden;
-}
-
-.connect-bank-page .progress-bar {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent), #60a5fa);
-    border-radius: inherit;
-    transition: width 0.35s ease;
-}
-
-.connect-bank-summary {
-    padding: 1rem 1.1rem;
-    border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--border);
-}
-
-.connect-bank-summary p {
-    margin: 0.9rem 0 0;
-    color: var(--text);
-    line-height: 1.6;
-}
-
-.connect-bank-summary p:first-of-type {
-    margin-top: 0.75rem;
 }
 
 /* Grid Layouts */
@@ -269,29 +105,12 @@
     font-weight: 500;
 }
 
-.bg-green-100 {
-    background: rgba(34, 197, 94, 0.1);
-}
-
-.text-green-800 {
-    color: #22c55e;
-}
-
-.bg-yellow-100 {
-    background: rgba(245, 158, 11, 0.1);
-}
-
-.text-yellow-800 {
-    color: #f59e0b;
-}
-
-.bg-red-100 {
-    background: rgba(239, 68, 68, 0.1);
-}
-
-.text-red-800 {
-    color: #ef4444;
-}
+.bg-green-100 { background: rgba(34, 197, 94, 0.1); }
+.text-green-800 { color: #22c55e; }
+.bg-yellow-100 { background: rgba(245, 158, 11, 0.1); }
+.text-yellow-800 { color: #f59e0b; }
+.bg-red-100 { background: rgba(239, 68, 68, 0.1); }
+.text-red-800 { color: #ef4444; }
 
 /* Metrics */
 .metrics-card {
@@ -829,57 +648,56 @@
     .nav-grid {
         grid-template-columns: 1fr;
     }
-
+    
     .nav-card {
         padding: 0.75rem;
     }
-
+    
     .nav-icon {
         font-size: 1.5rem;
     }
 }
-
 @media (max-width: 768px) {
     .page-container {
         padding: 1rem;
     }
-
+    
     .page-header {
         flex-direction: column;
         align-items: stretch;
     }
-
+    
     .form-row {
         grid-template-columns: 1fr;
     }
-
+    
     .debt-overview-grid,
     .credit-overview-grid {
         grid-template-columns: 1fr;
     }
-
+    
     .strategies-grid {
         grid-template-columns: 1fr;
     }
-
+    
     .goals-grid,
     .cards-grid {
         grid-template-columns: 1fr;
     }
-
+    
     .loan-details {
         grid-template-columns: 1fr;
     }
-
+    
     .tips-grid {
         grid-template-columns: 1fr;
     }
-
+    
     .card-actions,
     .goal-actions {
         flex-direction: column;
     }
-
+    
     .form-actions {
         flex-direction: column-reverse;
     }
@@ -889,16 +707,16 @@
     .page-header h1 {
         font-size: 2rem;
     }
-
+    
     .amount-large {
         font-size: 1.5rem;
     }
-
+    
     .score-circle {
         width: 100px;
         height: 100px;
     }
-
+    
     .score-number {
         font-size: 2rem;
     }
@@ -974,22 +792,19 @@
     margin-bottom: 15px;
 }
 
-.user-value,
-.peer-value {
+.user-value, .peer-value {
     text-align: center;
     flex: 1;
 }
 
-.user-value .label,
-.peer-value .label {
+.user-value .label, .peer-value .label {
     display: block;
     color: var(--text-muted);
     font-size: 0.8rem;
     margin-bottom: 5px;
 }
 
-.user-value .value,
-.peer-value .value {
+.user-value .value, .peer-value .value {
     display: block;
     color: var(--text);
     font-size: 1.2rem;
@@ -1068,14 +883,688 @@
     line-height: 1.5;
 }
 
-[data-theme='light'] .text-green-800 {
-    color: #166534;
+[data-theme='light'] .text-green-800 { color: #166534; }
+[data-theme='light'] .text-yellow-800 { color: #92400e; }
+[data-theme='light'] .text-red-800 { color: #991b1b; }
+
+/* Modern Financial Health Page */
+.financial-health-page {
+    max-width: 1320px;
+    padding-top: 2.4rem;
 }
 
-[data-theme='light'] .text-yellow-800 {
-    color: #92400e;
+.financial-health-page .page-header {
+    align-items: center;
+    margin-bottom: 1.6rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-[data-theme='light'] .text-red-800 {
-    color: #991b1b;
+.financial-health-page .page-header h1 {
+    font-size: clamp(2rem, 4vw, 3.1rem);
+    letter-spacing: -0.02em;
+    margin: 0;
+}
+
+.financial-health-page .page-subtitle {
+    font-size: 1.18rem;
+    color: rgba(203, 213, 225, 0.9);
+}
+
+.financial-health-page .content-grid {
+    grid-template-columns: 1.05fr 1.35fr;
+    gap: 1.25rem;
+}
+
+.financial-health-page .card {
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    background: linear-gradient(160deg, rgba(30, 41, 59, 0.95), rgba(23, 34, 53, 0.88));
+    box-shadow: 0 18px 44px rgba(2, 8, 23, 0.32);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.financial-health-page .card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(99, 102, 241, 0.5);
+    box-shadow: 0 24px 50px rgba(15, 23, 42, 0.45);
+}
+
+.financial-health-page .card h3 {
+    margin: 0;
+    font-size: 1.95rem;
+    font-size: clamp(1.3rem, 2.1vw, 1.7rem);
+}
+
+.financial-health-page .health-score-card {
+    text-align: left;
+    padding: 1.8rem;
+}
+
+.financial-health-page .health-score-card .score-display {
+    margin-top: 1.1rem;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.financial-health-page .health-score-card .score-circle {
+    width: 148px;
+    height: 148px;
+    border: 4px solid rgba(148, 163, 184, 0.35);
+    box-shadow: inset 0 0 0 10px rgba(15, 23, 42, 0.38);
+}
+
+.financial-health-page .health-score-card .score-number {
+    font-size: 2.85rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.financial-health-page .health-score-card .score-label {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.financial-health-page .risk-badge .badge {
+    border-radius: 999px;
+    padding: 0.42rem 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+}
+
+.financial-health-page .metrics-card {
+    padding: 1.8rem;
+}
+
+.financial-health-page .metrics-grid {
+    grid-template-columns: repeat(2, minmax(150px, 1fr));
+    gap: 0.9rem;
+    margin-top: 1rem;
+}
+
+.financial-health-page .metric {
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    background: linear-gradient(180deg, rgba(51, 65, 85, 0.85), rgba(51, 65, 85, 0.68));
+    padding: 1rem;
+}
+
+.financial-health-page .metric-label {
+    font-size: 0.96rem;
+    margin-bottom: 0.55rem;
+}
+
+.financial-health-page .metric-value {
+    font-size: clamp(1.65rem, 2.2vw, 2rem);
+    font-weight: 800;
+}
+
+.financial-health-page .recommendations-card,
+.financial-health-page .peer-benchmarks-card {
+    padding: 1.6rem;
+}
+
+.financial-health-page .benchmark-item {
+    border-radius: 14px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    background: linear-gradient(180deg, rgba(51, 65, 85, 0.7), rgba(30, 41, 59, 0.82));
+}
+
+.financial-health-page .comparison-badge {
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.3rem 0.65rem;
+}
+
+@media (max-width: 992px) {
+    .financial-health-page .content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .financial-health-page .metrics-grid {
+        grid-template-columns: repeat(3, minmax(120px, 1fr));
+    }
+}
+
+@media (max-width: 640px) {
+    .financial-health-page {
+        padding-top: 1.1rem;
+    }
+
+    .financial-health-page .page-subtitle {
+        font-size: 0.98rem;
+    }
+
+    .financial-health-page .health-score-card,
+    .financial-health-page .metrics-card,
+    .financial-health-page .recommendations-card,
+    .financial-health-page .peer-benchmarks-card {
+        padding: 1.2rem;
+    }
+
+    .financial-health-page .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Light mode: modern Financial Health page */
+[data-theme='light'] .financial-health-page .page-header {
+    border-bottom-color: rgba(15, 23, 42, 0.12);
+}
+
+[data-theme='light'] .financial-health-page .page-subtitle {
+    color: #475569;
+}
+
+[data-theme='light'] .financial-health-page .card {
+    background: linear-gradient(160deg, #f8fafc, #eef2ff);
+    border-color: rgba(148, 163, 184, 0.35);
+    box-shadow: 0 14px 28px rgba(148, 163, 184, 0.22);
+}
+
+[data-theme='light'] .financial-health-page .card:hover {
+    border-color: rgba(99, 102, 241, 0.4);
+    box-shadow: 0 18px 34px rgba(99, 102, 241, 0.18);
+}
+
+[data-theme='light'] .financial-health-page .card h3,
+[data-theme='light'] .financial-health-page .metric-value,
+[data-theme='light'] .financial-health-page .benchmark-header h4,
+[data-theme='light'] .financial-health-page .user-value .value,
+[data-theme='light'] .financial-health-page .peer-value .value,
+[data-theme='light'] .financial-health-page .insight-content h4 {
+    color: #0f172a;
+}
+
+[data-theme='light'] .financial-health-page .metric,
+[data-theme='light'] .financial-health-page .benchmark-item,
+[data-theme='light'] .financial-health-page .insight-card {
+    background: rgba(255, 255, 255, 0.78);
+    border-color: rgba(148, 163, 184, 0.28);
+}
+
+[data-theme='light'] .financial-health-page .health-score-card .score-circle {
+    border-color: rgba(148, 163, 184, 0.45);
+    box-shadow: inset 0 0 0 10px rgba(148, 163, 184, 0.18);
+}
+
+[data-theme='light'] .financial-health-page .health-score-card .score-number {
+    color: #0f172a;
+}
+
+[data-theme='light'] .financial-health-page .health-score-card .score-label,
+[data-theme='light'] .financial-health-page .metric-label,
+[data-theme='light'] .financial-health-page .benchmark-subtitle,
+[data-theme='light'] .financial-health-page .user-value .label,
+[data-theme='light'] .financial-health-page .peer-value .label,
+[data-theme='light'] .financial-health-page .percentile span,
+[data-theme='light'] .financial-health-page .insight-content p {
+    color: #475569;
+}
+
+/* Connect Bank Account UI Flow Styles */
+
+/* Stepper Component */
+.stepper {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 0 1rem;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    flex: 1;
+    position: relative;
+}
+
+.step::after {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    width: 100%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    z-index: 0;
+}
+
+.step:last-child::after {
+    display: none;
+}
+
+.step.active::after,
+.step:last-child.active::after {
+    background: var(--accent);
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    font-weight: 600;
+    font-size: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    z-index: 1;
+    transition: all 0.3s ease;
+}
+
+.step.active .step-number {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+}
+
+.step-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-align: center;
+    max-width: 100px;
+}
+
+.step.active .step-label {
+    color: var(--text);
+    font-weight: 600;
+}
+
+/* Form Grid Layout */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-field span {
+    color: var(--text);
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+    padding: 0.75rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-field input::placeholder,
+.form-field select::placeholder {
+    color: var(--text-muted);
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-field select {
+    cursor: pointer;
+    appearance: none;
+    padding-right: 2rem;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23e2e8f0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 1.25rem;
+}
+
+/* Button Actions Container */
+.actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.actions button {
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 120px;
+}
+
+.primary {
+    background: var(--accent);
+    color: white;
+    border: 1px solid var(--accent);
+}
+
+.primary:hover:not(:disabled) {
+    background: rgba(59, 130, 246, 0.8);
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.4);
+    transform: translateY(-2px);
+}
+
+.primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.secondary {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.secondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+.secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Progress Bar */
+.progress {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 1rem 0;
+}
+
+.progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), rgba(59, 130, 246, 0.7));
+    border-radius: 3px;
+    transition: width 0.3s ease;
+    box-shadow: 0 0 8px rgba(59, 130, 246, 0.5);
+}
+
+/* Confirmation Section */
+.form-grid > div:not(.actions) {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-grid > div:not(.actions) p {
+    color: var(--text);
+    margin: 0.5rem 0;
+    line-height: 1.6;
+}
+
+.form-grid > div:not(.actions) strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+/* Summary Section */
+.form-grid h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.3rem;
+    color: var(--text);
+}
+
+/* Responsive Stepper */
+@media (max-width: 768px) {
+    .stepper {
+        padding: 0;
+        gap: 0.5rem;
+    }
+
+    .step::after {
+        width: 100%;
+    }
+
+    .step-number {
+        width: 36px;
+        height: 36px;
+        font-size: 0.9rem;
+    }
+
+    .step-label {
+        font-size: 0.75rem;
+        max-width: 80px;
+    }
+
+    .actions {
+        flex-direction: column-reverse;
+    }
+
+    .actions button {
+        width: 100%;
+    }
+}
+
+/* Light mode Connect Bank Account styles */
+[data-theme='light'] .stepper {
+    padding: 0 1rem;
+}
+
+[data-theme='light'] .step-number {
+    background: rgba(15, 23, 42, 0.05);
+    color: #475569;
+    border-color: rgba(15, 23, 42, 0.15);
+}
+
+[data-theme='light'] .step.active .step-number {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
+}
+
+[data-theme='light'] .step-label {
+    color: #64748b;
+}
+
+[data-theme='light'] .step.active .step-label {
+    color: #0f172a;
+}
+
+[data-theme='light'] .form-field span {
+    color: #0f172a;
+}
+
+[data-theme='light'] .form-field input,
+[data-theme='light'] .form-field select,
+[data-theme='light'] .form-field textarea {
+    border-color: rgba(15, 23, 42, 0.15);
+    background: rgba(15, 23, 42, 0.03);
+    color: #0f172a;
+}
+
+[data-theme='light'] .form-field input::placeholder,
+[data-theme='light'] .form-field select::placeholder {
+    color: #94a3b8;
+}
+
+[data-theme='light'] .form-field input:focus,
+[data-theme='light'] .form-field select:focus,
+[data-theme='light'] .form-field textarea:focus {
+    border-color: #3b82f6;
+    background: rgba(59, 130, 246, 0.05);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+[data-theme='light'] .secondary {
+    border-color: rgba(15, 23, 42, 0.2);
+    color: #0f172a;
+}
+
+[data-theme='light'] .secondary:hover:not(:disabled) {
+    background: rgba(15, 23, 42, 0.05);
+    border-color: rgba(15, 23, 42, 0.3);
+}
+
+[data-theme='light'] .form-grid > div:not(.actions) p,
+[data-theme='light'] .form-grid > div:not(.actions) strong,
+[data-theme='light'] .form-grid h3 {
+    color: #0f172a;
+}
+
+/* Admin Dashboard page (route: /admin) */
+.admin-dashboard-page .admin-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.admin-dashboard-page .admin-stat-card {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+    padding: 0.9rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.admin-dashboard-page .admin-stat-label {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.admin-dashboard-page .admin-stat-value {
+    color: var(--text);
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.admin-dashboard-page .admin-section {
+    padding: 1rem;
+}
+
+.admin-dashboard-page .admin-section-header {
+    margin-bottom: 0.75rem;
+}
+
+.admin-dashboard-page .admin-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.75rem;
+}
+
+.admin-dashboard-page .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 760px;
+}
+
+.admin-dashboard-page .admin-table th {
+    text-align: left;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    font-weight: 700;
+    padding: 0.85rem 0.9rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.admin-dashboard-page .admin-table td {
+    padding: 0.85rem 0.9rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    color: var(--text);
+    vertical-align: middle;
+}
+
+.admin-dashboard-page .admin-table tbody tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.admin-dashboard-page .admin-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.admin-dashboard-page .admin-cell-strong {
+    font-weight: 600;
+}
+
+.admin-dashboard-page .admin-status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+
+.admin-dashboard-page .admin-status-badge.is-success {
+    color: #16a34a;
+    background: rgba(22, 163, 74, 0.16);
+}
+
+.admin-dashboard-page .admin-status-badge.is-danger {
+    color: #dc2626;
+    background: rgba(220, 38, 38, 0.16);
+}
+
+.admin-dashboard-page .admin-action-btn {
+    min-width: 110px;
+}
+
+@media (max-width: 768px) {
+    .admin-dashboard-page .admin-section {
+        padding: 0.8rem;
+    }
+
+    .admin-dashboard-page .admin-table {
+        min-width: 680px;
+    }
+}
+
+[data-theme='light'] .admin-dashboard-page .admin-stat-card {
+    background: rgba(15, 23, 42, 0.03);
+    border-color: rgba(15, 23, 42, 0.12);
+}
+
+[data-theme='light'] .admin-dashboard-page .admin-table-wrapper {
+    border-color: rgba(15, 23, 42, 0.12);
+}
+
+[data-theme='light'] .admin-dashboard-page .admin-table th {
+    background: rgba(15, 23, 42, 0.03);
+    border-bottom-color: rgba(15, 23, 42, 0.12);
+}
+
+[data-theme='light'] .admin-dashboard-page .admin-table td {
+    border-bottom-color: rgba(15, 23, 42, 0.08);
+}
+
+[data-theme='light'] .admin-dashboard-page .admin-table tbody tr:hover {
+    background: rgba(15, 23, 42, 0.02);
 }

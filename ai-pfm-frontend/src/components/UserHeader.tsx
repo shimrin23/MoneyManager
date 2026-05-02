@@ -52,6 +52,7 @@ export const UserHeader = ({ theme, onToggleTheme }: UserHeaderProps) => {
     const handleLogout = () => {
         // Clear token from localStorage
         localStorage.removeItem('token');
+        window.dispatchEvent(new Event('auth-changed'));
         
         // Clear any cached data
         setUser(null);

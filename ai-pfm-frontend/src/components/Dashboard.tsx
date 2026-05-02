@@ -1,68 +1,121 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.ts';
+import axios from 'axios';
 import { CashFlowForecast } from './CashFlowForecast';
 import { AIAssistant } from './AIAssistant';
 
 export const Dashboard = () => {
     const [aiOpen, setAiOpen] = useState(false);
+    // New State for Score
     const [score, setScore] = useState<number>(0);
     const [loadingScore, setLoadingScore] = useState<boolean>(true);
+    // State for transactions
     const [transactions, setTransactions] = useState<any[]>([]);
     const [loadingTransactions, setLoadingTransactions] = useState<boolean>(true);
+    const [hasPFMConsent, setHasPFMConsent] = useState<boolean | null>(null);
+    const [syncing, setSyncing] = useState<boolean>(false);
+    const [syncMode, setSyncMode] = useState<'mock' | 'real' | 'unknown'>('unknown');
 
+    const fetchTransactions = async () => {
+        try {
+            const response = await apiClient.get('/transactions');
+            setTransactions((response.data?.data ?? []).slice(0, 5)); // Get latest 5
+        } catch (error) {
+            console.error("Failed to fetch transactions", error);
+        } finally {
+            setLoadingTransactions(false);
+        }
+    };
+
+    const fetchConsentStatus = async () => {
+        try {
+            const response = await apiClient.get('/consent/check/pfm_analysis');
+            setHasPFMConsent(!!response.data?.hasConsent);
+        } catch (error) {
+            console.error('Failed to fetch consent status', error);
+            setHasPFMConsent(false);
+        }
+    };
+
+    const fetchSyncHealth = async () => {
+        try {
+            const response = await apiClient.get('/transactions/sync/health');
+            const mode = response.data?.bankingIntegration?.mode;
+            if (mode === 'mock' || mode === 'real') {
+                setSyncMode(mode);
+                return;
+            }
+            setSyncMode('unknown');
+        } catch (error) {
+            console.error('Failed to fetch sync health', error);
+            setSyncMode('unknown');
+        }
+    };
+    // 1. Fetch Score on Load
     useEffect(() => {
-        const refreshScore = async () => {
+        const fetchScore = async () => {
             try {
                 const response = await apiClient.get('/transactions/score');
-                setScore(Number(response.data?.score ?? 0));
+                setScore(response.data.score);
             } catch (error) {
-                console.error('Failed to fetch score', error);
+                console.error("Failed to fetch score", error);
             } finally {
                 setLoadingScore(false);
             }
         };
-
-        refreshScore();
-
-        const handleVisibilityChange = () => {
-            if (document.visibilityState === 'visible') {
-                refreshScore();
-            }
-        };
-
-        document.addEventListener('visibilitychange', handleVisibilityChange);
-        const intervalId = window.setInterval(() => {
-            refreshScore();
-        }, 30000);
-
-        return () => {
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-            window.clearInterval(intervalId);
-        };
+        fetchScore();
     }, []);
 
     // 2. Fetch Recent Transactions
     useEffect(() => {
-        const fetchTransactions = async () => {
-            try {
-                const response = await apiClient.get('/transactions');
-                setTransactions((response.data?.data ?? []).slice(0, 5)); // Get latest 5
-            } catch (error) {
-                console.error("Failed to fetch transactions", error);
-            } finally {
-                setLoadingTransactions(false);
-            }
-        };
         fetchTransactions();
+        fetchConsentStatus();
+        fetchSyncHealth();
     }, []);
 
-    const getScoreStatus = (s: number) => {
-        if (s >= 70) return { label: 'Excellent 🎉', description: 'Great financial habits!' };
-        if (s >= 40) return { label: 'Needs Work ⚠️', description: 'Room for improvement' };
-        return { label: 'Critical 🚨', description: 'Immediate attention needed' };
+    const syncBank = async () => {
+        if (!hasPFMConsent) {
+            alert('PFM consent is required. Use Transactions page to enable PFM Consent first.');
+            return;
+        }
+
+        try {
+            setSyncing(true);
+            await apiClient.post('/transactions/sync');
+            await fetchTransactions();
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                const apiMessage =
+                    error.response?.data?.message ||
+                    error.response?.data?.error ||
+                    error.response?.data?.details;
+                alert(apiMessage ? `Sync failed: ${apiMessage}` : 'Sync failed');
+            } else {
+                alert('Sync failed');
+            }
+        } finally {
+            setSyncing(false);
+        }
     };
 
-    const scoreStatus = getScoreStatus(score);
+    // Helper to determine color based on score
+    const getScoreColor = (s: number) => {
+        if (s >= 70) return 'var(--success)'; // Green
+        if (s >= 40) return '#facc15';       // Yellow
+        return 'var(--danger)';              // Red
+    };
+
+    const getStatusLabel = (s: number) => {
+        if (s >= 70) return 'Excellent';
+        if (s >= 40) return 'Needs Work';
+        return 'Critical';
+    };
+
+    const getRiskLevel = (s: number) => {
+        if (s >= 70) return 'Low';
+        if (s >= 40) return 'Medium';
+        return 'High';
+    };
 
     // Helper to format date
     const formatDate = (dateString: string) => {
@@ -88,29 +141,53 @@ export const Dashboard = () => {
                 </div>
             </div>
 
-            <div className="dashboard-layout" style={{ padding: '1.5rem', maxWidth: '100%' }}>
+            <div className="dashboard-layout dashboard-modern">
                 {/* Top Row: Health Score & Cash Flow */}
                 <div className="dashboard-top-row">
                     {/* Financial Health Score Card */}
                     <div className="card health-score-card">
-                        <h3>💚 Financial Health Score</h3>
+                        <div className="score-card-header">
+                            <div className="score-card-icon">♡</div>
+                            <h3>Financial Health Score</h3>
+                        </div>
+
                         <div className="score-display">
-                            <div
+                            <div 
                                 className="score-circle"
                                 style={{
-                                    background: 'rgba(255,255,255,0.04)',
-                                    borderColor: 'var(--border)'
+                                    background: `conic-gradient(${getScoreColor(score)} ${score * 3.6}deg, rgba(71, 85, 105, 0.55) 0deg)`
                                 }}
                             >
-                                <span className="score-number">{loadingScore ? '...' : `${score}%`}</span>
+                                <div className="score-inner">
+                                    <span className="score-number">{loadingScore ? "..." : score}</span>
+                                    <span className="score-label">/ 100</span>
+                                </div>
                             </div>
+
                             <div className="score-status">
-                                <span className="status-text">
-                                    {scoreStatus.label}
+                                <span className={`status-text status-${getRiskLevel(score).toLowerCase()}`}>
+                                    <span className="status-dot">●</span>
+                                    {getStatusLabel(score)}
                                 </span>
                                 <p className="status-description">
-                                    {scoreStatus.description}
+                                    {score >= 70 ? "Great financial habits" : 
+                                     score >= 40 ? "Room for improvement" : "Immediate attention needed"}
                                 </p>
+                            </div>
+                        </div>
+
+                        <div className="score-stats-grid">
+                            <div className="score-stat-item">
+                                <span className="score-stat-value">—</span>
+                                <span className="score-stat-label">Savings</span>
+                            </div>
+                            <div className="score-stat-item">
+                                <span className="score-stat-value">{loadingScore ? '...' : `${score}%`}</span>
+                                <span className="score-stat-label">Score</span>
+                            </div>
+                            <div className="score-stat-item">
+                                <span className="score-stat-value">{getRiskLevel(score)}</span>
+                                <span className="score-stat-label">Risk</span>
                             </div>
                         </div>
                     </div>
@@ -123,12 +200,22 @@ export const Dashboard = () => {
                 <div className="card transactions-card">
                     <div className="transactions-header">
                         <h3>Recent Transactions</h3>
-                        <button className="btn-sync">
-                            <span>🔄</span>
-                            <span>Sync Bank</span>
-                        </button>
+                        <div className="transactions-header-actions">
+                            <span className={`sync-mode-badge ${syncMode}`}>
+                                Sync Mode: {syncMode.toUpperCase()}
+                            </span>
+                            <button
+                                className="btn-sync"
+                                onClick={syncBank}
+                                disabled={syncing || hasPFMConsent === false}
+                                title={hasPFMConsent === false ? 'Enable consent in Transactions page first' : 'Sync latest bank transactions'}
+                            >
+                                <span>🔄</span>
+                                <span>{syncing ? 'Syncing...' : 'Sync Bank'}</span>
+                            </button>
+                        </div>
                     </div>
-
+                    
                     <div className="transactions-table-container">
                         <table className="transactions-table">
                             <thead>

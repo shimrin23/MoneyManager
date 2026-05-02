@@ -2,6 +2,8 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface ITransaction extends Document {
   userId: string;
+  syncKey?: string; // Deterministic key for idempotent upserts
+  externalTransactionId?: string; // Source transaction id from core banking
   amount: number;
   category: string;
   date: Date;
@@ -42,6 +44,8 @@ export interface ITransaction extends Document {
 const TransactionSchema: Schema = new Schema(
   {
     userId: { type: String, required: true, index: true },
+    syncKey: { type: String, index: true },
+    externalTransactionId: { type: String, index: true },
     amount: { type: Number, required: true },
     category: { type: String, required: true, index: true },
     date: { type: Date, required: true, default: Date.now, index: true },
@@ -91,5 +95,6 @@ TransactionSchema.index({ userId: 1, date: -1 });
 TransactionSchema.index({ userId: 1, isRecurring: 1 });
 TransactionSchema.index({ userId: 1, category: 1, date: -1 });
 TransactionSchema.index({ userId: 1, normalizedMerchant: 1 });
+TransactionSchema.index({ userId: 1, syncKey: 1 }, { unique: true, sparse: true });
 
 export default mongoose.model<ITransaction>("Transaction", TransactionSchema);
