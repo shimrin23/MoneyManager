@@ -322,6 +322,7 @@ export class TransactionSyncService {
 
       // Persist detected recurring subscriptions
       try {
+        console.info('[TransactionSyncService] operations to inspect:', operations.length);
         for (const op of operations) {
           const setDoc = op.updateOne.update.$set;
           if (setDoc && setDoc.isRecurring) {
