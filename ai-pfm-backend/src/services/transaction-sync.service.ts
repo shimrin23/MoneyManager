@@ -208,6 +208,8 @@ export class TransactionSyncService {
         since: state?.lastSyncedAt,
       });
 
+      console.log('[TransactionSyncService] fetched bankTransactions count:', bankTransactions?.length);
+
       if (bankTransactions.length === 0) {
         await SyncState.updateOne(
           { userId, sourceAccount },
@@ -294,6 +296,8 @@ export class TransactionSyncService {
           },
         };
       });
+
+      console.log('[TransactionSyncService] operations length:', operations.length);
 
       const bulkResult = await Transaction.bulkWrite(operations, { ordered: false });
       const inserted = bulkResult.upsertedCount || 0;
