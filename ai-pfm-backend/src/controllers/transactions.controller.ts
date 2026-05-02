@@ -6,6 +6,8 @@ import { BankingIntegration, getBankingIntegrationRuntimeConfig } from "../integ
 import { AnalyticsService } from "../services/analytics.service"; // Ensure this is imported
 import { FinancialHealthService } from "../services/financial-health.service";
 import { SimulatedBankFeedService } from "../services/simulated-bank-feed.service";
+import transactionSyncService from "../services/transaction-sync.service";
+import SyncState from "../schemas/sync_state.schema";
 
 export default class TransactionsController {
   private transactionsService: TransactionsService;
@@ -161,6 +163,12 @@ export default class TransactionsController {
   async syncBankAccount(req: Request, res: Response) {
     try {
       const authReq = req as AuthRequest;
+      // If caller supplied sourceAccounts (manual trigger), use the batch TransactionSyncService
+      if (req.body?.sourceAccounts && Array.isArray(req.body.sourceAccounts)) {
+        const userId = authReq.user?.id || String(authReq.user?.id || 'simulated-user');
+        const result = await transactionSyncService.syncUser(userId, { sourceAccounts: req.body.sourceAccounts, manualTrigger: true });
+        return res.json({ message: 'Sync complete', result });
+      }
       const feed = await this.bankFeedService.generateFeed({
         userId: authReq.user?.id || "simulated-user",
         accountId: req.body?.accountId ? String(req.body.accountId) : undefined,
@@ -210,11 +218,34 @@ export default class TransactionsController {
         return res.status(401).json({ error: "User not authenticated" });
       }
 
+      const syncStates = await SyncState.find({ userId }).lean();
+
+      const lastSync = syncStates.reduce<Date | null>((latest, s) => {
+        if (!s.lastSyncedAt) return latest;
+        return !latest || s.lastSyncedAt > latest ? s.lastSyncedAt : latest;
+      }, null);
+
+      const STATUS_PRIORITY = { running: 3, failed: 2, success: 1, idle: 0 } as const;
+      const overallStatus = syncStates.reduce<"idle" | "running" | "success" | "failed">((worst, s) => {
+        return (STATUS_PRIORITY[s.lastStatus] ?? 0) > STATUS_PRIORITY[worst] ? s.lastStatus : worst;
+      }, "idle");
+
       res.json({
         data: {
-          status: "idle",
-          lastSync: null,
+          status: overallStatus,
+          lastSync: lastSync ?? null,
           nextSync: null,
+          accounts: syncStates.map((s) => ({
+            sourceAccount: s.sourceAccount,
+            status: s.lastStatus,
+            lastSyncedAt: s.lastSyncedAt ?? null,
+            lastInserted: s.lastInsertedCount,
+            lastUpdated: s.lastUpdatedCount,
+            totalRuns: s.totalRuns,
+            successRuns: s.successRuns,
+            failedRuns: s.failedRuns,
+            lastError: s.lastError ?? null,
+          })),
         },
       });
     } catch (error) {

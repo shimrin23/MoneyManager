@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../api/client.ts';
+import axios from 'axios';
 
 interface Transaction {
     _id: string;
@@ -12,6 +13,9 @@ interface Transaction {
 
 export const TransactionList = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [hasPFMConsent, setHasPFMConsent] = useState<boolean | null>(null);
+    const [syncMode, setSyncMode] = useState<'mock' | 'real' | 'unknown'>('unknown');
+    const [consentBusy, setConsentBusy] = useState(false);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editFormData, setEditFormData] = useState({
         amount: '',
@@ -32,16 +36,87 @@ export const TransactionList = () => {
         }
     };
 
+    const fetchConsentStatus = async () => {
+        try {
+            const response = await apiClient.get('/consent/check/pfm_analysis');
+            setHasPFMConsent(!!response.data?.hasConsent);
+        } catch (error) {
+            console.error('Error checking consent status', error);
+            setHasPFMConsent(false);
+        }
+    };
+
+    const fetchSyncHealth = async () => {
+        try {
+            const response = await apiClient.get('/transactions/sync/health');
+            const mode = response.data?.bankingIntegration?.mode;
+            if (mode === 'mock' || mode === 'real') {
+                setSyncMode(mode);
+                return;
+            }
+            setSyncMode('unknown');
+        } catch (error) {
+            console.error('Error checking sync health', error);
+            setSyncMode('unknown');
+        }
+    };
+
     useEffect(() => {
         fetchTransactions();
+        fetchConsentStatus();
+        fetchSyncHealth();
     }, []);
 
     const syncBank = async () => {
+        if (!hasPFMConsent) {
+            alert('PFM consent is required. Click Enable PFM Consent first.');
+            return;
+        }
+
         try {
             await apiClient.post('/transactions/sync');
             fetchTransactions();
-        } catch {
-            alert("Sync failed");
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                const apiMessage =
+                    error.response?.data?.message ||
+                    error.response?.data?.error ||
+                    error.response?.data?.details;
+                alert(apiMessage ? `Sync failed: ${apiMessage}` : 'Sync failed');
+                return;
+            }
+            alert('Sync failed');
+        }
+    };
+
+    const enablePFMConsent = async () => {
+        try {
+            setConsentBusy(true);
+            await apiClient.post('/consent/grant', {
+                consentType: 'pfm_analysis',
+                version: 'v1.0'
+            });
+            await fetchConsentStatus();
+        } catch (error) {
+            console.error('Failed to grant consent', error);
+            alert('Failed to enable consent');
+        } finally {
+            setConsentBusy(false);
+        }
+    };
+
+    const disablePFMConsent = async () => {
+        try {
+            setConsentBusy(true);
+            await apiClient.post('/consent/revoke', {
+                consentType: 'pfm_analysis'
+            });
+            await fetchConsentStatus();
+        } catch (error) {
+            console.error('Failed to revoke consent', error);
+            alert('Failed to disable consent');
+        } finally {
+            setConsentBusy(false);
         }
     };
 
@@ -113,7 +188,32 @@ export const TransactionList = () => {
         <div className="card transaction-list">
             <div className="header-row">
                 <h2>Recent Transactions</h2>
-                <button className="secondary-btn" onClick={syncBank}>🔄 Sync Bank</button>
+                <div className="transaction-toolbar">
+                    <span className={`sync-mode-badge ${syncMode}`}>
+                        Sync Mode: {syncMode.toUpperCase()}
+                    </span>
+                    <span className={`consent-badge ${hasPFMConsent ? 'granted' : 'missing'}`}>
+                        {hasPFMConsent ? 'PFM Consent: Enabled' : 'PFM Consent: Required'}
+                    </span>
+                    {hasPFMConsent ? (
+                        <button
+                            className="secondary-btn"
+                            onClick={disablePFMConsent}
+                            disabled={consentBusy}
+                        >
+                            {consentBusy ? 'Updating...' : 'Disable Consent'}
+                        </button>
+                    ) : (
+                        <button
+                            className="secondary-btn"
+                            onClick={enablePFMConsent}
+                            disabled={consentBusy}
+                        >
+                            {consentBusy ? 'Updating...' : 'Enable PFM Consent'}
+                        </button>
+                    )}
+                    <button className="secondary-btn" onClick={syncBank} disabled={!hasPFMConsent}>🔄 Sync Bank</button>
+                </div>
             </div>
             
             <div className="table-container">

@@ -1,18 +1,18 @@
 import { schedule } from 'node-cron';
-import TransactionsService from '../services/transactions.service';
+import transactionSyncService from '../services/transaction-sync.service';
 
 const DAILY_SYNC_CRON = process.env.BANK_SYNC_CRON || '0 0 * * *';
 const SYNC_ENABLED = process.env.BANK_SYNC_ENABLED !== 'false';
 
 if (SYNC_ENABLED) {
-    const transactionsService = new TransactionsService();
-    
     schedule(DAILY_SYNC_CRON, async () => {
         console.log('Running scheduled daily transaction sync...');
         try {
-            // Placeholder: Sync job would fetch from banking integration and persist transactions
-            const transactions = await transactionsService.findAll();
-            console.log(`Scheduled transaction sync completed. Current transactions: ${transactions.length}`);
+            const summary = await transactionSyncService.syncAllConsentedUsers();
+            console.log(
+                `Scheduled sync complete — users: ${summary.usersProcessed} processed, ${summary.usersFailed} failed; ` +
+                `transactions: ${summary.inserted} inserted, ${summary.updated} updated`
+            );
         } catch (error) {
             console.error('Scheduled transaction sync failed:', error);
         }
