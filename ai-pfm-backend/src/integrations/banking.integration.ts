@@ -1,10 +1,16 @@
 import axios from 'axios';
+import {
+  SimulatedBankFeedOptions,
+  SimulatedBankFeedService,
+} from "../services/simulated-bank-feed.service";
 
 const BANK_API_BASE_URL = process.env.BANK_API_BASE_URL || 'https://api.fakebank.com';
 const BANK_API_TIMEOUT_MS = Number(process.env.BANK_API_TIMEOUT_MS || 12000);
 const BANK_API_MAX_RETRIES = Number(process.env.BANK_API_MAX_RETRIES || 3);
 const BANK_API_BACKOFF_MS = Number(process.env.BANK_API_BACKOFF_MS || 500);
 const BANKING_MOCK_ENABLED = process.env.BANKING_MOCK_ENABLED === 'true';
+
+const simulatedBankFeedService = new SimulatedBankFeedService();
 
 export const getBankingIntegrationRuntimeConfig = () => ({
     baseUrl: BANK_API_BASE_URL,
@@ -174,7 +180,11 @@ export class BankingIntegration {
         if (!since) return mockData;
         return mockData.filter((txn) => new Date(txn.date) > since);
     }
-    
+
+    async generateSimulatedFeed(options: Partial<SimulatedBankFeedOptions> = {}) {
+        return simulatedBankFeedService.generateFeed(options);
+    }
+
     async fetchAccountData(accountId: any) {
         try {
             const response = await this.requestWithRetry(
@@ -183,8 +193,7 @@ export class BankingIntegration {
                 async () => this.client.get(`/accounts/${accountId}`),
             );
             return response.data;
-        }
-        catch (error: any) {
+        } catch (error: any) {
             throw new Error(`Error fetching account data: ${error.message}`);
         }
     }
@@ -197,8 +206,7 @@ export class BankingIntegration {
                 async () => this.client.get(`/accounts/${accountId}/transactions`),
             );
             return Array.isArray(response.data) ? response.data : response.data?.transactions || [];
-        }
-        catch (error: any) {
+        } catch (error: any) {
             throw new Error(`Error fetching transaction history: ${error.message}`);
         }
     }
@@ -211,8 +219,7 @@ export class BankingIntegration {
                 async () => this.client.post('/transactions', transactionData),
             );
             return response.data;
-        }
-        catch (error: any) {
+        } catch (error: any) {
             throw new Error(`Error initiating transaction: ${error.message}`);
         }
     }
