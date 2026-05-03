@@ -9,6 +9,11 @@ interface Transaction {
     description: string;
     type: 'income' | 'expense';
     date: string;
+    isRecurring?: boolean;
+    recurringFrequency?: string;
+    recurringDueDate?: string;
+    isAnomaly?: boolean;
+    anomalyScore?: number;
 }
 
 export const TransactionList = () => {
@@ -256,7 +261,21 @@ export const TransactionList = () => {
                                                 placeholder="Description"
                                             />
                                         ) : (
-                                            <span className="description-text">{t.description}</span>
+                                            <>
+                                                <span className="description-text">{t.description}</span>
+                                                <div className="txn-badges">
+                                                    {t.isRecurring && (
+                                                        <span className="badge badge-recurring">
+                                                            Recurring{t.recurringFrequency ? ` (${t.recurringFrequency})` : ''}
+                                                        </span>
+                                                    )}
+                                                    {t.isAnomaly && (
+                                                        <span className="badge badge-anomaly">
+                                                            Anomaly {Math.round((t.anomalyScore || 0) * 100)}%
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </>
                                         )}
                                     </td>
                                     <td data-label="Category">
