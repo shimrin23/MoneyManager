@@ -3,6 +3,8 @@ import axios from 'axios';
 import fs from 'fs';
 import path from 'path';
 import Transaction from '../schemas/transaction.schema';
+import Alert, { IAlert } from '../schemas/alert.schema';
+import { FinancialAgent } from '../ai/agent';
 
 export class EnhancedBankingIntegration {
     private readonly MCC_CATEGORIES: Record<string, string> = {
@@ -86,6 +88,57 @@ export class EnhancedBankingIntegration {
             recurringDueDate: recurringMeta?.nextDueDate,
             confidence: this.calculateCategoryConfidence(mcc, merchantName, description),
         };
+    }
+
+    /**
+     * Async variant of categorizeTransaction: runs rule-based enrichment first,
+     * then falls back to AI (Gemini) when confidence is below 0.6 and no MCC matched.
+     */
+    async categorizeTransactionAsync(transaction: any): Promise<ReturnType<EnhancedBankingIntegration['categorizeTransaction']>> {
+        const result = this.categorizeTransaction(transaction);
+        if (result.confidence >= 0.6 || this.MCC_CATEGORIES[transaction.mcc]) {
+            return result;
+        }
+        try {
+            const agent = new FinancialAgent();
+            const aiResult = await agent.categorizeTransaction(
+                transaction.description || '',
+                transaction.merchantName || '',
+            );
+            if (aiResult && aiResult.confidence > result.confidence) {
+                return { ...result, category: aiResult.category, confidence: aiResult.confidence };
+            }
+        } catch {
+            // no Gemini key or network error — fall through to rule-based result
+        }
+        return result;
+    }
+
+    /**
+     * Compute anomaly score for a transaction based on z-score against the user's
+     * recent spending in the same category. Requires at least 5 historical records.
+     */
+    async computeAnomalyForTransaction(userId: string, amount: number, category: string): Promise<{ isAnomaly: boolean; anomalyScore: number }> {
+        try {
+            const recent = await Transaction.find(
+                { userId, category, type: 'expense' },
+            ).sort({ date: -1 }).limit(50).lean() as any[];
+
+            if (!recent || recent.length < 5) return { isAnomaly: false, anomalyScore: 0 };
+
+            const amounts = recent.map((t: any) => Math.abs(t.amount || 0));
+            const avg = amounts.reduce((s, a) => s + a, 0) / amounts.length;
+            const variance = amounts.reduce((s, a) => s + (a - avg) ** 2, 0) / amounts.length;
+            const std = Math.sqrt(variance);
+
+            if (std === 0) return { isAnomaly: false, anomalyScore: 0 };
+
+            const z = Math.abs((Math.abs(amount) - avg) / std);
+            const anomalyScore = Number(Math.min(z / 5, 1).toFixed(3));
+            return { isAnomaly: z > 2.5, anomalyScore };
+        } catch {
+            return { isAnomaly: false, anomalyScore: 0 };
+        }
     }
 
     private normalizeMerchant(merchantName: string): string {
@@ -279,8 +332,27 @@ export class EnhancedBankingIntegration {
         await newTransaction.save();
     }
 
-    private async triggerRealTimeAlert(transaction: any): Promise<void> {
-        // Implementation for real-time alerts
-        console.log(`High-priority transaction detected: ${transaction.amount}`);
+    async triggerRealTimeAlert(transaction: any): Promise<void> {
+        try {
+            const type: IAlert['type'] =
+                transaction.type === 'overdue_payment' ? 'overdue'
+                : transaction.type === 'overlimit'     ? 'overlimit'
+                :                                        'high_value';
+
+            const message =
+                type === 'overdue'   ? `Overdue payment of ${transaction.amount} detected`
+                : type === 'overlimit' ? `Over-limit transaction of ${transaction.amount} detected`
+                :                        `High-value transaction of ${transaction.amount} detected`;
+
+            await Alert.create({
+                userId: transaction.userId,
+                type,
+                message,
+                amount: transaction.amount,
+                transactionId: transaction.id || transaction.transactionId || transaction.externalTransactionId,
+            });
+        } catch (e) {
+            console.error('[EnhancedBankingIntegration] Failed to persist real-time alert:', (e as any)?.message || e);
+        }
     }
 }

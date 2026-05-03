@@ -253,7 +253,7 @@ export class TransactionSyncService {
             date: normalizedDate,
           });
 
-          const enriched = this.enrichmentService.categorizeTransaction({
+          const enriched = await this.enrichmentService.categorizeTransactionAsync({
             ...rawTxn,
             amount,
             description,
@@ -273,6 +273,12 @@ export class TransactionSyncService {
               histRecurrence = null;
             }
           }
+
+          const anomaly = await this.enrichmentService.computeAnomalyForTransaction(
+            userId,
+            amount,
+            enriched.category,
+          );
 
           const type =
             rawTxn.type === "income" || rawTxn.type === "expense"
@@ -298,10 +304,23 @@ export class TransactionSyncService {
             recurringFrequency: (histRecurrence && histRecurrence.frequency) || (enriched as any).recurringFrequency,
             recurringDueDate: (histRecurrence && histRecurrence.nextDueDate) || (enriched as any).recurringDueDate,
             categoryConfidence: enriched.confidence,
+            isAnomaly: anomaly.isAnomaly,
+            anomalyScore: anomaly.anomalyScore,
             sourceAccount,
             ingestionType: "batch",
             processedAt: new Date(),
           };
+
+          if (
+            Math.abs(amount) > 50000 ||
+            rawTxn.type === "overdue_payment" ||
+            rawTxn.type === "overlimit"
+          ) {
+            await this.enrichmentService.triggerRealTimeAlert({
+              ...updateDoc,
+              id: externalTransactionId,
+            });
+          }
 
           return {
             updateOne: {

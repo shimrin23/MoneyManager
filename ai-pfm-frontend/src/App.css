@@ -3697,6 +3697,32 @@ button:disabled { opacity: 0.6; cursor: wait; }
 
 .dashboard-modern {
   padding: 1.5rem;
+
+/* Transaction badges */
+.txn-badges {
+  margin-top: 6px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.badge {
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 999px;
+  display: inline-block;
+  font-weight: 600;
+}
+.badge-recurring {
+  background: rgba(96,165,250,0.12);
+  color: var(--accent);
+  border: 1px solid rgba(96,165,250,0.18);
+}
+.badge-anomaly {
+  background: rgba(239,68,68,0.08);
+  color: var(--danger);
+  border: 1px solid rgba(239,68,68,0.14);
+}
+
   max-width: 100%;
   gap: 1.25rem;
 }
