@@ -20,11 +20,12 @@ export const ConnectBankPage = () => {
         setConnecting(true);
         setProgress(10);
         try {
-            await apiClient.post('/transactions/sync', { bank: selectedBank, username, password });
-            setProgress(70);
-            const resp = await apiClient.get('/transactions/summary');
+            const accountId = selectedBank.replace(/\s+/g, '-').toUpperCase();
+            const resp = await apiClient.post('/transactions/sync', { sourceAccounts: [accountId] });
             setProgress(100);
-            setSummary({ imported: resp.data?.imported ?? 42, zombies: resp.data?.zombies ?? 3 });
+            const result = resp.data?.result;
+            const imported = result?.accounts?.reduce((sum: number, a: any) => sum + (a.inserted ?? 0), 0) ?? 0;
+            setSummary({ imported, zombies: 0 });
             setStep(4);
         } catch (err) {
             console.error('Bank connect failed', err);
