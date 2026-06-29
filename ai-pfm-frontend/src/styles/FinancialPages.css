@@ -4,7 +4,7 @@
 .page-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 0.75rem 2rem 2rem;
 }
 
 .page-header {
@@ -1567,4 +1567,895 @@
 
 [data-theme='light'] .admin-dashboard-page .admin-table tbody tr:hover {
     background: rgba(15, 23, 42, 0.02);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SMART BUDGETS PAGE
+   ═══════════════════════════════════════════════════════════════════ */
+
+.smart-budgets-page {
+    max-width: 1280px;
+    padding-top: 2rem;
+}
+
+.smart-budgets-page .page-header {
+    align-items: flex-start;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    margin-bottom: 2rem;
+}
+
+.smart-budgets-page .page-title {
+    font-size: clamp(1.9rem, 4vw, 2.8rem);
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    background: linear-gradient(135deg, #e2e8f0 0%, #94a3b8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+}
+
+.smart-budgets-page .page-subtitle {
+    font-size: 1.05rem;
+    color: rgba(148, 163, 184, 0.85);
+    margin: 0.4rem 0 0 0;
+}
+
+/* ── Budget Summary Cards ── */
+.budget-summary {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+}
+
+.summary-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem 1.4rem;
+    border-radius: 16px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.92), rgba(15, 23, 42, 0.82));
+    box-shadow: 0 8px 24px rgba(2, 8, 23, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.summary-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.summary-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 36px rgba(2, 8, 23, 0.4);
+    border-color: rgba(99, 102, 241, 0.35);
+}
+
+.summary-card.warning {
+    border-color: rgba(251, 191, 36, 0.28);
+}
+
+.summary-card.warning:hover {
+    border-color: rgba(251, 191, 36, 0.5);
+}
+
+.summary-icon {
+    font-size: 2rem;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.07);
+    flex-shrink: 0;
+}
+
+.summary-content {
+    min-width: 0;
+}
+
+.summary-content .metric-value {
+    font-size: clamp(1.1rem, 1.8vw, 1.45rem);
+    font-weight: 800;
+    color: #f1f5f9;
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.summary-content .metric-label {
+    font-size: 0.8rem;
+    color: rgba(148, 163, 184, 0.8);
+    margin: 0.18rem 0 0 0;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+/* ── Spending Trends Charts ── */
+.smart-budgets-page .card {
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: linear-gradient(160deg, rgba(30, 41, 59, 0.94), rgba(15, 23, 42, 0.86));
+    box-shadow: 0 12px 32px rgba(2, 8, 23, 0.28);
+    padding: 1.6rem;
+    margin-bottom: 1.5rem;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+.smart-budgets-page .card:hover {
+    border-color: rgba(99, 102, 241, 0.35);
+    box-shadow: 0 18px 44px rgba(2, 8, 23, 0.4);
+}
+
+.smart-budgets-page .section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin: 0 0 1.25rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    align-items: center;
+}
+
+/* ── Bar Chart ── */
+.bar-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.bar-row {
+    display: grid;
+    grid-template-columns: 120px 1fr 90px;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.bar-label {
+    font-size: 0.83rem;
+    font-weight: 500;
+    color: rgba(148, 163, 184, 0.9);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.bar-track {
+    height: 10px;
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #6366f1, #818cf8);
+    border-radius: 999px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 8px rgba(99, 102, 241, 0.4);
+}
+
+.bar-value {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* ── Pie Chart ── */
+.pie-chart {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    justify-content: center;
+}
+
+.pie {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 0 0 4px rgba(255, 255, 255, 0.06);
+}
+
+.pie-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.legend-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.82rem;
+    color: rgba(148, 163, 184, 0.85);
+    font-weight: 500;
+}
+
+.legend-swatch {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+/* ── AI Budget Insights ── */
+.ai-insights {
+    margin-bottom: 1.5rem;
+}
+
+.insights-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.insight-item {
+    display: grid;
+    grid-template-columns: 2.2rem 1fr auto;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.1rem 1.2rem;
+    border-radius: 12px;
+    border: 1px solid transparent;
+    transition: transform 0.2s ease;
+}
+
+.insight-item:hover {
+    transform: translateX(3px);
+}
+
+.insight-item.critical {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.25);
+}
+
+.insight-item.success {
+    background: rgba(34, 197, 94, 0.08);
+    border-color: rgba(34, 197, 94, 0.22);
+}
+
+.insight-icon {
+    font-size: 1.4rem;
+    line-height: 1;
+    text-align: center;
+}
+
+.insight-content {
+    min-width: 0;
+}
+
+.insight-content h4 {
+    margin: 0 0 0.22rem 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.insight-content p {
+    margin: 0;
+    font-size: 0.87rem;
+    color: rgba(148, 163, 184, 0.85);
+    line-height: 1.5;
+}
+
+/* Prevent the button from stretching in the grid */
+.insight-item .action-btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+    width: auto !important;
+    align-self: center;
+}
+
+/* ── Budget Cards List ── */
+.budgets-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.budget-card {
+    padding: 1.5rem 1.6rem;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    background: linear-gradient(160deg, rgba(30, 41, 59, 0.94), rgba(15, 23, 42, 0.86));
+    box-shadow: 0 6px 20px rgba(2, 8, 23, 0.24);
+    transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.budget-card::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: rgba(99, 102, 241, 0.6);
+    border-radius: 4px 0 0 4px;
+}
+
+.budget-card.over-budget::after {
+    background: linear-gradient(180deg, #ef4444, #dc2626);
+}
+
+.budget-card:not(.over-budget)::after {
+    background: linear-gradient(180deg, #22c55e, #16a34a);
+}
+
+.budget-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 36px rgba(2, 8, 23, 0.36);
+    border-color: rgba(148, 163, 184, 0.3);
+}
+
+.budget-card.over-budget {
+    border-color: rgba(239, 68, 68, 0.22);
+}
+
+.budget-card.over-budget:hover {
+    border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* Budget Card Header */
+.budget-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.budget-header .section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #e2e8f0;
+    margin: 0;
+}
+
+.budget-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Status Badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.28rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.status-badge.danger {
+    background: rgba(239, 68, 68, 0.18);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.status-badge.warning {
+    background: rgba(245, 158, 11, 0.18);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.status-badge.success {
+    background: rgba(34, 197, 94, 0.14);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.28);
+}
+
+/* Budget Progress Bar */
+.budget-progress {
+    margin: 0.75rem 0 1rem;
+}
+
+.budget-progress .progress-bar {
+    width: 100%;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 999px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 0.6rem;
+}
+
+.budget-progress .progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #22c55e, #4ade80);
+    box-shadow: 0 0 10px rgba(34, 197, 94, 0.35);
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.budget-progress .progress-fill.over {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
+}
+
+.budget-progress .progress-overflow {
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 22% !important;   /* fixed visual indicator, ignore inline % */
+    border-radius: 0 999px 999px 0;
+    background: rgba(239, 68, 68, 0.45);
+    animation: pulse-red 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-red {
+    0%, 100% { opacity: 0.5; }
+    50%       { opacity: 1; }
+}
+
+.progress-text {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+}
+
+.progress-text .spent {
+    font-weight: 700;
+    color: #e2e8f0;
+}
+
+.progress-text .total {
+    color: rgba(148, 163, 184, 0.7);
+}
+
+.progress-text .percentage {
+    margin-left: auto;
+    font-weight: 800;
+    color: #4ade80;
+    font-size: 0.92rem;
+}
+
+.progress-text .percentage.over {
+    color: #f87171;
+}
+
+/* Budget Details Row */
+.budget-details {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.85rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.budget-details .remaining .positive {
+    color: #4ade80;
+    font-weight: 600;
+    font-size: 0.87rem;
+}
+
+.budget-details .remaining .negative {
+    color: #f87171;
+    font-weight: 600;
+    font-size: 0.87rem;
+}
+
+.budget-details .trends .trend {
+    font-size: 0.83rem;
+    font-weight: 600;
+}
+
+.budget-details .trends .trend.up {
+    color: #f87171;
+}
+
+.budget-details .trends .trend.down {
+    color: #4ade80;
+}
+
+/* AI Recommendation Box */
+.ai-recommendation {
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.08));
+    border: 1px solid rgba(99, 102, 241, 0.22);
+    margin-bottom: 1rem;
+}
+
+.ai-recommendation p {
+    margin: 0;
+    font-size: 0.86rem;
+    color: rgba(196, 181, 253, 0.9);
+    line-height: 1.55;
+}
+
+.ai-recommendation strong {
+    color: #a78bfa;
+    font-weight: 700;
+}
+
+/* Budget Action Buttons */
+.budget-actions {
+    display: flex;
+    gap: 0.6rem;
+    justify-content: flex-end;
+}
+
+.action-btn {
+    padding: 0.5rem 1.1rem;
+    border-radius: 8px;
+    font-size: 0.84rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.action-btn.primary {
+    background: rgba(99, 102, 241, 0.2);
+    color: #a5b4fc;
+    border-color: rgba(99, 102, 241, 0.35);
+}
+
+.action-btn.primary:hover {
+    background: rgba(99, 102, 241, 0.35);
+    border-color: rgba(99, 102, 241, 0.6);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25);
+}
+
+.action-btn.secondary {
+    background: rgba(255, 255, 255, 0.06);
+    color: #94a3b8;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+.action-btn.secondary:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.22);
+    color: #e2e8f0;
+    transform: translateY(-1px);
+}
+
+.action-btn.danger {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.action-btn.danger:hover {
+    background: rgba(239, 68, 68, 0.28);
+    border-color: rgba(239, 68, 68, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+/* Loading State */
+.loading-spinner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60vh;
+    font-size: 1.1rem;
+    color: rgba(148, 163, 184, 0.7);
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+    .budget-summary {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .budget-summary {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+
+    .smart-budgets-page .card {
+        padding: 1.2rem;
+    }
+
+    .budget-card {
+        padding: 1.2rem;
+    }
+
+    .bar-row {
+        grid-template-columns: 90px 1fr 80px;
+    }
+
+    .pie-chart {
+        flex-direction: column;
+    }
+
+    .budget-actions {
+        flex-direction: column;
+    }
+
+    .budget-actions .action-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .budget-summary {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .budget-details {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .summary-icon {
+        width: 42px;
+        height: 42px;
+        font-size: 1.6rem;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   SMART BUDGETS — LIGHT THEME
+   ═══════════════════════════════════════════════════════════════════ */
+
+[data-theme='light'] .smart-budgets-page .page-title {
+    background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+[data-theme='light'] .smart-budgets-page .page-subtitle {
+    color: #64748b;
+}
+
+[data-theme='light'] .smart-budgets-page .page-header {
+    border-bottom-color: rgba(15, 23, 42, 0.1);
+}
+
+/* Light summary cards */
+[data-theme='light'] .summary-card {
+    background: linear-gradient(145deg, #ffffff, #f1f5f9);
+    border-color: rgba(148, 163, 184, 0.32);
+    box-shadow: 0 4px 16px rgba(148, 163, 184, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+[data-theme='light'] .summary-card:hover {
+    border-color: rgba(99, 102, 241, 0.35);
+    box-shadow: 0 10px 28px rgba(99, 102, 241, 0.15);
+}
+
+[data-theme='light'] .summary-card.warning:hover {
+    border-color: rgba(245, 158, 11, 0.45);
+}
+
+[data-theme='light'] .summary-icon {
+    background: rgba(15, 23, 42, 0.06);
+}
+
+[data-theme='light'] .summary-content .metric-value {
+    color: #0f172a;
+}
+
+[data-theme='light'] .summary-content .metric-label {
+    color: #64748b;
+}
+
+/* Light chart card */
+[data-theme='light'] .smart-budgets-page .card {
+    background: linear-gradient(160deg, #ffffff, #f8fafc);
+    border-color: rgba(148, 163, 184, 0.3);
+    box-shadow: 0 6px 20px rgba(148, 163, 184, 0.18);
+}
+
+[data-theme='light'] .smart-budgets-page .card:hover {
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 12px 30px rgba(99, 102, 241, 0.14);
+}
+
+[data-theme='light'] .smart-budgets-page .section-title {
+    color: #0f172a;
+}
+
+[data-theme='light'] .bar-track {
+    background: rgba(15, 23, 42, 0.07);
+}
+
+[data-theme='light'] .bar-label {
+    color: #475569;
+}
+
+[data-theme='light'] .bar-value {
+    color: #64748b;
+}
+
+[data-theme='light'] .pie {
+    box-shadow: 0 4px 16px rgba(148, 163, 184, 0.3), 0 0 0 4px rgba(15, 23, 42, 0.06);
+}
+
+[data-theme='light'] .legend-row {
+    color: #475569;
+}
+
+/* Light insight items */
+[data-theme='light'] .insight-item.critical {
+    background: rgba(239, 68, 68, 0.07);
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+[data-theme='light'] .insight-item.success {
+    background: rgba(34, 197, 94, 0.06);
+    border-color: rgba(34, 197, 94, 0.18);
+}
+
+[data-theme='light'] .insight-content h4 {
+    color: #0f172a;
+}
+
+[data-theme='light'] .insight-content p {
+    color: #475569;
+}
+
+/* Light budget cards */
+[data-theme='light'] .budget-card {
+    background: linear-gradient(160deg, #ffffff, #f8fafc);
+    border-color: rgba(148, 163, 184, 0.28);
+    box-shadow: 0 4px 14px rgba(148, 163, 184, 0.16);
+}
+
+[data-theme='light'] .budget-card:hover {
+    box-shadow: 0 10px 28px rgba(148, 163, 184, 0.28);
+    border-color: rgba(148, 163, 184, 0.42);
+}
+
+[data-theme='light'] .budget-card.over-budget {
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+[data-theme='light'] .budget-card.over-budget:hover {
+    border-color: rgba(239, 68, 68, 0.35);
+}
+
+[data-theme='light'] .budget-header .section-title {
+    color: #0f172a;
+}
+
+[data-theme='light'] .status-badge.danger {
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+    border-color: rgba(239, 68, 68, 0.22);
+}
+
+[data-theme='light'] .status-badge.warning {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+    border-color: rgba(245, 158, 11, 0.22);
+}
+
+[data-theme='light'] .status-badge.success {
+    background: rgba(34, 197, 94, 0.1);
+    color: #16a34a;
+    border-color: rgba(34, 197, 94, 0.22);
+}
+
+[data-theme='light'] .budget-progress .progress-bar {
+    background: rgba(15, 23, 42, 0.08);
+}
+
+[data-theme='light'] .progress-text .spent {
+    color: #0f172a;
+}
+
+[data-theme='light'] .progress-text .total {
+    color: #64748b;
+}
+
+[data-theme='light'] .budget-details {
+    background: rgba(15, 23, 42, 0.04);
+    border-color: rgba(15, 23, 42, 0.08);
+}
+
+[data-theme='light'] .budget-details .remaining .positive {
+    color: #16a34a;
+}
+
+[data-theme='light'] .budget-details .remaining .negative {
+    color: #dc2626;
+}
+
+[data-theme='light'] .budget-details .trends .trend.up {
+    color: #dc2626;
+}
+
+[data-theme='light'] .budget-details .trends .trend.down {
+    color: #16a34a;
+}
+
+[data-theme='light'] .ai-recommendation {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.07), rgba(139, 92, 246, 0.05));
+    border-color: rgba(99, 102, 241, 0.18);
+}
+
+[data-theme='light'] .ai-recommendation p {
+    color: #4338ca;
+}
+
+[data-theme='light'] .ai-recommendation strong {
+    color: #4f46e5;
+}
+
+[data-theme='light'] .action-btn.primary {
+    background: rgba(99, 102, 241, 0.12);
+    color: #4f46e5;
+    border-color: rgba(99, 102, 241, 0.28);
+}
+
+[data-theme='light'] .action-btn.primary:hover {
+    background: rgba(99, 102, 241, 0.22);
+    border-color: rgba(99, 102, 241, 0.5);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+[data-theme='light'] .action-btn.secondary {
+    background: rgba(15, 23, 42, 0.05);
+    color: #475569;
+    border-color: rgba(15, 23, 42, 0.14);
+}
+
+[data-theme='light'] .action-btn.secondary:hover {
+    background: rgba(15, 23, 42, 0.09);
+    border-color: rgba(15, 23, 42, 0.24);
+    color: #0f172a;
+}
+
+[data-theme='light'] .action-btn.danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border-color: rgba(239, 68, 68, 0.22);
+}
+
+[data-theme='light'] .action-btn.danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.15);
+}
+
+[data-theme='light'] .loading-spinner {
+    color: #64748b;
 }
