@@ -114,7 +114,6 @@ function App() {
                   <h1 className="sidebar-logo">💰 MoneyManager</h1>
                 </div>
                 <div className="nav-section">
-                  <div className="nav-title">NAVIGATION</div>
                   <NavLink to="/dashboard" onClick={handleNavLinkClick} className={({ isActive }) => `nav-item${isActive ? ' dashboard-item' : ''}`}>
                     <span className="nav-icon">📊</span>
                     Dashboard
