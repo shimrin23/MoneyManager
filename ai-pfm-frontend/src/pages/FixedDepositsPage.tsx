@@ -178,8 +178,8 @@ export const FixedDepositsPage = () => {
                 <div className="rec-stat-card savings">
                     <div className="rec-stat-icon">📈</div>
                     <div>
-                        <div className="rec-stat-value">LKR {(totalInterest / 1000).toFixed(1)}K</div>
-                        <div className="rec-stat-label">Interest Earned</div>
+                        <div className="rec-stat-value">LKR {(totalMaturityValue / 1000).toFixed(1)}K</div>
+                        <div className="rec-stat-label">Maturity Value</div>
                     </div>
                 </div>
                 <div className="rec-stat-card pending">

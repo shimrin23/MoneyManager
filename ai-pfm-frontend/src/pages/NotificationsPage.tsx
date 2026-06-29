@@ -1,6 +1,5 @@
 // Notifications Page
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client.ts';
 
 interface Notification {
@@ -34,8 +33,6 @@ export const NotificationsPage = () => {
     });
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'settings'>('all');
-    const navigate = useNavigate();
-
     useEffect(() => {
         fetchNotifications();
         fetchNotificationSettings();

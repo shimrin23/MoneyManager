@@ -1,6 +1,5 @@
 // Help & Support Page
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client.ts';
 
 interface FAQ {
@@ -29,8 +28,6 @@ export const HelpPage = () => {
     });
     const [ticketSubmitting, setTicketSubmitting] = useState(false);
     const [ticketMessage, setTicketMessage] = useState('');
-    const navigate = useNavigate();
-
     const faqs: FAQ[] = [
         {
             id: 1,
