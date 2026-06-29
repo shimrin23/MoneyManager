@@ -18,27 +18,23 @@ interface ConfigRow {
 }
 
 export const AdminDashboard = () => {
-    const [users, setUsers] = useState<UserRow[]>([]);
-    const [configs, setConfigs] = useState<ConfigRow[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [users, setUsers] = useState<UserRow[]>(mockUsers);
+    const [configs, setConfigs] = useState<ConfigRow[]>(mockConfigs);
 
     useEffect(() => {
         load();
     }, []);
 
     const load = async () => {
-        setLoading(true);
         try {
             const [u, c] = await Promise.all([
-                apiClient.get('/admin/users').catch(() => ({ data: { users: mockUsers } })),
-                apiClient.get('/admin/config').catch(() => ({ data: { configs: mockConfigs } })),
+                apiClient.get('/admin/users'),
+                apiClient.get('/admin/config'),
             ]);
             setUsers(u.data.users || mockUsers);
             setConfigs(c.data.configs || mockConfigs);
         } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
+            console.warn('Using fallback admin dashboard data:', err);
         }
     };
 
@@ -58,13 +54,13 @@ export const AdminDashboard = () => {
         return 'User';
     };
 
-    if (loading) return <div className="loading-spinner">Loading admin data...</div>;
-
     return (
         <div className="page-container admin-dashboard-page">
             <div className="page-header">
-                <h1>🛠️ Admin Dashboard</h1>
-                <p className="page-subtitle">Manage users, roles, and configuration with audit-friendly toggles.</p>
+                <div>
+                    <h1>🛠️ Admin Dashboard</h1>
+                    <p className="page-subtitle">Manage users, roles, and configuration with audit-friendly toggles.</p>
+                </div>
             </div>
 
             <div className="admin-stats-grid">

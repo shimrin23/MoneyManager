@@ -4,6 +4,11 @@ export interface IUser extends Document {
   name: string;
   email: string;
   passwordHash: string;
+  role: 'customer' | 'admin' | 'ops' | 'manager';
+  phone?: string;
+  dateOfBirth?: string;
+  address?: string;
+  occupation?: string;
   monthlyIncome?: number; // For loan-to-income ratio calculations
   bankAccounts?: Array<{
     accountId: string;
@@ -36,6 +41,16 @@ const UserSchema: Schema = new Schema(
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     passwordHash: { type: String, required: true },
+    role: {
+      type: String,
+      enum: ['customer', 'admin', 'ops', 'manager'],
+      default: 'customer',
+      index: true,
+    },
+    phone: { type: String, default: '' },
+    dateOfBirth: { type: String, default: '' },
+    address: { type: String, default: '' },
+    occupation: { type: String, default: '' },
     monthlyIncome: { type: Number, default: 50000 }, // Default income for loan calculations
     bankAccounts: [
       {

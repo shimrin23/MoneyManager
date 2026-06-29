@@ -39,28 +39,21 @@ export const UserHeader = ({ theme, onToggleTheme }: UserHeaderProps) => {
     const fetchUserProfile = async () => {
         try {
             const token = localStorage.getItem('token');
-            if (token) {
-                const response = await apiClient.get('/auth/profile');
-                setUser(response.data.user);
-            }
-        } catch (error) {
-            console.error('Failed to fetch user profile:', error);
-            handleLogout(); // Auto logout if token is invalid
+            if (!token) return;
+            const response = await apiClient.get('/auth/profile');
+            setUser(response.data.user);
+        } catch {
+            // Backend unavailable or demo token — show fallback name from localStorage
+            const role = localStorage.getItem('userRole') || 'user';
+            setUser({ id: 'demo', name: role.charAt(0).toUpperCase() + role.slice(1) + ' User', email: '' });
         }
     };
 
     const handleLogout = () => {
-        // Clear token from localStorage
         localStorage.removeItem('token');
-        window.dispatchEvent(new Event('auth-changed'));
-        
-        // Clear any cached data
+        localStorage.removeItem('userRole');
         setUser(null);
-        
-        // Show logout message
-        alert('Successfully logged out!');
-        
-        // Redirect to login page
+        window.dispatchEvent(new Event('auth-changed'));
         navigate('/login');
     };
 
