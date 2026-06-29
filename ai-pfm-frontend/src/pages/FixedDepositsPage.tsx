@@ -111,7 +111,6 @@ export const FixedDepositsPage = () => {
     const activeFDs = fds.filter(f => f.status === 'active');
     const totalPrincipal = activeFDs.reduce((s, f) => s + f.principalAmount, 0);
     const totalMaturityValue = activeFDs.reduce((s, f) => s + f.maturityAmount, 0);
-    const totalInterest = activeFDs.reduce((s, f) => s + f.interestEarned, 0);
     const maturitySoon = activeFDs.filter(f => getDaysUntilMaturity(f.maturityDate) <= 90).length;
 
     const handleNewFDSubmit = (e: React.FormEvent) => {
