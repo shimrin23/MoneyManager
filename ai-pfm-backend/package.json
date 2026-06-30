@@ -8,6 +8,7 @@
     "start": "node dist/server.js",
     "dev": "ts-node src/server.ts",
     "seed:admin-config": "ts-node src/scripts/seed-admin-config.ts",
+    "seed:users": "ts-node src/scripts/seed-users.ts",
     "test": "jest --runInBand"
   },
   "dependencies": {

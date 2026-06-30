@@ -13,5 +13,6 @@ router.post('/login', authController.login.bind(authController));
 
 // Route: GET /api/auth/profile (protected)
 router.get('/profile', authenticateToken, authController.getProfile.bind(authController));
+router.put('/profile', authenticateToken, authController.updateProfile.bind(authController));
 
 export default router;

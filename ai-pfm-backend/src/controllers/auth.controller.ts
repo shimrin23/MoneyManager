@@ -72,10 +72,11 @@ export default class AuthController {
                 { expiresIn: '1d' } // Token expires in 1 day
             );
 
-            res.json({ 
+            res.json({
                 message: "Login successful",
-                token, 
-                user: { id: user._id, name: user.name, email: user.email } 
+                token,
+                role: user.role,
+                user: { id: user._id, name: user.name, email: user.email, role: user.role }
             });
 
         } catch (error) {
@@ -101,7 +102,82 @@ export default class AuthController {
                 user: {
                     id: user._id,
                     name: user.name,
-                    email: user.email
+                    email: user.email,
+                    phone: user.phone || '',
+                    dateOfBirth: user.dateOfBirth || '',
+                    address: user.address || '',
+                    occupation: user.occupation || '',
+                    monthlyIncome: user.monthlyIncome ?? 0,
+                    role: user.role,
+                }
+            });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: 'Server Error' });
+        }
+    }
+
+    // PUT /api/auth/profile - Update user profile
+    async updateProfile(req: AuthRequest, res: Response) {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+
+            const {
+                name,
+                email,
+                phone,
+                dateOfBirth,
+                address,
+                occupation,
+                monthlyIncome,
+            } = req.body;
+
+            if (!name || !email) {
+                return res.status(400).json({ error: 'Name and email are required' });
+            }
+
+            const existingUser = await User.findOne({
+                email,
+                _id: { $ne: userId },
+            });
+
+            if (existingUser) {
+                return res.status(400).json({ error: 'Email already in use' });
+            }
+
+            const user = await User.findByIdAndUpdate(
+                userId,
+                {
+                    name,
+                    email,
+                    phone: phone || '',
+                    dateOfBirth: dateOfBirth || '',
+                    address: address || '',
+                    occupation: occupation || '',
+                    monthlyIncome: typeof monthlyIncome === 'number' ? monthlyIncome : Number(monthlyIncome) || 0,
+                },
+                { new: true, runValidators: true },
+            ).select('-passwordHash');
+
+            if (!user) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            res.json({
+                message: 'Profile updated successfully',
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email,
+                    phone: user.phone || '',
+                    dateOfBirth: user.dateOfBirth || '',
+                    address: user.address || '',
+                    occupation: user.occupation || '',
+                    monthlyIncome: user.monthlyIncome ?? 0,
+                    role: user.role,
                 }
             });
         } catch (err) {

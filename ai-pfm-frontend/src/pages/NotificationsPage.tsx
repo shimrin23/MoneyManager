@@ -1,6 +1,5 @@
 // Notifications Page
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client.ts';
 
 interface Notification {
@@ -34,8 +33,6 @@ export const NotificationsPage = () => {
     });
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'settings'>('all');
-    const navigate = useNavigate();
-
     useEffect(() => {
         fetchNotifications();
         fetchNotificationSettings();
@@ -188,28 +185,25 @@ export const NotificationsPage = () => {
     return (
         <div className="notifications-page">
             <div className="notifications-header">
-                <button className="back-button" onClick={() => navigate('/dashboard')}>
-                    ← Back to Dashboard
-                </button>
                 <h1>Notifications</h1>
                 <p>Stay updated with your financial activity and alerts</p>
             </div>
 
-            <div className="notifications-tabs">
+            <div className="notifications-navigation">
                 <button
-                    className={`tab-btn ${activeTab === 'all' ? 'active' : ''}`}
+                    className={`nav-btn ${activeTab === 'all' ? 'active' : ''}`}
                     onClick={() => setActiveTab('all')}
                 >
                     All ({notifications.length})
                 </button>
                 <button
-                    className={`tab-btn ${activeTab === 'unread' ? 'active' : ''}`}
+                    className={`nav-btn ${activeTab === 'unread' ? 'active' : ''}`}
                     onClick={() => setActiveTab('unread')}
                 >
                     Unread ({unreadCount})
                 </button>
                 <button
-                    className={`tab-btn ${activeTab === 'settings' ? 'active' : ''}`}
+                    className={`nav-btn ${activeTab === 'settings' ? 'active' : ''}`}
                     onClick={() => setActiveTab('settings')}
                 >
                     Settings

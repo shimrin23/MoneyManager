@@ -2,6 +2,7 @@ import axios from 'axios';
 
 export const apiClient = axios.create({
     baseURL: 'http://localhost:3000/api',
+    timeout: 2500,
     headers: {
         'Content-Type': 'application/json',
     },
@@ -25,7 +26,7 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        if (error.response?.status === 401 || error.response?.status === 403) {
             // Token expired or invalid
             localStorage.removeItem('token');
             window.dispatchEvent(new Event('auth-changed'));

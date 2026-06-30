@@ -181,9 +181,6 @@ export const SettingsPage = () => {
     return (
         <div className="settings-page">
             <div className="settings-header">
-                <button className="back-button" onClick={() => navigate('/dashboard')}>
-                    ← Back to Dashboard
-                </button>
                 <h1>Settings</h1>
                 <p>Customize your MoneyManager experience</p>
             </div>
@@ -596,22 +593,22 @@ export const SettingsPage = () => {
                         </div>
                     </div>
                 )}
-            </div>
 
-            <div className="settings-actions">
-                <button 
-                    className="btn-primary" 
-                    onClick={saveSettings}
-                    disabled={loading}
-                >
-                    {loading ? 'Saving...' : 'Save Settings'}
-                </button>
-                <button 
-                    className="btn-secondary" 
-                    onClick={() => navigate('/dashboard')}
-                >
-                    Cancel
-                </button>
+                <div className="settings-actions">
+                    <button
+                        className="btn-secondary"
+                        onClick={() => navigate('/dashboard')}
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        className="btn-primary"
+                        onClick={saveSettings}
+                        disabled={loading}
+                    >
+                        {loading ? 'Saving...' : 'Save Settings'}
+                    </button>
+                </div>
             </div>
         </div>
     );
