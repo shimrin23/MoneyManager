@@ -73,7 +73,7 @@ export const getChatHistory = async (
   try {
     const { sessionId } = req.params;
 
-    const messages = chatCoachService.getChatHistory(sessionId);
+    const messages = chatCoachService.getChatHistory(sessionId as string);
 
     res.status(200).json({
       success: true,
@@ -95,7 +95,7 @@ export const clearSession = async (
 ): Promise<void> => {
   try {
     const { sessionId } = req.params;
-    chatCoachService.clearChat(sessionId);
+    chatCoachService.clearChat(sessionId as string);
 
     res.status(200).json({
       success: true,

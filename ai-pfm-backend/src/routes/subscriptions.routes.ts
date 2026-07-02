@@ -82,12 +82,12 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
         const updates = req.body;
         
         // Verify subscription belongs to user
-        const existingSubscription = await subscriptionsService.findById(id);
+        const existingSubscription = await subscriptionsService.findById(id as string);
         if (!existingSubscription || existingSubscription.userId !== userId) {
             return res.status(404).json({ error: 'Subscription not found' });
         }
 
-        const updatedSubscription = await subscriptionsService.update(id, updates);
+        const updatedSubscription = await subscriptionsService.update(id as string, updates);
         
         res.json({
             message: 'Subscription updated successfully',
@@ -110,12 +110,12 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
         const { id } = req.params;
         
         // Verify subscription belongs to user
-        const existingSubscription = await subscriptionsService.findById(id);
+        const existingSubscription = await subscriptionsService.findById(id as string);
         if (!existingSubscription || existingSubscription.userId !== userId) {
             return res.status(404).json({ error: 'Subscription not found' });
         }
 
-        const cancelled = await subscriptionsService.delete(id);
+        const cancelled = await subscriptionsService.delete(id as string);
         
         if (!cancelled) {
             return res.status(404).json({ error: 'Subscription not found' });

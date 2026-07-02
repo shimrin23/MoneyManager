@@ -42,7 +42,7 @@ export class AdminConfigController {
       const modifiedBy = req.user?.userId || req.user?.id || "admin";
 
       const config = await adminConfigService.updateConfig(
-        configKey,
+        configKey as string,
         req.body,
         modifiedBy,
         req,
@@ -72,7 +72,7 @@ export class AdminConfigController {
   async getConfig(req: AuthRequest, res: Response): Promise<Response> {
     try {
       const { configKey } = req.params;
-      const config = await adminConfigService.getConfig(configKey);
+      const config = await adminConfigService.getConfig(configKey as string);
 
       if (!config) {
         return res.status(404).json({ error: "Configuration not found" });
@@ -149,7 +149,7 @@ export class AdminConfigController {
       const modifiedBy = req.user?.userId || req.user?.id || "admin";
 
       const config = await adminConfigService.toggleConfig(
-        configKey,
+        configKey as string,
         isActive,
         modifiedBy,
         req,
@@ -181,7 +181,7 @@ export class AdminConfigController {
   async getHistory(req: AuthRequest, res: Response): Promise<Response> {
     try {
       const { configKey } = req.params;
-      const history = await adminConfigService.getConfigHistory(configKey);
+      const history = await adminConfigService.getConfigHistory(configKey as string);
 
       return res.status(200).json({ history });
     } catch (error: any) {
@@ -265,7 +265,7 @@ export class AdminConfigController {
       const deletedBy = req.user?.userId || req.user?.id || "admin";
 
       const success = await adminConfigService.deleteConfig(
-        configKey,
+        configKey as string,
         deletedBy,
         req,
       );

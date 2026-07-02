@@ -77,7 +77,7 @@ export default class TransactionsController {
   async getTransaction(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const transaction = await this.transactionsService.findById(id);
+      const transaction = await this.transactionsService.findById(id as string);
 
       if (!transaction) {
         return res.status(404).json({ error: "Transaction not found" });
@@ -95,7 +95,7 @@ export default class TransactionsController {
       const { id } = req.params;
       const updates = req.body;
       const updatedTransaction = await this.transactionsService.update(
-        id,
+        id as string,
         updates,
       );
 
@@ -113,7 +113,7 @@ export default class TransactionsController {
   async deleteTransaction(req: Request, res: Response) {
     try {
       const { id } = req.params;
-      const deleted = await this.transactionsService.delete(id);
+      const deleted = await this.transactionsService.delete(id as string);
 
       if (!deleted) {
         return res.status(404).json({ error: "Transaction not found" });

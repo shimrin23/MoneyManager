@@ -3,7 +3,7 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface IUser extends Document {
   name: string;
   email: string;
-  passwordHash: string;
+  passwordHash?: string;
   role: 'customer' | 'admin' | 'ops' | 'manager';
   phone?: string;
   dateOfBirth?: string;
@@ -32,6 +32,14 @@ export interface IUser extends Document {
     emailReports?: boolean;
   };
 
+  // Verification & OAuth
+  isVerified?: boolean;
+  verificationToken?: string;
+  verificationTokenExpires?: Date;
+  isGoogleAccount?: boolean;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -40,7 +48,7 @@ const UserSchema: Schema = new Schema(
   {
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    passwordHash: { type: String, required: true },
+    passwordHash: { type: String, required: false },
     role: {
       type: String,
       enum: ['customer', 'admin', 'ops', 'manager'],
@@ -71,6 +79,14 @@ const UserSchema: Schema = new Schema(
         isActive: { type: Boolean, default: true },
       },
     ],
+
+    // Verification & OAuth
+    isVerified: { type: Boolean, default: false },
+    verificationToken: { type: String },
+    verificationTokenExpires: { type: Date },
+    isGoogleAccount: { type: Boolean, default: false },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
 
     // Enhanced fields
     pfmOptIn: { type: Boolean, default: false, index: true },

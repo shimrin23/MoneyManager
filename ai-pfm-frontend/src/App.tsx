@@ -30,7 +30,8 @@ import { AnomalyDetectionPage } from './pages/AnomalyDetectionPage';
 import { LeasesPage } from './pages/LeasesPage';
 import { PawningPage } from './pages/PawningPage';
 import { AdminAnalyticsPage } from './pages/AdminAnalyticsPage';
-import { WelcomePage } from './pages/WelcomePage';
+import { VerifyEmail } from './pages/VerifyEmail';
+import { ResetPassword } from './pages/ResetPassword';
 import { AIAssistant } from './components/AIAssistant';
 import './App.css';
 import './styles/UserPages.css';
@@ -39,7 +40,7 @@ import './styles/FinancialPages.css';
 type UserRole = 'customer' | 'admin' | 'ops' | 'manager';
 type Language = 'en' | 'si' | 'ta';
 
-const AUTH_PAGES = ['/login', '/signup', '/welcome', '/'];
+const AUTH_PAGES = ['/login', '/signup', '/verify-email', '/reset-password'];
 
 const T: Record<Language, Record<string, string>> = {
   en: {
@@ -77,7 +78,7 @@ const T: Record<Language, Record<string, string>> = {
 const getRole = (): UserRole =>
   (localStorage.getItem('userRole') as UserRole) || 'customer';
 
-const isAdminRole  = (r: UserRole) => r === 'admin' || r === 'ops' || r === 'manager';
+const isAdminRole = (r: UserRole) => r === 'admin' || r === 'ops' || r === 'manager';
 const isCustomerRole = (r: UserRole) => r === 'customer';
 
 // ── Route guards ─────────────────────────────────────────────────────────────
@@ -88,13 +89,13 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   if (!localStorage.getItem('token')) return <Navigate to="/login" replace />;
-  if (!isAdminRole(getRole()))        return <Navigate to="/dashboard" replace />;
+  if (!isAdminRole(getRole())) return <Navigate to="/dashboard" replace />;
   return <>{children}</>;
 };
 
 const CustomerRoute = ({ children }: { children: React.ReactNode }) => {
   if (!localStorage.getItem('token')) return <Navigate to="/login" replace />;
-  if (!isCustomerRole(getRole()))     return <Navigate to="/admin" replace />;
+  if (!isCustomerRole(getRole())) return <Navigate to="/admin" replace />;
   return <>{children}</>;
 };
 
@@ -104,7 +105,7 @@ function AppShell() {
 
   // Reactive auth state — updates when 'auth-changed' fires (login / logout)
   const [token, setToken] = useState(() => localStorage.getItem('token'));
-  const [role,  setRole]  = useState<UserRole>(getRole);
+  const [role, setRole] = useState<UserRole>(getRole);
   const [showAddTransactionModal, setShowAddTransactionModal] = useState(false);
   const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>(() =>
@@ -113,14 +114,13 @@ function AppShell() {
   const [lang, setLang] = useState<Language>(
     () => (localStorage.getItem('lang') as Language) || 'en'
   );
-  const [isMobile, setIsMobile]       = useState(() => window.innerWidth <= 768);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(() => window.innerWidth > 768);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
-  const isOnAuthPage   = AUTH_PAGES.includes(location.pathname);
+  const isOnAuthPage = AUTH_PAGES.includes(location.pathname);
   const isAuthenticated = !!token;
-  const showLayout      = isAuthenticated && !isOnAuthPage;
+  const showLayout = isAuthenticated && !isOnAuthPage;
 
-  const isAdmin    = isAdminRole(role);
+  const isAdmin = isAdminRole(role);
   const isCustomer = isCustomerRole(role);
 
   // Sync auth state on login / logout
@@ -131,17 +131,6 @@ function AppShell() {
     };
     window.addEventListener('auth-changed', sync);
     return () => window.removeEventListener('auth-changed', sync);
-  }, []);
-
-  useEffect(() => {
-    const onResize = () => {
-      const mobile = window.innerWidth <= 768;
-      setIsMobile(mobile);
-      setIsSidebarOpen(!mobile);
-    };
-    window.addEventListener('resize', onResize);
-    onResize();
-    return () => window.removeEventListener('resize', onResize);
   }, []);
 
   useEffect(() => {
@@ -159,11 +148,12 @@ function AppShell() {
   const navItem = (to: string, icon: string, label: string) => (
     <NavLink
       to={to}
-      onClick={() => { if (window.innerWidth <= 768) setIsSidebarOpen(false); }}
+      onClick={() => setIsMobileSidebarOpen(false)}
       className={({ isActive }) => `nav-item${isActive ? ' dashboard-item' : ''}`}
+      data-tooltip={label}
     >
-      <span className="nav-icon">{icon}</span>
-      {label}
+      <span className="nav-icon" aria-hidden="true">{icon}</span>
+      <span className="nav-label">{label}</span>
     </NavLink>
   );
 
@@ -185,9 +175,20 @@ function AppShell() {
       {/* ── Sidebar + header only when logged in AND not on an auth page ── */}
       {showLayout && (
         <>
-          <nav className={`side-navigation ${isMobile && isSidebarOpen ? 'open' : ''}`}>
+          {/* Backdrop overlay for mobile drawer */}
+          <button 
+            type="button" 
+            className={`sidebar-overlay ${isMobileSidebarOpen ? 'show' : ''}`}
+            onClick={() => setIsMobileSidebarOpen(false)} 
+            aria-label="Close sidebar" 
+          />
+
+          <nav className={`side-navigation ${isMobileSidebarOpen ? 'open' : ''}`}>
             <div className="sidebar-header">
-              <h1 className="sidebar-logo">💰 MoneyManager</h1>
+              <h1 className="sidebar-logo">
+                <span className="logo-emoji">💰</span>
+                <span className="logo-text">MoneyManager</span>
+              </h1>
               {isAdmin && (
                 <span className="sidebar-role-badge admin">
                   {role === 'ops' ? 'Operations' : role === 'manager' ? 'Manager' : 'Admin'}
@@ -198,58 +199,88 @@ function AppShell() {
             <div className="nav-section">
               {isCustomer && (
                 <>
-                  {navItem('/dashboard',       '📊', T[lang].dashboard)}
+                  {navItem('/dashboard', '📊', T[lang].dashboard)}
                   {navItem('/recommendations', '💡', T[lang].recommendations)}
-                  {navItem('/financial-health','🏥', T[lang].health)}
-                  {navItem('/transactions',    'Tx', T[lang].transactions)}
-                  {navItem('/recurring',       '🔁', T[lang].recurring)}
-                  {navItem('/anomalies',       '🚨', T[lang].anomalies)}
-                  {navItem('/smart-budgets',   '🧠', T[lang].budgets)}
-                  {navItem('/goals',           '🎯', T[lang].goals)}
-                  {navItem('/fixed-deposits',  '🏛️', T[lang].fd)}
-                  {navItem('/loans',           '🏦', T[lang].loans)}
-                  {navItem('/leases',          '🚗', T[lang].leases)}
-                  {navItem('/pawning',         '💍', T[lang].pawning)}
-                  {navItem('/credit-cards',    '💳', T[lang].cards)}
-                  {navItem('/subscriptions',   '🔄', T[lang].subscriptions)}
-                  {navItem('/connect-bank',    '🔗', T[lang].connectBank)}
+                  {navItem('/financial-health', '🏥', T[lang].health)}
+                  {navItem('/transactions', 'Tx', T[lang].transactions)}
+                  {navItem('/recurring', '🔁', T[lang].recurring)}
+                  {navItem('/anomalies', '🚨', T[lang].anomalies)}
+                  {navItem('/smart-budgets', '🧠', T[lang].budgets)}
+                  {navItem('/goals', '🎯', T[lang].goals)}
+                  {navItem('/fixed-deposits', '🏛️', T[lang].fd)}
+                  {navItem('/loans', '🏦', T[lang].loans)}
+                  {navItem('/leases', '🚗', T[lang].leases)}
+                  {navItem('/pawning', '💍', T[lang].pawning)}
+                  {navItem('/credit-cards', '💳', T[lang].cards)}
+                  {navItem('/subscriptions', '🔄', T[lang].subscriptions)}
+                  {navItem('/connect-bank', '🔗', T[lang].connectBank)}
                 </>
               )}
 
               {isAdmin && (
                 <>
                   {/* end prop prevents /admin matching /admin/users etc. */}
-                  <NavLink to="/admin" end onClick={() => { if (window.innerWidth <= 768) setIsSidebarOpen(false); }}
-                    className={({ isActive }) => `nav-item${isActive ? ' dashboard-item' : ''}`}>
-                    <span className="nav-icon">🛠️</span>{T[lang].adminDash}
+                  <NavLink to="/admin" end onClick={() => setIsMobileSidebarOpen(false)}
+                    className={({ isActive }) => `nav-item${isActive ? ' dashboard-item' : ''}`}
+                    data-tooltip={T[lang].adminDash}>
+                    <span className="nav-icon" aria-hidden="true">🛠️</span>
+                    <span className="nav-label">{T[lang].adminDash}</span>
                   </NavLink>
-                  {navItem('/admin/users',   '👥', T[lang].userMgmt)}
-                  {navItem('/admin/config',  '⚙️', T[lang].config)}
-                  {navItem('/admin/audit',   '📋', T[lang].audit)}
+                  {navItem('/admin/users', '👥', T[lang].userMgmt)}
+                  {navItem('/admin/config', '⚙️', T[lang].config)}
+                  {navItem('/admin/audit', '📋', T[lang].audit)}
                   {navItem('/admin/reports', '📊', T[lang].reports)}
                 </>
               )}
             </div>
+
+            <div className="sidebar-footer-mobile">
+              <div className="sidebar-footer-divider"></div>
+              <div className="sidebar-lang-selector">
+                {(['en', 'si', 'ta'] as Language[]).map(l => (
+                  <button key={l} className={`lang-btn ${lang === l ? 'active' : ''}`}
+                    onClick={() => switchLang(l)}
+                  >
+                    {l.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+              {isCustomer && (
+                <button
+                  type="button"
+                  className="sidebar-footer-btn ai-btn"
+                  onClick={() => { setIsMobileSidebarOpen(false); setIsAiAssistantOpen(true); }}
+                  data-tooltip="AI Assistant"
+                >
+                  <span className="nav-icon">🤖</span>
+                  <span className="nav-label">AI Assistant</span>
+                </button>
+              )}
+            </div>
           </nav>
 
-          {isMobile && isSidebarOpen && (
-            <button type="button" className="sidebar-overlay"
-              onClick={() => setIsSidebarOpen(false)} aria-label="Close sidebar" />
-          )}
-          {isMobile && (
-            <button type="button"
-              className={`sidebar-toggle ${isSidebarOpen ? 'open' : ''}`}
-              onClick={() => setIsSidebarOpen(p => !p)}
-              aria-label={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
-            >
-              {isSidebarOpen ? '<' : '>'}
-            </button>
-          )}
-
           <header className="top-header">
-            <div className="header-welcome">
-              <span className="welcome-text">{isAdmin ? T[lang].adminPortal : T[lang].welcomeBack}</span>
+            <div className="header-left">
+              <button
+                type="button"
+                className="hamburger-toggle"
+                onClick={() => setIsMobileSidebarOpen(p => !p)}
+                aria-label="Toggle navigation menu"
+                aria-expanded={isMobileSidebarOpen}
+              >
+                <span className="hamburger-line"></span>
+                <span className="hamburger-line"></span>
+                <span className="hamburger-line"></span>
+              </button>
+              <div className="header-logo-mobile">
+                <span className="header-logo-icon">💰</span>
+                <span className="header-logo-text">MoneyManager</span>
+              </div>
+              <div className="header-welcome">
+                <span className="welcome-text">{isAdmin ? T[lang].adminPortal : T[lang].welcomeBack}</span>
+              </div>
             </div>
+
             <div className="header-actions">
               <div className="lang-toggle">
                 {(['en', 'si', 'ta'] as Language[]).map(l => (
@@ -262,7 +293,7 @@ function AppShell() {
                 ))}
               </div>
               {isCustomer && (
-                <button className="header-quick-add" onClick={() => setShowAddTransactionModal(true)}>
+                <button className="header-quick-add" onClick={() => setShowAddTransactionModal(true)} aria-label={T[lang].newTx}>
                   {T[lang].newTx}
                 </button>
               )}
@@ -293,55 +324,59 @@ function AppShell() {
               ? <Navigate to="/dashboard" replace />
               : <Signup />
           } />
+          <Route path="/verify-email" element={
+            isAuthenticated
+              ? <Navigate to="/dashboard" replace />
+              : <VerifyEmail />
+          } />
+          <Route path="/reset-password" element={
+            isAuthenticated
+              ? <Navigate to="/dashboard" replace />
+              : <ResetPassword />
+          } />
 
           {/* ── Customer routes ── */}
-          <Route path="/dashboard"        element={<CustomerRoute><main className="page-content"><Dashboard /></main></CustomerRoute>} />
-          <Route path="/recommendations"  element={<CustomerRoute><main className="page-content"><RecommendationsPage /></main></CustomerRoute>} />
+          <Route path="/dashboard" element={<CustomerRoute><main className="page-content"><Dashboard /></main></CustomerRoute>} />
+          <Route path="/recommendations" element={<CustomerRoute><main className="page-content"><RecommendationsPage /></main></CustomerRoute>} />
           <Route path="/financial-health" element={<CustomerRoute><main className="page-content"><FinancialHealthPage /></main></CustomerRoute>} />
-          <Route path="/transactions"     element={<CustomerRoute><main className="page-content"><TransactionList /></main></CustomerRoute>} />
-          <Route path="/recurring"        element={<CustomerRoute><main className="page-content"><RecurringTransactionsPage /></main></CustomerRoute>} />
-          <Route path="/anomalies"        element={<CustomerRoute><main className="page-content"><AnomalyDetectionPage /></main></CustomerRoute>} />
-          <Route path="/smart-budgets"    element={<CustomerRoute><main className="page-content"><SmartBudgetsPage /></main></CustomerRoute>} />
-          <Route path="/goals"            element={<CustomerRoute><main className="page-content"><GoalsPage /></main></CustomerRoute>} />
-          <Route path="/fixed-deposits"   element={<CustomerRoute><main className="page-content"><FixedDepositsPage /></main></CustomerRoute>} />
-          <Route path="/loans"            element={<CustomerRoute><main className="page-content"><LoansPage /></main></CustomerRoute>} />
-          <Route path="/leases"           element={<CustomerRoute><main className="page-content"><LeasesPage /></main></CustomerRoute>} />
-          <Route path="/pawning"          element={<CustomerRoute><main className="page-content"><PawningPage /></main></CustomerRoute>} />
-          <Route path="/credit-cards"     element={<CustomerRoute><main className="page-content"><CreditCardsPage /></main></CustomerRoute>} />
-          <Route path="/subscriptions"    element={<CustomerRoute><main className="page-content"><SubscriptionsPage /></main></CustomerRoute>} />
-          <Route path="/connect-bank"     element={<CustomerRoute><main className="page-content"><ConnectBankPage /></main></CustomerRoute>} />
+          <Route path="/transactions" element={<CustomerRoute><main className="page-content"><TransactionList /></main></CustomerRoute>} />
+          <Route path="/recurring" element={<CustomerRoute><main className="page-content"><RecurringTransactionsPage /></main></CustomerRoute>} />
+          <Route path="/anomalies" element={<CustomerRoute><main className="page-content"><AnomalyDetectionPage /></main></CustomerRoute>} />
+          <Route path="/smart-budgets" element={<CustomerRoute><main className="page-content"><SmartBudgetsPage /></main></CustomerRoute>} />
+          <Route path="/goals" element={<CustomerRoute><main className="page-content"><GoalsPage /></main></CustomerRoute>} />
+          <Route path="/fixed-deposits" element={<CustomerRoute><main className="page-content"><FixedDepositsPage /></main></CustomerRoute>} />
+          <Route path="/loans" element={<CustomerRoute><main className="page-content"><LoansPage /></main></CustomerRoute>} />
+          <Route path="/leases" element={<CustomerRoute><main className="page-content"><LeasesPage /></main></CustomerRoute>} />
+          <Route path="/pawning" element={<CustomerRoute><main className="page-content"><PawningPage /></main></CustomerRoute>} />
+          <Route path="/credit-cards" element={<CustomerRoute><main className="page-content"><CreditCardsPage /></main></CustomerRoute>} />
+          <Route path="/subscriptions" element={<CustomerRoute><main className="page-content"><SubscriptionsPage /></main></CustomerRoute>} />
+          <Route path="/connect-bank" element={<CustomerRoute><main className="page-content"><ConnectBankPage /></main></CustomerRoute>} />
 
           {/* Shared */}
-          <Route path="/profile"          element={<ProtectedRoute><main className="page-content"><ProfilePage /></main></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><main className="page-content"><ProfilePage /></main></ProtectedRoute>} />
           <Route path="/account-settings" element={<ProtectedRoute><main className="page-content"><AccountSettings /></main></ProtectedRoute>} />
-          <Route path="/notifications"    element={<ProtectedRoute><main className="page-content"><NotificationsPage /></main></ProtectedRoute>} />
-          <Route path="/settings"         element={<ProtectedRoute><main className="page-content"><SettingsPage /></main></ProtectedRoute>} />
-          <Route path="/help"             element={<ProtectedRoute><main className="page-content"><HelpPage /></main></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><main className="page-content"><NotificationsPage /></main></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><main className="page-content"><SettingsPage /></main></ProtectedRoute>} />
+          <Route path="/help" element={<ProtectedRoute><main className="page-content"><HelpPage /></main></ProtectedRoute>} />
 
           {/* Admin routes */}
-          <Route path="/admin"            element={<AdminRoute><main className="page-content"><AdminDashboard /></main></AdminRoute>} />
-          <Route path="/admin/users"      element={<AdminRoute><main className="page-content"><AdminUsersPage /></main></AdminRoute>} />
-          <Route path="/admin/config"     element={<AdminRoute><main className="page-content"><AdminConfigPage /></main></AdminRoute>} />
-          <Route path="/admin/audit"      element={<AdminRoute><main className="page-content"><AdminAuditPage /></main></AdminRoute>} />
-          <Route path="/admin/reports"    element={<AdminRoute><main className="page-content"><AdminAnalyticsPage /></main></AdminRoute>} />
-
-          {/* Welcome / landing page */}
-          <Route path="/welcome" element={
-            isAuthenticated
-              ? <Navigate to={isAdmin ? '/admin' : '/dashboard'} replace />
-              : <WelcomePage />
-          } />
+          <Route path="/admin" element={<AdminRoute><main className="page-content"><AdminDashboard /></main></AdminRoute>} />
+          <Route path="/admin/users" element={<AdminRoute><main className="page-content"><AdminUsersPage /></main></AdminRoute>} />
+          <Route path="/admin/config" element={<AdminRoute><main className="page-content"><AdminConfigPage /></main></AdminRoute>} />
+          <Route path="/admin/audit" element={<AdminRoute><main className="page-content"><AdminAuditPage /></main></AdminRoute>} />
+          <Route path="/admin/reports" element={<AdminRoute><main className="page-content"><AdminAnalyticsPage /></main></AdminRoute>} />
 
           {/* Catch-all */}
+          <Route path="/welcome" element={<Navigate to="/login" replace />} />
           <Route path="/" element={
-            !isAuthenticated ? <WelcomePage /> :
-            isAdmin          ? <Navigate to="/admin" replace /> :
-                               <Navigate to="/dashboard" replace />
+            !isAuthenticated ? <Navigate to="/login" replace /> :
+              isAdmin ? <Navigate to="/admin" replace /> :
+                <Navigate to="/dashboard" replace />
           } />
           <Route path="*" element={
-            !isAuthenticated ? <Navigate to="/welcome" replace /> :
-            isAdmin          ? <Navigate to="/admin" replace /> :
-                               <Navigate to="/dashboard" replace />
+            !isAuthenticated ? <Navigate to="/login" replace /> :
+              isAdmin ? <Navigate to="/admin" replace /> :
+                <Navigate to="/dashboard" replace />
           } />
         </Routes>
       </div>
