@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
+import { IconDollarSign, IconBarChart, IconActivity, IconAlertTriangle, IconCheckCircle, IconTarget, IconBell, IconTrendingUp, IconTrendingDown, IconLightbulb } from '../components/Icons';
 
 interface Budget {
     _id?: string;
@@ -196,28 +197,28 @@ export const SmartBudgetsPage = () => {
             {/* Budget Summary */}
             <div className="budget-summary">
                 <div className="summary-card">
-                    <div className="summary-icon">💰</div>
+                    <div className="summary-icon"><IconDollarSign size={24} /></div>
                     <div className="summary-content">
                         <h3 className="metric-value">LKR {totalIncome.toLocaleString()}</h3>
                         <p className="metric-label">Monthly Income</p>
                     </div>
                 </div>
                 <div className="summary-card">
-                    <div className="summary-icon">📊</div>
+                    <div className="summary-icon"><IconBarChart size={24} /></div>
                     <div className="summary-content">
                         <h3 className="metric-value">LKR {totalAllocated.toLocaleString()}</h3>
                         <p className="metric-label">Total Budgeted</p>
                     </div>
                 </div>
                 <div className="summary-card">
-                    <div className="summary-icon">⚖️</div>
+                    <div className="summary-icon"><IconActivity size={24} /></div>
                     <div className="summary-content">
                         <h3 className="metric-value">{Math.round((totalAllocated / totalIncome) * 100)}%</h3>
                         <p className="metric-label">Income Allocated</p>
                     </div>
                 </div>
                 <div className="summary-card warning">
-                    <div className="summary-icon">⚠️</div>
+                    <div className="summary-icon"><IconAlertTriangle size={24} /></div>
                     <div className="summary-content">
                         <h3 className="metric-value">{overBudgetCount}</h3>
                         <p className="metric-label">Over Budget Categories</p>
@@ -230,23 +231,23 @@ export const SmartBudgetsPage = () => {
                 <h3 className="section-title">AI Budget Insights</h3>
                 <div className="insights-grid">
                     <div className="insight-item critical">
-                        <span className="insight-icon">🚨</span>
+                        <span className="insight-icon" style={{ display: 'flex', alignItems: 'center' }}><IconAlertTriangle size={20} /></span>
                         <div className="insight-content">
                             <h4>Critical: Entertainment Overspend</h4>
                             <p>You're spending 185% more than recommended on entertainment. This is your biggest budget leak.</p>
                         </div>
-                        <button className="action-btn danger" onClick={() => handleOptimizeBudget('Entertainment')}>
-                            🎯 Fix Now
+                        <button className="action-btn danger" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => handleOptimizeBudget('Entertainment')}>
+                            <IconTarget size={16} /> Fix Now
                         </button>
                     </div>
                     <div className="insight-item success">
-                        <span className="insight-icon">✅</span>
+                        <span className="insight-icon" style={{ display: 'flex', alignItems: 'center' }}><IconCheckCircle size={20} /></span>
                         <div className="insight-content">
                             <h4>Good: Transportation Control</h4>
                             <p>You've reduced transportation costs by 15% this month. Keep it up!</p>
                         </div>
-                        <button className="action-btn secondary">
-                            📈 View Details
+                        <button className="action-btn secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <IconTrendingUp size={16} /> View Details
                         </button>
                     </div>
                 </div>
@@ -299,29 +300,31 @@ export const SmartBudgetsPage = () => {
                                 </span>
                             </div>
                             <div className="trends">
-                                <span className={`trend ${budget.trends.change > 0 ? 'up' : 'down'}`}>
-                                    {budget.trends.change > 0 ? '📈' : '📉'}
+                                <span className={`trend ${budget.trends.change > 0 ? 'up' : 'down'}`} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    {budget.trends.change > 0 ? <IconTrendingUp size={14} /> : <IconTrendingDown size={14} />}
                                     {Math.abs(budget.trends.change).toFixed(1)}% vs last month
                                 </span>
                             </div>
                         </div>
 
                         <div className="ai-recommendation">
-                            <p>💡 <strong>AI Recommendation:</strong> {budget.aiRecommendation}</p>
+                            <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><IconLightbulb size={16} /> <strong>AI Recommendation:</strong> {budget.aiRecommendation}</p>
                         </div>
 
                         <div className="budget-actions">
                             <button
                                 className="action-btn primary"
+                                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                                 onClick={() => handleOptimizeBudget(budget.category)}
                             >
-                                🎯 Optimize
+                                <IconTarget size={16} /> Optimize
                             </button>
                             <button
                                 className="action-btn secondary"
+                                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
                                 onClick={() => handleSetAlert(budget.category)}
                             >
-                                🔔 Set Alert
+                                <IconBell size={16} /> Set Alert
                             </button>
                         </div>
                     </div>

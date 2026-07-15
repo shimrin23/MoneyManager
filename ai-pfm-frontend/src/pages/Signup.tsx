@@ -101,7 +101,7 @@ export const Signup = () => {
             <div className="auth-center-card">
                 {/* Logo */}
                 <div className="auth-logo">
-                    <span className="auth-logo-icon">💰</span>
+                    <span className="auth-logo-icon"></span>
                     <span className="auth-logo-name">MoneyManager</span>
                 </div>
 
@@ -129,7 +129,7 @@ export const Signup = () => {
 
                         {error && (
                             <div className="auth-error">
-                                <span>⚠️</span> {error}
+                                <span></span> {error}
                             </div>
                         )}
 

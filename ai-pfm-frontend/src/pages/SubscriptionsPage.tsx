@@ -96,25 +96,25 @@ export const SubscriptionsPage = () => {
     // Feature 1: Health Score Calculation
     const getHealthScore = () => {
         const percentOfIncome = (totalMonthlyCost / monthlyIncome) * 100;
-        if (percentOfIncome < 5) return { score: 'Healthy', icon: '🟢', percentage: percentOfIncome };
-        if (percentOfIncome < 10) return { score: 'Needs Review', icon: '🟡', percentage: percentOfIncome };
-        return { score: 'Overloaded', icon: '🔴', percentage: percentOfIncome };
+        if (percentOfIncome < 5) return { score: 'Healthy', icon: '', percentage: percentOfIncome };
+        if (percentOfIncome < 10) return { score: 'Needs Review', icon: '', percentage: percentOfIncome };
+        return { score: 'Overloaded', icon: '', percentage: percentOfIncome };
     };
 
     // Feature 2: Usage Status Determination
     const getUsageStatus = (subscription: Subscription) => {
-        if (subscription.isZombie) return { status: 'Zombie', icon: '🔴', label: 'No activity detected' };
+        if (subscription.isZombie) return { status: 'Zombie', icon: '', label: 'No activity detected' };
         
         if (subscription.lastUsed) {
             const lastUsedDate = new Date(subscription.lastUsed);
             const now = new Date();
             const daysAgo = Math.floor((now.getTime() - lastUsedDate.getTime()) / (1000 * 60 * 60 * 24));
             
-            if (daysAgo < 7) return { status: 'Actively Used', icon: '🟢', label: `Last used: ${daysAgo} days ago` };
-            if (daysAgo < 60) return { status: 'Rarely Used', icon: '🟡', label: `Last used: ${Math.floor(daysAgo / 7)} weeks ago` };
-            return { status: 'Zombie', icon: '🔴', label: `Last used: ${Math.floor(daysAgo / 30)} months ago` };
+            if (daysAgo < 7) return { status: 'Actively Used', icon: '', label: `Last used: ${daysAgo} days ago` };
+            if (daysAgo < 60) return { status: 'Rarely Used', icon: '', label: `Last used: ${Math.floor(daysAgo / 7)} weeks ago` };
+            return { status: 'Zombie', icon: '', label: `Last used: ${Math.floor(daysAgo / 30)} months ago` };
         }
-        return { status: 'Unknown', icon: '⚪', label: 'No usage data' };
+        return { status: 'Unknown', icon: '', label: 'No usage data' };
     };
 
     // Feature 3 & 4: AI Insights and Alternatives
@@ -139,10 +139,10 @@ export const SubscriptionsPage = () => {
         };
 
         const categoryAlts = alternatives[subscription.category] || [];
-        let insight = `📦 ${subscription.category} subscription`;
+        let insight = `${subscription.category} subscription`;
         
         if (categoryAlts.length > 0 && categoryAlts[0].savings > 0) {
-            insight = `💡 ${categoryAlts[0].name} could save you LKR ${categoryAlts[0].savings.toLocaleString()}/month`;
+            insight = `${categoryAlts[0].name} could save you LKR ${categoryAlts[0].savings.toLocaleString()}/month`;
         }
 
         return { insight, alternatives: categoryAlts };
@@ -157,7 +157,7 @@ export const SubscriptionsPage = () => {
         if (daysUntilRenewal <= 3 && daysUntilRenewal > 0) {
             const usageStatus = getUsageStatus(subscription);
             if (usageStatus.status === 'Rarely Used' || usageStatus.status === 'Zombie') {
-                return { risk: true, message: `⚠️ Renews in ${daysUntilRenewal} days - Rarely used` };
+                return { risk: true, message: `Renews in ${daysUntilRenewal} days - Rarely used` };
             }
         }
         return { risk: false };
@@ -261,7 +261,7 @@ export const SubscriptionsPage = () => {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1>🔄 Subscriptions & Recurring</h1>
+                    <h1>Subscriptions & Recurring</h1>
                     <p className="page-subtitle">AI-Powered subscription management and savings</p>
                 </div>
                 <button 
@@ -283,7 +283,7 @@ export const SubscriptionsPage = () => {
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
-                        <h3 style={{ margin: '0 0 8px 0', fontSize: '18px' }}>💚 Subscription Health Score</h3>
+                        <h3 style={{ margin: '0 0 8px 0', fontSize: '18px' }}>Subscription Health Score</h3>
                         <p style={{ margin: '0', opacity: 0.9 }}>
                             {healthScore.icon} <strong>{healthScore.score}</strong> — Your subscriptions are {(healthScore.percentage).toFixed(1)}% of monthly income
                         </p>
@@ -438,7 +438,7 @@ export const SubscriptionsPage = () => {
                 borderRadius: '8px',
                 marginBottom: '20px'
             }}>
-                <h3 style={{ marginTop: '0', marginBottom: '16px', color: 'var(--text)' }}>📊 6-Month Spending Trend</h3>
+                <h3 style={{ marginTop: '0', marginBottom: '16px', color: 'var(--text)' }}>6-Month Spending Trend</h3>
                 <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', height: '120px' }}>
                     {trends.map((trend, idx) => (
                         <div key={idx} style={{ textAlign: 'center' }}>
@@ -464,10 +464,10 @@ export const SubscriptionsPage = () => {
                     borderRadius: '8px',
                     marginBottom: '20px'
                 }}>
-                    <h4 style={{ margin: '0 0 12px 0', color: '#92400e' }}>🤖 AI Consolidation Opportunity</h4>
+                    <h4 style={{ margin: '0 0 12px 0', color: '#92400e' }}>AI Consolidation Opportunity</h4>
                     {consolidationSuggestions().map((suggestion, idx) => (
                         <div key={idx} style={{ marginBottom: '8px', color: '#92400e' }}>
-                            <strong>📦 {suggestion.category}:</strong> You have {suggestion.count} subscriptions costing LKR {suggestion.totalCost.toLocaleString()}/month.
+                            <strong>{suggestion.category}:</strong> You have {suggestion.count} subscriptions costing LKR {suggestion.totalCost.toLocaleString()}/month.
                             Consolidating could save <strong>LKR {suggestion.potentialSavings.toLocaleString()}/month</strong>.
                         </div>
                     ))}
@@ -478,7 +478,7 @@ export const SubscriptionsPage = () => {
             {zombieSubs.length > 0 && (
                 <div className="zombie-alert">
                     <div className="alert-content">
-                        <span className="alert-icon">🚨</span>
+                        <span className="alert-icon" style={{ display: 'none' }}></span>
                         <div>
                             <h4>Zombie Subscriptions Detected!</h4>
                             <p>You have {zombieSubs.length} subscriptions you haven't used in 3+ months. Cancel them to save LKR {savings.toLocaleString()}/month.</p>
@@ -494,35 +494,12 @@ export const SubscriptionsPage = () => {
                             alert('Failed to cancel subscriptions. Please try again.');
                         }
                     }}>
-                        💀 Cancel All Zombies
+                        Cancel All Zombies
                     </button>
                 </div>
             )}
 
-            {/* Zombie Subscriptions Alert */}
-            {zombieSubs.length > 0 && (
-                <div className="zombie-alert">
-                    <div className="alert-content">
-                        <span className="alert-icon">🚨</span>
-                        <div>
-                            <h4>Zombie Subscriptions Detected!</h4>
-                            <p>You have {zombieSubs.length} subscriptions you haven't used in 3+ months. Cancel them to save LKR {savings.toLocaleString()}/month.</p>
-                        </div>
-                    </div>
-                    <button className="alert-action" onClick={async () => {
-                        try {
-                            const zombieIds = zombieSubs.map(sub => sub._id!);
-                            await apiClient.post('/subscriptions/bulk-cancel', { subscriptionIds: zombieIds });
-                            await fetchSubscriptions();
-                        } catch (error) {
-                            console.error('Failed to cancel zombie subscriptions:', error);
-                            alert('Failed to cancel subscriptions. Please try again.');
-                        }
-                    }}>
-                        💀 Cancel All Zombies
-                    </button>
-                </div>
-            )}
+
 
             {/* Subscriptions List - Feature 10: Enhanced Card Layout */}
             <div className="subscriptions-list">
@@ -614,7 +591,7 @@ export const SubscriptionsPage = () => {
                                 color: '#1e40af',
                                 fontSize: '13px'
                             }}>
-                                🤖 <strong>AI Insight:</strong> {insight}
+                                <strong>AI Insight:</strong> {insight}
                             </div>
 
                             {/* Impact Summary - Feature 9 */}
@@ -627,7 +604,7 @@ export const SubscriptionsPage = () => {
                                 fontSize: '13px',
                                 color: '#166534'
                             }}>
-                                <strong>💡 If you cancel:</strong><br />
+                                <strong>If you cancel:</strong><br />
                                 • Save LKR {monthlyAmount.toLocaleString()}/month<br />
                                 • Financial Health Score: +{Math.round((monthlyAmount / monthlyIncome) * 10)}<br />
                                 • Annual savings: LKR {(monthlyAmount * 12).toLocaleString()}
@@ -654,7 +631,7 @@ export const SubscriptionsPage = () => {
                                     }}
                                     onClick={() => handleFindAlternative(subscription)}
                                 >
-                                    🔍 View Alternatives
+                                    View Alternatives
                                 </button>
                                 <button 
                                     style={{
@@ -671,7 +648,7 @@ export const SubscriptionsPage = () => {
                                     }}
                                     onClick={() => alert('Downgrade feature coming soon')}
                                 >
-                                    ⬇️ Downgrade
+                                    Downgrade
                                 </button>
                                 <button 
                                     style={{
@@ -688,7 +665,7 @@ export const SubscriptionsPage = () => {
                                     }}
                                     onClick={() => handleCancelSubscription(subscription._id!)}
                                 >
-                                    ❌ Cancel
+                                    Cancel
                                 </button>
                             </div>
                         </div>
@@ -698,7 +675,7 @@ export const SubscriptionsPage = () => {
 
             {activeSubs.length === 0 && (
                 <div className="empty-state">
-                    <div className="empty-icon">🔄</div>
+                    <div className="empty-icon" style={{ display: 'none' }}></div>
                     <h3>No Subscriptions Found</h3>
                     <p>We'll automatically detect recurring payments from your transactions</p>
                 </div>
@@ -727,7 +704,7 @@ export const SubscriptionsPage = () => {
                         maxHeight: '80vh',
                         overflow: 'auto'
                     }}>
-                        <h3 style={{ marginTop: '0' }}>💰 Cheaper Alternatives for {selectedSubscription.name}</h3>
+                        <h3 style={{ marginTop: '0' }}>Cheaper Alternatives for {selectedSubscription.name}</h3>
                         
                         {(() => {
                             const { alternatives } = getAIInsight(selectedSubscription);
@@ -775,7 +752,7 @@ export const SubscriptionsPage = () => {
                                                     }}
                                                     onClick={() => alert('Switch plan feature coming soon')}
                                                 >
-                                                    🔁 Switch Plan
+                                                    Switch Plan
                                                 </button>
                                                 <button
                                                     style={{

@@ -58,7 +58,7 @@ export const AdminDashboard = () => {
         <div className="page-container admin-dashboard-page">
             <div className="page-header">
                 <div>
-                    <h1>🛠️ Admin Dashboard</h1>
+                    <h1>Admin Dashboard</h1>
                     <p className="page-subtitle">Manage users, roles, and configuration with audit-friendly toggles.</p>
                 </div>
             </div>

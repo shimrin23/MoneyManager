@@ -9,50 +9,50 @@
 /* ── Design Tokens (Dark Mode Default) ───────────────────────── */
 :root {
   /* ─ Colors */
-  --color-bg:          #080c14;
-  --color-surface:     #0f1724;
-  --color-surface-2:   #161f30;
-  --color-surface-3:   #1e2a3d;
-  --color-border:      rgba(255,255,255,0.07);
-  --color-border-2:    rgba(255,255,255,0.12);
-  --color-text:        #e8edf5;
-  --color-text-2:      #a0aec0;
-  --color-text-muted:  #64748b;
+  --color-bg:          #0a0a0a;
+  --color-surface:     #111111;
+  --color-surface-2:   #1a1a1a;
+  --color-surface-3:   #222222;
+  --color-border:      rgba(255,255,255,0.05);
+  --color-border-2:    rgba(255,255,255,0.1);
+  --color-text:        #ededed;
+  --color-text-2:      #a1a1aa;
+  --color-text-muted:  #71717a;
 
   /* ─ Brand */
-  --color-accent:      #3b82f6;
-  --color-accent-2:    #6366f1;
-  --color-accent-glow: rgba(59,130,246,0.25);
-  --color-success:     #10b981;
-  --color-warning:     #f59e0b;
-  --color-danger:      #ef4444;
-  --color-info:        #06b6d4;
+  --color-accent:      #ffffff;
+  --color-accent-2:    #e5e5e5;
+  --color-accent-glow: rgba(255,255,255,0.1);
+  --color-success:     #ededed;
+  --color-warning:     #ededed;
+  --color-danger:      #ededed;
+  --color-info:        #ededed;
 
   /* ─ Sidebar */
-  --sidebar-bg:        #0b1220;
-  --sidebar-border:    rgba(255,255,255,0.06);
-  --sidebar-w:         260px;
+  --sidebar-bg:        #0a0a0a;
+  --sidebar-border:    rgba(255,255,255,0.05);
+  --sidebar-w:         240px;
   --sidebar-collapsed: 72px;
 
   /* ─ Header */
   --header-h:          64px;
-  --header-bg:         rgba(8,12,20,0.85);
+  --header-bg:         rgba(10,10,10,0.85);
 
   /* ─ Shadows */
-  --shadow-xs:  0 1px 2px rgba(0,0,0,0.4);
-  --shadow-sm:  0 2px 8px rgba(0,0,0,0.35);
-  --shadow-md:  0 4px 20px rgba(0,0,0,0.45);
+  --shadow-xs:  0 1px 2px rgba(0,0,0,0.5);
+  --shadow-sm:  0 2px 8px rgba(0,0,0,0.5);
+  --shadow-md:  0 4px 20px rgba(0,0,0,0.5);
   --shadow-lg:  0 8px 40px rgba(0,0,0,0.5);
-  --shadow-xl:  0 16px 60px rgba(0,0,0,0.55);
-  --shadow-glow:0 0 20px rgba(59,130,246,0.3);
+  --shadow-xl:  0 16px 60px rgba(0,0,0,0.5);
+  --shadow-glow:0 0 20px rgba(255,255,255,0.1);
 
   /* ─ Radius */
   --radius-xs:  4px;
-  --radius-sm:  8px;
-  --radius-md:  12px;
-  --radius-lg:  16px;
-  --radius-xl:  20px;
-  --radius-2xl: 28px;
+  --radius-sm:  6px;
+  --radius-md:  8px;
+  --radius-lg:  12px;
+  --radius-xl:  16px;
+  --radius-2xl: 24px;
   --radius-full:9999px;
 
   /* ─ Spacing scale (4px base) */
@@ -99,41 +99,41 @@
   --border:        var(--color-border);
   --header-bg:     var(--header-bg);
   --sidebar-bg:    var(--sidebar-bg);
-  --sidebar-header-bg: rgba(11,18,32,0.9);
-  --table-head-bg: rgba(22,31,48,0.95);
-  --table-head-text:#a0aec0;
-  --table-border:  rgba(255,255,255,0.07);
-  --table-row-hover:rgba(59,130,246,0.06);
-  --sync-btn-bg:   var(--color-accent);
-  --sync-btn-text: #ffffff;
-  --sync-btn-border:transparent;
-  --sync-btn-hover-bg:#2563eb;
-  --sync-btn-disabled-bg:#1e2a3d;
-  --sync-btn-disabled-text:#64748b;
+  --sidebar-header-bg: var(--color-bg);
+  --table-head-bg: var(--color-surface);
+  --table-head-text:var(--color-text-2);
+  --table-border:  var(--color-border);
+  --table-row-hover:var(--color-surface-3);
+  --sync-btn-bg:   var(--color-surface-2);
+  --sync-btn-text: var(--color-text);
+  --sync-btn-border:var(--color-border);
+  --sync-btn-hover-bg:var(--color-surface-3);
+  --sync-btn-disabled-bg:var(--color-surface);
+  --sync-btn-disabled-text:var(--color-text-muted);
 }
 
 /* ── Light Theme ──────────────────────────────────────────────── */
 [data-theme='light'] {
-  --color-bg:        #f0f4f8;
+  --color-bg:        #fafafa;
   --color-surface:   #ffffff;
   --color-surface-2: #ffffff;
-  --color-surface-3: #f8fafc;
-  --color-border:    rgba(0,0,0,0.08);
-  --color-border-2:  rgba(0,0,0,0.14);
-  --color-text:      #0f172a;
-  --color-text-2:    #334155;
-  --color-text-muted:#64748b;
-  --color-accent:    #2563eb;
-  --color-accent-glow:rgba(37,99,235,0.18);
+  --color-surface-3: #f4f4f5;
+  --color-border:    rgba(0,0,0,0.06);
+  --color-border-2:  rgba(0,0,0,0.1);
+  --color-text:      #09090b;
+  --color-text-2:    #52525b;
+  --color-text-muted:#71717a;
+  --color-accent:    #09090b;
+  --color-accent-glow:rgba(0,0,0,0.05);
 
-  --sidebar-bg:      #1a2340;
-  --sidebar-border:  rgba(255,255,255,0.08);
-  --header-bg:       rgba(255,255,255,0.88);
+  --sidebar-bg:      #fafafa;
+  --sidebar-border:  rgba(0,0,0,0.06);
+  --header-bg:       rgba(250,250,250,0.85);
 
-  --shadow-sm: 0 1px 6px rgba(0,0,0,0.08);
-  --shadow-md: 0 4px 20px rgba(0,0,0,0.1);
-  --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
-  --shadow-xl: 0 16px 60px rgba(0,0,0,0.15);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.05);
 
   /* Legacy aliases */
   --bg:           var(--color-bg);
@@ -143,11 +143,11 @@
   --text-muted:   var(--color-text-muted);
   --border:       var(--color-border);
   --accent:       var(--color-accent);
-  --success:      #059669;
-  --danger:       #dc2626;
-  --table-head-bg:#f1f5fd;
-  --table-head-text:#1e3a8a;
-  --table-border: rgba(0,0,0,0.08);
+  --success:      var(--color-text);
+  --danger:       var(--color-text);
+  --table-head-bg:var(--color-surface-3);
+  --table-head-text:var(--color-text-2);
+  --table-border: var(--color-border);
   --table-row-hover:rgba(37,99,235,0.05);
   --sync-btn-bg:  #2563eb;
   --sync-btn-hover-bg:#1d4ed8;
@@ -327,6 +327,46 @@ input, select, textarea { font-family: inherit; }
   text-align: center;
   flex-shrink: 0;
   line-height: 1;
+}
+
+/* ── NavGroup (Dropdown Sidebar Categories) ── */
+.nav-group {
+  margin-bottom: var(--sp-2);
+}
+.nav-group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: var(--sp-3) var(--sp-4) var(--sp-2) var(--sp-4);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color var(--dur-fast);
+}
+.nav-group-header:hover {
+  color: var(--text);
+}
+.nav-group-chevron {
+  display: flex;
+  align-items: center;
+  opacity: 0.5;
+}
+.nav-group-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s var(--ease-out);
+}
+.nav-group.open .nav-group-content {
+  max-height: 800px; /* arbitrary large max-height for animation */
 }
 
 /* Sidebar footer (mobile AI + lang) */

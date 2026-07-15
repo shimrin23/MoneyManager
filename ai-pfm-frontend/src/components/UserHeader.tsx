@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client.ts';
+import { IconUser, IconSettings, IconBell, IconHelpCircle, IconLogOut, IconSun, IconMoon } from './Icons';
 
 interface User {
     id: string;
@@ -129,17 +130,17 @@ export const UserHeader = ({ theme, onToggleTheme }: UserHeaderProps) => {
                             <div className="menu-section-title">Account</div>
 
                             <div className="dropdown-item" role="menuitem" onClick={() => goto('/profile')}>
-                                <span className="item-icon" aria-hidden="true">👤</span>
+                                <span className="item-icon" aria-hidden="true"><IconUser size={16} /></span>
                                 <span className="item-text">Edit Profile</span>
                             </div>
 
                             <div className="dropdown-item" role="menuitem" onClick={() => goto('/settings')}>
-                                <span className="item-icon" aria-hidden="true">⚙️</span>
+                                <span className="item-icon" aria-hidden="true"><IconSettings size={16} /></span>
                                 <span className="item-text">Settings</span>
                             </div>
 
                             <div className="dropdown-item" role="menuitem" onClick={() => goto('/notifications')}>
-                                <span className="item-icon" aria-hidden="true">🔔</span>
+                                <span className="item-icon" aria-hidden="true"><IconBell size={16} /></span>
                                 <span className="item-text">Notifications</span>
                             </div>
 
@@ -160,8 +161,8 @@ export const UserHeader = ({ theme, onToggleTheme }: UserHeaderProps) => {
                                     )}
                                 </span>
                                 <span className="item-text">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-                                <span style={{ marginLeft: 'auto', fontSize: 10, background: 'var(--color-surface-3)', padding: '2px 6px', borderRadius: 4, color: 'var(--color-text-muted)' }}>
-                                    {theme === 'dark' ? '☀️' : '🌙'}
+                                <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', background: 'var(--color-surface-3)', padding: '2px 6px', borderRadius: 4, color: 'var(--color-text-muted)' }}>
+                                    {theme === 'dark' ? <IconSun size={14} /> : <IconMoon size={14} />}
                                 </span>
                             </div>
                         </div>
@@ -190,7 +191,7 @@ export const UserHeader = ({ theme, onToggleTheme }: UserHeaderProps) => {
                         <div className="menu-section">
                             <div className="menu-section-title">Support</div>
                             <div className="dropdown-item" role="menuitem" onClick={() => goto('/help')}>
-                                <span className="item-icon" aria-hidden="true">❓</span>
+                                <span className="item-icon" aria-hidden="true"><IconHelpCircle size={16} /></span>
                                 <span className="item-text">Help & Support</span>
                             </div>
                         </div>
@@ -204,7 +205,7 @@ export const UserHeader = ({ theme, onToggleTheme }: UserHeaderProps) => {
                                 role="menuitem"
                                 onClick={() => { setShowDropdown(false); handleLogout(); }}
                             >
-                                <span className="item-icon" aria-hidden="true">🚪</span>
+                                <span className="item-icon" aria-hidden="true"><IconLogOut size={16} /></span>
                                 <span className="item-text">Sign Out</span>
                                 <span className="logout-shortcut">Ctrl+Q</span>
                             </div>

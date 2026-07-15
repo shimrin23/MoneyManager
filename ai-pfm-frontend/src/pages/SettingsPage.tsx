@@ -196,25 +196,25 @@ export const SettingsPage = () => {
                     className={`nav-btn ${activeTab === 'general' ? 'active' : ''}`}
                     onClick={() => setActiveTab('general')}
                 >
-                    ⚙️ General
+                    General
                 </button>
                 <button
                     className={`nav-btn ${activeTab === 'notifications' ? 'active' : ''}`}
                     onClick={() => setActiveTab('notifications')}
                 >
-                    🔔 Notifications
+                    Notifications
                 </button>
                 <button
                     className={`nav-btn ${activeTab === 'privacy' ? 'active' : ''}`}
                     onClick={() => setActiveTab('privacy')}
                 >
-                    🔒 Privacy
+                    Privacy
                 </button>
                 <button
                     className={`nav-btn ${activeTab === 'advanced' ? 'active' : ''}`}
                     onClick={() => setActiveTab('advanced')}
                 >
-                    🔧 Advanced
+                    Advanced
                 </button>
             </div>
 

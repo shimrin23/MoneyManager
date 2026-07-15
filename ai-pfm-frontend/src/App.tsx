@@ -1,4 +1,10 @@
 import React, { useEffect, useState } from 'react';
+import { 
+  IconDashboard, IconLightbulb, IconActivity, IconReceipt, IconRepeat, 
+  IconAlertTriangle, IconBrain, IconTarget, IconLandmark, IconBuilding, 
+  IconCar, IconDiamond, IconCreditCard, IconRefreshCw, IconLink, 
+  IconSettings, IconUsers, IconClipboardList, IconBarChart, IconWallet 
+} from './components/Icons';
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
@@ -145,7 +151,7 @@ function AppShell() {
     window.dispatchEvent(new CustomEvent('lang-changed', { detail: l }));
   };
 
-  const navItem = (to: string, icon: string, label: string) => (
+  const navItem = (to: string, icon: React.ReactNode, label: string) => (
     <NavLink
       to={to}
       onClick={() => setIsMobileSidebarOpen(false)}
@@ -156,6 +162,39 @@ function AppShell() {
       <span className="nav-label">{label}</span>
     </NavLink>
   );
+
+  const navButton = (onClick: () => void, icon: React.ReactNode, label: string) => (
+    <button
+      onClick={() => {
+        setIsMobileSidebarOpen(false);
+        onClick();
+      }}
+      className="nav-item"
+      data-tooltip={label}
+    >
+      <span className="nav-icon" aria-hidden="true">{icon}</span>
+      <span className="nav-label">{label}</span>
+    </button>
+  );
+
+  const NavGroup = ({ title, children }: { title: string, children: React.ReactNode }) => {
+    const [isOpen, setIsOpen] = useState(true);
+    return (
+      <div className={`nav-group ${isOpen ? 'open' : ''}`}>
+        <button type="button" className="nav-group-header" onClick={() => setIsOpen(!isOpen)}>
+          <span className="nav-group-title">{title}</span>
+          <span className="nav-group-chevron">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </span>
+        </button>
+        <div className="nav-group-content">
+          {children}
+        </div>
+      </div>
+    );
+  };
 
   const AddTransactionModal = () => (
     <div className="modal-overlay" onClick={() => setShowAddTransactionModal(false)}>
@@ -186,7 +225,7 @@ function AppShell() {
           <nav className={`side-navigation ${isMobileSidebarOpen ? 'open' : ''}`}>
             <div className="sidebar-header">
               <h1 className="sidebar-logo">
-                <span className="logo-emoji">💰</span>
+                <span className="logo-emoji"><IconWallet size={24} /></span>
                 <span className="logo-text">MoneyManager</span>
               </h1>
               {isAdmin && (
@@ -199,21 +238,37 @@ function AppShell() {
             <div className="nav-section">
               {isCustomer && (
                 <>
-                  {navItem('/dashboard', '📊', T[lang].dashboard)}
-                  {navItem('/recommendations', '💡', T[lang].recommendations)}
-                  {navItem('/financial-health', '🏥', T[lang].health)}
-                  {navItem('/transactions', 'Tx', T[lang].transactions)}
-                  {navItem('/recurring', '🔁', T[lang].recurring)}
-                  {navItem('/anomalies', '🚨', T[lang].anomalies)}
-                  {navItem('/smart-budgets', '🧠', T[lang].budgets)}
-                  {navItem('/goals', '🎯', T[lang].goals)}
-                  {navItem('/fixed-deposits', '🏛️', T[lang].fd)}
-                  {navItem('/loans', '🏦', T[lang].loans)}
-                  {navItem('/leases', '🚗', T[lang].leases)}
-                  {navItem('/pawning', '💍', T[lang].pawning)}
-                  {navItem('/credit-cards', '💳', T[lang].cards)}
-                  {navItem('/subscriptions', '🔄', T[lang].subscriptions)}
-                  {navItem('/connect-bank', '🔗', T[lang].connectBank)}
+                  <NavGroup title="Overview">
+                    {navItem('/dashboard', <IconDashboard size={20} />, T[lang].dashboard)}
+                    {navItem('/financial-health', <IconActivity size={20} />, T[lang].health)}
+                    {navItem('/recommendations', <IconLightbulb size={20} />, T[lang].recommendations)}
+                    {navButton(() => setIsAiAssistantOpen(true), <IconBrain size={20} />, 'AI Coach')}
+                  </NavGroup>
+
+                  <NavGroup title="Money">
+                    {navItem('/transactions', <IconReceipt size={20} />, T[lang].transactions)}
+                    {navItem('/credit-cards', <IconCreditCard size={20} />, T[lang].cards)}
+                    {navItem('/anomalies', <IconAlertTriangle size={20} />, T[lang].anomalies)}
+                  </NavGroup>
+
+                  <NavGroup title="Planning">
+                    {navItem('/smart-budgets', <IconBrain size={20} />, T[lang].budgets)}
+                    {navItem('/goals', <IconTarget size={20} />, T[lang].goals)}
+                    {navItem('/recurring', <IconRepeat size={20} />, 'Cash Flow Forecast')}
+                  </NavGroup>
+
+                  <NavGroup title="Banking Products">
+                    {navItem('/fixed-deposits', <IconLandmark size={20} />, T[lang].fd)}
+                    {navItem('/loans', <IconBuilding size={20} />, T[lang].loans)}
+                    {navItem('/leases', <IconCar size={20} />, T[lang].leases)}
+                    {navItem('/pawning', <IconDiamond size={20} />, T[lang].pawning)}
+                  </NavGroup>
+
+                  <NavGroup title="Settings">
+                    {navItem('/connect-bank', <IconLink size={20} />, T[lang].connectBank)}
+                    {navItem('/profile', <IconUsers size={20} />, 'Profile')}
+                    {navItem('/settings', <IconSettings size={20} />, 'Security')}
+                  </NavGroup>
                 </>
               )}
 
@@ -223,13 +278,13 @@ function AppShell() {
                   <NavLink to="/admin" end onClick={() => setIsMobileSidebarOpen(false)}
                     className={({ isActive }) => `nav-item${isActive ? ' dashboard-item' : ''}`}
                     data-tooltip={T[lang].adminDash}>
-                    <span className="nav-icon" aria-hidden="true">🛠️</span>
+                    <span className="nav-icon" aria-hidden="true"><IconSettings size={20} /></span>
                     <span className="nav-label">{T[lang].adminDash}</span>
                   </NavLink>
-                  {navItem('/admin/users', '👥', T[lang].userMgmt)}
-                  {navItem('/admin/config', '⚙️', T[lang].config)}
-                  {navItem('/admin/audit', '📋', T[lang].audit)}
-                  {navItem('/admin/reports', '📊', T[lang].reports)}
+                  {navItem('/admin/users', <IconUsers size={20} />, T[lang].userMgmt)}
+                  {navItem('/admin/config', <IconSettings size={20} />, T[lang].config)}
+                  {navItem('/admin/audit', <IconClipboardList size={20} />, T[lang].audit)}
+                  {navItem('/admin/reports', <IconBarChart size={20} />, T[lang].reports)}
                 </>
               )}
             </div>
@@ -245,17 +300,6 @@ function AppShell() {
                   </button>
                 ))}
               </div>
-              {isCustomer && (
-                <button
-                  type="button"
-                  className="sidebar-footer-btn ai-btn"
-                  onClick={() => { setIsMobileSidebarOpen(false); setIsAiAssistantOpen(true); }}
-                  data-tooltip="AI Assistant"
-                >
-                  <span className="nav-icon">🤖</span>
-                  <span className="nav-label">AI Assistant</span>
-                </button>
-              )}
             </div>
           </nav>
 
@@ -273,7 +317,7 @@ function AppShell() {
                 <span className="hamburger-line"></span>
               </button>
               <div className="header-logo-mobile">
-                <span className="header-logo-icon">💰</span>
+                <span className="header-logo-icon"><IconWallet size={24} /></span>
                 <span className="header-logo-text">MoneyManager</span>
               </div>
               <div className="header-welcome">
@@ -302,7 +346,7 @@ function AppShell() {
                   aria-label="Open AI Assistant" title="AI Assistant"
                   onClick={() => setIsAiAssistantOpen(true)}
                 >
-                  <span className="header-ai-icon" aria-hidden="true">🤖</span>
+                  <span className="header-ai-icon" aria-hidden="true"><IconBrain size={20} /></span>
                 </button>
               )}
               <UserHeader theme={theme} onToggleTheme={() => setTheme(p => p === 'dark' ? 'light' : 'dark')} />

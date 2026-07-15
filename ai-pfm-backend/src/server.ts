@@ -1,15 +1,15 @@
+import dotenv from 'dotenv';
+// Load env vars FIRST, before any module reads process.env
+dotenv.config();
+
 import { createServer } from 'http';
 import mongoose from 'mongoose';
 import app from './index'; 
 import config from './config'; 
-import dotenv from 'dotenv';
 import './jobs/sync.bank';
 
-// Load env vars
-dotenv.config();
-
 const server = createServer(app);
-const PORT: number = Number(config.port) || 3000;
+const PORT: number = Number(process.env.PORT) || 5000;
 
 // 1. Connect to MongoDB
 mongoose.connect(config.mongoUri)

@@ -71,7 +71,7 @@ export const VerifyEmail = () => {
             <div className="auth-center-card">
                 {/* Logo */}
                 <div className="auth-logo">
-                    <span className="auth-logo-icon">💰</span>
+                    <span className="auth-logo-icon"></span>
                     <span className="auth-logo-name">MoneyManager</span>
                 </div>
 
@@ -120,13 +120,13 @@ export const VerifyEmail = () => {
                                 
                                 {resendStatus === 'success' && (
                                     <div className="resend-alert success">
-                                        <span>✔️</span> {resendMessage}
+                                        <span></span> {resendMessage}
                                     </div>
                                 )}
                                 
                                 {resendStatus === 'error' && (
                                     <div className="resend-alert error">
-                                        <span>⚠️</span> {resendMessage}
+                                        <span></span> {resendMessage}
                                     </div>
                                 )}
 

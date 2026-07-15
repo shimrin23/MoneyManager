@@ -59,7 +59,7 @@ export const ResetPassword = () => {
 
             <div className="auth-center-card">
                 <div className="auth-logo">
-                    <span className="auth-logo-icon">💰</span>
+                    <span className="auth-logo-icon"></span>
                     <span className="auth-logo-name">MoneyManager</span>
                 </div>
 
@@ -86,7 +86,7 @@ export const ResetPassword = () => {
 
                             {message && (
                                 <div className={`auth-error ${status === 'error' ? 'error' : ''}`}>
-                                    <span>⚠️</span> {message}
+                                    <span></span> {message}
                                 </div>
                             )}
 

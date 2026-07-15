@@ -131,7 +131,7 @@ export const Login = () => {
             <div className="auth-center-card">
                 {/* Logo */}
                 <div className="auth-logo">
-                    <span className="auth-logo-icon">💰</span>
+                    <span className="auth-logo-icon"></span>
                     <span className="auth-logo-name">MoneyManager</span>
                 </div>
 
@@ -142,7 +142,7 @@ export const Login = () => {
 
                 {error && (
                     <div className="auth-error">
-                        <span>⚠️</span> {error}
+                        <span></span> {error}
                     </div>
                 )}
 
@@ -157,8 +157,8 @@ export const Login = () => {
                         >
                             {resendStatus === 'loading' ? 'Sending...' : 'Resend Link'}
                         </button>
-                        {resendStatus === 'success' && <span className="resend-success-inline">✔️ Resent!</span>}
-                        {resendStatus === 'error' && <span className="resend-error-inline">⚠️ Failed.</span>}
+                        {resendStatus === 'success' && <span className="resend-success-inline">Resent!</span>}
+                        {resendStatus === 'error' && <span className="resend-error-inline">Failed.</span>}
                     </div>
                 )}
 
@@ -272,7 +272,7 @@ export const Login = () => {
                                 <p className="forgot-sub">Enter your email address and we'll send you a link to reset your password.</p>
                                 {forgotStatus === 'error' && (
                                     <div className="auth-error" style={{ marginBottom: '1rem' }}>
-                                        <span>⚠️</span> Failed to send reset link. Please try again.
+                                        <span></span> Failed to send reset link. Please try again.
                                     </div>
                                 )}
                                 <form onSubmit={handleForgotPasswordSubmit}>
@@ -298,7 +298,7 @@ export const Login = () => {
                         )}
                         {forgotStatus === 'success' && (
                             <div className="forgot-success" style={{ textAlign: 'center', padding: '1rem 0' }}>
-                                <span className="success-icon" style={{ fontSize: '2.5rem', display: 'block', marginBottom: '1rem' }}>✉️</span>
+                                <span className="success-icon" style={{ fontSize: '2.5rem', display: 'block', marginBottom: '1rem' }}></span>
                                 <h3>Check your email</h3>
                                 <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5', margin: '1rem 0' }}>
                                     A password reset link has been sent to <strong>{forgotEmail}</strong> if an account exists.

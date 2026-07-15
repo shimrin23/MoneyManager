@@ -3,6 +3,7 @@ import { apiClient } from '../api/client.ts';
 import axios from 'axios';
 import { CashFlowForecast } from './CashFlowForecast';
 import { AIAssistant } from './AIAssistant';
+import { IconActivity, IconRefreshCw, IconRepeat, IconBrain } from './Icons';
 
 export const Dashboard = () => {
     const [aiOpen, setAiOpen] = useState(false);
@@ -166,7 +167,7 @@ export const Dashboard = () => {
                             background: 'rgba(16,185,129,0.1)',
                             border: '1px solid rgba(16,185,129,0.2)'
                         }}>
-                            ♡
+                            <IconActivity size={24} />
                         </div>
                         <div style={{ flex: 1 }}>
                             <div className="ds-card-title">Financial Health</div>
@@ -277,7 +278,7 @@ export const Dashboard = () => {
                                 title={hasPFMConsent === false ? 'Enable consent in Transactions page first' : 'Sync latest bank transactions'}
                                 aria-label="Sync bank transactions"
                             >
-                                <span aria-hidden="true">{syncing ? '⏳' : '🔄'}</span>
+                                <span aria-hidden="true" style={{ display: 'flex' }}><IconRefreshCw size={16} /></span>
                                 <span>{syncing ? 'Syncing…' : 'Sync'}</span>
                             </button>
                         </div>
@@ -350,7 +351,7 @@ export const Dashboard = () => {
                         <div className="ds-card-icon" style={{
                             background: 'rgba(99,102,241,0.1)',
                             border: '1px solid rgba(99,102,241,0.2)'
-                        }}>📅</div>
+                        }}><IconRepeat size={24} /></div>
                         <div>
                             <div className="ds-card-title">Subscriptions</div>
                             <div className="ds-card-subtitle">Recurring charges detected</div>
@@ -362,12 +363,12 @@ export const Dashboard = () => {
                             style={{ marginLeft: 'auto', fontSize: 12 }}
                             aria-label="Open AI Assistant"
                         >
-                            🤖 AI Coach
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><IconBrain size={14} /> AI Coach</span>
                         </button>
                     </div>
 
                     <div className="subscriptions-content">
-                        <div className="subscriptions-icon">📅</div>
+                        <div className="subscriptions-icon" style={{ display: 'none' }}></div>
                         <div className="subscriptions-info">
                             <h3>Recurring Subscriptions</h3>
                             <p>Detected from your transaction history.</p>
