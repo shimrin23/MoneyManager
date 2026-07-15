@@ -16,54 +16,7 @@ interface Budget {
         change: number;
     };
 }
-
-const BarChart = ({ data }: { data: { category: string; value: number }[] }) => {
-    const max = Math.max(...data.map(d => d.value), 1);
-    return (
-        <div className="bar-chart">
-            {data.map((d) => (
-                <div key={d.category} className="bar-row">
-                    <span className="bar-label">{d.category}</span>
-                    <div className="bar-track">
-                        <div className="bar-fill" style={{ width: `${(d.value / max) * 100}%` }} />
-                    </div>
-                    <span className="bar-value">LKR {d.value.toLocaleString()}</span>
-                </div>
-            ))}
-        </div>
-    );
-};
-
-const PieChart = ({ data }: { data: { category: string; value: number }[] }) => {
-    const total = data.reduce((sum, d) => sum + d.value, 0) || 1;
-    let cumulative = 0;
-    const segments = data.map((d) => {
-        const start = cumulative;
-        cumulative += d.value / total * 100;
-        const end = cumulative;
-        return { category: d.category, start, end };
-    });
-
-    const gradient = segments
-        .map((seg, idx) => `${pieColors[idx % pieColors.length]} ${seg.start}% ${seg.end}%`)
-        .join(', ');
-
-    return (
-        <div className="pie-chart">
-            <div className="pie" style={{ background: `conic-gradient(${gradient})` }} />
-            <div className="pie-legend">
-                {segments.map((s, idx) => (
-                    <div key={s.category} className="legend-row">
-                        <span className="legend-swatch" style={{ background: pieColors[idx % pieColors.length] }} />
-                        <span>{s.category}</span>
-                    </div>
-                ))}
-            </div>
-        </div>
-    );
-};
-
-const pieColors = ['#6ee7b7', '#fbbf24', '#60a5fa', '#f87171', '#a78bfa', '#34d399'];
+import { SpendingTrends } from '../components/SpendingTrends';
 
 export const SmartBudgetsPage = () => {
     const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -186,13 +139,7 @@ export const SmartBudgetsPage = () => {
             </div>
 
             {/* Spending Trends Charts */}
-            <div className="card" style={{ marginBottom: '1.5rem' }}>
-                <h3 className="section-title">Spending Trends</h3>
-                <div className="charts-grid">
-                    <BarChart data={chartData} />
-                    <PieChart data={chartData} />
-                </div>
-            </div>
+            <SpendingTrends />
 
             {/* Budget Summary */}
             <div className="budget-summary">

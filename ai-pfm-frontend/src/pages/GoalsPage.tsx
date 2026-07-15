@@ -132,11 +132,9 @@ export const GoalsPage = () => {
     };
 
     const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-LK', {
-            style: 'currency',
-            currency: 'LKR',
-            minimumFractionDigits: 0
-        }).format(amount);
+        return `Rs. ${new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 0, maximumFractionDigits: 0
+        }).format(amount)}`;
     };
 
     const getDaysRemaining = (deadline: string) => {
@@ -147,11 +145,11 @@ export const GoalsPage = () => {
     const getAISuggestion = (goal: Goal) => {
         const riskStatus = getGoalRiskStatus(goal.currentAmount, goal.targetAmount, goal.deadline);
         if (riskStatus.status === 'On Track') {
-            return `You're on track! Continue saving LKR ${getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline).toLocaleString('en-LK')} monthly.`;
+            return `You're on track! Continue saving Rs. ${getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline).toLocaleString('en-US')} monthly.`;
         } else if (riskStatus.status === 'Slightly Behind') {
-            return `You're slightly behind. Increase monthly savings to LKR ${(getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline) * 1.2).toLocaleString('en-LK')} to stay on track.`;
+            return `You're slightly behind. Increase monthly savings to Rs. ${(getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline) * 1.2).toLocaleString('en-US')} to stay on track.`;
         } else {
-            return `High risk! Try to save LKR ${(getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline) * 1.5).toLocaleString('en-LK')} monthly to catch up.`;
+            return `High risk! Try to save Rs. ${(getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline) * 1.5).toLocaleString('en-US')} monthly to catch up.`;
         }
     };
 

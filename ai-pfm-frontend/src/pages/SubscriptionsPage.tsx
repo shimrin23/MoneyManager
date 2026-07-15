@@ -142,7 +142,7 @@ export const SubscriptionsPage = () => {
         let insight = `${subscription.category} subscription`;
         
         if (categoryAlts.length > 0 && categoryAlts[0].savings > 0) {
-            insight = `${categoryAlts[0].name} could save you LKR ${categoryAlts[0].savings.toLocaleString()}/month`;
+            insight = `${categoryAlts[0].name} could save you Rs. ${categoryAlts[0].savings.toLocaleString()}/month`;
         }
 
         return { insight, alternatives: categoryAlts };
@@ -731,7 +731,7 @@ export const SubscriptionsPage = () => {
                                                                 LKR {alt.price.toLocaleString()}
                                                             </td>
                                                             <td style={{ textAlign: 'right', padding: '12px 8px', fontWeight: '600', color: '#059669' }}>
-                                                                {alt.savings > 0 ? `+LKR ${alt.savings.toLocaleString()}` : 'N/A'}
+                                                                {alt.savings > 0 ? `+Rs. ${alt.savings.toLocaleString()}` : 'N/A'}
                                                             </td>
                                                         </tr>
                                                     ))}

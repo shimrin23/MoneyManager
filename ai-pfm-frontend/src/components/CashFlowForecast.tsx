@@ -28,8 +28,10 @@ export const CashFlowForecast = () => {
                 }));
                 setAllData(mapped);
                 setDaysToZero(Number.isFinite(response.data?.daysToZero) ? response.data.daysToZero : null);
-            } catch {
-                generateMockForecast();
+            } catch (err) {
+                console.error("Error fetching forecast data:", err);
+                setAllData([]);
+                setDaysToZero(null);
             } finally {
                 setLoading(false);
             }
@@ -37,25 +39,7 @@ export const CashFlowForecast = () => {
         fetchForecastData();
     }, []);
 
-    const generateMockForecast = () => {
-        const today = new Date();
-        const data: CashFlowData[] = [];
-        let balance = 125000;
-        const dailySpend = 4500;
-        for (let i = -7; i <= 0; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() + i);
-            data.push({ date: date.toISOString().split('T')[0], balance: balance + i * dailySpend * 0.8, predicted: false });
-        }
-        for (let i = 1; i <= 90; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() + i);
-            balance -= dailySpend;
-            data.push({ date: date.toISOString().split('T')[0], balance: Math.max(0, balance), predicted: true });
-        }
-        setAllData(data);
-        setDaysToZero(Math.ceil(125000 / dailySpend));
-    };
+
 
     // Filter data by time range
     useEffect(() => {
@@ -127,7 +111,7 @@ export const CashFlowForecast = () => {
                         {currentBalance !== undefined && (
                             <div className="ds-card-subtitle">
                                 Current balance: <strong style={{ color: 'var(--color-text)' }}>
-                                    {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(currentBalance)}
+                                    Rs. {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(currentBalance)}
                                 </strong>
                             </div>
                         )}

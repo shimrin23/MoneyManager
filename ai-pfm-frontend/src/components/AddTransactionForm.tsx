@@ -27,6 +27,7 @@ export const AddTransactionForm = ({ onTransactionAdded, onCancel }: Transaction
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState(false);
 
     const categories = {
         expense: ['Food & Dining', 'Shopping', 'Entertainment', 'Transport',
@@ -50,10 +51,15 @@ export const AddTransactionForm = ({ onTransactionAdded, onCancel }: Transaction
             });
 
             setFormData({ amount: '', category: '', description: '', type: 'expense', date: getLocalDateString() });
-            onTransactionAdded();
-            alert('Transaction added successfully!');
+            setSuccess(true);
+            setTimeout(() => {
+                setSuccess(false);
+                onTransactionAdded();
+            }, 1000);
         } catch (err: any) {
-            setError(err.response?.data?.error || err.message || 'Failed to add transaction');
+            const errorMsg = err.response?.data?.details || err.response?.data?.error || err.message || 'Failed to add transaction';
+            setError(`Error: ${errorMsg}`);
+            console.error("Backend Error Details:", err.response?.data);
         } finally {
             setLoading(false);
         }
@@ -80,111 +86,102 @@ export const AddTransactionForm = ({ onTransactionAdded, onCancel }: Transaction
                     ⚠️ {error}
                 </div>
             )}
+            {success && (
+                <div style={{ color: '#059669', marginBottom: 'var(--sp-4)', padding: '0.75rem', backgroundColor: '#ecfdf5', borderRadius: '8px', border: '1px solid #a7f3d0' }}>
+                    ✅ Transaction added successfully!
+                </div>
+            )}
 
             <form onSubmit={handleSubmit} className="transaction-form">
                 {/* Type toggle — full width */}
-                <div className="form-group">
-                    <label>Transaction Type</label>
-                    <div className="type-toggle">
+                <div className="form-group full-width">
+                    <div className="type-toggle-group">
                         <button
                             type="button"
-                            className={`toggle-btn ${isExpense ? 'active' : ''}`}
-                            onClick={() => setFormData(p => ({ ...p, type: 'expense', category: '' }))}
-                            aria-pressed={isExpense}
-                            style={isExpense ? { borderColor: '#ef4444', color: '#f87171', background: 'rgba(239,68,68,0.1)' } : {}}
+                            className={`type-toggle-btn ${formData.type === 'expense' ? 'active expense' : ''}`}
+                            onClick={() => setFormData({ ...formData, type: 'expense', category: '' })}
                         >
-                            <span aria-hidden="true">💸</span> Expense
+                            <span className="icon">⬇️</span>
+                            Expense
                         </button>
                         <button
                             type="button"
-                            className={`toggle-btn ${!isExpense ? 'active' : ''}`}
-                            onClick={() => setFormData(p => ({ ...p, type: 'income', category: '' }))}
-                            aria-pressed={!isExpense}
-                            style={!isExpense ? { borderColor: '#10b981', color: '#34d399', background: 'rgba(16,185,129,0.1)' } : {}}
+                            className={`type-toggle-btn ${formData.type === 'income' ? 'active income' : ''}`}
+                            onClick={() => setFormData({ ...formData, type: 'income', category: '' })}
                         >
-                            <span aria-hidden="true">💰</span> Income
+                            <span className="icon">⬆️</span>
+                            Income
                         </button>
                     </div>
                 </div>
 
-                {/* 2-col grid: Amount + Category */}
-                <div className="form-grid-2">
-                    <div className="form-group">
-                        <label htmlFor="tx-amount">Amount (LKR)</label>
+                {/* Amount */}
+                <div className="form-group">
+                    <label>Amount (Rs.) <span className="required">*</span></label>
+                    <div className="input-with-icon">
+                        <span className="input-prefix">Rs.</span>
                         <input
-                            id="tx-amount"
                             type="number"
-                            name="amount"
-                            value={formData.amount}
-                            onChange={handleChange}
-                            placeholder="0.00"
                             step="0.01"
-                            min="0.01"
+                            min="0"
+                            placeholder="0.00"
+                            value={formData.amount}
+                            onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                             required
-                            aria-required="true"
                         />
                     </div>
-
-                    <div className="form-group">
-                        <label htmlFor="tx-category">Category</label>
-                        <select
-                            id="tx-category"
-                            name="category"
-                            value={formData.category}
-                            onChange={handleChange}
-                            required
-                            aria-required="true"
-                        >
-                            <option value="">Select category…</option>
-                            {categories[formData.type].map(cat => (
-                                <option key={cat} value={cat}>
-                                    {CATEGORY_ICONS[cat] || '•'} {cat}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
                 </div>
 
-                {/* Description — full width */}
+                {/* Category */}
                 <div className="form-group">
-                    <label htmlFor="tx-description">Description <span style={{ color: 'var(--color-text-muted)', fontWeight: 400 }}>(optional)</span></label>
-                    <input
-                        id="tx-description"
-                        type="text"
-                        name="description"
-                        value={formData.description}
-                        onChange={handleChange}
-                        placeholder="e.g. Lunch at restaurant, Monthly salary…"
-                    />
-                </div>
-
-                {/* Date — full width */}
-                <div className="form-group">
-                    <DatePicker
-                        label="Date"
-                        value={formData.date}
-                        onChange={(date) => setFormData(p => ({ ...p, date }))}
+                    <label>Category <span className="required">*</span></label>
+                    <select
+                        value={formData.category}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                         required
-                        maxDate={getLocalDateString()}
-                        placeholder="Select transaction date"
+                    >
+                        <option value="">Select a category</option>
+                        {categories[formData.type].map(cat => (
+                            <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Date */}
+                <div className="form-group">
+                    <label>Date <span className="required">*</span></label>
+                    <input
+                        type="date"
+                        value={formData.date}
+                        max={getLocalDateString()}
+                        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                        required
                     />
                 </div>
 
-                {/* Actions */}
-                <div className="transaction-form-actions">
-                    <button
-                        type="button"
-                        className="cancel-btn"
-                        onClick={onCancel}
-                        disabled={loading}
-                    >
-                        Cancel
-                    </button>
+                {/* Description */}
+                <div className="form-group full-width">
+                    <label>Description</label>
+                    <input
+                        type="text"
+                        placeholder="What was this for?"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    />
+                </div>
+
+                <div className="form-actions full-width" style={{ marginTop: 'var(--sp-4)' }}>
+                    {onCancel && (
+                        <button type="button" className="btn-secondary" onClick={onCancel}>
+                            Cancel
+                        </button>
+                    )}
                     <button
                         type="submit"
-                        className="submit-btn"
+                        className="btn-primary"
                         disabled={loading}
                         style={{
+                            flex: 1,
                             background: isExpense
                                 ? 'linear-gradient(135deg, #ef4444, #dc2626)'
                                 : 'linear-gradient(135deg, #10b981, #059669)'

@@ -40,11 +40,7 @@ router.get(
   transactionsController.getFinancialAnalysis.bind(transactionsController),
 );
 
-// GET /api/transactions/simulated-feed
-router.get(
-  "/simulated-feed",
-  transactionsController.getSimulatedFeed.bind(transactionsController),
-);
+
 
 // GET /api/transactions/sync/status
 router.get(

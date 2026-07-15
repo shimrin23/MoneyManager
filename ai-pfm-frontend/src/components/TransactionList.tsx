@@ -32,6 +32,12 @@ export const TransactionList = () => {
     const [savingEdit, setSavingEdit] = useState(false);
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
+    const categories = {
+        expense: ['Food & Dining', 'Shopping', 'Entertainment', 'Transport',
+            'Bills & Utilities', 'Healthcare', 'Education', 'Travel', 'Other'],
+        income: ['Salary', 'Freelance', 'Business', 'Investment', 'Gift', 'Other']
+    };
+
     const fetchTransactions = async () => {
         try {
             const response = await apiClient.get('/transactions');
@@ -72,15 +78,9 @@ export const TransactionList = () => {
         fetchSyncHealth();
     }, []);
 
-    const syncBank = async () => {
-        if (!hasPFMConsent) {
-            alert('PFM consent is required. Click Enable PFM Consent first.');
-            return;
-        }
-
+    const refreshData = async () => {
         try {
-            await apiClient.post('/transactions/sync');
-            fetchTransactions();
+            await fetchTransactions();
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 const apiMessage =
@@ -194,30 +194,7 @@ export const TransactionList = () => {
             <div className="header-row">
                 <h2>Recent Transactions</h2>
                 <div className="transaction-toolbar">
-                    <span className={`sync-mode-badge ${syncMode}`}>
-                        Sync Mode: {syncMode.toUpperCase()}
-                    </span>
-                    <span className={`consent-badge ${hasPFMConsent ? 'granted' : 'missing'}`}>
-                        {hasPFMConsent ? 'PFM Consent: Enabled' : 'PFM Consent: Required'}
-                    </span>
-                    {hasPFMConsent ? (
-                        <button
-                            className="secondary-btn"
-                            onClick={disablePFMConsent}
-                            disabled={consentBusy}
-                        >
-                            {consentBusy ? 'Updating...' : 'Disable Consent'}
-                        </button>
-                    ) : (
-                        <button
-                            className="secondary-btn"
-                            onClick={enablePFMConsent}
-                            disabled={consentBusy}
-                        >
-                            {consentBusy ? 'Updating...' : 'Enable PFM Consent'}
-                        </button>
-                    )}
-                    <button className="secondary-btn" onClick={syncBank} disabled={!hasPFMConsent}>🔄 Sync Bank</button>
+                    <button className="secondary-btn" onClick={refreshData}>🔄 Refresh Data</button>
                 </div>
             </div>
             
@@ -280,12 +257,17 @@ export const TransactionList = () => {
                                     </td>
                                     <td data-label="Category">
                                         {isEditing ? (
-                                            <input
-                                                type="text"
-                                                className="table-input"
+                                            <select
+                                                className="table-input table-select"
                                                 value={editFormData.category}
                                                 onChange={(e) => setEditFormData((prev) => ({ ...prev, category: e.target.value }))}
-                                            />
+                                                required
+                                            >
+                                                <option value="">Select a category</option>
+                                                {categories[editFormData.type].map(cat => (
+                                                    <option key={cat} value={cat}>{cat}</option>
+                                                ))}
+                                            </select>
                                         ) : (
                                             <span className="category-tag">{t.category}</span>
                                         )}

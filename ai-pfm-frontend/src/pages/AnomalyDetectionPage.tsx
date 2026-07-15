@@ -21,88 +21,7 @@ interface AnomalyAlert {
     detectedReason: string;
 }
 
-const mockAnomalies: AnomalyAlert[] = [
-    {
-        _id: '1',
-        type: 'duplicate',
-        icon: '🔁',
-        title: 'Possible Duplicate Charge',
-        description: 'Two identical charges of LKR 4,800 from Lanka Electricity Board were detected within 2 minutes. Likely a double-processing error.',
-        transactionId: 'TXN-2026-88412',
-        amount: 4800,
-        merchant: 'Lanka Electricity Board',
-        date: '2026-06-27',
-        time: '14:32',
-        category: 'Utilities',
-        riskScore: 92,
-        status: 'open',
-        detectedReason: 'Same merchant, same amount, 2-min window — Isolation Forest flagged as 98th percentile anomaly'
-    },
-    {
-        _id: '2',
-        type: 'spike',
-        icon: '📈',
-        title: 'Unusual Spending Spike — Entertainment',
-        description: 'LKR 42,800 spent on Entertainment this month, which is 285% above your 3-month average of LKR 15,000.',
-        transactionId: 'TXN-2026-75831',
-        amount: 42800,
-        merchant: 'Multiple Merchants',
-        date: '2026-06-26',
-        time: '—',
-        category: 'Entertainment',
-        riskScore: 78,
-        status: 'open',
-        detectedReason: 'Monthly aggregate 2.85x above rolling 3-month mean — statistical outlier at >95th percentile'
-    },
-    {
-        _id: '3',
-        type: 'unusual-merchant',
-        icon: '🏪',
-        title: 'First-Time Merchant — Large Amount',
-        description: 'A LKR 28,500 transaction at "Digital Express Pvt Ltd" — a merchant you have never transacted with. Unverified merchant.',
-        transactionId: 'TXN-2026-91034',
-        amount: 28500,
-        merchant: 'Digital Express Pvt Ltd',
-        date: '2026-06-25',
-        time: '23:15',
-        category: 'Shopping',
-        riskScore: 85,
-        status: 'open',
-        detectedReason: 'Merchant ID not in user transaction history; amount exceeds 2x average single-transaction amount'
-    },
-    {
-        _id: '4',
-        type: 'unusual-time',
-        icon: '🌙',
-        title: 'Late-Night High-Value Transaction',
-        description: 'LKR 12,000 at 02:45 AM — your typical spending window is 08:00 AM to 10:00 PM. This falls outside your normal pattern.',
-        transactionId: 'TXN-2026-63201',
-        amount: 12000,
-        merchant: 'Keells Super',
-        date: '2026-06-22',
-        time: '02:45',
-        category: 'Groceries',
-        riskScore: 61,
-        status: 'reviewed-safe',
-        detectedReason: 'Transaction time at 02:45 AM is outside user\'s established activity window (08:00–22:00)'
-    },
-    {
-        _id: '5',
-        type: 'spike',
-        icon: '💸',
-        title: 'Atypical Cash Withdrawal',
-        description: 'LKR 75,000 ATM withdrawal in a single transaction. Your typical withdrawal is LKR 5,000–10,000.',
-        transactionId: 'TXN-2026-54892',
-        amount: 75000,
-        merchant: 'ATM — Nugegoda Branch',
-        date: '2026-06-18',
-        time: '11:20',
-        category: 'Cash Withdrawal',
-        riskScore: 70,
-        status: 'dismissed',
-        detectedReason: 'Withdrawal amount 7.5x above user\'s median ATM withdrawal amount'
-    }
-];
+const mockAnomalies: AnomalyAlert[] = [];
 
 const riskColor = (score: number) => {
     if (score >= 85) return '#ef4444';
@@ -192,7 +111,7 @@ export const AnomalyDetectionPage = () => {
                     </div>
                 </div>
                 <div className="rec-stat-card accepted">
-                    <div className="rec-stat-icon">✅</div>
+                    <div className="rec-stat-icon"></div>
                     <div>
                         <div className="rec-stat-value">{anomalies.filter(a => a.status === 'reviewed-safe').length}</div>
                         <div className="rec-stat-label">Marked Safe</div>

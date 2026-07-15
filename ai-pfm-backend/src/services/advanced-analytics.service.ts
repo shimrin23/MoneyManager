@@ -232,10 +232,11 @@ export class AdvancedAnalyticsService {
     }
 
     private predictDailyChange(transactions: any[], dayOffset: number): number {
-        // Simple prediction based on historical patterns
+        // Simple deterministic prediction based on historical patterns
         // In real implementation, use time-series forecasting algorithms
         const dailyAverage = transactions.reduce((sum, t) => sum + t.amount, 0) / 30;
-        return dailyAverage * (Math.random() * 0.2 - 0.1); // Add some variance
+        // Use a deterministic wave pattern based on dayOffset instead of Math.random()
+        return dailyAverage * (Math.sin(dayOffset) * 0.1);
     }
 
     private assessCashFlowRisk(balance: number, dailyChange: number): 'LOW' | 'MEDIUM' | 'HIGH' {

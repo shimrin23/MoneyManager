@@ -95,6 +95,9 @@ TransactionSchema.index({ userId: 1, date: -1 });
 TransactionSchema.index({ userId: 1, isRecurring: 1 });
 TransactionSchema.index({ userId: 1, category: 1, date: -1 });
 TransactionSchema.index({ userId: 1, normalizedMerchant: 1 });
-TransactionSchema.index({ userId: 1, syncKey: 1 }, { unique: true, sparse: true });
+TransactionSchema.index(
+  { userId: 1, syncKey: 1 }, 
+  { unique: true, partialFilterExpression: { syncKey: { $exists: true } } }
+);
 
 export default mongoose.model<ITransaction>("Transaction", TransactionSchema);

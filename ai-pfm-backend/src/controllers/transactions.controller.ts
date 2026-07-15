@@ -5,7 +5,7 @@ import { FinancialAgent } from "../ai/agent"; // Import the agent
 import { BankingIntegration, getBankingIntegrationRuntimeConfig } from "../integrations/banking.integration";
 import { AnalyticsService } from "../services/analytics.service"; // Ensure this is imported
 import { FinancialHealthService } from "../services/financial-health.service";
-import { SimulatedBankFeedService } from "../services/simulated-bank-feed.service";
+
 import transactionSyncService from "../services/transaction-sync.service";
 import SyncState from "../schemas/sync_state.schema";
 import { AdvancedAnalyticsService } from "../services/advanced-analytics.service";
@@ -14,7 +14,7 @@ export default class TransactionsController {
   private transactionsService: TransactionsService;
   private analyticsService: AnalyticsService; // Add this
   private financialHealthService: FinancialHealthService;
-  private bankFeedService: SimulatedBankFeedService;
+
   private bankingIntegration: BankingIntegration;
   private advancedAnalyticsService: AdvancedAnalyticsService;
 
@@ -22,7 +22,7 @@ export default class TransactionsController {
     this.transactionsService = new TransactionsService();
     this.analyticsService = new AnalyticsService(); // Initialize
     this.financialHealthService = new FinancialHealthService();
-    this.bankFeedService = new SimulatedBankFeedService();
+
     this.bankingIntegration = new BankingIntegration();
     this.advancedAnalyticsService = new AdvancedAnalyticsService();
   }
@@ -58,6 +58,11 @@ export default class TransactionsController {
       // Add userId to transaction data
       transactionData.userId = userId;
 
+      // Prevent duplicate key error for null sparse indexes
+      if (!transactionData.syncKey) {
+          delete transactionData.syncKey;
+      }
+
       // call the service to save to MongoDB
       const newTransaction = await this.transactionsService.create(
         transactionData,
@@ -67,9 +72,9 @@ export default class TransactionsController {
         message: "Transaction created successfully",
         data: newTransaction,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      res.status(500).json({ error: "Internal Server Error" });
+      res.status(500).json({ error: "Internal Server Error", details: error.message, stack: error.stack });
     }
   }
 
@@ -166,50 +171,22 @@ export default class TransactionsController {
   async syncBankAccount(req: Request, res: Response) {
     try {
       const authReq = req as AuthRequest;
-      // If caller supplied sourceAccounts (manual trigger), use the batch TransactionSyncService
-      if (req.body?.sourceAccounts && Array.isArray(req.body.sourceAccounts)) {
-        const userId = authReq.user?.id || String(authReq.user?.id || 'simulated-user');
-        const result = await transactionSyncService.syncUser(userId, { sourceAccounts: req.body.sourceAccounts, manualTrigger: true });
-        return res.json({ message: 'Sync complete', result });
-      }
-      const feed = await this.bankFeedService.generateFeed({
-        userId: authReq.user?.id || "simulated-user",
-        accountId: req.body?.accountId ? String(req.body.accountId) : undefined,
-        accountName: req.body?.accountName
-          ? String(req.body.accountName)
-          : undefined,
-        currency: req.body?.currency ? String(req.body.currency) : undefined,
-        transactionCount: req.body?.transactionCount
-          ? Number(req.body.transactionCount)
-          : undefined,
-        days: req.body?.days ? Number(req.body.days) : undefined,
-        seed: req.body?.seed ? String(req.body.seed) : undefined,
+      const userId = authReq.user?.id || String(authReq.user?.id || 'simulated-user');
+      
+      // Use the enterprise TransactionSyncService to sync from configured bank APIs
+      const result = await transactionSyncService.syncUser(userId, { 
+        sourceAccounts: req.body?.sourceAccounts, 
+        manualTrigger: true 
       });
-
-      const newTransactions = feed.transactions;
-
-      // Save each transaction to the database using your existing Service
-      const savedTransactions = [];
-      for (const data of newTransactions) {
-        const saved = await this.transactionsService.create({
-          ...data,
-          date: new Date(data.date),
-          recurringDueDate: data.recurringDueDate
-            ? new Date(data.recurringDueDate)
-            : undefined,
-          processedAt: new Date(data.processedAt),
-        });
-        savedTransactions.push(saved);
-      }
 
       res.json({
         message: "Sync complete",
-        transactions_added: savedTransactions.length,
-        data: savedTransactions,
+        transactions_added: result.accounts.reduce((sum, a) => sum + a.inserted, 0),
+        data: result,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      res.status(500).json({ error: "Bank sync failed" });
+      res.status(500).json({ error: "Bank sync failed", details: error.message, stack: error.stack });
     }
   }
 
@@ -288,37 +265,7 @@ export default class TransactionsController {
     }
   }
 
-  // GET /api/transactions/simulated-feed
-  async getSimulatedFeed(req: AuthRequest, res: Response) {
-    try {
-      const userId = req.user?.id;
-      if (!userId) {
-        return res.status(401).json({ error: "User not authenticated" });
-      }
 
-      const feed = await this.bankingIntegration.generateSimulatedFeed({
-        userId,
-        accountId: req.query.accountId
-          ? String(req.query.accountId)
-          : undefined,
-        accountName: req.query.accountName
-          ? String(req.query.accountName)
-          : undefined,
-        currency: req.query.currency ? String(req.query.currency) : undefined,
-        transactionCount: req.query.count ? Number(req.query.count) : undefined,
-        days: req.query.days ? Number(req.query.days) : undefined,
-        seed: req.query.seed ? String(req.query.seed) : undefined,
-      });
-
-      res.json({
-        message: "Simulated bank feed generated",
-        data: feed,
-      });
-    } catch (error) {
-      console.error("Error generating simulated bank feed:", error);
-      res.status(500).json({ error: "Failed to generate simulated bank feed" });
-    }
-  }
 
   // GET /api/transactions/score
   async getHealthScore(req: AuthRequest, res: Response) {

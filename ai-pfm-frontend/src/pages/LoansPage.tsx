@@ -84,11 +84,9 @@ export const LoansPage = () => {
     };
 
     const formatCurrency = (amount: number) => {
-        return new Intl.NumberFormat('en-LK', {
-            style: 'currency',
-            currency: 'LKR',
-            minimumFractionDigits: 0
-        }).format(amount);
+        return `Rs. ${new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 0, maximumFractionDigits: 0
+        }).format(amount)}`;
     };
 
     const getTotalDebt = () => {

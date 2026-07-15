@@ -3,6 +3,7 @@ import { apiClient } from '../api/client.ts';
 import axios from 'axios';
 import { CashFlowForecast } from './CashFlowForecast';
 import { AIAssistant } from './AIAssistant';
+import { SpendingTrends } from './SpendingTrends';
 import { IconActivity, IconRefreshCw, IconRepeat, IconBrain } from './Icons';
 
 export const Dashboard = () => {
@@ -83,10 +84,6 @@ export const Dashboard = () => {
     }, []);
 
     const syncBank = async () => {
-        if (!hasPFMConsent) {
-            alert('PFM consent is required. Use Transactions page to enable PFM Consent first.');
-            return;
-        }
         try {
             setSyncing(true);
             await apiClient.post('/transactions/sync');
@@ -127,9 +124,9 @@ export const Dashboard = () => {
     };
 
     const formatAmount = (amount: number, type: string) => {
-        const formatted = new Intl.NumberFormat('en-US', {
-            style: 'currency', currency: 'USD'
-        }).format(Math.abs(amount));
+        const formatted = `Rs. ${new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2, maximumFractionDigits: 2
+        }).format(Math.abs(amount))}`;
         return type === 'expense' ? `-${formatted}` : `+${formatted}`;
     };
 
@@ -162,21 +159,15 @@ export const Dashboard = () => {
                 <div className="dashboard-grid">
 
                 {/* ── Financial Health Score Card ── */}
-                <div className="card health-score-card" style={{ padding: '1.75rem' }}>
-                    <div className="score-card-header">
-                        <div className="score-card-icon" style={{
-                            background: 'rgba(16,185,129,0.1)',
-                            border: '1px solid rgba(16,185,129,0.2)'
-                        }}>
-                            <IconActivity size={24} />
-                        </div>
-                        <div style={{ flex: 1 }}>
+                <div className="card health-score-card" style={{ padding: '1.75rem', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center' }}>
+                    <div className="score-card-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%', margin: 0 }}>
+                        <div>
                             <div className="ds-card-title">Financial Health</div>
                             <div className="ds-card-subtitle">Based on your transactions</div>
                         </div>
                     </div>
 
-                    <div className="score-display">
+                    <div className="score-display" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '0.5rem', margin: '0.5rem 0 0 0' }}>
                         {/* SVG Animated Ring */}
                         <div className="score-ring-wrap" style={{ width: 128, height: 128 }}>
                             <svg
@@ -219,17 +210,16 @@ export const Dashboard = () => {
                                 <span className="score-number" style={{ color: scoreColor }}>
                                     {loadingScore ? '…' : displayScore}
                                 </span>
-                                <span className="score-label">/100</span>
                             </div>
                         </div>
 
                         {/* Status */}
-                        <div className="score-status">
-                            <span className={`status-text status-${getRiskLevel(score).toLowerCase()}`}>
+                        <div className="score-status" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+                            <span className={`status-text status-${getRiskLevel(score).toLowerCase()}`} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <span className="status-dot" aria-hidden="true">●</span>
                                 {getStatusLabel(score)}
                             </span>
-                            <p className="status-description" style={{ marginTop: '0.5rem' }}>
+                            <p className="status-description" style={{ marginTop: '0.25rem', margin: 0 }}>
                                 {score >= 70 ? 'Great financial habits! Keep it up.' :
                                  score >= 40 ? 'Good start — there\'s room to grow.' :
                                  'Attention needed — let\'s improve together.'}
@@ -238,7 +228,7 @@ export const Dashboard = () => {
                     </div>
 
                     {/* Stats row */}
-                    <div className="score-stats-grid">
+                    <div className="score-stats-grid" style={{ marginTop: 'auto' }}>
                         <div className="score-stat-item">
                             <span className="score-stat-value" style={{ color: scoreColor }}>
                                 {loadingScore ? '—' : `${score}%`}
@@ -256,8 +246,8 @@ export const Dashboard = () => {
                     </div>
                 </div>
 
-                {/* ── Cash Flow Forecast Card ── */}
-                <CashFlowForecast />
+                {/* ── Spending Trends Card ── */}
+                <SpendingTrends />
 
                 {/* ── Recent Transactions Card ── */}
                 <div className="card transactions-card" style={{ padding: '1.75rem' }}>
@@ -269,14 +259,11 @@ export const Dashboard = () => {
                             </p>
                         </div>
                         <div className="transactions-header-actions">
-                            <span className={`sync-mode-badge ${syncMode}`}>
-                                {syncMode.toUpperCase()}
-                            </span>
                             <button
                                 className="btn-sync"
                                 onClick={syncBank}
-                                disabled={syncing || hasPFMConsent === false}
-                                title={hasPFMConsent === false ? 'Enable consent in Transactions page first' : 'Sync latest bank transactions'}
+                                disabled={syncing}
+                                title="Sync latest bank transactions"
                                 aria-label="Sync bank transactions"
                             >
                                 <span aria-hidden="true" style={{ display: 'flex' }}><IconRefreshCw size={16} /></span>
@@ -320,14 +307,7 @@ export const Dashboard = () => {
                                                 </span>
                                             </td>
                                             <td data-label="Category">
-                                                <span
-                                                    className="category-badge"
-                                                    style={{
-                                                        background: `${getCategoryColor(tx.category)}18`,
-                                                        color: getCategoryColor(tx.category),
-                                                        borderColor: `${getCategoryColor(tx.category)}30`,
-                                                    }}
-                                                >
+                                                <span className="category-badge">
                                                     {tx.category}
                                                 </span>
                                             </td>
