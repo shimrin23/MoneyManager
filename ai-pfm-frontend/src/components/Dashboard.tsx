@@ -150,15 +150,16 @@ export const Dashboard = () => {
     const dashOffset = CIRCUMFERENCE - (displayScore / 100) * CIRCUMFERENCE;
 
     return (
-        <div className="page-container" style={{ width: '100%' }}>
-            <div className="page-header">
+        <div className="notifications-page" style={{ width: '100%' }}>
+            <div className="notifications-header">
                 <div>
                     <h1>Dashboard</h1>
                     <p className="page-subtitle">Your financial overview at a glance</p>
                 </div>
             </div>
 
-            <div className="dashboard-grid">
+            <div className="notifications-content">
+                <div className="dashboard-grid">
 
                 {/* ── Financial Health Score Card ── */}
                 <div className="card health-score-card" style={{ padding: '1.75rem' }}>
@@ -379,6 +380,7 @@ export const Dashboard = () => {
                     </div>
                 </div>
 
+            </div>
             </div>
 
             {/* AI Assistant Modal */}

@@ -231,7 +231,7 @@ input, select, textarea { font-family: inherit; }
   gap: var(--sp-3);
   font-size: 17px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--color-text);
   white-space: nowrap;
   overflow: hidden;
   text-decoration: none;
@@ -283,7 +283,7 @@ input, select, textarea { font-family: inherit; }
 .nav-section::-webkit-scrollbar { width: 4px; }
 .nav-section::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 4px; }
 
-.nav-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(255,255,255,0.3); padding: var(--sp-2) var(--sp-3) var(--sp-1); margin-top: var(--sp-3); white-space: nowrap; overflow: hidden; }
+.nav-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-text-muted); padding: var(--sp-2) var(--sp-3) var(--sp-1); margin-top: var(--sp-3); white-space: nowrap; overflow: hidden; }
 
 .nav-item {
   display: flex;
@@ -291,7 +291,7 @@ input, select, textarea { font-family: inherit; }
   gap: var(--sp-3);
   padding: 10px var(--sp-3);
   border-radius: var(--radius-sm);
-  color: rgba(255,255,255,0.65);
+  color: var(--color-text-2);
   font-size: var(--font-sm);
   font-weight: 500;
   text-decoration: none;
@@ -304,8 +304,8 @@ input, select, textarea { font-family: inherit; }
   background: transparent;
 }
 .nav-item:hover {
-  background: rgba(255,255,255,0.09);
-  color: #ffffff;
+  background: var(--color-surface-3);
+  color: var(--color-text);
 }
 .nav-item.dashboard-item {
   background: rgba(59,130,246,0.15);
@@ -342,7 +342,7 @@ input, select, textarea { font-family: inherit; }
   padding: var(--sp-3) var(--sp-4) var(--sp-2) var(--sp-4);
   background: transparent;
   border: none;
-  color: rgba(255,255,255,0.35);
+  color: var(--color-text-muted);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -351,7 +351,7 @@ input, select, textarea { font-family: inherit; }
   transition: color var(--dur-fast);
 }
 .nav-group-header:hover {
-  color: rgba(255,255,255,0.65);
+  color: var(--color-text-2);
 }
 .nav-group-chevron {
   display: flex;
@@ -1397,7 +1397,7 @@ input, select, textarea { font-family: inherit; }
   border-radius: var(--radius-sm);
   margin: 2px var(--sp-2);
 }
-.sidebar-user-menu-item:hover { background: rgba(255,255,255,0.06); color: var(--color-text); }
+.sidebar-user-menu-item:hover { background: var(--color-surface-3); color: var(--color-text); }
 .sidebar-user-menu-item.logout:hover { background: rgba(239,68,68,0.08); color: #f87171; }
 
 .sidebar-user-item-icon { width: 20px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; opacity: 0.7; }
@@ -1413,13 +1413,13 @@ input, select, textarea { font-family: inherit; }
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   cursor: pointer;
-  color: rgba(255,255,255,0.70);
+  color: var(--color-text-2);
   transition: background var(--dur-fast), color var(--dur-fast);
   min-height: 44px;
 }
 .sidebar-user-trigger:hover {
-  background: rgba(255,255,255,0.09);
-  color: #ffffff;
+  background: var(--color-surface-3);
+  color: var(--color-text);
 }
 
 .sidebar-user-avatar-sm {
@@ -1449,7 +1449,7 @@ input, select, textarea { font-family: inherit; }
 }
 .sidebar-user-role {
   font-size: 10px;
-  color: rgba(255,255,255,0.35);
+  color: var(--color-text-muted);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1772,13 +1772,8 @@ input, select, textarea { font-family: inherit; }
 /* ── Light theme table overrides ─────────────────────────────── */
 [data-theme='light'] .responsive-table thead th,
 [data-theme='light'] .transactions-table thead th { background: #f1f5fd; }
-[data-theme='light'] .side-navigation { background: #1a2340; }
-[data-theme='light'] .nav-item { color: rgba(255,255,255,0.6); }
-[data-theme='light'] .nav-item:hover { color: rgba(255,255,255,0.9); }
-[data-theme='light'] .nav-item.dashboard-item { color: #93c5fd; }
 [data-theme='light'] .user-dropdown-menu { background: #ffffff; }
 [data-theme='light'] .user-dropdown-header { background: #f8fafc; }
-[data-theme='light'] .sidebar-header { background: #12213a; }
 
 /* ── Utility classes ─────────────────────────────────────────── */
 .d-flex { display: flex; }

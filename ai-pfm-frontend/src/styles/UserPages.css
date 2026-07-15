@@ -7,9 +7,9 @@
 .help-page,
 .settings-page {
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--color-bg);
     padding: 20px;
-    color: #333;
+    color: var(--color-text);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 

@@ -325,38 +325,6 @@ function AppShell() {
                 <span className="header-logo-icon"><IconWallet size={24} /></span>
                 <span className="header-logo-text">MoneyManager</span>
               </div>
-              {/* Dynamic page title */}
-              <span className="header-page-title">
-                {(() => {
-                  const map: Record<string, string> = {
-                    '/dashboard': T[lang].dashboard,
-                    '/financial-health': T[lang].health,
-                    '/recommendations': T[lang].recommendations,
-                    '/transactions': T[lang].transactions,
-                    '/recurring': 'Cash Flow Forecast',
-                    '/anomalies': T[lang].anomalies,
-                    '/smart-budgets': T[lang].budgets,
-                    '/goals': T[lang].goals,
-                    '/fixed-deposits': T[lang].fd,
-                    '/loans': T[lang].loans,
-                    '/leases': T[lang].leases,
-                    '/pawning': T[lang].pawning,
-                    '/credit-cards': T[lang].cards,
-                    '/subscriptions': T[lang].subscriptions,
-                    '/connect-bank': T[lang].connectBank,
-                    '/profile': 'Profile',
-                    '/settings': 'Security & Settings',
-                    '/notifications': 'Notifications',
-                    '/help': 'Help & Support',
-                    '/admin': T[lang].adminDash,
-                    '/admin/users': T[lang].userMgmt,
-                    '/admin/config': T[lang].config,
-                    '/admin/audit': T[lang].audit,
-                    '/admin/reports': T[lang].reports,
-                  };
-                  return map[location.pathname] || 'MoneyManager';
-                })()}
-              </span>
             </div>
 
             <div className="header-actions">
