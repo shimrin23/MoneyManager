@@ -10,10 +10,10 @@ interface TransactionFormProps {
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
-    'Food & Dining': '🍽️', 'Shopping': '🛍️', 'Entertainment': '🎭',
-    'Transport': '🚗', 'Bills & Utilities': '⚡', 'Healthcare': '🏥',
-    'Education': '📚', 'Travel': '✈️', 'Salary': '💼', 'Freelance': '💻',
-    'Business': '🏢', 'Investment': '📈', 'Gift': '🎁', 'Other': '📌',
+    'Food & Dining': '', 'Shopping': '', 'Entertainment': '',
+    'Transport': '', 'Bills & Utilities': '', 'Healthcare': '',
+    'Education': '', 'Travel': '', 'Salary': '', 'Freelance': '',
+    'Business': '', 'Investment': '', 'Gift': '', 'Other': '',
 };
 
 export const AddTransactionForm = ({ onTransactionAdded, onCancel }: TransactionFormProps) => {

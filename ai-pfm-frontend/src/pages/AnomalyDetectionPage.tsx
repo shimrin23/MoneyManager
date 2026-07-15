@@ -163,7 +163,7 @@ export const AnomalyDetectionPage = () => {
                 </div>
                 {openCount > 0 && (
                     <div className="rec-alert-banner danger">
-                        🚨 {openCount} open alert{openCount > 1 ? 's' : ''} need{openCount === 1 ? 's' : ''} your review
+                         {openCount} open alert{openCount > 1 ? 's' : ''} need{openCount === 1 ? 's' : ''} your review
                     </div>
                 )}
             </div>
@@ -171,21 +171,21 @@ export const AnomalyDetectionPage = () => {
             {/* Summary */}
             <div className="rec-summary-grid">
                 <div className="rec-stat-card">
-                    <div className="rec-stat-icon">🔍</div>
+                    <div className="rec-stat-icon"></div>
                     <div>
                         <div className="rec-stat-value">{anomalies.length}</div>
                         <div className="rec-stat-label">Total Flagged</div>
                     </div>
                 </div>
                 <div className="rec-stat-card pending" style={{ '--accent-color': '#ef4444' } as React.CSSProperties}>
-                    <div className="rec-stat-icon">🚨</div>
+                    <div className="rec-stat-icon"></div>
                     <div>
                         <div className="rec-stat-value">{highRisk}</div>
                         <div className="rec-stat-label">High Risk Open</div>
                     </div>
                 </div>
                 <div className="rec-stat-card pending">
-                    <div className="rec-stat-icon">⏳</div>
+                    <div className="rec-stat-icon"></div>
                     <div>
                         <div className="rec-stat-value">{openCount}</div>
                         <div className="rec-stat-label">Awaiting Review</div>
@@ -266,10 +266,10 @@ export const AnomalyDetectionPage = () => {
                                     {anomaly.status === 'open' && (
                                         <div className="anomaly-actions">
                                             <button className="rec-action-btn accept" onClick={() => updateStatus(anomaly._id, 'reviewed-safe')}>
-                                                ✅ This is Safe
+                                                This is Safe
                                             </button>
                                             <button className="rec-action-btn decline" onClick={() => updateStatus(anomaly._id, 'reviewed-fraud')}>
-                                                🚨 Report as Fraud
+                                                Report as Fraud
                                             </button>
                                             <button className="rec-action-btn snooze" onClick={() => updateStatus(anomaly._id, 'dismissed')}>
                                                 Dismiss
@@ -279,8 +279,8 @@ export const AnomalyDetectionPage = () => {
                                     {anomaly.status !== 'open' && (
                                         <div className="anomaly-actions">
                                             <span className={`status-pill ${anomaly.status}`}>
-                                                {anomaly.status === 'reviewed-safe' ? '✅ Marked Safe' :
-                                                    anomaly.status === 'reviewed-fraud' ? '🚨 Reported as Fraud' : 'Dismissed'}
+                                                {anomaly.status === 'reviewed-safe' ? 'Marked Safe' :
+                                                    anomaly.status === 'reviewed-fraud' ? 'Reported as Fraud' : 'Dismissed'}
                                             </span>
                                             <button className="rec-action-btn restore small" onClick={() => updateStatus(anomaly._id, 'open')}>
                                                 Reopen

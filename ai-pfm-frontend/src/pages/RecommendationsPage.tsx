@@ -93,7 +93,7 @@ const mockRecommendations: Recommendation[] = [
     {
         _id: '6',
         category: 'budget',
-        icon: '🛍️',
+        icon: '',
         title: 'Reduce Shopping Category Spend',
         reason: 'Shopping spend is 83% of budget with 8 days remaining this month. At current pace you will exceed budget.',
         action: 'Pause non-essential shopping purchases for the rest of the month',

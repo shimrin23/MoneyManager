@@ -323,7 +323,7 @@ export const CreditCardsPage = () => {
 
             {/* Action Recommendations */}
             <div className="card actions-card">
-                <h3>🚀 Smart Actions</h3>
+                <h3>Smart Actions</h3>
                 <div className="actions-grid">
                     <div className="action-item">
                         <div className="action-content">

@@ -136,15 +136,16 @@ export const FinancialHealthPage = () => {
     };
 
     const getScoreStatus = (score: number) => {
-        if (score >= 70) {
-            return { label: 'Excellent 🎉', description: 'Great financial habits!', badge: 'bg-green-100 text-green-800' };
+        if (score >= 850) {
+            return { label: 'Excellent', description: 'Outstanding financial health', badge: 'bg-indigo-100 text-indigo-800' };
         }
-
-        if (score >= 40) {
-            return { label: 'Needs Work ⚠️', description: 'Room for improvement', badge: 'bg-yellow-100 text-yellow-800' };
+        if (score >= 700) {
+            return { label: 'Good', description: 'Healthy financial profile', badge: 'bg-green-100 text-green-800' };
         }
-
-        return { label: 'Critical 🚨', description: 'Immediate attention needed', badge: 'bg-red-100 text-red-800' };
+        if (score >= 500) {
+            return { label: 'Needs Work', description: 'Room for improvement', badge: 'bg-yellow-100 text-yellow-800' };
+        }
+        return { label: 'Critical', description: 'Immediate attention needed', badge: 'bg-red-100 text-red-800' };
     };
 
     const scoreStatus = getScoreStatus(health.score);

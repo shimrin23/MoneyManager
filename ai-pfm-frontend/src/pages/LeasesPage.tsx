@@ -35,7 +35,7 @@ const mockLeases: Lease[] = [
         endDate: '2027-06-01',
         nextPaymentDate: '2026-07-05',
         status: 'active',
-        icon: '🚗'
+        icon: ''
     },
     {
         _id: '2',

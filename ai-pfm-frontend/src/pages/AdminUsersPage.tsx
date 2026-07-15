@@ -64,16 +64,16 @@ export const AdminUsersPage = () => {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">👥 User Management</h1>
+                    <h1 className="page-title">User Management</h1>
                     <p className="page-subtitle">View, enable, disable and manage all platform users</p>
                 </div>
             </div>
 
             <div className="rec-summary-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
-                <div className="rec-stat-card"><div className="rec-stat-icon">👥</div><div><div className="rec-stat-value">{stats.total}</div><div className="rec-stat-label">Total Users</div></div></div>
-                <div className="rec-stat-card accepted"><div className="rec-stat-icon">✅</div><div><div className="rec-stat-value">{stats.active}</div><div className="rec-stat-label">Active</div></div></div>
-                <div className="rec-stat-card" style={{ borderColor: 'rgba(239,68,68,0.3)' }}><div className="rec-stat-icon">🚫</div><div><div className="rec-stat-value">{stats.disabled}</div><div className="rec-stat-label">Disabled</div></div></div>
-                <div className="rec-stat-card savings"><div className="rec-stat-icon">⭐</div><div><div className="rec-stat-value">{stats.premium}</div><div className="rec-stat-label">Premium</div></div></div>
+                <div className="rec-stat-card"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{stats.total}</div><div className="rec-stat-label">Total Users</div></div></div>
+                <div className="rec-stat-card accepted"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{stats.active}</div><div className="rec-stat-label">Active</div></div></div>
+                <div className="rec-stat-card"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{stats.disabled}</div><div className="rec-stat-label">Disabled</div></div></div>
+                <div className="rec-stat-card savings"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{stats.premium}</div><div className="rec-stat-label">Premium</div></div></div>
             </div>
 
             {/* Search + Filter */}

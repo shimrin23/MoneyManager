@@ -132,12 +132,12 @@ export const LoansPage = () => {
 
     const getLoanTypeIcon = (type: string) => {
         const icons = {
-            Personal: '👤',
-            Home: '🏠',
-            Lease: '🚗',
-            Pawning: '💍'
+            Personal: '',
+            Home: '',
+            Lease: '',
+            Pawning: ''
         };
-        return icons[type as keyof typeof icons] || '📄';
+        return icons[type as keyof typeof icons] || '';
     };
 
     if (loading) return <div className="loading">Loading your loans...</div>;

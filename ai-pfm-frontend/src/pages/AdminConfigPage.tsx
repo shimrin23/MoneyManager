@@ -57,16 +57,16 @@ export const AdminConfigPage = () => {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">⚙️ System Configuration</h1>
+                    <h1 className="page-title">System Configuration</h1>
                     <p className="page-subtitle">Manage feature flags, AI thresholds and system parameters</p>
                 </div>
             </div>
 
             <div className="rec-summary-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
-                <div className="rec-stat-card"><div className="rec-stat-icon">🔑</div><div><div className="rec-stat-value">{configs.length}</div><div className="rec-stat-label">Total Keys</div></div></div>
-                <div className="rec-stat-card accepted"><div className="rec-stat-icon">✅</div><div><div className="rec-stat-value">{activeCount}</div><div className="rec-stat-label">Active</div></div></div>
-                <div className="rec-stat-card" style={{ borderColor: 'rgba(239,68,68,0.3)' }}><div className="rec-stat-icon">🚫</div><div><div className="rec-stat-value">{configs.length - activeCount}</div><div className="rec-stat-label">Inactive</div></div></div>
-                <div className="rec-stat-card savings"><div className="rec-stat-icon">🤖</div><div><div className="rec-stat-value">{configs.filter(c => c.type === 'ai').length}</div><div className="rec-stat-label">AI Keys</div></div></div>
+                <div className="rec-stat-card"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{configs.length}</div><div className="rec-stat-label">Total Keys</div></div></div>
+                <div className="rec-stat-card accepted"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{activeCount}</div><div className="rec-stat-label">Active</div></div></div>
+                <div className="rec-stat-card"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{configs.length - activeCount}</div><div className="rec-stat-label">Inactive</div></div></div>
+                <div className="rec-stat-card savings"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{configs.filter(c => c.type === 'ai').length}</div><div className="rec-stat-label">AI Keys</div></div></div>
             </div>
 
             <div className="filter-pill-row">

@@ -13,19 +13,19 @@ export const AdminDashboardEnhanced = () => {
         {
             id: 'users',
             label: 'User Management',
-            icon: '👥',
+            icon: '',
             description: 'Manage user accounts and permissions',
         },
         {
             id: 'roles',
             label: 'Role Management',
-            icon: '🔐',
+            icon: '',
             description: 'Define roles and manage permissions',
         },
         {
             id: 'audit',
             label: 'Audit Log',
-            icon: '📋',
+            icon: '',
             description: 'Track system activities and changes',
         },
     ];
@@ -34,7 +34,7 @@ export const AdminDashboardEnhanced = () => {
         <div className="admin-dashboard-enhanced">
             <div className="admin-dashboard-header">
                 <div className="header-content">
-                    <h1>🛠️ Admin Dashboard</h1>
+                    <h1>Admin Dashboard</h1>
                     <p className="header-subtitle">Manage system, users, roles, and track all activities</p>
                 </div>
             </div>
@@ -83,8 +83,8 @@ export const AdminDashboardEnhanced = () => {
                     <p>Last updated: {new Date().toLocaleString()}</p>
                 </div>
                 <div className="footer-actions">
-                    <button className="btn-export">📥 Export Data</button>
-                    <button className="btn-refresh">🔄 Refresh</button>
+                    <button className="btn-export">Export Data</button>
+                    <button className="btn-refresh">Refresh</button>
                 </div>
             </div>
         </div>

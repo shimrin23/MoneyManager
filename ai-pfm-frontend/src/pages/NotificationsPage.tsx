@@ -151,11 +151,11 @@ export const NotificationsPage = () => {
 
     const getNotificationIcon = (type: string) => {
         switch (type) {
-            case 'warning': return '⚠️';
-            case 'success': return '✅';
-            case 'alert': return '🚨';
+            case 'warning': return '';
+            case 'success': return '';
+            case 'alert': return '';
             case 'info':
-            default: return 'ℹ️';
+            default: return '';
         }
     };
 

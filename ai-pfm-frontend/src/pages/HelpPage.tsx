@@ -83,31 +83,31 @@ export const HelpPage = () => {
         {
             title: "Getting Started Guide",
             description: "Learn the basics of MoneyManager",
-            icon: "🚀",
+            icon: "",
             link: "#getting-started"
         },
         {
             title: "Setting Up Budgets",
             description: "Create and manage your budgets effectively",
-            icon: "💰",
+            icon: "",
             link: "#budgets"
         },
         {
             title: "Understanding Your Health Score",
             description: "How to improve your financial health",
-            icon: "📊",
+            icon: "",
             link: "#health-score"
         },
         {
             title: "AI Recommendations",
             description: "Making the most of AI-powered insights",
-            icon: "🤖",
+            icon: "",
             link: "#ai-recommendations"
         },
         {
             title: "Security & Privacy",
             description: "Keeping your data safe and secure",
-            icon: "🔐",
+            icon: "",
             link: "#security"
         },
         {

@@ -157,14 +157,14 @@ export const GoalsPage = () => {
 
     const getCategoryIcon = (category?: string) => {
         const icons: { [key: string]: string } = {
-            'Personal': '🚲',
-            'Travel': '✈️',
-            'Education': '🎓',
-            'Emergency': '🆘',
-            'Home': '🏠',
-            'Investment': '💼'
+            'Travel': '',
+            'Home': '',
+            'Vehicle': '',
+            'Emergency': '',
+            'Personal': '',
+            'Retirement': ''
         };
-        return icons[category || 'Personal'] || '🎯';
+        return icons[category || 'Personal'] || '';
     };
 
     if (loading) return <div className="loading">Loading your goals...</div>;
