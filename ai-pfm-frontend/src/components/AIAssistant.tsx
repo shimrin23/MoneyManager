@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { apiClient } from '../api/client';
+import { IconBrain, IconUser, IconLogOut, IconRefreshCw } from './Icons';
 
 interface Message {
     id: string;
@@ -29,10 +30,6 @@ export const AIAssistant = ({ open = false, onOpenChange }: AIAssistantProps) =>
     const handleOpenChange = (newOpen: boolean) => {
         setIsOpen(newOpen);
         onOpenChange?.(newOpen);
-    };
-
-    const handleBack = () => {
-        window.history.back();
     };
 
     const scrollToBottom = () => {
@@ -102,8 +99,7 @@ export const AIAssistant = ({ open = false, onOpenChange }: AIAssistantProps) =>
         "How can I improve my credit score?",
         "What's the best debt repayment strategy?",
         "How much should I save for an emergency fund?",
-        "What are the benefits of diversifying investments?",
-        "How can I reduce my monthly expenses?"
+        "What are the benefits of diversifying investments?"
     ];
 
     const handleSampleQuestion = (sample: string) => {
@@ -120,23 +116,14 @@ export const AIAssistant = ({ open = false, onOpenChange }: AIAssistantProps) =>
 
     return (
         <>
-            {/* AI Chat Modal */}
             {isOpen && (
-                <div className="ai-modal-overlay" onClick={() => handleOpenChange(false)}>
-                    <div className="ai-modal-content" onClick={e => e.stopPropagation()}>
+                <div className="ai-modal-overlay fade-in" onClick={() => handleOpenChange(false)}>
+                    <div className="ai-modal-content drop-in" onClick={e => e.stopPropagation()}>
                         <div className="ai-modal-header">
                             <div className="ai-header-info">
-                                {messages.length > 0 && (
-                                    <button
-                                        className="btn-back-icon"
-                                        onClick={handleBack}
-                                        aria-label="Go back"
-                                        title="Back"
-                                    >
-                                        ←
-                                    </button>
-                                )}
-                                <div className="ai-avatar">🤖</div>
+                                <div className="ai-avatar">
+                                    <IconBrain size={20} />
+                                </div>
                                 <div className="ai-header-text">
                                     <h3>AI Financial Coach</h3>
                                     <span className="ai-status">
@@ -148,19 +135,20 @@ export const AIAssistant = ({ open = false, onOpenChange }: AIAssistantProps) =>
                             <div className="ai-modal-actions">
                                 {messages.length > 0 && (
                                     <button 
-                                        className="btn-clear" 
+                                        className="ai-icon-btn" 
                                         onClick={clearChat}
                                         title="Clear conversation"
                                     >
-                                        🗑️
+                                        <IconRefreshCw size={16} />
                                     </button>
                                 )}
                                 <button 
                                     className="modal-close" 
                                     onClick={closeModal}
                                     aria-label="Close AI Assistant"
+                                    title="Close"
                                 >
-                                    ✕
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                                 </button>
                             </div>
                         </div>
@@ -168,20 +156,20 @@ export const AIAssistant = ({ open = false, onOpenChange }: AIAssistantProps) =>
                         <div className="ai-chat-container">
                             {messages.length === 0 ? (
                                 <div className="ai-welcome">
-                                    <div className="welcome-avatar">🤖</div>
-                                    <h4 className="welcome-title">Welcome to Your AI Financial Coach!</h4>
+                                    <div className="ai-welcome-icon">
+                                        <IconBrain size={48} />
+                                    </div>
+                                    <h4 className="welcome-title">Your Personal Financial Guide</h4>
                                     <p className="ai-intro">
-                                        I'm here to help you with personal finance, investing, budgeting, and financial planning.
+                                        Ask me anything about budgeting, saving, or investment strategies. I'm here to help you make smarter financial decisions.
                                     </p>
-                                    <div className="sample-questions">
-                                        <p className="sample-title">Try asking:</p>
+                                    <div className="ai-sample-grid">
                                         {sampleQuestions.map((sample, index) => (
                                             <button
                                                 key={index}
-                                                className="sample-question"
+                                                className="ai-sample-card"
                                                 onClick={() => handleSampleQuestion(sample)}
                                             >
-                                                <span className="sample-icon">💡</span>
                                                 {sample}
                                             </button>
                                         ))}
@@ -196,7 +184,9 @@ export const AIAssistant = ({ open = false, onOpenChange }: AIAssistantProps) =>
                                         >
                                             <div className="message-bubble">
                                                 {message.type === 'ai' && (
-                                                    <div className="message-avatar">🤖</div>
+                                                    <div className="message-avatar ai-bg">
+                                                        <IconBrain size={16} />
+                                                    </div>
                                                 )}
                                                 <div className="message-content">
                                                     <div className="message-text">
@@ -209,7 +199,9 @@ export const AIAssistant = ({ open = false, onOpenChange }: AIAssistantProps) =>
                                                     </div>
                                                 </div>
                                                 {message.type === 'user' && (
-                                                    <div className="message-avatar user-avatar">👤</div>
+                                                    <div className="message-avatar user-bg">
+                                                        <IconUser size={16} />
+                                                    </div>
                                                 )}
                                             </div>
                                         </div>
@@ -217,7 +209,9 @@ export const AIAssistant = ({ open = false, onOpenChange }: AIAssistantProps) =>
                                     {loading && (
                                         <div className="message-wrapper ai-message">
                                             <div className="message-bubble">
-                                                <div className="message-avatar">🤖</div>
+                                                <div className="message-avatar ai-bg">
+                                                    <IconBrain size={16} />
+                                                </div>
                                                 <div className="message-content">
                                                     <div className="typing-indicator">
                                                         <span></span>
@@ -235,12 +229,12 @@ export const AIAssistant = ({ open = false, onOpenChange }: AIAssistantProps) =>
 
                         <div className="ai-modal-footer">
                             <form onSubmit={handleAskQuestion} className="ai-question-form">
-                                <div className="question-input-group">
+                                <div className="ai-input-wrapper">
                                     <input
                                         type="text"
                                         value={question}
                                         onChange={(e) => setQuestion(e.target.value)}
-                                        placeholder="Ask me anything about finance..."
+                                        placeholder="Ask me anything..."
                                         disabled={loading}
                                         className="ai-question-input"
                                         autoFocus
@@ -251,7 +245,11 @@ export const AIAssistant = ({ open = false, onOpenChange }: AIAssistantProps) =>
                                         className="ai-ask-button"
                                         title="Send message"
                                     >
-                                        {loading ? '⏳' : '📤'}
+                                        {loading ? (
+                                            <div className="ai-spinner"></div>
+                                        ) : (
+                                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                                        )}
                                     </button>
                                 </div>
                             </form>

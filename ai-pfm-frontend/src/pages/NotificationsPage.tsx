@@ -1,6 +1,6 @@
 // Notifications Page
 import { useState, useEffect } from 'react';
-import { apiClient } from '../api/client.ts';
+import { apiClient } from '../api/client';
 
 interface Notification {
     id: string;

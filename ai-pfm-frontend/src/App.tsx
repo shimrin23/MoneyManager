@@ -5,7 +5,30 @@ import {
   IconCar, IconDiamond, IconCreditCard, IconRefreshCw, IconLink, 
   IconSettings, IconUsers, IconClipboardList, IconBarChart, IconWallet 
 } from './components/Icons';
-import { BrowserRouter, Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, NavLink, useLocation, useNavigate } from 'react-router-dom';
+
+// ── NavGroup — defined OUTSIDE AppShell so it never re-mounts on route changes ─
+const NavGroup = ({ title, children }: { title: string; children: React.ReactNode }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <div className={`nav-group ${isOpen ? 'open' : ''}`}>
+      <button type="button" className="nav-group-header" onClick={() => setIsOpen(o => !o)}>
+        <span className="nav-group-title">{title}</span>
+        <span className="nav-group-chevron">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </span>
+      </button>
+      <div className="nav-group-content">
+        {children}
+      </div>
+    </div>
+  );
+};
+
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Dashboard } from './components/Dashboard';
@@ -55,9 +78,14 @@ const T: Record<Language, Record<string, string>> = {
     budgets: 'Smart Budgets', goals: 'Goals', fd: 'Fixed Deposits', loans: 'Loans',
     leases: 'Leases', pawning: 'Pawning', cards: 'Cards', subscriptions: 'Subscriptions',
     connectBank: 'Connect Bank', welcomeBack: 'Welcome back!', adminPortal: 'Admin Portal',
-    newTx: '+ New Transaction',
+    newTx: 'New Transaction',
     adminDash: 'Admin Dashboard', userMgmt: 'User Management',
     config: 'Configuration', audit: 'Audit Logs', reports: 'Reports & Analytics',
+    // Nav group titles
+    grpOverview: 'Overview', grpMoney: 'Money', grpPlanning: 'Planning',
+    grpBanking: 'Banking Products', grpSettings: 'Settings',
+    aiCoach: 'AI Coach', cashFlow: 'Cash Flow Forecast',
+    profile: 'Profile', security: 'Security',
   },
   si: {
     dashboard: 'උපකරණ පුවරුව', recommendations: 'නිර්දේශ', health: 'සෞඛ්‍යය',
@@ -65,9 +93,14 @@ const T: Record<Language, Record<string, string>> = {
     budgets: 'ස්මාර්ට් අයවැය', goals: 'ඉලක්ක', fd: 'ස්ථාවර තැන්පතු', loans: 'ණය',
     leases: 'බදු', pawning: 'උකස්', cards: 'කාඩ්', subscriptions: 'දායකත්ව',
     connectBank: 'බැංකුව සම්බන්ධ කරන්න', welcomeBack: 'නැවත සාදරයෙන් පිළිගනිමු!', adminPortal: 'පරිපාලන ද්වාරය',
-    newTx: '+ නව ගනුදෙනුව',
+    newTx: 'නව ගනුදෙනු',
     adminDash: 'පරිපාලන උපකරණ පුවරුව', userMgmt: 'පරිශීලක කළමනාකරණය',
     config: 'වින්‍යාසය', audit: 'විගණන ලඝු-සටහන්', reports: 'වාර්තා සහ විශ්ලේෂණ',
+    // Nav group titles
+    grpOverview: 'දළ විශ්ලේෂණය', grpMoney: 'මුදල්', grpPlanning: 'සැලසුම',
+    grpBanking: 'බැංකු නිෂ්පාදන', grpSettings: 'සැකසුම්',
+    aiCoach: 'AI උපදේශක', cashFlow: 'මුදල් ප්‍රවාහ පුරෝකථනය',
+    profile: 'පැතිකඩ', security: 'ආරක්ෂාව',
   },
   ta: {
     dashboard: 'டாஷ்போர்டு', recommendations: 'பரிந்துரைகள்', health: 'நிதி ஆரோக்கியம்',
@@ -75,9 +108,14 @@ const T: Record<Language, Record<string, string>> = {
     budgets: 'ஸ்மார்ட் பட்ஜெட்', goals: 'இலக்குகள்', fd: 'நிலையான வைப்பு', loans: 'கடன்கள்',
     leases: 'குத்தகை', pawning: 'அடகு', cards: 'அட்டைகள்', subscriptions: 'சந்தாக்கள்',
     connectBank: 'வங்கி இணைக்க', welcomeBack: 'மீண்டும் வரவேற்கிறோம்!', adminPortal: 'நிர்வாக போர்டல்',
-    newTx: '+ புதிய பரிவர்த்தனை',
+    newTx: 'புதிய பரிவர்த்தனை',
     adminDash: 'நிர்வாக டாஷ்போர்டு', userMgmt: 'பயனர் நிர்வாகம்',
     config: 'கட்டமைப்பு', audit: 'தணிக்கை பதிவுகள்', reports: 'அறிக்கைகள் மற்றும் பகுப்பாய்வு',
+    // Nav group titles
+    grpOverview: 'கண்ணோட்டம்', grpMoney: 'பணம்', grpPlanning: 'திட்டமிடல்',
+    grpBanking: 'வங்கி தயாரிப்புகள்', grpSettings: 'அமைப்புகள்',
+    aiCoach: 'AI பயிற்சியாளர்', cashFlow: 'பண ஓட்ட முன்கணிப்பு',
+    profile: 'சுயவிவரம்', security: 'பாதுகாப்பு',
   },
 };
 
@@ -108,6 +146,7 @@ const CustomerRoute = ({ children }: { children: React.ReactNode }) => {
 // ── Inner shell (needs useLocation, so must be inside <BrowserRouter>) ───────
 function AppShell() {
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Reactive auth state — updates when 'auth-changed' fires (login / logout)
   const [token, setToken] = useState(() => localStorage.getItem('token'));
@@ -177,25 +216,6 @@ function AppShell() {
     </button>
   );
 
-  const NavGroup = ({ title, children }: { title: string, children: React.ReactNode }) => {
-    const [isOpen, setIsOpen] = useState(true);
-    return (
-      <div className={`nav-group ${isOpen ? 'open' : ''}`}>
-        <button type="button" className="nav-group-header" onClick={() => setIsOpen(!isOpen)}>
-          <span className="nav-group-title">{title}</span>
-          <span className="nav-group-chevron">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </span>
-        </button>
-        <div className="nav-group-content">
-          {children}
-        </div>
-      </div>
-    );
-  };
-
   const AddTransactionModal = () => (
     <div className="modal-overlay" onClick={() => setShowAddTransactionModal(false)}>
       <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -238,36 +258,30 @@ function AppShell() {
             <div className="nav-section">
               {isCustomer && (
                 <>
-                  <NavGroup title="Overview">
+                  <NavGroup title={T[lang].grpOverview}>
                     {navItem('/dashboard', <IconDashboard size={20} />, T[lang].dashboard)}
                     {navItem('/financial-health', <IconActivity size={20} />, T[lang].health)}
                     {navItem('/recommendations', <IconLightbulb size={20} />, T[lang].recommendations)}
-                    {navButton(() => setIsAiAssistantOpen(true), <IconBrain size={20} />, 'AI Coach')}
                   </NavGroup>
 
-                  <NavGroup title="Money">
+                  <NavGroup title={T[lang].grpMoney}>
                     {navItem('/transactions', <IconReceipt size={20} />, T[lang].transactions)}
                     {navItem('/credit-cards', <IconCreditCard size={20} />, T[lang].cards)}
                     {navItem('/anomalies', <IconAlertTriangle size={20} />, T[lang].anomalies)}
                   </NavGroup>
 
-                  <NavGroup title="Planning">
+                  <NavGroup title={T[lang].grpPlanning}>
                     {navItem('/smart-budgets', <IconBrain size={20} />, T[lang].budgets)}
                     {navItem('/goals', <IconTarget size={20} />, T[lang].goals)}
-                    {navItem('/recurring', <IconRepeat size={20} />, 'Cash Flow Forecast')}
+                    {navItem('/recurring', <IconRepeat size={20} />, T[lang].cashFlow)}
                   </NavGroup>
 
-                  <NavGroup title="Banking Products">
+                  <NavGroup title={T[lang].grpBanking}>
+                    {navItem('/connect-bank', <IconLink size={20} />, T[lang].connectBank)}
                     {navItem('/fixed-deposits', <IconLandmark size={20} />, T[lang].fd)}
                     {navItem('/loans', <IconBuilding size={20} />, T[lang].loans)}
                     {navItem('/leases', <IconCar size={20} />, T[lang].leases)}
                     {navItem('/pawning', <IconDiamond size={20} />, T[lang].pawning)}
-                  </NavGroup>
-
-                  <NavGroup title="Settings">
-                    {navItem('/connect-bank', <IconLink size={20} />, T[lang].connectBank)}
-                    {navItem('/profile', <IconUsers size={20} />, 'Profile')}
-                    {navItem('/settings', <IconSettings size={20} />, 'Security')}
                   </NavGroup>
                 </>
               )}
@@ -289,17 +303,8 @@ function AppShell() {
               )}
             </div>
 
-            <div className="sidebar-footer-mobile">
-              <div className="sidebar-footer-divider"></div>
-              <div className="sidebar-lang-selector">
-                {(['en', 'si', 'ta'] as Language[]).map(l => (
-                  <button key={l} className={`lang-btn ${lang === l ? 'active' : ''}`}
-                    onClick={() => switchLang(l)}
-                  >
-                    {l.toUpperCase()}
-                  </button>
-                ))}
-              </div>
+            <div className="sidebar-footer">
+              <UserHeader theme={theme} onToggleTheme={() => setTheme(p => p === 'dark' ? 'light' : 'dark')} />
             </div>
           </nav>
 
@@ -320,36 +325,117 @@ function AppShell() {
                 <span className="header-logo-icon"><IconWallet size={24} /></span>
                 <span className="header-logo-text">MoneyManager</span>
               </div>
-              <div className="header-welcome">
-                <span className="welcome-text">{isAdmin ? T[lang].adminPortal : T[lang].welcomeBack}</span>
-              </div>
+              {/* Dynamic page title */}
+              <span className="header-page-title">
+                {(() => {
+                  const map: Record<string, string> = {
+                    '/dashboard': T[lang].dashboard,
+                    '/financial-health': T[lang].health,
+                    '/recommendations': T[lang].recommendations,
+                    '/transactions': T[lang].transactions,
+                    '/recurring': 'Cash Flow Forecast',
+                    '/anomalies': T[lang].anomalies,
+                    '/smart-budgets': T[lang].budgets,
+                    '/goals': T[lang].goals,
+                    '/fixed-deposits': T[lang].fd,
+                    '/loans': T[lang].loans,
+                    '/leases': T[lang].leases,
+                    '/pawning': T[lang].pawning,
+                    '/credit-cards': T[lang].cards,
+                    '/subscriptions': T[lang].subscriptions,
+                    '/connect-bank': T[lang].connectBank,
+                    '/profile': 'Profile',
+                    '/settings': 'Security & Settings',
+                    '/notifications': 'Notifications',
+                    '/help': 'Help & Support',
+                    '/admin': T[lang].adminDash,
+                    '/admin/users': T[lang].userMgmt,
+                    '/admin/config': T[lang].config,
+                    '/admin/audit': T[lang].audit,
+                    '/admin/reports': T[lang].reports,
+                  };
+                  return map[location.pathname] || 'MoneyManager';
+                })()}
+              </span>
             </div>
 
             <div className="header-actions">
-              <div className="lang-toggle">
-                {(['en', 'si', 'ta'] as Language[]).map(l => (
+              <div className="header-lang-row">
+                {([['en','En'], ['si','සිං'], ['ta','த']] as [Language, string][]).map(([l, label]) => (
                   <button key={l} className={`lang-btn ${lang === l ? 'active' : ''}`}
                     onClick={() => switchLang(l)}
                     title={l === 'en' ? 'English' : l === 'si' ? 'Sinhala' : 'Tamil'}
                   >
-                    {l.toUpperCase()}
+                    {label}
                   </button>
                 ))}
               </div>
               {isCustomer && (
-                <button className="header-quick-add" onClick={() => setShowAddTransactionModal(true)} aria-label={T[lang].newTx}>
-                  {T[lang].newTx}
+                <button
+                  className="modal-close"
+                  onClick={() => setIsAiAssistantOpen(true)}
+                  aria-label="AI Coach"
+                  title="AI Coach"
+                >
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 3 3v2a3 3 0 0 1-3 3h-1v1a4 4 0 0 1-8 0v-1H7a3 3 0 0 1-3-3v-2a3 3 0 0 1 3-3h1V6a4 4 0 0 1 4-4z"/>
+                    <line x1="9" y1="10" x2="9" y2="14"/>
+                    <line x1="15" y1="10" x2="15" y2="14"/>
+                  </svg>
                 </button>
               )}
               {isCustomer && (
-                <button type="button" className="header-ai-icon-button"
-                  aria-label="Open AI Assistant" title="AI Assistant"
-                  onClick={() => setIsAiAssistantOpen(true)}
+                <button
+                  className="modal-close"
+                  onClick={() => setShowAddTransactionModal(true)}
+                  aria-label="New Transaction"
+                  title="New Transaction"
                 >
-                  <span className="header-ai-icon" aria-hidden="true"><IconBrain size={20} /></span>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
                 </button>
               )}
-              <UserHeader theme={theme} onToggleTheme={() => setTheme(p => p === 'dark' ? 'light' : 'dark')} />
+              {isCustomer && (
+                <button
+                  className="modal-close"
+                  onClick={() => setTheme(p => p === 'dark' ? 'light' : 'dark')}
+                  aria-label="Toggle Theme"
+                  title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                >
+                  {theme === 'dark' ? (
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="5"></circle>
+                      <line x1="12" y1="1" x2="12" y2="3"></line>
+                      <line x1="12" y1="21" x2="12" y2="23"></line>
+                      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                      <line x1="1" y1="12" x2="3" y2="12"></line>
+                      <line x1="21" y1="12" x2="23" y2="12"></line>
+                      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                  ) : (
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+                    </svg>
+                  )}
+                </button>
+              )}
+              {isCustomer && (
+                <button
+                  className="modal-close"
+                  onClick={() => navigate('/notifications')}
+                  aria-label="Notifications"
+                  title="Notifications"
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+                  </svg>
+                </button>
+              )}
             </div>
           </header>
         </>

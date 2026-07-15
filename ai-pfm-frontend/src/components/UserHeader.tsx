@@ -1,4 +1,4 @@
-// Premium User Profile Dropdown — MoneyManager
+// Sidebar User Card — MoneyManager
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client.ts';
@@ -18,7 +18,6 @@ interface UserHeaderProps {
 export const UserHeader = ({ theme, onToggleTheme }: UserHeaderProps) => {
     const [user, setUser] = useState<User | null>(null);
     const [showDropdown, setShowDropdown] = useState(false);
-    const [currentLang, setCurrentLang] = useState(() => localStorage.getItem('lang') || 'en');
     const navigate = useNavigate();
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -30,20 +29,14 @@ export const UserHeader = ({ theme, onToggleTheme }: UserHeaderProps) => {
                 setShowDropdown(false);
             }
         };
-        const handleLangSync = (e: Event) => {
-            const ce = e as CustomEvent<string>;
-            if (ce.detail) setCurrentLang(ce.detail);
-        };
         const handleEsc = (e: KeyboardEvent) => {
             if (e.key === 'Escape') setShowDropdown(false);
         };
 
         document.addEventListener('mousedown', handleClickOutside);
-        window.addEventListener('lang-changed', handleLangSync);
         document.addEventListener('keydown', handleEsc);
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
-            window.removeEventListener('lang-changed', handleLangSync);
             document.removeEventListener('keydown', handleEsc);
         };
     }, []);
@@ -68,13 +61,6 @@ export const UserHeader = ({ theme, onToggleTheme }: UserHeaderProps) => {
         navigate('/login');
     };
 
-    const switchLang = (l: string) => {
-        localStorage.setItem('lang', l);
-        localStorage.setItem('pfm_language', l);
-        setCurrentLang(l);
-        window.dispatchEvent(new CustomEvent('lang-changed', { detail: l }));
-    };
-
     const getInitials = (name: string) =>
         name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
 
@@ -85,134 +71,76 @@ export const UserHeader = ({ theme, onToggleTheme }: UserHeaderProps) => {
     const avatarGradient = 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)';
 
     return (
-        <div className="user-header" ref={dropdownRef}>
-            {/* Trigger */}
+        <div className="sidebar-user-card" ref={dropdownRef}>
+            {/* Upward popup menu */}
+            {showDropdown && (
+                <div className="sidebar-user-menu" role="menu" aria-label="User menu">
+                    {/* Profile header */}
+                    <div className="sidebar-user-menu-header">
+                        <div className="sidebar-user-avatar-lg" style={{ background: avatarGradient }}>
+                            {getInitials(user.name)}
+                        </div>
+                        <div className="sidebar-user-info-full">
+                            <div className="sidebar-user-name-full">{user.name}</div>
+                            {user.email && <div className="sidebar-user-email">{user.email}</div>}
+                            <div className="sidebar-user-status">
+                                <span className="sidebar-status-dot" aria-hidden="true"></span>
+                                Online
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="sidebar-user-divider" />
+
+                    <div className="sidebar-user-menu-item" role="menuitem" onClick={() => goto('/profile')}>
+                        <span className="sidebar-user-item-icon"><IconUser size={15} /></span>
+                        <span>Edit Profile</span>
+                    </div>
+                    <div className="sidebar-user-menu-item" role="menuitem" onClick={() => goto('/settings')}>
+                        <span className="sidebar-user-item-icon"><IconSettings size={15} /></span>
+                        <span>Settings</span>
+                    </div>
+
+
+
+                    <div className="sidebar-user-divider" />
+
+                    <div className="sidebar-user-menu-item" role="menuitem" onClick={() => goto('/help')}>
+                        <span className="sidebar-user-item-icon"><IconHelpCircle size={15} /></span>
+                        <span>Help & Support</span>
+                    </div>
+
+                    <div className="sidebar-user-divider" />
+
+                    <div className="sidebar-user-menu-item logout" role="menuitem" onClick={() => { setShowDropdown(false); handleLogout(); }}>
+                        <span className="sidebar-user-item-icon"><IconLogOut size={15} /></span>
+                        <span>Sign Out</span>
+                    </div>
+                </div>
+            )}
+
+            {/* Trigger — styled like a nav-item */}
             <button
                 type="button"
-                className="user-profile-button"
+                className="sidebar-user-trigger"
                 onClick={() => setShowDropdown(v => !v)}
                 aria-haspopup="true"
                 aria-expanded={showDropdown}
                 aria-label="Open user menu"
             >
-                <div className="user-avatar" style={{ background: avatarGradient }}>
+                <div className="sidebar-user-avatar-sm" style={{ background: avatarGradient }}>
                     {getInitials(user.name)}
                 </div>
-                <div className="user-info-compact">
-                    <span className="user-name-compact">{user.name.split(' ')[0]}</span>
-                    <span className="status-indicator" aria-hidden="true">●</span>
+                <div className="sidebar-user-text">
+                    <span className="sidebar-user-name">{user.name.split(' ')[0]}</span>
+                    <span className="sidebar-user-role">{user.email || localStorage.getItem('userRole') || 'User'}</span>
                 </div>
-                <div className={`dropdown-arrow ${showDropdown ? 'rotated' : ''}`} aria-hidden="true">▼</div>
+                <svg className="sidebar-user-chevron" width="14" height="14" viewBox="0 0 24 24"
+                    fill="none" stroke="currentColor" strokeWidth="2"
+                    style={{ transform: showDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+                    <polyline points="6 9 12 15 18 9" />
+                </svg>
             </button>
-
-            {/* Dropdown */}
-            {showDropdown && (
-                <div className="user-dropdown-menu" role="menu" aria-label="User menu">
-                    {/* Profile header */}
-                    <div className="user-dropdown-header">
-                        <div className="user-avatar-large" style={{ background: avatarGradient }}>
-                            {getInitials(user.name)}
-                        </div>
-                        <div className="user-details-full">
-                            <div className="user-name-full">{user.name}</div>
-                            {user.email && <div className="user-email">{user.email}</div>}
-                            <div className="user-status">
-                                <span aria-hidden="true">●</span> Online
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="dropdown-divider" />
-
-                    <div className="dropdown-menu-items">
-                        {/* Account group */}
-                        <div className="menu-section">
-                            <div className="menu-section-title">Account</div>
-
-                            <div className="dropdown-item" role="menuitem" onClick={() => goto('/profile')}>
-                                <span className="item-icon" aria-hidden="true"><IconUser size={16} /></span>
-                                <span className="item-text">Edit Profile</span>
-                            </div>
-
-                            <div className="dropdown-item" role="menuitem" onClick={() => goto('/settings')}>
-                                <span className="item-icon" aria-hidden="true"><IconSettings size={16} /></span>
-                                <span className="item-text">Settings</span>
-                            </div>
-
-                            <div className="dropdown-item" role="menuitem" onClick={() => goto('/notifications')}>
-                                <span className="item-icon" aria-hidden="true"><IconBell size={16} /></span>
-                                <span className="item-text">Notifications</span>
-                            </div>
-
-                            {/* Theme toggle */}
-                            <div className="dropdown-item" role="menuitem" onClick={onToggleTheme}>
-                                <span className="item-icon theme-mode-icon" aria-hidden="true">
-                                    {theme === 'dark' ? (
-                                        <svg className="theme-mode-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                            <circle cx="12" cy="12" r="9" strokeWidth="1.8" />
-                                            <path d="M15.8 8.2a5.6 5.6 0 1 0 0 7.6 4.2 4.2 0 1 1 0-7.6Z" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                    ) : (
-                                        <svg className="theme-mode-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                                            <circle cx="12" cy="12" r="9" strokeWidth="1.8" />
-                                            <circle cx="12" cy="12" r="2.6" strokeWidth="1.8" />
-                                            <path d="M12 6.2v1.8M12 16v1.8M6.2 12H8M16 12h1.8M8 8l1.3 1.3M14.7 14.7L16 16M8 16l1.3-1.3M14.7 9.3L16 8" strokeWidth="1.8" strokeLinecap="round" />
-                                        </svg>
-                                    )}
-                                </span>
-                                <span className="item-text">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
-                                <span style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', background: 'var(--color-surface-3)', padding: '2px 6px', borderRadius: 4, color: 'var(--color-text-muted)' }}>
-                                    {theme === 'dark' ? <IconSun size={14} /> : <IconMoon size={14} />}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Language (mobile only) */}
-                        <div className="menu-section mobile-only-lang">
-                            <div className="dropdown-divider" style={{ margin: '4px 0' }} />
-                            <div className="menu-section-title">Language</div>
-                            <div className="dropdown-lang-toggle">
-                                {(['en', 'si', 'ta'] as const).map(l => (
-                                    <button
-                                        key={l}
-                                        className={`lang-btn ${currentLang === l ? 'active' : ''}`}
-                                        onClick={() => switchLang(l)}
-                                        aria-pressed={currentLang === l}
-                                    >
-                                        {l.toUpperCase()}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div className="dropdown-divider" />
-
-                        {/* Support */}
-                        <div className="menu-section">
-                            <div className="menu-section-title">Support</div>
-                            <div className="dropdown-item" role="menuitem" onClick={() => goto('/help')}>
-                                <span className="item-icon" aria-hidden="true"><IconHelpCircle size={16} /></span>
-                                <span className="item-text">Help & Support</span>
-                            </div>
-                        </div>
-
-                        <div className="dropdown-divider" />
-
-                        {/* Sign out */}
-                        <div className="menu-section">
-                            <div
-                                className="dropdown-item logout-item"
-                                role="menuitem"
-                                onClick={() => { setShowDropdown(false); handleLogout(); }}
-                            >
-                                <span className="item-icon" aria-hidden="true"><IconLogOut size={16} /></span>
-                                <span className="item-text">Sign Out</span>
-                                <span className="logout-shortcut">Ctrl+Q</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };
