@@ -7,6 +7,8 @@ import { getLocalDateString } from '../utils/date';
 interface TransactionFormProps {
     onTransactionAdded: () => void;
     onCancel?: () => void;
+    initialData?: any;
+    isEditMode?: boolean;
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -16,14 +18,14 @@ const CATEGORY_ICONS: Record<string, string> = {
     'Business': '', 'Investment': '', 'Gift': '', 'Other': '',
 };
 
-export const AddTransactionForm = ({ onTransactionAdded, onCancel }: TransactionFormProps) => {
+export const AddTransactionForm = ({ onTransactionAdded, onCancel, initialData, isEditMode }: TransactionFormProps) => {
     const today = getLocalDateString();
     const [formData, setFormData] = useState({
-        amount: '',
-        category: '',
-        description: '',
-        type: 'expense' as 'income' | 'expense',
-        date: today
+        amount: initialData?.amount?.toString() || '',
+        category: initialData?.category || '',
+        description: initialData?.description || '',
+        type: initialData?.type || 'expense' as 'income' | 'expense',
+        date: initialData?.date ? initialData.date.split('T')[0] : today
     });
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
@@ -46,9 +48,15 @@ export const AddTransactionForm = ({ onTransactionAdded, onCancel }: Transaction
             const token = localStorage.getItem('token');
             if (!token) throw new Error('Please login again');
 
-            await apiClient.post('/transactions', { ...formData, amount }, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+            if (isEditMode && initialData?._id) {
+                await apiClient.put(`/transactions/${initialData._id}`, { ...formData, amount }, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+            } else {
+                await apiClient.post('/transactions', { ...formData, amount }, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+            }
 
             setFormData({ amount: '', category: '', description: '', type: 'expense', date: getLocalDateString() });
             setSuccess(true);
@@ -78,7 +86,7 @@ export const AddTransactionForm = ({ onTransactionAdded, onCancel }: Transaction
                 fontSize: 'var(--font-lg)', fontWeight: 700, color: 'var(--color-text)',
                 marginBottom: 'var(--sp-5)', display: 'none'
             }}>
-                Add New Transaction
+                {loading ? (isEditMode ? 'Updating...' : 'Adding...') : (isEditMode ? 'Update Transaction' : 'Add Transaction')}
             </h3>
 
             {error && (
@@ -88,7 +96,7 @@ export const AddTransactionForm = ({ onTransactionAdded, onCancel }: Transaction
             )}
             {success && (
                 <div style={{ color: '#059669', marginBottom: 'var(--sp-4)', padding: '0.75rem', backgroundColor: '#ecfdf5', borderRadius: '8px', border: '1px solid #a7f3d0' }}>
-                    ✅ Transaction added successfully!
+                    ✅ Transaction {isEditMode ? 'updated' : 'added'} successfully!
                 </div>
             )}
 
@@ -188,8 +196,8 @@ export const AddTransactionForm = ({ onTransactionAdded, onCancel }: Transaction
                         }}
                     >
                         {loading
-                            ? 'Adding…'
-                            : `Add ${isExpense ? 'Expense' : 'Income'}`}
+                            ? (isEditMode ? 'Updating…' : 'Adding…')
+                            : (isEditMode ? 'Update' : `Add ${isExpense ? 'Expense' : 'Income'}`)}
                     </button>
                 </div>
             </form>

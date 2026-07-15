@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../api/client.ts';
 import axios from 'axios';
+import { AddTransactionForm } from './AddTransactionForm';
 
 interface Transaction {
     _id: string;
@@ -21,16 +22,9 @@ export const TransactionList = () => {
     const [hasPFMConsent, setHasPFMConsent] = useState<boolean | null>(null);
     const [syncMode, setSyncMode] = useState<'mock' | 'real' | 'unknown'>('unknown');
     const [consentBusy, setConsentBusy] = useState(false);
-    const [editingId, setEditingId] = useState<string | null>(null);
-    const [editFormData, setEditFormData] = useState({
-        amount: '',
-        category: '',
-        description: '',
-        type: 'expense' as 'income' | 'expense',
-        date: ''
-    });
-    const [savingEdit, setSavingEdit] = useState(false);
+    const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
 
     const categories = {
         expense: ['Food & Dining', 'Shopping', 'Entertainment', 'Transport',
@@ -126,59 +120,37 @@ export const TransactionList = () => {
     };
 
     const startEditing = (transaction: Transaction) => {
-        setEditingId(transaction._id);
-        setEditFormData({
-            amount: transaction.amount.toString(),
-            category: transaction.category,
-            description: transaction.description || '',
-            type: transaction.type,
-            date: new Date(transaction.date).toISOString().split('T')[0]
-        });
+        setEditingTransaction(transaction);
     };
 
     const cancelEditing = () => {
-        setEditingId(null);
-        setEditFormData({
-            amount: '',
-            category: '',
-            description: '',
-            type: 'expense',
-            date: ''
-        });
+        setEditingTransaction(null);
     };
 
-    const saveEdit = async (transactionId: string) => {
-        const amount = parseFloat(editFormData.amount);
-        if (isNaN(amount) || amount <= 0) {
-            alert('Please enter a valid amount.');
-            return;
-        }
-
-        try {
-            setSavingEdit(true);
-            await apiClient.put(`/transactions/${transactionId}`, {
-                ...editFormData,
-                amount
-            });
-            await fetchTransactions();
-            cancelEditing();
-        } catch (error) {
-            console.error('Failed to update transaction', error);
-            alert('Failed to update transaction');
-        } finally {
-            setSavingEdit(false);
-        }
+    const handleTransactionUpdated = async () => {
+        setEditingTransaction(null);
+        await fetchTransactions();
     };
 
-    const deleteTransaction = async (transactionId: string) => {
-        const shouldDelete = window.confirm('Delete this transaction? This action cannot be undone.');
-        if (!shouldDelete) return;
+    const confirmDeleteTransaction = (transactionId: string) => {
+        setTransactionToDelete(transactionId);
+    };
 
+    const cancelDelete = () => {
+        setTransactionToDelete(null);
+    };
+
+    const executeDeleteTransaction = async () => {
+        if (!transactionToDelete) return;
+        
+        const transactionId = transactionToDelete;
+        setTransactionToDelete(null);
+        
         try {
             setDeletingId(transactionId);
             await apiClient.delete(`/transactions/${transactionId}`);
             setTransactions((prev) => prev.filter((transaction) => transaction._id !== transactionId));
-            if (editingId === transactionId) {
+            if (editingTransaction?._id === transactionId) {
                 cancelEditing();
             }
         } catch (error) {
@@ -211,128 +183,50 @@ export const TransactionList = () => {
                     </thead>
                     <tbody>
                         {transactions.map((t) => {
-                            const isEditing = editingId === t._id;
                             const isDeleting = deletingId === t._id;
 
                             return (
                                 <tr key={t._id} className={t.type}>
                                     <td data-label="Date">
-                                        {isEditing ? (
-                                            <input
-                                                type="date"
-                                                className="table-input"
-                                                value={editFormData.date}
-                                                onChange={(e) => setEditFormData((prev) => ({ ...prev, date: e.target.value }))}
-                                            />
-                                        ) : (
-                                            new Date(t.date).toLocaleDateString()
-                                        )}
+                                        {new Date(t.date).toLocaleDateString()}
                                     </td>
                                     <td data-label="Description" className="description-cell">
-                                        {isEditing ? (
-                                            <input
-                                                type="text"
-                                                className="table-input"
-                                                value={editFormData.description}
-                                                onChange={(e) => setEditFormData((prev) => ({ ...prev, description: e.target.value }))}
-                                                placeholder="Description"
-                                            />
-                                        ) : (
-                                            <>
-                                                <span className="description-text">{t.description}</span>
-                                                <div className="txn-badges">
-                                                    {t.isRecurring && (
-                                                        <span className="badge badge-recurring">
-                                                            Recurring{t.recurringFrequency ? ` (${t.recurringFrequency})` : ''}
-                                                        </span>
-                                                    )}
-                                                    {t.isAnomaly && (
-                                                        <span className="badge badge-anomaly">
-                                                            Anomaly {Math.round((t.anomalyScore || 0) * 100)}%
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </>
-                                        )}
+                                        <span className="description-text">{t.description}</span>
+                                        <div className="txn-badges">
+                                            {t.isRecurring && (
+                                                <span className="badge badge-recurring">
+                                                    Recurring{t.recurringFrequency ? ` (${t.recurringFrequency})` : ''}
+                                                </span>
+                                            )}
+                                            {t.isAnomaly && (
+                                                <span className="badge badge-anomaly">
+                                                    Anomaly {Math.round((t.anomalyScore || 0) * 100)}%
+                                                </span>
+                                            )}
+                                        </div>
                                     </td>
                                     <td data-label="Category">
-                                        {isEditing ? (
-                                            <select
-                                                className="table-input table-select"
-                                                value={editFormData.category}
-                                                onChange={(e) => setEditFormData((prev) => ({ ...prev, category: e.target.value }))}
-                                                required
-                                            >
-                                                <option value="">Select a category</option>
-                                                {categories[editFormData.type].map(cat => (
-                                                    <option key={cat} value={cat}>{cat}</option>
-                                                ))}
-                                            </select>
-                                        ) : (
-                                            <span className="category-tag">{t.category}</span>
-                                        )}
+                                        <span className="category-tag">{t.category}</span>
                                     </td>
                                     <td data-label="Amount" className="amount">
-                                        {isEditing ? (
-                                            <div className="table-edit-amount">
-                                                <select
-                                                    className="table-input table-select"
-                                                    value={editFormData.type}
-                                                    onChange={(e) => setEditFormData((prev) => ({ ...prev, type: e.target.value as 'income' | 'expense' }))}
-                                                >
-                                                    <option value="expense">Expense</option>
-                                                    <option value="income">Income</option>
-                                                </select>
-                                                <input
-                                                    type="number"
-                                                    step="0.01"
-                                                    min="0"
-                                                    className="table-input"
-                                                    value={editFormData.amount}
-                                                    onChange={(e) => setEditFormData((prev) => ({ ...prev, amount: e.target.value }))}
-                                                />
-                                            </div>
-                                        ) : (
-                                            `${t.type === 'income' ? '+' : '-'}Rs. ${t.amount.toLocaleString()}`
-                                        )}
+                                        {t.type === 'income' ? '+' : '-'}Rs. {t.amount.toLocaleString()}
                                     </td>
                                     <td data-label="Actions">
                                         <div className="table-actions">
-                                            {isEditing ? (
-                                                <>
-                                                    <button
-                                                        className="table-action-btn save"
-                                                        onClick={() => saveEdit(t._id)}
-                                                        disabled={savingEdit}
-                                                    >
-                                                        {savingEdit ? 'Saving...' : 'Save'}
-                                                    </button>
-                                                    <button
-                                                        className="table-action-btn cancel"
-                                                        onClick={cancelEditing}
-                                                        disabled={savingEdit}
-                                                    >
-                                                        Cancel
-                                                    </button>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <button
-                                                        className="table-action-btn edit"
-                                                        onClick={() => startEditing(t)}
-                                                        disabled={deletingId !== null}
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                    <button
-                                                        className="table-action-btn delete"
-                                                        onClick={() => deleteTransaction(t._id)}
-                                                        disabled={isDeleting || editingId !== null}
-                                                    >
-                                                        {isDeleting ? 'Deleting...' : 'Delete'}
-                                                    </button>
-                                                </>
-                                            )}
+                                            <button
+                                                className="table-action-btn edit"
+                                                onClick={() => startEditing(t)}
+                                                disabled={deletingId !== null}
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                className="table-action-btn delete"
+                                                onClick={() => confirmDeleteTransaction(t._id)}
+                                                disabled={isDeleting}
+                                            >
+                                                {isDeleting ? 'Deleting...' : 'Delete'}
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>
@@ -341,6 +235,49 @@ export const TransactionList = () => {
                     </tbody>
                 </table>
             </div>
+
+            {editingTransaction && (
+                <div className="modal-overlay" onClick={cancelEditing}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">Edit Transaction</h2>
+                            <button className="modal-close" onClick={cancelEditing}>×</button>
+                        </div>
+                        <AddTransactionForm 
+                            onTransactionAdded={handleTransactionUpdated} 
+                            onCancel={cancelEditing}
+                            initialData={editingTransaction}
+                            isEditMode={true}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {transactionToDelete && (
+                <div className="modal-overlay" onClick={cancelDelete}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">Confirm Deletion</h2>
+                            <button className="modal-close" onClick={cancelDelete}>×</button>
+                        </div>
+                        <div style={{ padding: '1rem 0 2rem 0', color: 'var(--color-text)' }}>
+                            Are you sure you want to delete this transaction? This action cannot be undone.
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem' }}>
+                            <button className="btn-secondary" style={{ flex: 1 }} onClick={cancelDelete}>
+                                Cancel
+                            </button>
+                            <button 
+                                className="btn-primary" 
+                                style={{ flex: 1, background: 'linear-gradient(135deg, #ef4444, #dc2626)' }} 
+                                onClick={executeDeleteTransaction}
+                            >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
