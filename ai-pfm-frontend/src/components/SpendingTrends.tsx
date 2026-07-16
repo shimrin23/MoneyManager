@@ -56,19 +56,26 @@ export const SpendingTrends = () => {
     useEffect(() => {
         const fetchBudgets = async () => {
             try {
-                const response = await apiClient.get('/budgets/smart');
-                const budgets = response.data.budgets || [];
-                setChartData(budgets.map((b: any) => ({ category: b.category, value: b.spentAmount })));
+                const response = await apiClient.get('/transactions');
+                const transactions = response.data.data || [];
+                
+                // Group expenses by category
+                const expensesByCategory: Record<string, number> = {};
+                transactions.forEach((t: any) => {
+                    if (t.type === 'expense') {
+                        expensesByCategory[t.category] = (expensesByCategory[t.category] || 0) + t.amount;
+                    }
+                });
+
+                const chartDataFormatted = Object.entries(expensesByCategory).map(([category, value]) => ({
+                    category,
+                    value
+                })).sort((a, b) => b.value - a.value);
+
+                setChartData(chartDataFormatted);
             } catch (error) {
-                console.error('Failed to fetch budgets for trends:', error);
-                // Mock data fallback if API fails
-                setChartData([
-                    { category: 'Food & Dining', value: 28500 },
-                    { category: 'Entertainment', value: 42800 },
-                    { category: 'Transportation', value: 9800 },
-                    { category: 'Shopping', value: 16500 },
-                    { category: 'Utilities', value: 7200 }
-                ]);
+                console.error('Failed to fetch transactions for trends:', error);
+                setChartData([]);
             } finally {
                 setLoading(false);
             }
