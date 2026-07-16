@@ -339,7 +339,17 @@ export const Dashboard = () => {
                 </div>
 
                 {/* ── Recurring Subscriptions Card ── */}
-                <div className="card subscriptions-card" style={{ padding: '1.75rem' }}>
+                <div 
+                    className="card subscriptions-card" 
+                    style={{ 
+                        padding: '1.75rem',
+                        cursor: 'pointer',
+                        transition: 'transform 0.2s',
+                        ...({ '&:hover': { transform: 'scale(1.02)' } } as any)
+                    }}
+                    onClick={() => navigate('/recurring')}
+                    title="View cash flow and subscriptions"
+                >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
                         <div className="ds-card-icon" style={{
                             background: 'rgba(99,102,241,0.1)',
@@ -352,7 +362,10 @@ export const Dashboard = () => {
                         <button
                             type="button"
                             className="ds-btn ds-btn-ghost ds-btn-sm"
-                            onClick={() => setAiOpen(true)}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setAiOpen(true);
+                            }}
                             style={{ marginLeft: 'auto', fontSize: 12 }}
                             aria-label="Open AI Assistant"
                         >
