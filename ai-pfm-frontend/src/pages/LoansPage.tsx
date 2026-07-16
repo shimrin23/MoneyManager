@@ -143,10 +143,7 @@ export const LoansPage = () => {
     return (
         <div className="page-container">
             <div className="page-header">
-                <div>
-                    <h1>🏦 Loans & Debt</h1>
-                    <p className="page-subtitle">Manage your loans and optimize debt repayment</p>
-                </div>
+                <div style={{ flex: 1 }}></div>
                 <button 
                     className="btn-primary"
                     onClick={() => setShowAddForm(!showAddForm)}

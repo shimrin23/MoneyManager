@@ -8,6 +8,10 @@ export interface IFinancialHealth extends Document {
         liquidityRatio: number;
         debtToIncomeRatio: number;
         savingsRate: number;
+        creditUtilization: number;
+        emergencyFundMonths: number;
+        netWorth: number;
+        discretionaryRatio: number;
     };
     lastUpdated: Date;
 }
@@ -19,7 +23,11 @@ const FinancialHealthSchema: Schema = new Schema({
     metrics: {
         liquidityRatio: Number,
         debtToIncomeRatio: Number,
-        savingsRate: Number
+        savingsRate: Number,
+        creditUtilization: Number,
+        emergencyFundMonths: Number,
+        netWorth: Number,
+        discretionaryRatio: Number
     },
     lastUpdated: { type: Date, default: Date.now }
 }, { timestamps: true });

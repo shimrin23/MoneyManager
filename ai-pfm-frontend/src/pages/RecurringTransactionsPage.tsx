@@ -170,17 +170,11 @@ export const RecurringTransactionsPage = () => {
 
     return (
         <div className="page-container recurring-page">
-            <div className="page-header">
-                <div>
-                    <h1 className="page-title">Recurring Transactions</h1>
-                    <p className="page-subtitle">AI-detected repeating charges — confirm or dismiss each one</p>
+            {unconfirmedCount > 0 && (
+                <div className="rec-alert-banner" style={{ marginBottom: '1.5rem' }}>
+                    🔔 {unconfirmedCount} new pattern{unconfirmedCount > 1 ? 's' : ''} detected — review below
                 </div>
-                {unconfirmedCount > 0 && (
-                    <div className="rec-alert-banner">
-                        🔔 {unconfirmedCount} new pattern{unconfirmedCount > 1 ? 's' : ''} detected — review below
-                    </div>
-                )}
-            </div>
+            )}
 
             {/* Summary */}
             <div className="rec-summary-grid">

@@ -133,10 +133,6 @@ export const SmartBudgetsPage = () => {
 
     return (
         <div className="page-container smart-budgets-page">
-            <div className="page-header">
-                <h1 className="page-title">Smart Budgets</h1>
-                <p className="page-subtitle">AI-generated budgets based on your income and spending patterns</p>
-            </div>
 
             {/* Spending Trends Charts */}
             <SpendingTrends />

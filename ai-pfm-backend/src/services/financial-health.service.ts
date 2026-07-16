@@ -29,7 +29,8 @@ export class FinancialHealthService {
                 transactions,
                 loans,
                 creditCards,
-                Number(user?.monthlyIncome ?? 0)
+                Number(user?.monthlyIncome ?? 0),
+                goals
             );
 
             // Calculate score based on multiple factors
@@ -64,7 +65,8 @@ export class FinancialHealthService {
         transactions: any[],
         loans: any[],
         creditCards: any[],
-        monthlyIncomeBaseline: number
+        monthlyIncomeBaseline: number,
+        goals: any[]
     ) {
         const now = new Date();
         const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -83,6 +85,14 @@ export class FinancialHealthService {
         const totalExpenses = recentTransactions
             .filter(t => t.type === 'expense')
             .reduce((sum, t) => sum + t.amount, 0);
+            
+        // Discretionary Ratio
+        const discretionaryCategories = ['Food & Dining', 'Shopping', 'Entertainment', 'Travel', 'Personal Care'];
+        const discretionaryExpenses = recentTransactions
+            .filter(t => t.type === 'expense' && discretionaryCategories.includes(t.category))
+            .reduce((sum, t) => sum + t.amount, 0);
+            
+        const discretionaryRatio = totalIncome > 0 ? discretionaryExpenses / totalIncome : 0;
 
         const savings = totalIncome - totalExpenses;
         const savingsRate = totalIncome > 0 ? savings / totalIncome : 0;
@@ -96,6 +106,10 @@ export class FinancialHealthService {
         const totalCreditLimit = creditCards.reduce((sum, card) => sum + card.creditLimit, 0);
         const totalCreditBalance = creditCards.reduce((sum, card) => sum + card.currentBalance, 0);
         const creditUtilization = totalCreditLimit > 0 ? totalCreditBalance / totalCreditLimit : 0;
+        
+        // Net Worth
+        const totalAssets = goals.reduce((sum, goal) => sum + (goal.currentAmount || 0), 0);
+        const netWorth = totalAssets - totalDebt - totalCreditBalance;
 
         // Emergency fund (simplified - based on savings rate)
         const monthlyExpenses = totalExpenses;
@@ -110,7 +124,9 @@ export class FinancialHealthService {
             debtToIncomeRatio,
             creditUtilization,
             emergencyFundMonths,
-            liquidityRatio: savingsRate
+            liquidityRatio: savingsRate,
+            netWorth,
+            discretionaryRatio
         };
     }
 
@@ -197,35 +213,109 @@ export class FinancialHealthService {
             const health = await this.getHealthReport(userId);
             const metrics = health.metrics || {};
 
+            // Calculate real peer averages from the database
+            const peerStats = await FinancialHealth.aggregate([
+                {
+                    $group: {
+                        _id: null,
+                        avgScore: { $avg: '$score' },
+                        avgSavingsRate: { $avg: '$metrics.savingsRate' },
+                        avgDebtRatio: { $avg: '$metrics.debtToIncomeRatio' },
+                        avgLiquidityRatio: { $avg: '$metrics.liquidityRatio' },
+                        avgCreditUtilization: { $avg: '$metrics.creditUtilization' },
+                        avgEmergencyFundMonths: { $avg: '$metrics.emergencyFundMonths' },
+                        avgNetWorth: { $avg: '$metrics.netWorth' },
+                        avgDiscretionaryRatio: { $avg: '$metrics.discretionaryRatio' }
+                    }
+                }
+            ]);
+
+            const stats = peerStats.length > 0 ? peerStats[0] : {
+                avgScore: 65,
+                avgSavingsRate: 0.18,
+                avgDebtRatio: 0.35,
+                avgLiquidityRatio: 0.30,
+                avgCreditUtilization: 0.25,
+                avgEmergencyFundMonths: 3,
+                avgNetWorth: 500000,
+                avgDiscretionaryRatio: 0.30
+            };
+
+            const peerScore = Number((stats.avgScore ?? 65).toFixed(0));
+            const peerSavings = Number(((stats.avgSavingsRate ?? 0.18) * 100).toFixed(1));
+            const peerDebt = Number(((stats.avgDebtRatio ?? 0.35) * 100).toFixed(1));
+            const peerLiquidity = Number(((stats.avgLiquidityRatio ?? 0.30) * 100).toFixed(1));
+            const peerCreditUtil = Number(((stats.avgCreditUtilization ?? 0.25) * 100).toFixed(1));
+            const peerEmergencyFund = Number((stats.avgEmergencyFundMonths ?? 3).toFixed(1));
+            const peerNetWorth = Number((stats.avgNetWorth ?? 500000).toFixed(0));
+            const peerDiscretionary = Number(((stats.avgDiscretionaryRatio ?? 0.30) * 100).toFixed(1));
+
+            const userScore = Number(health.score ?? 0);
+            const userSavings = Number(((metrics.savingsRate ?? 0) * 100).toFixed(1));
+            const userDebt = Number(((metrics.debtToIncomeRatio ?? 0) * 100).toFixed(1));
+            const userLiquidity = Number(((metrics.liquidityRatio ?? 0) * 100).toFixed(1));
+            const userCreditUtil = Number(((metrics.creditUtilization ?? 0) * 100).toFixed(1));
+            const userEmergencyFund = Number((metrics.emergencyFundMonths ?? 0).toFixed(1));
+            const userNetWorth = Number((metrics.netWorth ?? 0).toFixed(0));
+            const userDiscretionary = Number(((metrics.discretionaryRatio ?? 0) * 100).toFixed(1));
+
             return {
                 benchmarks: [
                     {
                         category: 'Financial Health Score',
-                        userValue: Number(health.score ?? 0),
-                        peerAverage: 65,
-                        percentile: Math.max(5, Math.min(95, Number(health.score ?? 0))),
-                        comparison: Number(health.score ?? 0) >= 65 ? 'above' : 'below'
+                        userValue: userScore,
+                        peerAverage: peerScore,
+                        percentile: Math.max(5, Math.min(95, userScore)),
+                        comparison: userScore >= peerScore ? 'above' : 'below'
                     },
                     {
                         category: 'Savings Rate',
-                        userValue: Number(((metrics.savingsRate ?? 0) * 100).toFixed(1)),
-                        peerAverage: 18,
-                        percentile: (metrics.savingsRate ?? 0) >= 0.18 ? 70 : 25,
-                        comparison: (metrics.savingsRate ?? 0) >= 0.18 ? 'above' : 'below'
+                        userValue: userSavings,
+                        peerAverage: peerSavings,
+                        percentile: (metrics.savingsRate ?? 0) >= (stats.avgSavingsRate ?? 0.18) ? 70 : 25,
+                        comparison: userSavings >= peerSavings ? 'above' : 'below'
                     },
                     {
                         category: 'Debt-to-Income Ratio',
-                        userValue: Number(((metrics.debtToIncomeRatio ?? 0) * 100).toFixed(1)),
-                        peerAverage: 35,
-                        percentile: (metrics.debtToIncomeRatio ?? 0) <= 0.35 ? 75 : 30,
-                        comparison: (metrics.debtToIncomeRatio ?? 0) <= 0.35 ? 'below' : 'above'
+                        userValue: userDebt,
+                        peerAverage: peerDebt,
+                        percentile: (metrics.debtToIncomeRatio ?? 0) <= (stats.avgDebtRatio ?? 0.35) ? 75 : 30,
+                        comparison: userDebt <= peerDebt ? 'below' : 'above'
                     },
                     {
                         category: 'Liquidity Ratio',
-                        userValue: Number(((metrics.liquidityRatio ?? 0) * 100).toFixed(1)),
-                        peerAverage: 30,
-                        percentile: (metrics.liquidityRatio ?? 0) >= 0.3 ? 70 : 20,
-                        comparison: (metrics.liquidityRatio ?? 0) >= 0.3 ? 'above' : 'below'
+                        userValue: userLiquidity,
+                        peerAverage: peerLiquidity,
+                        percentile: (metrics.liquidityRatio ?? 0) >= (stats.avgLiquidityRatio ?? 0.30) ? 70 : 20,
+                        comparison: userLiquidity >= peerLiquidity ? 'above' : 'below'
+                    },
+                    {
+                        category: 'Credit Utilization',
+                        userValue: userCreditUtil,
+                        peerAverage: peerCreditUtil,
+                        percentile: (metrics.creditUtilization ?? 0) <= (stats.avgCreditUtilization ?? 0.25) ? 80 : 20,
+                        comparison: userCreditUtil <= peerCreditUtil ? 'below' : 'above'
+                    },
+                    {
+                        category: 'Emergency Fund Health',
+                        userValue: userEmergencyFund,
+                        peerAverage: peerEmergencyFund,
+                        percentile: (metrics.emergencyFundMonths ?? 0) >= (stats.avgEmergencyFundMonths ?? 3) ? 75 : 25,
+                        comparison: userEmergencyFund >= peerEmergencyFund ? 'above' : 'below'
+                    },
+                    {
+                        category: 'Net Worth',
+                        userValue: userNetWorth,
+                        peerAverage: peerNetWorth,
+                        percentile: (metrics.netWorth ?? 0) >= (stats.avgNetWorth ?? 500000) ? 60 : 40,
+                        comparison: userNetWorth >= peerNetWorth ? 'above' : 'below'
+                    },
+                    {
+                        category: 'Discretionary Ratio',
+                        userValue: userDiscretionary,
+                        peerAverage: peerDiscretionary,
+                        percentile: (metrics.discretionaryRatio ?? 0) <= (stats.avgDiscretionaryRatio ?? 0.30) ? 75 : 25,
+                        comparison: userDiscretionary <= peerDiscretionary ? 'below' : 'above'
                     }
                 ]
             };

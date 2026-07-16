@@ -153,12 +153,6 @@ export const Dashboard = () => {
 
     return (
         <div className="notifications-page" style={{ width: '100%' }}>
-            <div className="notifications-header">
-                <div>
-                    <h1>Dashboard</h1>
-                    <p className="page-subtitle">Your financial overview at a glance</p>
-                </div>
-            </div>
 
             <div className="notifications-content">
                 <div className="dashboard-grid">

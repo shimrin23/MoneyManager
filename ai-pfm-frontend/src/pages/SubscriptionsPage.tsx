@@ -260,10 +260,7 @@ export const SubscriptionsPage = () => {
     return (
         <div className="page-container">
             <div className="page-header">
-                <div>
-                    <h1>Subscriptions & Recurring</h1>
-                    <p className="page-subtitle">AI-Powered subscription management and savings</p>
-                </div>
+                <div style={{ flex: 1 }}></div>
                 <button 
                     className="btn-primary"
                     onClick={() => setShowAddForm(!showAddForm)}

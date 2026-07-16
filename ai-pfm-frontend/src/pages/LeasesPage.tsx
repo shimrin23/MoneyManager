@@ -111,12 +111,6 @@ export const LeasesPage = () => {
 
     return (
         <div className="page-container leases-page">
-            <div className="page-header">
-                <div>
-                    <h1 className="page-title">Leases</h1>
-                    <p className="page-subtitle">Manage your active lease agreements and repayment schedules</p>
-                </div>
-            </div>
 
             {/* Summary */}
             <div className="rec-summary-grid">

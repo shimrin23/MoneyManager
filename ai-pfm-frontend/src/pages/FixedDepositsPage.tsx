@@ -149,10 +149,7 @@ export const FixedDepositsPage = () => {
     return (
         <div className="page-container fd-page">
             <div className="page-header">
-                <div>
-                    <h1 className="page-title">Fixed Deposits</h1>
-                    <p className="page-subtitle">Manage your FD portfolio and track maturity dates</p>
-                </div>
+                <div style={{ flex: 1 }}></div>
                 <button className="action-btn primary" onClick={() => setShowNewFDForm(!showNewFDForm)}>
                     + Open New FD
                 </button>

@@ -115,10 +115,7 @@ export const CreditCardsPage = () => {
     return (
         <div className="page-container">
             <div className="page-header">
-                <div>
-                    <h1>💳 Credit Cards</h1>
-                    <p className="page-subtitle">Manage your credit cards and track spending</p>
-                </div>
+                <div style={{ flex: 1 }}></div>
                 <button 
                     className="btn-primary"
                     onClick={() => setShowAddForm(!showAddForm)}

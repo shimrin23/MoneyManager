@@ -170,10 +170,7 @@ export const GoalsPage = () => {
     return (
         <div className="page-container">
             <div className="page-header">
-                <div>
-                    <h1>🎯 Financial Goals</h1>
-                    <p className="page-subtitle">Track and achieve your financial objectives</p>
-                </div>
+                <div style={{ flex: 1 }}></div>
                 <button 
                     className="btn-primary"
                     onClick={() => setShowForm(!showForm)}

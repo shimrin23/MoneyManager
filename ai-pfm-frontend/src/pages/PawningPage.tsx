@@ -116,17 +116,11 @@ export const PawningPage = () => {
 
     return (
         <div className="page-container pawning-page">
-            <div className="page-header">
-                <div>
-                    <h1 className="page-title">Pawning</h1>
-                    <p className="page-subtitle">Track your pledged items, interest accrual and redemption dates</p>
+            {urgentCount > 0 && (
+                <div className="rec-alert-banner danger" style={{ marginBottom: '1.5rem' }}>
+                    ⚠️ {urgentCount} item{urgentCount > 1 ? 's' : ''} due within 21 days — redeem or renew soon
                 </div>
-                {urgentCount > 0 && (
-                    <div className="rec-alert-banner danger">
-                        ⚠️ {urgentCount} item{urgentCount > 1 ? 's' : ''} due within 21 days — redeem or renew soon
-                    </div>
-                )}
-            </div>
+            )}
 
             {/* Summary */}
             <div className="rec-summary-grid">

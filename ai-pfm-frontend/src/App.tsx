@@ -161,6 +161,36 @@ function AppShell() {
   );
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
+  const getPageTitleInfo = () => {
+    switch (location.pathname) {
+      case '/dashboard': return { title: 'Dashboard', subtitle: 'Your financial overview at a glance' };
+      case '/financial-health': return { title: 'Financial Health', subtitle: 'Detailed analysis of your metrics' };
+      case '/recommendations': return { title: 'AI Recommendations', subtitle: 'Insights and suggestions' };
+      case '/transactions': return { title: 'Transactions', subtitle: 'Your transaction history' };
+      case '/credit-cards': return { title: 'Credit Cards', subtitle: 'Manage your credit lines' };
+      case '/anomalies': return { title: 'Anomaly Detection', subtitle: 'Unusual transaction alerts' };
+      case '/smart-budgets': return { title: 'Smart Budgets', subtitle: 'AI-assisted budgeting' };
+      case '/goals': return { title: 'Financial Goals', subtitle: 'Track your saving progress' };
+      case '/recurring': return { title: 'Cash Flow', subtitle: 'Subscriptions and recurring payments' };
+      case '/connect-bank': return { title: 'Connect Bank Account', subtitle: 'Link external accounts' };
+      case '/fixed-deposits': return { title: 'Fixed Deposits', subtitle: 'Manage term deposits' };
+      case '/loans': return { title: 'Loans & Debt', subtitle: 'Track your liabilities' };
+      case '/leases': return { title: 'Leases', subtitle: 'Vehicle and equipment leases' };
+      case '/pawning': return { title: 'Pawning', subtitle: 'Gold and item pawning' };
+      case '/notifications': return { title: 'Notifications', subtitle: 'Recent alerts and updates' };
+      case '/profile': return { title: 'Edit Profile', subtitle: 'Update your personal info' };
+      case '/settings': return { title: 'Settings', subtitle: 'App configuration' };
+      case '/admin': return { title: 'Admin Dashboard', subtitle: 'System overview' };
+      case '/admin/users': return { title: 'User Management', subtitle: 'Manage platform users' };
+      case '/admin/config': return { title: 'System Configuration', subtitle: 'Platform settings' };
+      case '/admin/audit': return { title: 'Audit Logs', subtitle: 'System activity history' };
+      case '/admin/reports': return { title: 'Reports & Analytics', subtitle: 'Platform metrics' };
+      default: return null;
+    }
+  };
+
+  const pageTitleInfo = getPageTitleInfo();
+
   const isOnAuthPage = AUTH_PAGES.includes(location.pathname);
   const isAuthenticated = !!token;
   const showLayout = isAuthenticated && !isOnAuthPage;
@@ -326,6 +356,37 @@ function AppShell() {
                 <span className="header-logo-text">MoneyManager</span>
               </div>
             </div>
+
+            {pageTitleInfo && (
+              <div className="header-center" style={{ flex: 1, display: 'flex', paddingLeft: '1.5rem', alignItems: 'center' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <h1 style={{ 
+                      fontSize: '1.25rem', 
+                      fontWeight: 800, 
+                      letterSpacing: '-0.02em',
+                      margin: 0, 
+                      background: 'linear-gradient(90deg, #0ea5e9, #6366f1)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                      lineHeight: 1.2
+                  }}>
+                    {pageTitleInfo.title}
+                  </h1>
+                  {pageTitleInfo.subtitle && (
+                    <p style={{ 
+                        fontSize: '0.8rem', 
+                        fontWeight: 500,
+                        margin: '2px 0 0 0', 
+                        color: 'var(--color-text-muted)',
+                        opacity: 0.8
+                    }}>
+                      {pageTitleInfo.subtitle}
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="header-actions">
               <div className="header-lang-row">
