@@ -20,103 +20,7 @@ interface Recommendation {
     createdAt: string;
 }
 
-const mockRecommendations: Recommendation[] = [
-    {
-        _id: '1',
-        category: 'subscription',
-        icon: '🎬',
-        title: 'Cancel Duplicate Streaming Services',
-        reason: 'You are subscribed to Netflix, Disney+ and Amazon Prime simultaneously. Your viewing data shows only Netflix is actively used.',
-        action: 'Cancel Disney+ and Amazon Prime subscriptions',
-        projectedImpact: 'Save LKR 3,200/month (LKR 38,400/year)',
-        executionPath: 'Go to Subscriptions → Cancel Disney+ and Amazon Prime',
-        status: 'pending',
-        savingsAmount: 3200,
-        priority: 'high',
-        createdAt: '2026-06-28'
-    },
-    {
-        _id: '2',
-        category: 'budget',
-        icon: '🍔',
-        title: 'Set Dining Budget Cap',
-        reason: 'Dining spend increased 42% vs last month (LKR 28,500 vs LKR 20,000 peer average for your income group).',
-        action: 'Create a monthly dining budget of LKR 20,000 with alert at 80%',
-        projectedImpact: 'Reduce dining overspend by LKR 8,500/month',
-        executionPath: 'Smart Budgets → Create Budget → Dining Category → Set LKR 20,000 cap',
-        status: 'pending',
-        savingsAmount: 8500,
-        priority: 'critical',
-        createdAt: '2026-06-27'
-    },
-    {
-        _id: '3',
-        category: 'debt',
-        icon: '💳',
-        title: 'Convert Credit Card Balance to IPP',
-        reason: 'Your credit card balance of LKR 85,000 is accruing 28% annual interest. Converting to IPP at 14% saves significantly.',
-        action: 'Apply for Instalment Payment Plan at 14% for 12 months',
-        projectedImpact: 'Save LKR 11,900 in interest over 12 months',
-        executionPath: 'Cards → Select Card → Convert to IPP → Apply',
-        status: 'pending',
-        savingsAmount: 11900,
-        priority: 'high',
-        createdAt: '2026-06-26'
-    },
-    {
-        _id: '4',
-        category: 'goal',
-        icon: '🏠',
-        title: 'Start Emergency Fund Goal',
-        reason: 'You currently have less than 1 month of expenses saved. Financial best practice is 3–6 months of expenses as emergency buffer.',
-        action: 'Set up automated transfer of LKR 10,000/month to a short-tenor FD',
-        projectedImpact: 'Build LKR 120,000 emergency fund in 12 months',
-        executionPath: 'Goals → New Goal → Emergency Fund → Enable auto-transfer',
-        status: 'accepted',
-        savingsAmount: 120000,
-        priority: 'high',
-        createdAt: '2026-06-20'
-    },
-    {
-        _id: '5',
-        category: 'alert',
-        icon: '⚠️',
-        title: 'Low Balance Warning — Set Alert',
-        reason: 'Based on your cash flow forecast, your account balance is predicted to drop below LKR 5,000 on July 15.',
-        action: 'Enable low balance push notification at LKR 10,000 threshold',
-        projectedImpact: 'Avoid overdraft fees and missed payments',
-        executionPath: 'Notifications → Add Alert → Balance Below LKR 10,000',
-        status: 'pending',
-        priority: 'critical',
-        createdAt: '2026-06-28'
-    },
-    {
-        _id: '6',
-        category: 'budget',
-        icon: '',
-        title: 'Reduce Shopping Category Spend',
-        reason: 'Shopping spend is 83% of budget with 8 days remaining this month. At current pace you will exceed budget.',
-        action: 'Pause non-essential shopping purchases for the rest of the month',
-        projectedImpact: 'Stay within LKR 20,000 monthly shopping budget',
-        executionPath: 'Smart Budgets → Shopping → View Transactions → Defer non-essential items',
-        status: 'snoozed',
-        priority: 'medium',
-        createdAt: '2026-06-25'
-    },
-    {
-        _id: '7',
-        category: 'goal',
-        icon: '✈️',
-        title: 'Allocate Surplus to Travel Fund',
-        reason: 'You have an estimated surplus of LKR 15,000 this month. Allocating it to your travel goal accelerates target by 2 months.',
-        action: 'Transfer LKR 15,000 surplus to Travel Fund savings goal',
-        projectedImpact: 'Reach travel goal 2 months earlier (by October instead of December)',
-        executionPath: 'Goals → Travel Fund → Add Funds → LKR 15,000',
-        status: 'declined',
-        priority: 'low',
-        createdAt: '2026-06-22'
-    }
-];
+// Mock recommendations removed. Data is now fetched exclusively from the backend.
 
 const categoryLabels: Record<string, string> = {
     budget: 'Budget', goal: 'Goal', debt: 'Debt', subscription: 'Subscription', alert: 'Alert'
@@ -232,9 +136,10 @@ export const RecommendationsPage = () => {
         const fetchRecommendations = async () => {
             try {
                 const response = await apiClient.get('/recommendations');
-                setRecommendations(response.data.recommendations || mockRecommendations);
-            } catch {
-                setRecommendations(mockRecommendations);
+                setRecommendations(response.data.recommendations || []);
+            } catch (error) {
+                console.error('Failed to fetch recommendations', error);
+                setRecommendations([]);
             } finally {
                 setLoading(false);
             }
@@ -242,10 +147,20 @@ export const RecommendationsPage = () => {
         fetchRecommendations();
     }, []);
 
-    const updateStatus = (id: string, newStatus: RecommendationStatus) => {
+    const updateStatus = async (id: string, newStatus: RecommendationStatus) => {
+        // Optimistic UI update
         setRecommendations(prev =>
             prev.map(r => r._id === id ? { ...r, status: newStatus } : r)
         );
+        
+        try {
+            await apiClient.patch(`/recommendations/${id}`, { status: newStatus });
+        } catch (error) {
+            console.error('Failed to update status', error);
+            // Revert on failure (simple reload for now)
+            const response = await apiClient.get('/recommendations');
+            setRecommendations(response.data.recommendations || []);
+        }
     };
 
     const handleAccept = (rec: Recommendation) => {
