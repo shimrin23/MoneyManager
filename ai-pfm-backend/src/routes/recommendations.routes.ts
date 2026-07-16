@@ -18,7 +18,7 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
         if (recs.length === 0) {
             const health = await healthService.getHealthReport(userId);
             const metrics = health.metrics;
-            const newRecs = [];
+            const newRecs: any[] = [];
 
             if (metrics.savingsRate < 0.1) {
                 newRecs.push({
@@ -77,7 +77,8 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
             }
 
             if (newRecs.length > 0) {
-                recs = await Recommendation.insertMany(newRecs);
+                await Recommendation.insertMany(newRecs);
+                recs = await Recommendation.find({ userId });
             }
         }
 
