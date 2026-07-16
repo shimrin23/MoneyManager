@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client.ts';
 import axios from 'axios';
-import { CashFlowForecast } from './CashFlowForecast';
 import { AIAssistant } from './AIAssistant';
 import { SpendingTrends } from './SpendingTrends';
 import { IconActivity, IconRefreshCw, IconRepeat, IconBrain } from './Icons';
