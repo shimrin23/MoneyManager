@@ -37,67 +37,9 @@ export const SmartBudgetsPage = () => {
             calculateTotals(response.data.budgets || []);
         } catch (error) {
             console.error('Failed to fetch budgets:', error);
-            // Mock data for demo
-            const mockBudgets: Budget[] = [
-                {
-                    _id: '1',
-                    category: 'Food & Dining',
-                    allocatedAmount: 25000,
-                    spentAmount: 28500,
-                    remainingAmount: -3500,
-                    percentageUsed: 114,
-                    aiRecommendation: 'Reduce restaurant visits by 2 times/week to get back on track',
-                    isOverBudget: true,
-                    trends: { lastMonth: 22000, change: 29.5 }
-                },
-                {
-                    _id: '2',
-                    category: 'Entertainment',
-                    allocatedAmount: 15000,
-                    spentAmount: 42800,
-                    remainingAmount: -27800,
-                    percentageUsed: 285,
-                    aiRecommendation: 'CRITICAL: Entertainment spending is 185% over budget. Cancel non-essential subscriptions immediately',
-                    isOverBudget: true,
-                    trends: { lastMonth: 18000, change: 137.8 }
-                },
-                {
-                    _id: '3',
-                    category: 'Transportation',
-                    allocatedAmount: 12000,
-                    spentAmount: 9800,
-                    remainingAmount: 2200,
-                    percentageUsed: 82,
-                    aiRecommendation: 'Good control! Consider carpooling to save more',
-                    isOverBudget: false,
-                    trends: { lastMonth: 11500, change: -14.8 }
-                },
-                {
-                    _id: '4',
-                    category: 'Shopping',
-                    allocatedAmount: 20000,
-                    spentAmount: 16500,
-                    remainingAmount: 3500,
-                    percentageUsed: 83,
-                    aiRecommendation: 'On track. Review purchases before month-end',
-                    isOverBudget: false,
-                    trends: { lastMonth: 24000, change: -31.3 }
-                },
-                {
-                    _id: '5',
-                    category: 'Utilities',
-                    allocatedAmount: 8000,
-                    spentAmount: 7200,
-                    remainingAmount: 800,
-                    percentageUsed: 90,
-                    aiRecommendation: 'Consistent spending. Consider energy-saving tips',
-                    isOverBudget: false,
-                    trends: { lastMonth: 7800, change: -7.7 }
-                }
-            ];
-            setBudgets(mockBudgets);
-            setTotalIncome(150000);
-            calculateTotals(mockBudgets);
+            setBudgets([]);
+            setTotalIncome(0);
+            calculateTotals([]);
         } finally {
             setLoading(false);
         }
