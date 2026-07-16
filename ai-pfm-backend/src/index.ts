@@ -13,6 +13,8 @@ import adminConfigRoutes from "./routes/admin-config.routes";
 import chatCoachRoutes from "./routes/chatCoach.routes";
 import recommendationsRoutes from "./routes/recommendations.routes";
 import budgetsRoutes from "./routes/budgets.routes";
+import analyticsRoutes from "./routes/analytics.routes";
+import fixedDepositsRoutes from "./routes/fixedDeposits.routes";
 import errorHandler from "./middlewares/errorHandler";
 import { authenticateToken } from "./middlewares/authMiddleware";
 
@@ -34,6 +36,8 @@ app.use("/api/consent", consentRoutes); // Consent Management Routes (Phase 1)
 app.use("/api/admin/config", adminConfigRoutes); // Admin Configuration Routes (Phase 1)
 app.use("/api/recommendations", authenticateToken, recommendationsRoutes); // AI Recommendations
 app.use("/api/budgets", authenticateToken, budgetsRoutes); // Smart Budgets
+app.use("/api/analytics", authenticateToken, analyticsRoutes); // Analytics
+app.use("/api/fixed-deposits", authenticateToken, fixedDepositsRoutes); // Fixed Deposits
 app.use("/api", authenticateToken, userRoutes); // User management routes (protected)
 
 // Global Error Handler (Must be after routes)

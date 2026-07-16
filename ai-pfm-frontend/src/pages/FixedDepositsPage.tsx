@@ -18,57 +18,6 @@ interface FixedDeposit {
     bank: string;
 }
 
-const mockFDs: FixedDeposit[] = [
-    {
-        _id: '1',
-        accountNumber: 'FD-****-8821',
-        principalAmount: 500000,
-        interestRate: 12.5,
-        tenure: 12,
-        tenureUnit: 'months',
-        startDate: '2026-01-10',
-        maturityDate: '2027-01-10',
-        maturityAmount: 562500,
-        interestEarned: 31250,
-        type: 'Standard',
-        status: 'active',
-        autoRenewal: true,
-        bank: 'Commercial Bank'
-    },
-    {
-        _id: '2',
-        accountNumber: 'FD-****-3345',
-        principalAmount: 200000,
-        interestRate: 11.0,
-        tenure: 6,
-        tenureUnit: 'months',
-        startDate: '2026-03-15',
-        maturityDate: '2026-09-15',
-        maturityAmount: 211000,
-        interestEarned: 5500,
-        type: 'Goal-Linked',
-        status: 'active',
-        autoRenewal: false,
-        bank: 'HNB'
-    },
-    {
-        _id: '3',
-        accountNumber: 'FD-****-6612',
-        principalAmount: 150000,
-        interestRate: 13.0,
-        tenure: 24,
-        tenureUnit: 'months',
-        startDate: '2024-06-01',
-        maturityDate: '2026-06-01',
-        maturityAmount: 171500,
-        interestEarned: 21500,
-        type: 'Tax Saver',
-        status: 'matured',
-        autoRenewal: false,
-        bank: 'Sampath Bank'
-    }
-];
-
 const getDaysUntilMaturity = (dateStr: string) => {
     const diff = new Date(dateStr).getTime() - new Date().getTime();
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
@@ -85,27 +34,35 @@ export const FixedDepositsPage = () => {
     const [fds, setFDs] = useState<FixedDeposit[]>([]);
     const [loading, setLoading] = useState(true);
     const [showNewFDForm, setShowNewFDForm] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [newFD, setNewFD] = useState({
         principalAmount: '',
         interestRate: '',
         tenure: '',
         tenureUnit: 'months' as 'months' | 'years',
         type: 'Standard' as FixedDeposit['type'],
+        bank: '',
         autoRenewal: false
     });
 
+    const fetchFDs = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const res = await apiClient.get('/fixed-deposits');
+            setFDs(res.data.fixedDeposits || []);
+        } catch (err) {
+            console.error('Failed to fetch fixed deposits:', err);
+            setError('Unable to load fixed deposits. Please try again.');
+            setFDs([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetch = async () => {
-            try {
-                const res = await apiClient.get('/fixed-deposits');
-                setFDs(res.data.fixedDeposits || mockFDs);
-            } catch {
-                setFDs(mockFDs);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetch();
+        fetchFDs();
     }, []);
 
     const activeFDs = fds.filter(f => f.status === 'active');
@@ -113,35 +70,47 @@ export const FixedDepositsPage = () => {
     const totalMaturityValue = activeFDs.reduce((s, f) => s + f.maturityAmount, 0);
     const maturitySoon = activeFDs.filter(f => getDaysUntilMaturity(f.maturityDate) <= 90).length;
 
-    const handleNewFDSubmit = (e: React.FormEvent) => {
+    const handleNewFDSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const principal = Number(newFD.principalAmount);
-        const rate = Number(newFD.interestRate);
-        const tenureMonths = newFD.tenureUnit === 'years' ? Number(newFD.tenure) * 12 : Number(newFD.tenure);
-        const interestEarned = (principal * rate * tenureMonths) / (100 * 12);
-        const startDate = new Date().toISOString().split('T')[0];
-        const maturityDate = new Date();
-        maturityDate.setMonth(maturityDate.getMonth() + tenureMonths);
+        setSubmitting(true);
+        try {
+            await apiClient.post('/fixed-deposits', {
+                principalAmount: Number(newFD.principalAmount),
+                interestRate: Number(newFD.interestRate),
+                tenure: Number(newFD.tenure),
+                tenureUnit: newFD.tenureUnit,
+                type: newFD.type,
+                bank: newFD.bank || 'Your Bank',
+                autoRenewal: newFD.autoRenewal
+            });
+            setNewFD({ principalAmount: '', interestRate: '', tenure: '', tenureUnit: 'months', type: 'Standard', bank: '', autoRenewal: false });
+            setShowNewFDForm(false);
+            await fetchFDs();
+        } catch (err) {
+            console.error('Failed to create FD:', err);
+            alert('Failed to create fixed deposit. Please try again.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
-        const created: FixedDeposit = {
-            _id: Date.now().toString(),
-            accountNumber: `FD-****-${Math.floor(1000 + Math.random() * 9000)}`,
-            principalAmount: principal,
-            interestRate: rate,
-            tenure: Number(newFD.tenure),
-            tenureUnit: newFD.tenureUnit,
-            startDate,
-            maturityDate: maturityDate.toISOString().split('T')[0],
-            maturityAmount: principal + interestEarned,
-            interestEarned,
-            type: newFD.type,
-            status: 'active',
-            autoRenewal: newFD.autoRenewal,
-            bank: 'Your Bank'
-        };
-        setFDs(prev => [created, ...prev]);
-        setShowNewFDForm(false);
-        setNewFD({ principalAmount: '', interestRate: '', tenure: '', tenureUnit: 'months', type: 'Standard', autoRenewal: false });
+    const handleUpdateStatus = async (id: string, status: FixedDeposit['status']) => {
+        try {
+            await apiClient.put(`/fixed-deposits/${id}`, { status });
+            await fetchFDs();
+        } catch (err) {
+            console.error('Failed to update FD:', err);
+        }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!window.confirm('Are you sure you want to delete this fixed deposit?')) return;
+        try {
+            await apiClient.delete(`/fixed-deposits/${id}`);
+            setFDs(prev => prev.filter(f => f._id !== id));
+        } catch (err) {
+            console.error('Failed to delete FD:', err);
+        }
     };
 
     if (loading) return <div className="loading-spinner">Loading fixed deposits...</div>;
@@ -154,6 +123,12 @@ export const FixedDepositsPage = () => {
                     + Open New FD
                 </button>
             </div>
+
+            {error && (
+                <div className="rec-alert-banner" style={{ marginBottom: '1.5rem', background: 'rgba(239,68,68,0.15)', borderColor: '#ef4444' }}>
+                    {error}
+                </div>
+            )}
 
             {/* Summary */}
             <div className="rec-summary-grid">
@@ -193,6 +168,15 @@ export const FixedDepositsPage = () => {
                     <h3 className="section-title">Open New Fixed Deposit</h3>
                     <form onSubmit={handleNewFDSubmit} className="fd-form">
                         <div className="fd-form-grid">
+                            <div className="form-group">
+                                <label>Bank Name</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. Commercial Bank"
+                                    value={newFD.bank}
+                                    onChange={e => setNewFD({ ...newFD, bank: e.target.value })}
+                                />
+                            </div>
                             <div className="form-group">
                                 <label>Principal Amount (LKR)</label>
                                 <input
@@ -254,10 +238,24 @@ export const FixedDepositsPage = () => {
                             </label>
                         </div>
                         <div className="fd-form-actions">
-                            <button type="submit" className="action-btn primary">Open FD</button>
+                            <button type="submit" className="action-btn primary" disabled={submitting}>
+                                {submitting ? 'Opening...' : 'Open FD'}
+                            </button>
                             <button type="button" className="action-btn secondary" onClick={() => setShowNewFDForm(false)}>Cancel</button>
                         </div>
                     </form>
+                </div>
+            )}
+
+            {/* Empty State */}
+            {fds.length === 0 && !showNewFDForm && (
+                <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏦</div>
+                    <h3 style={{ marginBottom: '0.5rem' }}>No Fixed Deposits Yet</h3>
+                    <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+                        Open your first fixed deposit to start earning guaranteed returns.
+                    </p>
+                    <button className="action-btn primary" onClick={() => setShowNewFDForm(true)}>+ Open New FD</button>
                 </div>
             )}
 
@@ -282,7 +280,7 @@ export const FixedDepositsPage = () => {
                                     </div>
                                     <div className="fd-badges">
                                         <span className="fd-type-badge">{fd.type}</span>
-                                        <span className="fd-status-badge" style={{ color: fd.status === 'active' ? '#10b981' : '#f59e0b' }}>
+                                        <span className="fd-status-badge" style={{ color: fd.status === 'active' ? '#10b981' : fd.status === 'matured' ? '#6366f1' : '#ef4444' }}>
                                             {fd.status === 'active' ? 'Active' : fd.status === 'matured' ? 'Matured' : 'Closed'}
                                         </span>
                                     </div>
@@ -306,18 +304,18 @@ export const FixedDepositsPage = () => {
                                 </div>
 
                                 <div className="fd-details-row">
-                                    <span>📊 {fd.interestRate}% p.a.</span>
-                                    <span>📅 {fd.tenure} {fd.tenureUnit}</span>
-                                    <span>🔄 {fd.autoRenewal ? 'Auto-Renew On' : 'No Auto-Renew'}</span>
-                                    <span style={{ color: matStatus.color }}>⏱ {matStatus.label}</span>
+                                    <span>{fd.interestRate}% p.a.</span>
+                                    <span>{fd.tenure} {fd.tenureUnit}</span>
+                                    <span>{fd.autoRenewal ? 'Auto-Renew On' : 'No Auto-Renew'}</span>
+                                    <span style={{ color: matStatus.color }}>{matStatus.label}</span>
                                 </div>
 
                                 {fd.status === 'active' && (
                                     <div className="fd-progress-wrap">
                                         <div className="fd-progress-labels">
-                                            <span>{fd.startDate}</span>
+                                            <span>{new Date(fd.startDate).toLocaleDateString()}</span>
                                             <span>{Math.round(progress)}% elapsed</span>
-                                            <span>{fd.maturityDate}</span>
+                                            <span>{new Date(fd.maturityDate).toLocaleDateString()}</span>
                                         </div>
                                         <div className="fd-progress-bar">
                                             <div className="fd-progress-fill" style={{ width: `${progress}%` }} />
@@ -329,17 +327,28 @@ export const FixedDepositsPage = () => {
                             <div className="fd-card-actions">
                                 {fd.status === 'active' && (
                                     <>
-                                        <button className="action-btn secondary small">📄 e-Advice</button>
-                                        <button className="action-btn secondary small">🔁 Renew</button>
-                                        <button className="action-btn danger small">💸 Withdraw Early</button>
+                                        <button className="action-btn danger small" onClick={() => handleUpdateStatus(fd._id, 'prematurely-closed')}>
+                                            Withdraw Early
+                                        </button>
+                                        <button className="action-btn secondary small" onClick={() => handleDelete(fd._id)}>
+                                            Delete
+                                        </button>
                                     </>
                                 )}
                                 {fd.status === 'matured' && (
                                     <>
-                                        <button className="action-btn primary small">🔁 Renew FD</button>
-                                        <button className="action-btn secondary small">📄 Certificate</button>
-                                        <button className="action-btn secondary small">💳 Transfer to Account</button>
+                                        <button className="action-btn primary small" onClick={() => handleUpdateStatus(fd._id, 'active')}>
+                                            Renew FD
+                                        </button>
+                                        <button className="action-btn secondary small" onClick={() => handleDelete(fd._id)}>
+                                            Delete
+                                        </button>
                                     </>
+                                )}
+                                {fd.status === 'prematurely-closed' && (
+                                    <button className="action-btn secondary small" onClick={() => handleDelete(fd._id)}>
+                                        Remove
+                                    </button>
                                 )}
                             </div>
                         </div>

@@ -195,4 +195,71 @@ router.get('/upcoming', async (req: AuthRequest, res: Response) => {
     }
 });
 
+// POST /api/subscriptions/detect - Detect recurring patterns in transactions
+router.post('/detect', async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: 'User not authenticated' });
+        }
+
+        const detectedCount = await subscriptionsService.detectRecurring(userId);
+        
+        res.json({ 
+            message: 'Scan complete',
+            detectedCount 
+        });
+    } catch (error) {
+        console.error('Error detecting recurring subscriptions:', error);
+        res.status(500).json({ error: 'Failed to detect recurring subscriptions' });
+    }
+});
+
+// POST /api/subscriptions/:id/pay - Log payment as a real transaction and advance next due date
+router.post('/:id/pay', async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: 'User not authenticated' });
+        }
+
+        const { id } = req.params;
+
+        // Get the subscription
+        const sub = await subscriptionsService.findById(id);
+        if (!sub || sub.userId !== userId) {
+            return res.status(404).json({ error: 'Subscription not found' });
+        }
+
+        // Create a real transaction from this subscription payment
+        const Transaction = (await import('../schemas/transaction.schema')).default;
+        await Transaction.create({
+            userId,
+            amount: sub.amount,
+            category: sub.category,
+            description: `${sub.name} - recurring payment`,
+            merchantName: sub.provider,
+            normalizedMerchant: sub.provider,
+            type: 'expense',
+            date: new Date(),
+            isRecurring: true,
+            recurringFrequency: sub.frequency,
+        });
+
+        // Advance the subscription's next payment date by 1 month and update lastUsed
+        const nextPayment = new Date(sub.nextPayment);
+        nextPayment.setMonth(nextPayment.getMonth() + 1);
+        await subscriptionsService.update(id, {
+            lastUsed: new Date(),
+            nextPayment,
+            isZombie: false
+        });
+
+        res.json({ message: 'Payment logged successfully', nextPayment });
+    } catch (error) {
+        console.error('Error logging subscription payment:', error);
+        res.status(500).json({ error: 'Failed to log payment' });
+    }
+});
+
 export default router;

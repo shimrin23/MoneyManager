@@ -118,4 +118,68 @@ router.get('/smart', authenticateToken, async (req: AuthRequest, res: Response) 
     }
 });
 
+// UPDATE a budget manually
+router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        const budgetId = req.params.id;
+        const { allocatedAmount } = req.body;
+
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+        if (typeof allocatedAmount !== 'number' || allocatedAmount < 0) {
+            return res.status(400).json({ error: 'Invalid allocated amount' });
+        }
+
+        const updatedBudget = await Budget.findOneAndUpdate(
+            { _id: budgetId, userId },
+            { allocatedAmount },
+            { new: true }
+        );
+
+        if (!updatedBudget) {
+            return res.status(404).json({ error: 'Budget not found' });
+        }
+
+        res.json({ message: 'Budget updated successfully', budget: updatedBudget });
+    } catch (error) {
+        console.error('Error updating budget:', error);
+        res.status(500).json({ error: 'Failed to update budget' });
+    }
+});
+
+// CREATE a new budget category manually
+router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        const { category, allocatedAmount } = req.body;
+
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+        if (!category || typeof category !== 'string') {
+            return res.status(400).json({ error: 'Valid category name is required' });
+        }
+        if (typeof allocatedAmount !== 'number' || allocatedAmount < 0) {
+            return res.status(400).json({ error: 'Invalid allocated amount' });
+        }
+
+        // Check if budget for this category already exists
+        const existingBudget = await Budget.findOne({ userId, category });
+        if (existingBudget) {
+            return res.status(400).json({ error: `Budget for ${category} already exists` });
+        }
+
+        const newBudget = new Budget({
+            userId,
+            category,
+            allocatedAmount
+        });
+
+        await newBudget.save();
+
+        res.status(201).json({ message: 'Budget created successfully', budget: newBudget });
+    } catch (error) {
+        console.error('Error creating budget:', error);
+        res.status(500).json({ error: 'Failed to create budget' });
+    }
+});
+
 export default router;
