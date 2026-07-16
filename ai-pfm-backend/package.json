@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
-    "dev": "ts-node src/server.ts",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "seed:admin-config": "ts-node src/scripts/seed-admin-config.ts",
     "seed:users": "ts-node src/scripts/seed-users.ts",
     "test": "jest --runInBand"
@@ -39,6 +39,7 @@
     "prettier": "^2.2.1",
     "ts-jest": "^29.4.5",
     "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
     "typescript": "^5.4.5"
   },
   "keywords": [
