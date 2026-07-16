@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
 
 export const BarChart = ({ data }: { data: { category: string; value: number }[] }) => {
@@ -50,6 +51,7 @@ export const PieChart = ({ data }: { data: { category: string; value: number }[]
 };
 
 export const SpendingTrends = () => {
+    const navigate = useNavigate();
     const [chartData, setChartData] = useState<{ category: string; value: number }[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -86,7 +88,20 @@ export const SpendingTrends = () => {
     if (loading) return null;
 
     return (
-        <div className="card" style={{ padding: '1.75rem', height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div 
+            className="card" 
+            style={{ 
+                padding: '1.75rem', 
+                height: '100%', 
+                display: 'flex', 
+                flexDirection: 'column',
+                cursor: 'pointer',
+                transition: 'transform 0.2s',
+                ...({ '&:hover': { transform: 'scale(1.02)' } } as any)
+            }}
+            onClick={() => navigate('/smart-budgets')}
+            title="View smart budgets"
+        >
             <h3 className="section-title">Spending Trends</h3>
             <div className="charts-grid">
                 <BarChart data={chartData} />

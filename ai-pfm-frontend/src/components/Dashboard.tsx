@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client.ts';
 import axios from 'axios';
 import { CashFlowForecast } from './CashFlowForecast';
@@ -7,8 +8,10 @@ import { SpendingTrends } from './SpendingTrends';
 import { IconActivity, IconRefreshCw, IconRepeat, IconBrain } from './Icons';
 
 export const Dashboard = () => {
+    const navigate = useNavigate();
     const [aiOpen, setAiOpen] = useState(false);
     const [score, setScore] = useState<number>(0);
+    const [savingsRate, setSavingsRate] = useState<number | null>(null);
     const [loadingScore, setLoadingScore] = useState<boolean>(true);
     const [transactions, setTransactions] = useState<any[]>([]);
     const [loadingTransactions, setLoadingTransactions] = useState<boolean>(true);
@@ -53,6 +56,9 @@ export const Dashboard = () => {
             try {
                 const response = await apiClient.get('/transactions/score');
                 setScore(response.data.score);
+                if (response.data.metrics && typeof response.data.metrics.savingsRate === 'number') {
+                    setSavingsRate(response.data.metrics.savingsRate);
+                }
             } catch {
                 console.error('Failed to fetch score');
             } finally {
@@ -228,7 +234,12 @@ export const Dashboard = () => {
                     </div>
 
                     {/* Stats row */}
-                    <div className="score-stats-grid" style={{ marginTop: 'auto' }}>
+                    <div 
+                        className="score-stats-grid" 
+                        style={{ marginTop: 'auto', cursor: 'pointer', transition: 'transform 0.2s', ...({ '&:hover': { transform: 'scale(1.02)' } } as any) }}
+                        onClick={() => navigate('/financial-health')}
+                        title="View detailed financial health"
+                    >
                         <div className="score-stat-item">
                             <span className="score-stat-value" style={{ color: scoreColor }}>
                                 {loadingScore ? '—' : `${score}%`}
@@ -236,7 +247,9 @@ export const Dashboard = () => {
                             <span className="score-stat-label">Score</span>
                         </div>
                         <div className="score-stat-item">
-                            <span className="score-stat-value">—</span>
+                            <span className="score-stat-value" style={{ color: savingsRate !== null && savingsRate >= 0 ? '#10b981' : '#f43f5e' }}>
+                                {loadingScore ? '—' : savingsRate !== null ? `${Math.round(savingsRate * 100)}%` : '0%'}
+                            </span>
                             <span className="score-stat-label">Savings</span>
                         </div>
                         <div className="score-stat-item">
