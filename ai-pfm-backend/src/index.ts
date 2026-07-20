@@ -15,6 +15,8 @@ import recommendationsRoutes from "./routes/recommendations.routes";
 import budgetsRoutes from "./routes/budgets.routes";
 import analyticsRoutes from "./routes/analytics.routes";
 import fixedDepositsRoutes from "./routes/fixedDeposits.routes";
+import leasesRoutes from "./routes/leases.routes";
+import pawningRoutes from "./routes/pawning.routes";
 import errorHandler from "./middlewares/errorHandler";
 import { authenticateToken } from "./middlewares/authMiddleware";
 
@@ -38,6 +40,8 @@ app.use("/api/recommendations", authenticateToken, recommendationsRoutes); // AI
 app.use("/api/budgets", authenticateToken, budgetsRoutes); // Smart Budgets
 app.use("/api/analytics", authenticateToken, analyticsRoutes); // Analytics
 app.use("/api/fixed-deposits", authenticateToken, fixedDepositsRoutes); // Fixed Deposits
+app.use("/api/leases", authenticateToken, leasesRoutes); // Leases
+app.use("/api/pawning", authenticateToken, pawningRoutes); // Pawning
 app.use("/api", authenticateToken, userRoutes); // User management routes (protected)
 
 // Global Error Handler (Must be after routes)

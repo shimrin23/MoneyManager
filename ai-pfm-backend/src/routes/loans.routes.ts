@@ -120,7 +120,7 @@ router.get('/ai-insights', async (req: Request, res: Response) => {
         const user = await User.findById(userId);
         const monthlyIncome = user?.monthlyIncome || 50000;
 
-        const insights = LoanService.generateLoanInsights(loans, monthlyIncome);
+        const insights = await LoanService.generateLoanInsights(loans, monthlyIncome);
 
         res.json({ insights });
     } catch (error) {

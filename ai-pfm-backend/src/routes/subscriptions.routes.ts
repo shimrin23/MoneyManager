@@ -262,4 +262,52 @@ router.post('/:id/pay', async (req: AuthRequest, res: Response) => {
     }
 });
 
+// GET /api/subscriptions/ai-insights - Generate AI insights for all subscriptions
+router.get('/ai-insights', async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: 'User not authenticated' });
+        }
+        
+        const subscriptions = await subscriptionsService.getAll(userId);
+        if (subscriptions.length === 0) {
+            return res.json({ insights: {} });
+        }
+
+        const geminiService = (await import('../ai/geminiService')).default;
+        
+        const prompt = `Analyze these subscriptions for a user:
+${JSON.stringify(subscriptions, null, 2)}
+
+For each subscription, provide a brief financial insight (max 1 sentence) and 1-2 real-world cheaper alternatives if applicable (in Sri Lankan Rupees LKR). 
+Return exactly in this JSON format:
+{
+  "insights": {
+    "subscription_id_here": {
+      "insight": "Your insight string here.",
+      "alternatives": [
+        { "name": "Alternative Name", "price": 0, "savings": 100, "provider": "Provider Name" }
+      ]
+    }
+  }
+}
+Do not include markdown blocks like \`\`\`json, just return the raw JSON object. Use the exact _id values from the input for the keys.`;
+
+        const responseString = await geminiService.generateContent(prompt);
+        let parsed;
+        try {
+            parsed = JSON.parse(responseString.replace(/```json/g, '').replace(/```/g, '').trim());
+        } catch (parseError) {
+            console.error("Failed to parse Gemini response:", responseString);
+            return res.status(500).json({ error: 'Failed to parse AI response' });
+        }
+        
+        res.json(parsed);
+    } catch (error) {
+        console.error('Error generating subscription insights:', error);
+        res.status(500).json({ error: 'Failed to generate insights' });
+    }
+});
+
 export default router;

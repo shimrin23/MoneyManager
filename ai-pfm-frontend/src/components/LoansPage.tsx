@@ -128,15 +128,15 @@ const LoansPage: FC = () => {
 
             {error && <div className="error-box">{error}</div>}
 
-            <div className="tabs-navigation">
+            <div className="rec-filter-row">
                 <button
-                    className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
+                    className={`rec-filter-btn ${activeTab === 'overview' ? 'active' : ''}`}
                     onClick={() => setActiveTab('overview')}
                 >
                     Overview
                 </button>
                 <button
-                    className={`tab-btn ${activeTab === 'calculator' ? 'active' : ''}`}
+                    className={`rec-filter-btn ${activeTab === 'calculator' ? 'active' : ''}`}
                     onClick={() => setActiveTab('calculator')}
                 >
                     Calculator
@@ -144,31 +144,31 @@ const LoansPage: FC = () => {
                 {loans.length > 0 && (
                     <>
                         <button
-                            className={`tab-btn ${activeTab === 'schedule' ? 'active' : ''}`}
+                            className={`rec-filter-btn ${activeTab === 'schedule' ? 'active' : ''}`}
                             onClick={() => setActiveTab('schedule')}
                         >
                             Schedule
                         </button>
                         <button
-                            className={`tab-btn ${activeTab === 'strategies' ? 'active' : ''}`}
+                            className={`rec-filter-btn ${activeTab === 'strategies' ? 'active' : ''}`}
                             onClick={() => setActiveTab('strategies')}
                         >
                             Strategies
                         </button>
                         <button
-                            className={`tab-btn ${activeTab === 'simulation' ? 'active' : ''}`}
+                            className={`rec-filter-btn ${activeTab === 'simulation' ? 'active' : ''}`}
                             onClick={() => setActiveTab('simulation')}
                         >
                             Simulation
                         </button>
                         <button
-                            className={`tab-btn ${activeTab === 'insights' ? 'active' : ''}`}
+                            className={`rec-filter-btn ${activeTab === 'insights' ? 'active' : ''}`}
                             onClick={() => setActiveTab('insights')}
                         >
                             Insights
                         </button>
                         <button
-                            className={`tab-btn ${activeTab === 'ratio' ? 'active' : ''}`}
+                            className={`rec-filter-btn ${activeTab === 'ratio' ? 'active' : ''}`}
                             onClick={() => setActiveTab('ratio')}
                         >
                             Debt-to-Income

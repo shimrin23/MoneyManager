@@ -33,7 +33,7 @@ export class FinancialAgent {
         const genAI = new GoogleGenerativeAI(apiKey);
 
         // 2. Use the specific model you confirmed works
-        this.model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+        this.model = genAI.getGenerativeModel({ model: process.env.GEMINI_MODEL || "gemini-3.1-flash-lite" });
 
         // 3. Initialize the Analytics Service
         this.analyticsService = new AnalyticsService();
@@ -152,7 +152,7 @@ confidence is a number between 0.0 and 1.0 representing how certain you are.`;
      */
     private async callLLM(prompt: string): Promise<string> {
         try {
-            console.log("AI Agent is connecting to Gemini (gemini-2.5-flash)...");
+            console.log(`AI Agent is connecting to Gemini (${process.env.GEMINI_MODEL || "gemini-3.1-flash-lite"})...`);
 
             const result = await this.model.generateContent(prompt);
             const response = await result.response;

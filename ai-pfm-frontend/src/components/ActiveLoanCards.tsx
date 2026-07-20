@@ -50,22 +50,18 @@ const ActiveLoanCards: FC<ActiveLoanCardsProps> = ({
                                 <h3>{loan.type} Loan</h3>
                                 <span className="provider">{loan.provider}</span>
                             </div>
-                            <div className="header-actions">
+                            <div className="header-actions" style={{ display: 'flex', gap: '0.5rem' }}>
                                 <button
                                     onClick={() => onEdit?.(loan._id)}
-                                    className="btn-header-icon"
-                                    aria-label="Edit loan"
-                                    title="Edit"
+                                    className="action-btn secondary small"
                                 >
-                                    ✏️
+                                    Edit
                                 </button>
                                 <button
                                     onClick={() => onDelete?.(loan._id)}
-                                    className="btn-header-icon btn-danger"
-                                    aria-label="Delete loan"
-                                    title="Delete"
+                                    className="action-btn danger small"
                                 >
-                                    🗑️
+                                    Delete
                                 </button>
                             </div>
                         </div>
@@ -96,22 +92,25 @@ const ActiveLoanCards: FC<ActiveLoanCardsProps> = ({
                             </div>
                         </div>
 
-                        <div className="card-actions">
+                        <div className="card-actions" style={{ display: 'flex', gap: '0.5rem', marginTop: '1.25rem' }}>
                             <button
                                 onClick={() => onViewSchedule?.(loan._id)}
-                                className="btn-small btn-secondary"
+                                className="action-btn secondary small"
+                                style={{ flex: 1 }}
                             >
                                 View Schedule
                             </button>
                             <button
                                 onClick={() => onRecalculate?.(loan._id)}
-                                className="btn-small btn-secondary"
+                                className="action-btn secondary small"
+                                style={{ flex: 1 }}
                             >
                                 Recalculate
                             </button>
                             <button
                                 onClick={() => onMakePayment?.(loan._id)}
-                                className="btn-small btn-primary"
+                                className="action-btn primary small"
+                                style={{ flex: 1 }}
                             >
                                 Pay EMI
                             </button>

@@ -84,17 +84,6 @@ router.get('/smart', authenticateToken, async (req: AuthRequest, res: Response) 
                 change = ((spentAmount - lastMonth) / lastMonth) * 100;
             }
 
-            let aiRecommendation = '';
-            if (percentageUsed > 100) {
-                aiRecommendation = `CRITICAL: ${budget.category} spending is ${Math.round(percentageUsed - 100)}% over budget. Immediate adjustment needed.`;
-            } else if (percentageUsed > 80) {
-                aiRecommendation = `Warning: Approaching limit for ${budget.category}. Only ${remainingAmount.toLocaleString()} left.`;
-            } else if (percentageUsed > 50) {
-                aiRecommendation = `On track. Keep monitoring your ${budget.category} expenses.`;
-            } else {
-                aiRecommendation = `Excellent control! Consider transferring excess to savings at month-end.`;
-            }
-
             smartBudgets.push({
                 _id: budget._id,
                 category: budget.category,
@@ -102,13 +91,39 @@ router.get('/smart', authenticateToken, async (req: AuthRequest, res: Response) 
                 spentAmount,
                 remainingAmount,
                 percentageUsed: Math.round(percentageUsed),
-                aiRecommendation,
+                aiRecommendation: "", // Will be filled by Gemini below
                 isOverBudget,
                 trends: {
                     lastMonth,
                     change: Math.round(change * 10) / 10
                 }
             });
+        }
+
+        // 6. Generate real AI Recommendations via Gemini
+        const geminiService = (await import('../ai/geminiService')).default;
+        let aiRecommendations: Record<string, string> = {};
+        
+        if (smartBudgets.length > 0) {
+            try {
+                const prompt = `Analyze this budget data for a user:\n${JSON.stringify(smartBudgets.map(b => ({
+                    category: b.category,
+                    allocated: b.allocatedAmount,
+                    spent: b.spentAmount,
+                    percentageUsed: b.percentageUsed,
+                    trendChange: b.trends.change
+                })), null, 2)}\n\nFor each category, provide a concise, personalized 1-sentence financial recommendation. Do not use generic text. Return exactly a JSON object where keys are the category names and values are the string recommendations.\nExample: { "Food": "Since your food spending is up 10%, consider cooking at home this weekend." }`;
+                
+                const responseString = await geminiService.generateContent(prompt);
+                aiRecommendations = JSON.parse(responseString.replace(/```json/g, '').replace(/```/g, '').trim());
+            } catch (err) {
+                console.error("AI budget generation failed:", err);
+            }
+        }
+
+        // Merge AI recommendations back into the response
+        for (const budget of smartBudgets) {
+            budget.aiRecommendation = aiRecommendations[budget.category] || "AI analysis is currently unavailable for this category.";
         }
 
         res.json({ budgets: smartBudgets, income: totalIncome });

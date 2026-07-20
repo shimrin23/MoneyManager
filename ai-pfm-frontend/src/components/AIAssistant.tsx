@@ -135,7 +135,7 @@ export const AIAssistant = ({ open = false, onOpenChange }: AIAssistantProps) =>
                             <div className="ai-modal-actions">
                                 {messages.length > 0 && (
                                     <button 
-                                        className="ai-icon-btn" 
+                                        className="modal-close" 
                                         onClick={clearChat}
                                         title="Clear conversation"
                                     >

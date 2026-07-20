@@ -47,9 +47,11 @@ export const SubscriptionsPage = () => {
         isActive: true,
         isZombie: false
     });
+    const [insightsMap, setInsightsMap] = useState<Record<string, { insight: string; alternatives: CheaperAlternative[] }>>({});
 
     useEffect(() => {
         fetchSubscriptions();
+        fetchAIInsights();
         generateTrends();
         // Fetch monthly income from user stats
         fetchUserStats();
@@ -77,6 +79,17 @@ export const SubscriptionsPage = () => {
             setMonthlyIncome(response.data.monthlyIncome || 100000);
         } catch (error) {
             console.error('Failed to fetch user stats:', error);
+        }
+    };
+
+    const fetchAIInsights = async () => {
+        try {
+            const response = await apiClient.get('/subscriptions/ai-insights');
+            if (response.data && response.data.insights) {
+                setInsightsMap(response.data.insights);
+            }
+        } catch (error) {
+            console.error('Failed to fetch AI insights:', error);
         }
     };
 
@@ -117,36 +130,7 @@ export const SubscriptionsPage = () => {
         return { status: 'Unknown', icon: '', label: 'No usage data' };
     };
 
-    // Feature 3 & 4: AI Insights and Alternatives
-    const getAIInsight = (subscription: Subscription): { insight: string; alternatives: CheaperAlternative[] } => {
-        const alternatives: { [key: string]: CheaperAlternative[] } = {
-            'Cloud Storage': [
-                { name: 'OneDrive Basic', price: 350, savings: Math.max(0, subscription.amount - 350), provider: 'Microsoft' },
-                { name: 'Google Drive', price: 400, savings: Math.max(0, subscription.amount - 400), provider: 'Google' }
-            ],
-            'Entertainment': [
-                { name: 'Netflix Basic', price: 499, savings: Math.max(0, subscription.amount - 499), provider: 'Netflix' },
-                { name: 'Local Streaming', price: 0, savings: subscription.amount, provider: 'Various' }
-            ],
-            'Music': [
-                { name: 'Spotify Free', price: 0, savings: subscription.amount, provider: 'Spotify' },
-                { name: 'Apple Music', price: 499, savings: Math.max(0, subscription.amount - 499), provider: 'Apple' }
-            ],
-            'Software': [
-                { name: 'Open Source Alternative', price: 0, savings: subscription.amount, provider: 'Various' },
-                { name: 'Discounted Plan', price: Math.floor(subscription.amount * 0.7), savings: Math.floor(subscription.amount * 0.3), provider: subscription.provider }
-            ]
-        };
 
-        const categoryAlts = alternatives[subscription.category] || [];
-        let insight = `${subscription.category} subscription`;
-        
-        if (categoryAlts.length > 0 && categoryAlts[0].savings > 0) {
-            insight = `${categoryAlts[0].name} could save you Rs. ${categoryAlts[0].savings.toLocaleString()}/month`;
-        }
-
-        return { insight, alternatives: categoryAlts };
-    };
 
     // Feature 5: Renewal Risk Detection
     const getRenewalRisk = (subscription: Subscription) => {
@@ -502,7 +486,8 @@ export const SubscriptionsPage = () => {
             <div className="subscriptions-list">
                 {activeSubs.map((subscription) => {
                     const usageStatus = getUsageStatus(subscription);
-                    const { insight } = getAIInsight(subscription);
+                    const insightData = subscription._id ? insightsMap[subscription._id] : null;
+                    const insight = insightData ? insightData.insight : 'Loading AI insight...';
                     const renewalRisk = getRenewalRisk(subscription);
                     const monthlyAmount = subscription.frequency === 'yearly' ? subscription.amount / 12 : subscription.amount;
                     
@@ -704,7 +689,9 @@ export const SubscriptionsPage = () => {
                         <h3 style={{ marginTop: '0' }}>Cheaper Alternatives for {selectedSubscription.name}</h3>
                         
                         {(() => {
-                            const { alternatives } = getAIInsight(selectedSubscription);
+                            const insightData = selectedSubscription._id ? insightsMap[selectedSubscription._id] : null;
+                            const alternatives = insightData ? (insightData.alternatives || []) : [];
+                            
                             return (
                                 <div>
                                     {alternatives.length > 0 ? (
