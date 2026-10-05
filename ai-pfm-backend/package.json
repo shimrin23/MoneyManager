@@ -9,7 +9,7 @@
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "seed:admin-config": "ts-node src/scripts/seed-admin-config.ts",
     "seed:users": "ts-node src/scripts/seed-users.ts",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand --forceExit"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
