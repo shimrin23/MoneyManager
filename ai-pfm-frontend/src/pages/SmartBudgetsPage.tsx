@@ -65,11 +65,11 @@ export const SmartBudgetsPage = () => {
         setOverBudgetCount(overBudget);
     };
 
-    const handleOptimizeBudget = (category: string) => {
+    const handleOptimizeBudget = (_category?: string) => {
         navigate('/recommendations');
     };
 
-    const handleSetAlert = (category: string) => {
+    const handleSetAlert = (_category?: string) => {
         navigate('/notifications');
     };
 
@@ -114,8 +114,6 @@ export const SmartBudgetsPage = () => {
             setIsAdding(false);
         }
     };
-
-    const chartData = budgets.map((b) => ({ category: b.category, value: b.spentAmount }));
 
     if (loading) {
         return <div className="loading-spinner">Loading smart budgets...</div>;

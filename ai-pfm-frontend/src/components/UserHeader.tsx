@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client.ts';
-import { IconUser, IconSettings, IconBell, IconHelpCircle, IconLogOut, IconSun, IconMoon } from './Icons';
+import { IconUser, IconSettings, IconHelpCircle, IconLogOut, IconSun, IconMoon } from './Icons';
 
 interface User {
     id: string;
@@ -101,7 +101,10 @@ export const UserHeader = ({ theme, onToggleTheme }: UserHeaderProps) => {
                         <span>Settings</span>
                     </div>
 
-
+                    <div className="sidebar-user-menu-item" role="menuitem" onClick={() => { setShowDropdown(false); onToggleTheme(); }}>
+                        <span className="sidebar-user-item-icon">{theme === 'dark' ? <IconSun size={15} /> : <IconMoon size={15} />}</span>
+                        <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+                    </div>
 
                     <div className="sidebar-user-divider" />
 

@@ -31,7 +31,7 @@ export const AddTransactionForm = ({ onTransactionAdded, onCancel, initialData, 
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
 
-    const categories = {
+    const categories: Record<'expense' | 'income', string[]> = {
         expense: ['Food & Dining', 'Shopping', 'Entertainment', 'Transport',
             'Bills & Utilities', 'Healthcare', 'Education', 'Travel', 'Other'],
         income: ['Salary', 'Freelance', 'Business', 'Investment', 'Gift', 'Other']
@@ -149,7 +149,7 @@ export const AddTransactionForm = ({ onTransactionAdded, onCancel, initialData, 
                         required
                     >
                         <option value="">Select a category</option>
-                        {categories[formData.type].map(cat => (
+                        {categories[formData.type as 'expense' | 'income']?.map((cat: string) => (
                             <option key={cat} value={cat}>{cat}</option>
                         ))}
                     </select>

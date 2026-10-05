@@ -14,9 +14,7 @@ export const Dashboard = () => {
     const [loadingScore, setLoadingScore] = useState<boolean>(true);
     const [transactions, setTransactions] = useState<any[]>([]);
     const [loadingTransactions, setLoadingTransactions] = useState<boolean>(true);
-    const [hasPFMConsent, setHasPFMConsent] = useState<boolean | null>(null);
     const [syncing, setSyncing] = useState<boolean>(false);
-    const [syncMode, setSyncMode] = useState<'mock' | 'real' | 'unknown'>('unknown');
     const [displayScore, setDisplayScore] = useState(0);
     const animFrameRef = useRef<number>(0);
 
@@ -28,25 +26,6 @@ export const Dashboard = () => {
             console.error('Failed to fetch transactions', error);
         } finally {
             setLoadingTransactions(false);
-        }
-    };
-
-    const fetchConsentStatus = async () => {
-        try {
-            const response = await apiClient.get('/consent/check/pfm_analysis');
-            setHasPFMConsent(!!response.data?.hasConsent);
-        } catch {
-            setHasPFMConsent(false);
-        }
-    };
-
-    const fetchSyncHealth = async () => {
-        try {
-            const response = await apiClient.get('/transactions/sync/health');
-            const mode = response.data?.bankingIntegration?.mode;
-            setSyncMode(mode === 'mock' || mode === 'real' ? mode : 'unknown');
-        } catch {
-            setSyncMode('unknown');
         }
     };
 
@@ -84,8 +63,6 @@ export const Dashboard = () => {
 
     useEffect(() => {
         fetchTransactions();
-        fetchConsentStatus();
-        fetchSyncHealth();
     }, []);
 
     const syncBank = async () => {
@@ -133,16 +110,6 @@ export const Dashboard = () => {
             minimumFractionDigits: 2, maximumFractionDigits: 2
         }).format(Math.abs(amount))}`;
         return type === 'expense' ? `-${formatted}` : `+${formatted}`;
-    };
-
-    const getCategoryColor = (category: string) => {
-        const map: Record<string, string> = {
-            'Food & Dining': '#f59e0b', 'Shopping': '#8b5cf6', 'Entertainment': '#ec4899',
-            'Transport': '#06b6d4', 'Bills & Utilities': '#ef4444', 'Healthcare': '#10b981',
-            'Education': '#3b82f6', 'Travel': '#f97316', 'Salary': '#10b981',
-            'Freelance': '#6366f1', 'Business': '#06b6d4', 'Investment': '#8b5cf6',
-        };
-        return map[category] || '#64748b';
     };
 
     // SVG ring values

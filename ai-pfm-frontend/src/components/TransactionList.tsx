@@ -19,18 +19,9 @@ interface Transaction {
 
 export const TransactionList = () => {
     const [transactions, setTransactions] = useState<Transaction[]>([]);
-    const [hasPFMConsent, setHasPFMConsent] = useState<boolean | null>(null);
-    const [syncMode, setSyncMode] = useState<'mock' | 'real' | 'unknown'>('unknown');
-    const [consentBusy, setConsentBusy] = useState(false);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
-
-    const categories = {
-        expense: ['Food & Dining', 'Shopping', 'Entertainment', 'Transport',
-            'Bills & Utilities', 'Healthcare', 'Education', 'Travel', 'Other'],
-        income: ['Salary', 'Freelance', 'Business', 'Investment', 'Gift', 'Other']
-    };
 
     const fetchTransactions = async () => {
         try {
@@ -41,35 +32,8 @@ export const TransactionList = () => {
         }
     };
 
-    const fetchConsentStatus = async () => {
-        try {
-            const response = await apiClient.get('/consent/check/pfm_analysis');
-            setHasPFMConsent(!!response.data?.hasConsent);
-        } catch (error) {
-            console.error('Error checking consent status', error);
-            setHasPFMConsent(false);
-        }
-    };
-
-    const fetchSyncHealth = async () => {
-        try {
-            const response = await apiClient.get('/transactions/sync/health');
-            const mode = response.data?.bankingIntegration?.mode;
-            if (mode === 'mock' || mode === 'real') {
-                setSyncMode(mode);
-                return;
-            }
-            setSyncMode('unknown');
-        } catch (error) {
-            console.error('Error checking sync health', error);
-            setSyncMode('unknown');
-        }
-    };
-
     useEffect(() => {
         fetchTransactions();
-        fetchConsentStatus();
-        fetchSyncHealth();
     }, []);
 
     const refreshData = async () => {
@@ -85,37 +49,6 @@ export const TransactionList = () => {
                 return;
             }
             alert('Sync failed');
-        }
-    };
-
-    const enablePFMConsent = async () => {
-        try {
-            setConsentBusy(true);
-            await apiClient.post('/consent/grant', {
-                consentType: 'pfm_analysis',
-                version: 'v1.0'
-            });
-            await fetchConsentStatus();
-        } catch (error) {
-            console.error('Failed to grant consent', error);
-            alert('Failed to enable consent');
-        } finally {
-            setConsentBusy(false);
-        }
-    };
-
-    const disablePFMConsent = async () => {
-        try {
-            setConsentBusy(true);
-            await apiClient.post('/consent/revoke', {
-                consentType: 'pfm_analysis'
-            });
-            await fetchConsentStatus();
-        } catch (error) {
-            console.error('Failed to revoke consent', error);
-            alert('Failed to disable consent');
-        } finally {
-            setConsentBusy(false);
         }
     };
 
