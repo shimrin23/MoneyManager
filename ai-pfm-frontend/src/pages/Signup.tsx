@@ -14,8 +14,8 @@ export const Signup = () => {
     // Success State
     const [isRegistered, setIsRegistered] = useState(false);
 
-    // Google Sign In Mode
-    const [useRealGoogle, setUseRealGoogle] = useState(false);
+    // Google Sign In State
+    const [googleRendered, setGoogleRendered] = useState(false);
 
     const navigate = useNavigate();
 
@@ -35,14 +35,12 @@ export const Signup = () => {
                 const cId = res.data.clientId;
                 if (!cId || cId.startsWith('your_') || cId === '') return;
 
-                if (mounted) setUseRealGoogle(true);
-
                 let attempts = 0;
                 const tryRenderGoogle = () => {
                     if (!mounted) return;
-                    if ((window as any).google?.accounts?.id) {
-                        const container = document.getElementById("google-signup-btn-container");
-                        if (container) {
+                    const container = document.getElementById("google-signup-btn-container");
+                    if ((window as any).google?.accounts?.id && container) {
+                        try {
                             (window as any).google.accounts.id.initialize({
                                 client_id: cId,
                                 callback: handleGoogleCredentialResponse,
@@ -51,6 +49,9 @@ export const Signup = () => {
                                 container,
                                 { theme: "outline", size: "large", width: "100%", text: "signup_with" }
                             );
+                            if (mounted) setGoogleRendered(true);
+                        } catch (e) {
+                            console.warn("Google Sign-In button render error:", e);
                         }
                     } else if (attempts < 50) {
                         attempts++;
@@ -65,6 +66,18 @@ export const Signup = () => {
         fetchGoogleConfig();
         return () => { mounted = false; };
     }, []);
+
+    const handleGoogleFallbackClick = () => {
+        if ((window as any).google?.accounts?.id) {
+            try {
+                (window as any).google.accounts.id.prompt();
+                return;
+            } catch (e) {
+                console.warn("Google prompt error:", e);
+            }
+        }
+        alert("Google Sign-In is not configured yet. Please add GOOGLE_CLIENT_ID to your backend .env file and restart the server.");
+    };
 
     const handleGoogleCredentialResponse = async (response: any) => {
         setError('');
@@ -239,13 +252,17 @@ export const Signup = () => {
                         <div className="auth-divider"><span>or continue with</span></div>
 
                         {/* Google Sign In Container (Renders real SDK button or custom fallback button) */}
-                        {useRealGoogle ? (
-                            <div id="google-signup-btn-container" className="auth-google-real-container"></div>
-                        ) : (
+                        <div
+                            id="google-signup-btn-container"
+                            className="auth-google-real-container"
+                            style={{ display: googleRendered ? 'flex' : 'none' }}
+                        ></div>
+
+                        {!googleRendered && (
                             <button
                                 type="button"
                                 className="auth-google-btn"
-                                onClick={() => alert("Google Sign-In is not configured yet. Please add GOOGLE_CLIENT_ID to your backend .env file and restart the server.")}
+                                onClick={handleGoogleFallbackClick}
                                 disabled={loading}
                             >
                                 <svg className="auth-google-icon" viewBox="0 0 24 24" width="20" height="20">
