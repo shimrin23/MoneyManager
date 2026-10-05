@@ -10,8 +10,6 @@ jobs:
     strategy:
       matrix:
         node-version: [20]
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - uses: actions/checkout@v4
 
@@ -19,11 +17,10 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
 
       - name: Install backend deps
         working-directory: ai-pfm-backend
-        run: npm ci
+        run: npm install
 
       - name: Backend build
         working-directory: ai-pfm-backend
@@ -35,7 +32,7 @@ jobs:
 
       - name: Install frontend deps
         working-directory: ai-pfm-frontend
-        run: npm ci
+        run: npm install
 
       - name: Frontend build
         working-directory: ai-pfm-frontend
