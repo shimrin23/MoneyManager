@@ -250,7 +250,6 @@ export const FixedDepositsPage = () => {
             {/* Empty State */}
             {fds.length === 0 && !showNewFDForm && (
                 <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🏦</div>
                     <h3 style={{ marginBottom: '0.5rem' }}>No Fixed Deposits Yet</h3>
                     <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
                         Open your first fixed deposit to start earning guaranteed returns.
@@ -273,7 +272,6 @@ export const FixedDepositsPage = () => {
                         <div key={fd._id} className={`fd-card ${fd.status}`}>
                             <div className="fd-card-header">
                                 <div className="fd-card-title-row">
-                                    <span className="fd-icon">🏦</span>
                                     <div>
                                         <div className="fd-account">{fd.accountNumber}</div>
                                         <div className="fd-bank">{fd.bank}</div>
