@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "es2016",
     "module": "commonjs",
-    "rootDir": ".",
+    "rootDir": "./src",
     "moduleResolution": "node",
     "baseUrl": "./src",
     //"ignoreDeprecations": "6.0",
@@ -13,8 +13,7 @@
     "skipLibCheck": true
   },
   "include": [
-    "src/**/*",
-    "tests/**/*"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",
