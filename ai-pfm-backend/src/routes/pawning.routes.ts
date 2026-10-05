@@ -7,7 +7,8 @@ const router = Router();
 // GET all pawning items for user
 router.get('/', async (req: AuthRequest, res: Response) => {
     try {
-        const pawning = await Pawning.find({ userId: req.user?.userId }).sort({ createdAt: -1 });
+        const userId = req.user?.id || req.user?.userId;
+        const pawning = await Pawning.find({ userId }).sort({ createdAt: -1 });
         
         // Dynamically update days remaining and total interest accrued on fetch
         const now = new Date();
@@ -55,8 +56,9 @@ router.post('/', async (req: AuthRequest, res: Response) => {
         
         const totalDue = Number(loanAmount) + totalInterestAccrued;
 
+        const userId = req.user?.id || req.user?.userId;
         const newPawning = new Pawning({
-            userId: req.user?.userId,
+            userId,
             itemDescription,
             itemType,
             icon: icon || '💍',
@@ -84,8 +86,9 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 router.put('/:id', async (req: AuthRequest, res: Response) => {
     try {
         const { status } = req.body;
+        const userId = req.user?.id || req.user?.userId;
         const item = await Pawning.findOneAndUpdate(
-            { _id: req.params.id, userId: req.user?.userId },
+            { _id: req.params.id, userId },
             { status },
             { new: true }
         );
@@ -101,7 +104,8 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
 // DELETE pawning item
 router.delete('/:id', async (req: AuthRequest, res: Response) => {
     try {
-        const item = await Pawning.findOneAndDelete({ _id: req.params.id, userId: req.user?.userId });
+        const userId = req.user?.id || req.user?.userId;
+        const item = await Pawning.findOneAndDelete({ _id: req.params.id, userId });
         if (!item) {
             return res.status(404).json({ message: 'Pawning item not found' });
         }

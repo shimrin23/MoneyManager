@@ -7,7 +7,8 @@ const router = Router();
 // GET all leases for user
 router.get('/', async (req: AuthRequest, res: Response) => {
     try {
-        const leases = await Lease.find({ userId: req.user?.userId }).sort({ createdAt: -1 });
+        const userId = req.user?.id || req.user?.userId;
+        const leases = await Lease.find({ userId }).sort({ createdAt: -1 });
         res.json({ leases });
     } catch (error: any) {
         res.status(500).json({ message: 'Error fetching leases', error: error.message });
@@ -35,8 +36,9 @@ router.post('/', async (req: AuthRequest, res: Response) => {
         
         const nextPaymentDate = new Date(now.getFullYear(), now.getMonth() + 1, start.getDate());
 
+        const userId = req.user?.id || req.user?.userId;
         const newLease = new Lease({
-            userId: req.user?.userId,
+            userId,
             assetName,
             assetType,
             lessor,
@@ -63,8 +65,9 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 router.put('/:id', async (req: AuthRequest, res: Response) => {
     try {
         const { status } = req.body;
+        const userId = req.user?.id || req.user?.userId;
         const lease = await Lease.findOneAndUpdate(
-            { _id: req.params.id, userId: req.user?.userId },
+            { _id: req.params.id, userId },
             { status },
             { new: true }
         );
@@ -80,7 +83,8 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
 // DELETE lease
 router.delete('/:id', async (req: AuthRequest, res: Response) => {
     try {
-        const lease = await Lease.findOneAndDelete({ _id: req.params.id, userId: req.user?.userId });
+        const userId = req.user?.id || req.user?.userId;
+        const lease = await Lease.findOneAndDelete({ _id: req.params.id, userId });
         if (!lease) {
             return res.status(404).json({ message: 'Lease not found' });
         }
