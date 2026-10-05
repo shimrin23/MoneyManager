@@ -23,7 +23,7 @@ router.get('/cash-flow-forecast', authenticateToken, async (req: AuthRequest, re
         const currentBalance = totalIncome - totalExpense;
 
         // 2. Get Active Subscriptions to forecast expenses
-        const subscriptions = await Subscription.find({ userId, status: 'active' });
+        const subscriptions = await Subscription.find({ userId, isActive: true });
 
         // 3. Generate 30-Day Forecast
         const forecast = [];
@@ -37,19 +37,17 @@ router.get('/cash-flow-forecast', authenticateToken, async (req: AuthRequest, re
             const dayOfMonth = forecastDate.getDate();
 
             // Find subscriptions due on this day (assuming monthly for simplicity)
-            // Real logic might handle weekly/yearly, but for now we map 'monthly' to dayOfMonth
             const dueSubscriptions = subscriptions.filter(sub => {
-                // If it's a monthly sub, we assume it's due on the day it started
-                if (sub.billingCycle === 'monthly' && sub.startDate) {
-                    const startDay = new Date(sub.startDate).getDate();
+                if (sub.frequency === 'monthly' && sub.nextPayment) {
+                    const startDay = new Date(sub.nextPayment).getDate();
                     return startDay === dayOfMonth;
                 }
-                return false; // ignore other cycles for this basic forecast
+                return false;
             });
 
             // Subtract expenses
             let dailyExpense = 0;
-            dueSubscriptions.forEach(sub => dailyExpense += sub.cost);
+            dueSubscriptions.forEach(sub => dailyExpense += sub.amount);
             runningBalance -= dailyExpense;
 
             // Determine Risk Level

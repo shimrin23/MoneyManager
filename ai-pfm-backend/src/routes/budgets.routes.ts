@@ -101,7 +101,8 @@ router.get('/smart', authenticateToken, async (req: AuthRequest, res: Response) 
         }
 
         // 6. Generate real AI Recommendations via Gemini
-        const geminiService = (await import('../ai/geminiService')).default;
+        const { FinancialAgent } = await import('../ai/agent');
+        const agent = new FinancialAgent();
         let aiRecommendations: Record<string, string> = {};
         
         if (smartBudgets.length > 0) {
@@ -114,7 +115,7 @@ router.get('/smart', authenticateToken, async (req: AuthRequest, res: Response) 
                     trendChange: b.trends.change
                 })), null, 2)}\n\nFor each category, provide a concise, personalized 1-sentence financial recommendation. Do not use generic text. Return exactly a JSON object where keys are the category names and values are the string recommendations.\nExample: { "Food": "Since your food spending is up 10%, consider cooking at home this weekend." }`;
                 
-                const responseString = await geminiService.generateContent(prompt);
+                const responseString = await agent.generateResearch(prompt);
                 aiRecommendations = JSON.parse(responseString.replace(/```json/g, '').replace(/```/g, '').trim());
             } catch (err) {
                 console.error("AI budget generation failed:", err);

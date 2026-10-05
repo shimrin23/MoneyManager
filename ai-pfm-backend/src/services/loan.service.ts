@@ -441,208 +441,19 @@ class LoanService {
             totalInterest: newResult.totalInterest,
             totalPayable: newResult.totalPayable,
             timeToPayoff: tenureMonths,
-            method: 'avalanche',
-            totalInterestSaved,
-            timeToPayoff: maxMonths,
+            savings: {
+                interestSaved: Math.round((currentResult.totalInterest - newResult.totalInterest) * 100) / 100,
+                timeSaved: 0
+            },
             schedule
         };
     }
 
-    /**
-     * Calculate Loan-to-Income Ratio
-     */
-    calculateLoanToIncomeRatio(totalMonthlyEMI: number, monthlyIncome: number): {
-        ratio: number;
-        riskLevel: 'low' | 'medium' | 'high' | 'critical';
-        recommendation: string;
-    } {
-        const ratio = (totalMonthlyEMI / monthlyIncome) * 100;
 
-        let riskLevel: 'low' | 'medium' | 'high' | 'critical' = 'low';
-        let recommendation = 'Your debt is well managed.';
 
-        if (ratio <= 20) {
-            riskLevel = 'low';
-            recommendation = 'Your debt-to-income ratio is healthy. Keep it up!';
-        } else if (ratio <= 35) {
-            riskLevel = 'medium';
-            recommendation = 'Your debt-to-income ratio is acceptable but monitor it closely.';
-        } else if (ratio <= 50) {
-            riskLevel = 'high';
-            recommendation = 'Your debt-to-income ratio is high. Consider paying off loans faster.';
-        } else {
-            riskLevel = 'critical';
-            recommendation = 'Your debt-to-income ratio is critical. Prioritize debt repayment.';
-        }
 
-        return {
-            ratio: Math.round(ratio * 100) / 100,
-            riskLevel,
-            recommendation
-        };
-    }
 
-    /**
-     * What-If Simulation: Increase Monthly EMI
-     */
-    simulateIncreaseEMI(
-        principal: number,
-        annualInterestRate: number,
-        currentEMI: number,
-        increasedEMI: number,
-        currentTenure: number
-    ): WhatIfSimulation {
-        const currentResult = this.calculateEMI({
-            principal,
-            annualInterestRate,
-            tenureMonths: currentTenure
-        });
 
-        const monthlyRate = annualInterestRate / 12 / 100;
-        let remainingBalance = principal;
-        let month = 0;
-        const schedule: RepaymentScheduleItem[] = [];
-
-        while (remainingBalance > 0 && month < 360) {
-            month++;
-            const interestPayment =
-                monthlyRate === 0
-                    ? 0
-                    : Math.round(remainingBalance * monthlyRate * 100) / 100;
-            const principalPayment = Math.min(increasedEMI - interestPayment, remainingBalance);
-            remainingBalance = Math.max(0, remainingBalance - principalPayment);
-
-            schedule.push({
-                month,
-                principalPayment,
-                interestPayment,
-                remainingBalance,
-                dueDate: new Date(new Date().setMonth(new Date().getMonth() + month)),
-                paid: false
-            });
-
-            if (remainingBalance === 0) break;
-        }
-
-        const totalPayable = schedule.reduce((sum, item) => sum + item.principalPayment + item.interestPayment, 0);
-        const totalInterest = totalPayable - principal;
-
-        return {
-            scenarioName: `Increased EMI to ${increasedEMI}`,
-            monthlyEMI: increasedEMI,
-            totalInterest: Math.round(totalInterest * 100) / 100,
-            totalPayable: Math.round(totalPayable * 100) / 100,
-            timeToPayoff: month,
-            schedule,
-            savings: {
-                interestSaved: Math.round((currentResult.totalInterest - totalInterest) * 100) / 100,
-                timeSaved: currentTenure - month
-            }
-        };
-    }
-
-    /**
-     * What-If Simulation: Lump Sum Payment
-     */
-    simulateLumpSumPayment(
-        principal: number,
-        annualInterestRate: number,
-        monthlyEMI: number,
-        lumpSumAmount: number,
-        monthToApply: number,
-        currentTenure: number
-    ): WhatIfSimulation {
-        const currentResult = this.calculateEMI({
-            principal,
-            annualInterestRate,
-            tenureMonths: currentTenure
-        });
-
-        const monthlyRate = annualInterestRate / 12 / 100;
-        let remainingBalance = principal;
-        let month = 0;
-        const schedule: RepaymentScheduleItem[] = [];
-
-        while (remainingBalance > 0 && month < 360) {
-            month++;
-            const interestPayment =
-                monthlyRate === 0
-                    ? 0
-                    : Math.round(remainingBalance * monthlyRate * 100) / 100;
-            const principalPayment = monthlyEMI - interestPayment;
-            remainingBalance = remainingBalance - principalPayment;
-
-            if (month === monthToApply) {
-                remainingBalance = Math.max(0, remainingBalance - lumpSumAmount);
-            }
-
-            remainingBalance = Math.max(0, remainingBalance);
-
-            schedule.push({
-                month,
-                principalPayment: month === monthToApply ? principalPayment + lumpSumAmount : principalPayment,
-                interestPayment,
-                remainingBalance,
-                dueDate: new Date(new Date().setMonth(new Date().getMonth() + month)),
-                paid: false
-            });
-
-            if (remainingBalance === 0) break;
-        }
-
-        const totalPayable = schedule.reduce((sum, item) => sum + item.principalPayment + item.interestPayment, 0) + lumpSumAmount;
-        const totalInterest = totalPayable - principal - lumpSumAmount;
-
-        return {
-            scenarioName: `Lump Sum Payment of ${lumpSumAmount} in Month ${monthToApply}`,
-            monthlyEMI: monthlyEMI,
-            totalInterest: Math.round(totalInterest * 100) / 100,
-            totalPayable: Math.round(totalPayable * 100) / 100,
-            timeToPayoff: month,
-            schedule,
-            savings: {
-                interestSaved: Math.round((currentResult.totalInterest - totalInterest) * 100) / 100,
-                timeSaved: currentTenure - month
-            }
-        };
-    }
-
-    /**
-     * What-If Simulation: Lower Interest Rate / Refinancing
-     */
-    simulateRefinancing(
-        principal: number,
-        currentInterestRate: number,
-        newInterestRate: number,
-        tenureMonths: number
-    ): WhatIfSimulation {
-        const currentResult = this.calculateEMI({
-            principal,
-            annualInterestRate: currentInterestRate,
-            tenureMonths
-        });
-
-        const newResult = this.calculateEMI({
-            principal,
-            annualInterestRate: newInterestRate,
-            tenureMonths
-        });
-
-        const schedule = this.generateRepaymentSchedule(principal, newInterestRate, tenureMonths);
-
-        return {
-            scenarioName: `Refinance from ${currentInterestRate}% to ${newInterestRate}%`,
-            monthlyEMI: newResult.monthlyEMI,
-            totalInterest: newResult.totalInterest,
-            totalPayable: newResult.totalPayable,
-            timeToPayoff: tenureMonths,
-            schedule,
-            savings: {
-                interestSaved: Math.round((currentResult.totalInterest - newResult.totalInterest) * 100) / 100,
-                timeSaved: 0
-            }
-        };
-    }
 
     /**
      * Generate AI-powered loan insights
@@ -653,10 +464,11 @@ class LoanService {
         }
 
         try {
-            const geminiService = (await import('../ai/geminiService')).default;
+            const { FinancialAgent } = await import('../ai/agent');
+            const agent = new FinancialAgent();
             const prompt = `Analyze this user's loan portfolio and their monthly income of LKR ${totalIncome}:\n${JSON.stringify(loans.map(l => ({ type: l.type, principal: l.principal, remaining: l.remainingAmount, emi: l.monthlyInstallment, interestRate: l.interestRate, status: l.status })), null, 2)}\n\nProvide 3-5 concise, highly personalized financial insights or recommendations regarding their debt strategy. Return EXACTLY a JSON array of strings without markdown blocks.\nExample: ["Insight 1", "Insight 2"]`;
             
-            const responseString = await geminiService.generateContent(prompt);
+            const responseString = await agent.generateResearch(prompt);
             const insights = JSON.parse(responseString.replace(/```json/g, '').replace(/```/g, '').trim());
             
             if (Array.isArray(insights)) {

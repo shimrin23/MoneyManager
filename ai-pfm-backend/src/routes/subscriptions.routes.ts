@@ -223,7 +223,7 @@ router.post('/:id/pay', async (req: AuthRequest, res: Response) => {
             return res.status(401).json({ error: 'User not authenticated' });
         }
 
-        const { id } = req.params;
+        const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
         // Get the subscription
         const sub = await subscriptionsService.findById(id);
@@ -275,7 +275,8 @@ router.get('/ai-insights', async (req: AuthRequest, res: Response) => {
             return res.json({ insights: {} });
         }
 
-        const geminiService = (await import('../ai/geminiService')).default;
+        const { FinancialAgent } = await import('../ai/agent');
+        const agent = new FinancialAgent();
         
         const prompt = `Analyze these subscriptions for a user:
 ${JSON.stringify(subscriptions, null, 2)}
@@ -294,7 +295,7 @@ Return exactly in this JSON format:
 }
 Do not include markdown blocks like \`\`\`json, just return the raw JSON object. Use the exact _id values from the input for the keys.`;
 
-        const responseString = await geminiService.generateContent(prompt);
+        const responseString = await agent.generateResearch(prompt);
         let parsed;
         try {
             parsed = JSON.parse(responseString.replace(/```json/g, '').replace(/```/g, '').trim());
