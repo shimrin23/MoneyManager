@@ -258,7 +258,6 @@ export const PawningPage = () => {
                     <div key={item._id} className={`fd-card ${item.status}`}>
                         <div className="fd-card-header">
                             <div className="fd-card-title-row">
-                                <span className="fd-icon">{item.icon}</span>
                                 <div>
                                     <div className="fd-account">{item.itemDescription}</div>
                                     <div className="fd-bank">{item.branch} | #{item.ticketNumber}</div>

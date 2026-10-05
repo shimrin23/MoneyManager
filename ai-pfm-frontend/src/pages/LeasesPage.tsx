@@ -254,7 +254,6 @@ export const LeasesPage = () => {
                         <div key={lease._id} className={`fd-card ${lease.status}`}>
                             <div className="fd-card-header">
                                 <div className="fd-card-title-row">
-                                    <span className="fd-icon">{lease.icon}</span>
                                     <div>
                                         <div className="fd-account">{lease.assetName}</div>
                                         <div className="fd-bank">{lease.lessor}</div>
