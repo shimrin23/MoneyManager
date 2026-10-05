@@ -24,7 +24,7 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
                 newRecs.push({
                     userId,
                     category: 'budget',
-                    icon: '🍔',
+                    icon: '',
                     title: 'Increase Your Savings Rate',
                     reason: 'Your savings rate is currently below the recommended 10% minimum threshold.',
                     action: 'Set up an automated transfer to savings on payday.',
@@ -38,7 +38,7 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
                 newRecs.push({
                     userId,
                     category: 'debt',
-                    icon: '💳',
+                    icon: '',
                     title: 'Reduce High Debt-to-Income',
                     reason: 'Your debt obligations consume more than 30% of your income.',
                     action: 'Prioritize paying down high-interest debt like credit cards.',
@@ -52,7 +52,7 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
                 newRecs.push({
                     userId,
                     category: 'goal',
-                    icon: '🏠',
+                    icon: '',
                     title: 'Build Emergency Fund',
                     reason: 'You have less than 3 months of expenses saved for emergencies.',
                     action: 'Set up a dedicated Emergency Fund goal.',
@@ -66,7 +66,7 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
                 newRecs.push({
                     userId,
                     category: 'alert',
-                    icon: '⚠️',
+                    icon: '',
                     title: 'High Credit Utilization',
                     reason: 'Using more than 30% of your credit limit negatively impacts your credit score.',
                     action: 'Pay down credit card balances before the statement date.',

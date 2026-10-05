@@ -241,17 +241,56 @@ export const RecommendationsPage = () => {
                     <div key={rec._id} className={`rec-card ${rec.status}`}>
                         <div className="rec-card-header">
                             <div className="rec-card-title-row">
-                                <span className="rec-card-icon">{rec.icon}</span>
-                                <div>
-                                    <h3 className="rec-card-title">{rec.title}</h3>
-                                    <div className="rec-card-badges">
-                                        <span className="rec-badge category">{categoryLabels[rec.category]}</span>
-                                        <span className="rec-badge priority" style={{ color: priorityColors[rec.priority], borderColor: priorityColors[rec.priority] }}>
-                                            {rec.priority.charAt(0).toUpperCase() + rec.priority.slice(1)}
-                                        </span>
-                                        <span className="rec-badge status" style={{ color: statusColors[rec.status], borderColor: statusColors[rec.status] }}>
-                                            {rec.status.charAt(0).toUpperCase() + rec.status.slice(1)}
-                                        </span>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
+                                        <h3 className="rec-card-title" style={{ margin: 0 }}>{rec.title}</h3>
+                                        <div className="rec-card-badges">
+                                            <span 
+                                                className={`rec-priority-highlight priority-${rec.priority}`}
+                                                style={{ 
+                                                    display: 'inline-flex',
+                                                    alignItems: 'center',
+                                                    gap: '6px',
+                                                    padding: '4px 10px',
+                                                    borderRadius: '6px',
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: '700',
+                                                    letterSpacing: '0.03em',
+                                                    textTransform: 'uppercase',
+                                                    color: priorityColors[rec.priority] || '#ef4444',
+                                                    background: rec.priority === 'critical' ? 'rgba(239, 68, 68, 0.15)' :
+                                                                rec.priority === 'high' ? 'rgba(245, 158, 11, 0.15)' :
+                                                                rec.priority === 'medium' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                                                    border: `1px solid ${priorityColors[rec.priority] || '#ef4444'}40`
+                                                }}
+                                            >
+                                                <span 
+                                                    style={{ 
+                                                        width: '7px', 
+                                                        height: '7px', 
+                                                        borderRadius: '50%', 
+                                                        background: priorityColors[rec.priority] || '#ef4444',
+                                                        boxShadow: rec.priority === 'critical' ? '0 0 6px rgba(239, 68, 68, 0.6)' : 'none'
+                                                    }} 
+                                                />
+                                                {rec.priority} Priority
+                                            </span>
+                                            {rec.status !== 'pending' && (
+                                                <span 
+                                                    style={{ 
+                                                        fontSize: '0.72rem', 
+                                                        padding: '3px 8px', 
+                                                        borderRadius: '6px',
+                                                        border: '1px solid rgba(255,255,255,0.1)',
+                                                        color: rec.status === 'accepted' ? '#10b981' : '#f59e0b',
+                                                        fontWeight: '600',
+                                                        textTransform: 'uppercase'
+                                                    }}
+                                                >
+                                                    {rec.status}
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>

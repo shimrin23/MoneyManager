@@ -23,7 +23,7 @@ const RecommendationSchema: Schema = new Schema({
         enum: ['budget', 'goal', 'debt', 'subscription', 'alert'],
         required: true 
     },
-    icon: { type: String, required: true },
+    icon: { type: String, default: '' },
     title: { type: String, required: true },
     reason: { type: String, required: true },
     action: { type: String, required: true },
