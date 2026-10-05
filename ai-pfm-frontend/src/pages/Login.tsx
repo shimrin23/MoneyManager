@@ -34,13 +34,19 @@ export const Login = () => {
 
     // Initialize Google Sign-In SDK if Client ID is configured on the backend
     useEffect(() => {
+        let mounted = true;
         const fetchGoogleConfig = async () => {
             try {
                 const res = await apiClient.get('/auth/google-client-id');
                 const cId = res.data.clientId;
-                if (cId && !cId.startsWith('your_') && cId !== '' && (window as any).google) {
-                    setUseRealGoogle(true);
-                    setTimeout(() => {
+                if (!cId || cId.startsWith('your_') || cId === '') return;
+
+                if (mounted) setUseRealGoogle(true);
+
+                let attempts = 0;
+                const tryRenderGoogle = () => {
+                    if (!mounted) return;
+                    if ((window as any).google?.accounts?.id) {
                         const container = document.getElementById("google-signin-btn-container");
                         if (container) {
                             (window as any).google.accounts.id.initialize({
@@ -52,13 +58,18 @@ export const Login = () => {
                                 { theme: "outline", size: "large", width: "100%", text: "continue_with" }
                             );
                         }
-                    }, 100);
-                }
+                    } else if (attempts < 50) {
+                        attempts++;
+                        setTimeout(tryRenderGoogle, 100);
+                    }
+                };
+                tryRenderGoogle();
             } catch (err) {
                 console.error("Failed to load Google OAuth config from backend:", err);
             }
         };
         fetchGoogleConfig();
+        return () => { mounted = false; };
     }, []);
 
     const handleGoogleCredentialResponse = async (response: any) => {
