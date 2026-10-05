@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { SimulatedBankFeedService } from '../services/simulated-bank-feed.service';
 const BANK_API_BASE_URL = process.env.BANK_API_BASE_URL || 'https://api.fakebank.com';
 const BANK_API_TIMEOUT_MS = Number(process.env.BANK_API_TIMEOUT_MS || 12000);
 const BANK_API_MAX_RETRIES = Number(process.env.BANK_API_MAX_RETRIES || 3);
@@ -6,7 +7,7 @@ const BANK_API_BACKOFF_MS = Number(process.env.BANK_API_BACKOFF_MS || 500);
 
 export const getBankingIntegrationRuntimeConfig = () => ({
     baseUrl: BANK_API_BASE_URL,
-    mode: 'real',
+    mode: process.env.BANKING_MOCK_ENABLED === 'true' ? 'mock' : 'real',
     timeoutMs: BANK_API_TIMEOUT_MS,
     maxRetries: BANK_API_MAX_RETRIES,
     backoffBaseMs: BANK_API_BACKOFF_MS,
@@ -210,6 +211,30 @@ export class BankingIntegration {
         const accountId = params?.accountId || 'DEFAULT_ACCOUNT';
         const since = params?.since;
         const sinceISO = since?.toISOString();
+
+        if (process.env.BANKING_MOCK_ENABLED === 'true') {
+            const feedService = new SimulatedBankFeedService();
+            const feed = feedService.generateFeed({
+                userId: 'mock-user',
+                accountId,
+                accountName: 'Simulated Account',
+                transactionCount: 8,
+                seed: `fixed-seed-${accountId}`,
+            });
+            return feed.transactions.map((txn) => ({
+                id: txn.id,
+                amount: txn.amount,
+                type: txn.type,
+                category: txn.category,
+                description: txn.description,
+                merchantName: txn.merchantName,
+                mcc: txn.mcc,
+                date: txn.date,
+                sourceAccount: txn.sourceAccount || accountId,
+                isRecurring: txn.isRecurring,
+                recurringFrequency: txn.isRecurring ? 'monthly' : undefined,
+            }));
+        }
 
         const response = await this.requestWithRetry(
             'fetchRecentTransactions',

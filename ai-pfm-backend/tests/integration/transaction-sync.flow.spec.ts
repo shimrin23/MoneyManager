@@ -23,6 +23,7 @@ class MockUserModel {
     const user = {
       _id: `user-${users.length + 1}`,
       ...data,
+      isVerified: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -299,6 +300,31 @@ jest.mock("../../src/schemas/subscription.schema", () => ({
 jest.mock("../../src/schemas/sync_state.schema", () => ({
   __esModule: true,
   default: MockSyncStateModel,
+}));
+
+jest.mock("../../src/schemas/alert.schema", () => ({
+  __esModule: true,
+  default: {
+    create: jest.fn().mockResolvedValue({}),
+    save: jest.fn().mockResolvedValue({}),
+    find: jest.fn().mockReturnValue({ lean: async () => [] }),
+  },
+}));
+
+jest.mock("../../src/ai/agent", () => ({
+  __esModule: true,
+  FinancialAgent: jest.fn().mockImplementation(() => ({
+    generateSpendingAdvice: jest.fn().mockResolvedValue("Mock spending advice"),
+    categorizeTransaction: jest.fn().mockResolvedValue({ category: "Mock Category" }),
+    chat: jest.fn().mockResolvedValue("Mock response"),
+  })),
+}));
+
+jest.mock("../../src/utils/email", () => ({
+  __esModule: true,
+  sendVerificationEmail: jest.fn().mockResolvedValue(true),
+  sendWelcomeEmail: jest.fn().mockResolvedValue(true),
+  sendResetPasswordEmail: jest.fn().mockResolvedValue(true),
 }));
 
 import app from "../../src/index";
