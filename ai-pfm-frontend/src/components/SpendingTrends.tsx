@@ -50,22 +50,31 @@ export const PieChart = ({ data }: { data: { category: string; value: number }[]
     );
 };
 
+const DEFAULT_TRENDS = [
+    { category: 'Food & Dining', value: 28500 },
+    { category: 'Shopping', value: 16500 },
+    { category: 'Transport', value: 9800 },
+    { category: 'Entertainment', value: 12000 },
+    { category: 'Utilities', value: 7500 },
+];
+
 export const SpendingTrends = () => {
     const navigate = useNavigate();
-    const [chartData, setChartData] = useState<{ category: string; value: number }[]>([]);
+    const [chartData, setChartData] = useState<{ category: string; value: number }[]>(DEFAULT_TRENDS);
+    const [isDemo, setIsDemo] = useState(false);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchBudgets = async () => {
             try {
                 const response = await apiClient.get('/transactions');
-                const transactions = response.data.data || [];
+                const transactions = response.data?.data || [];
                 
                 // Group expenses by category
                 const expensesByCategory: Record<string, number> = {};
                 transactions.forEach((t: any) => {
                     if (t.type === 'expense') {
-                        expensesByCategory[t.category] = (expensesByCategory[t.category] || 0) + t.amount;
+                        expensesByCategory[t.category] = (expensesByCategory[t.category] || 0) + (Number(t.amount) || 0);
                     }
                 });
 
@@ -74,10 +83,17 @@ export const SpendingTrends = () => {
                     value
                 })).sort((a, b) => b.value - a.value);
 
-                setChartData(chartDataFormatted);
+                if (chartDataFormatted.length > 0) {
+                    setChartData(chartDataFormatted);
+                    setIsDemo(false);
+                } else {
+                    setChartData(DEFAULT_TRENDS);
+                    setIsDemo(true);
+                }
             } catch (error) {
                 console.error('Failed to fetch transactions for trends:', error);
-                setChartData([]);
+                setChartData(DEFAULT_TRENDS);
+                setIsDemo(true);
             } finally {
                 setLoading(false);
             }
@@ -85,7 +101,16 @@ export const SpendingTrends = () => {
         fetchBudgets();
     }, []);
 
-    if (loading) return null;
+    if (loading) {
+        return (
+            <div className="card" style={{ padding: '1.75rem', height: '100%' }}>
+                <h3 className="section-title">Spending Trends</h3>
+                <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
+                    Loading charts…
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div 
@@ -97,12 +122,19 @@ export const SpendingTrends = () => {
                 flexDirection: 'column',
                 cursor: 'pointer',
                 transition: 'transform 0.2s',
-                ...({ '&:hover': { transform: 'scale(1.02)' } } as any)
+                ...({ '&:hover': { transform: 'scale(1.01)' } } as any)
             }}
             onClick={() => navigate('/smart-budgets')}
             title="View smart budgets"
         >
-            <h3 className="section-title">Spending Trends</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                <h3 className="section-title" style={{ margin: 0 }}>Spending Trends</h3>
+                {isDemo && (
+                    <span style={{ fontSize: '0.75rem', background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8', padding: '2px 8px', borderRadius: '4px', fontWeight: '500' }}>
+                        Sample Preview
+                    </span>
+                )}
+            </div>
             <div className="charts-grid">
                 <BarChart data={chartData} />
                 <PieChart data={chartData} />
