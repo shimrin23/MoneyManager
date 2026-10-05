@@ -6,9 +6,11 @@ import { BankingIntegration, getBankingIntegrationRuntimeConfig } from "../integ
 import { AnalyticsService } from "../services/analytics.service"; // Ensure this is imported
 import { FinancialHealthService } from "../services/financial-health.service";
 
-import transactionSyncService from "../services/transaction-sync.service";
+import transactionSyncService, { buildTransactionSyncKey } from "../services/transaction-sync.service";
 import SyncState from "../schemas/sync_state.schema";
+import Transaction from "../schemas/transaction.schema";
 import { AdvancedAnalyticsService } from "../services/advanced-analytics.service";
+import { parseBankStatementCSV, SupportedSriLankanBank } from "../services/bank-statement-parser.service";
 
 export default class TransactionsController {
   private transactionsService: TransactionsService;
@@ -187,6 +189,84 @@ export default class TransactionsController {
     } catch (error: any) {
       console.error(error);
       res.status(500).json({ error: "Bank sync failed", details: error.message, stack: error.stack });
+    }
+  }
+
+  // POST /api/transactions/import-statement
+  async importStatement(req: Request, res: Response) {
+    try {
+      const authReq = req as AuthRequest;
+      const userId = authReq.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const { csvContent, bankType } = req.body;
+      if (!csvContent || typeof csvContent !== "string") {
+        return res.status(400).json({ error: "csvContent string is required" });
+      }
+
+      const parsedTransactions = parseBankStatementCSV(
+        csvContent,
+        (bankType as SupportedSriLankanBank) || "generic"
+      );
+
+      if (parsedTransactions.length === 0) {
+        return res.status(400).json({
+          error: "No valid transactions could be parsed from the provided statement.",
+        });
+      }
+
+      let insertedCount = 0;
+      let skippedDuplicates = 0;
+
+      for (const txn of parsedTransactions) {
+        const syncKey = buildTransactionSyncKey({
+          userId,
+          sourceAccount: txn.sourceAccount,
+          externalTransactionId: txn.reference,
+          amount: txn.amount,
+          description: txn.description,
+          merchantName: txn.description,
+          date: txn.date,
+        });
+
+        // Upsert by syncKey to ensure idempotency and prevent duplicates
+        const existing = await Transaction.findOne({ userId, syncKey });
+        if (existing) {
+          skippedDuplicates++;
+          continue;
+        }
+
+        await Transaction.create({
+          userId,
+          syncKey,
+          amount: txn.amount,
+          category: txn.category,
+          date: txn.date,
+          description: txn.description,
+          type: txn.type,
+          merchantName: txn.description,
+          sourceAccount: txn.sourceAccount,
+          ingestionType: "batch",
+          isRecurring: false,
+        });
+        insertedCount++;
+      }
+
+      res.json({
+        success: true,
+        message: `Successfully processed bank statement.`,
+        summary: {
+          totalParsed: parsedTransactions.length,
+          inserted: insertedCount,
+          skippedDuplicates,
+          bankType: bankType || "generic",
+        },
+      });
+    } catch (error: any) {
+      console.error("Error importing statement:", error);
+      res.status(500).json({ error: "Failed to import bank statement", details: error.message });
     }
   }
 

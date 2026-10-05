@@ -78,6 +78,12 @@ router.post(
   transactionsController.syncBankAccount.bind(transactionsController),
 );
 
+// POST /api/transactions/import-statement
+router.post(
+  "/import-statement",
+  transactionsController.importStatement.bind(transactionsController),
+);
+
 // GET /api/transactions/:id
 router.get(
   "/:id",
