@@ -543,6 +543,13 @@
     text-align: center;
     animation: fadeIn 0.3s ease-out;
 }
+.verify-status h2 {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--color-text, #ededed);
+    letter-spacing: -0.02em;
+    margin: 0 0 0.5rem;
+}
 .verify-spinner {
     width: 48px;
     height: 48px;

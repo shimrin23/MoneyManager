@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import '../styles/AuthPages.css';
@@ -7,6 +7,8 @@ export const VerifyEmail = () => {
     const [searchParams] = useSearchParams();
     const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
     const [message, setMessage] = useState('');
+    const [verifiedEmail, setVerifiedEmail] = useState('');
+    const [countdown, setCountdown] = useState(3);
     
     // Resend verification state
     const [resendEmail, setResendEmail] = useState('');
@@ -15,36 +17,71 @@ export const VerifyEmail = () => {
 
     const navigate = useNavigate();
     const token = searchParams.get('token');
+    const hasVerifiedRef = useRef(false);
+
+    // Function to navigate to login with verification state
+    const goToLogin = (emailToPass?: string) => {
+        navigate('/login', {
+            replace: true,
+            state: {
+                verified: true,
+                email: emailToPass || verifiedEmail,
+                message: 'Email verified successfully! Please log in to your account.'
+            }
+        });
+    };
 
     useEffect(() => {
         const verify = async () => {
             if (!token) {
                 setStatus('error');
-                setMessage('No verification token was provided. Please check your verification link.');
+                setMessage('No verification token was provided in the link. Please check your verification email.');
                 return;
             }
 
             try {
-                const res = await apiClient.get(`/auth/verify-email?token=${token}`);
+                const res = await apiClient.get(`/auth/verify-email?token=${encodeURIComponent(token)}`);
                 setStatus('success');
-                setMessage(res.data.message || 'Your email has been successfully verified! Redirecting you to your dashboard...');
-                
-                const { token: jwtToken, role } = res.data;
-                if (jwtToken && role) {
-                    localStorage.setItem('token', jwtToken);
-                    localStorage.setItem('userRole', role);
-                    window.dispatchEvent(new Event('auth-changed'));
-                    setTimeout(() => {
-                        navigate(role === 'customer' ? '/dashboard' : '/admin');
-                    }, 2000);
+                const successMsg = res.data.message || 'Your email has been successfully verified! You can now log in.';
+                setMessage(successMsg);
+
+                const email = res.data.email || '';
+                if (email) {
+                    setVerifiedEmail(email);
                 }
+
+                // Explicitly clear any existing session tokens so user logs in cleanly
+                localStorage.removeItem('token');
+                localStorage.removeItem('userRole');
+                window.dispatchEvent(new Event('auth-changed'));
+
             } catch (err: any) {
                 setStatus('error');
                 setMessage(err.response?.data?.error || 'Verification link is invalid or has expired.');
             }
         };
-        verify();
-    }, [token, navigate]);
+
+        if (!hasVerifiedRef.current) {
+            hasVerifiedRef.current = true;
+            verify();
+        }
+    }, [token]);
+
+    // Countdown timer for automatic redirect to login upon success
+    useEffect(() => {
+        if (status !== 'success') return;
+
+        if (countdown <= 0) {
+            goToLogin(verifiedEmail);
+            return;
+        }
+
+        const timer = setTimeout(() => {
+            setCountdown(prev => prev - 1);
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [status, countdown, verifiedEmail]);
 
     const handleResend = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -54,7 +91,7 @@ export const VerifyEmail = () => {
         try {
             const res = await apiClient.post('/auth/resend-verification', { email: resendEmail });
             setResendStatus('success');
-            setResendMessage(res.data.message || 'Verification link resent successfully!');
+            setResendMessage(res.data.message || 'Verification link resent successfully! Please check your inbox.');
         } catch (err: any) {
             setResendStatus('error');
             setResendMessage(err.response?.data?.error || 'Failed to resend verification link. Please try again.');
@@ -71,7 +108,7 @@ export const VerifyEmail = () => {
             <div className="auth-center-card">
                 {/* Logo */}
                 <div className="auth-logo">
-                    <span className="auth-logo-icon"></span>
+                    <span className="auth-logo-icon">💰</span>
                     <span className="auth-logo-name">MoneyManager</span>
                 </div>
 
@@ -93,11 +130,17 @@ export const VerifyEmail = () => {
                             </div>
                             <h2>Email Verified!</h2>
                             <p className="verify-sub">{message}</p>
-                            <button className="auth-submit-btn" onClick={() => navigate('/dashboard')}>
-                                Go to Dashboard <span className="auth-btn-arrow">→</span>
+                            
+                            <button 
+                                className="auth-submit-btn" 
+                                onClick={() => goToLogin(verifiedEmail)}
+                                style={{ width: '100%', marginBottom: '1rem' }}
+                            >
+                                Go to Sign In <span className="auth-btn-arrow">→</span>
                             </button>
-                            <p style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.4)', marginTop: '1rem' }}>
-                                Redirecting you automatically in a moment...
+                            
+                            <p style={{ fontSize: '0.85rem', color: 'rgba(255, 255, 255, 0.5)' }}>
+                                Redirecting you to login page in <strong>{countdown}s</strong>...
                             </p>
                         </div>
                     )}
@@ -119,14 +162,14 @@ export const VerifyEmail = () => {
                                 <p className="resend-instructions">Enter your email below to receive a new verification link.</p>
                                 
                                 {resendStatus === 'success' && (
-                                    <div className="resend-alert success">
-                                        <span></span> {resendMessage}
+                                    <div className="resend-alert success" style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '8px', color: '#34d399', fontSize: '0.85rem' }}>
+                                        <span>✓</span> {resendMessage}
                                     </div>
                                 )}
                                 
                                 {resendStatus === 'error' && (
-                                    <div className="resend-alert error">
-                                        <span></span> {resendMessage}
+                                    <div className="resend-alert error" style={{ marginBottom: '1rem', padding: '0.75rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', color: '#f87171', fontSize: '0.85rem' }}>
+                                        <span>⚠️</span> {resendMessage}
                                     </div>
                                 )}
 

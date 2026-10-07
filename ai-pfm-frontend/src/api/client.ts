@@ -34,15 +34,17 @@ apiClient.interceptors.response.use(
         const status = error.response?.status;
         const url = error.config?.url || '';
         
-        // Skip auth redirect for public endpoints
+        // Skip auth redirect for public endpoints (strip query params first)
+        const cleanUrl = (url.split('?')[0] || '').toLowerCase();
         const isPublicEndpoint = 
-            url.endsWith('/auth/login') || 
-            url.endsWith('/auth/signup') || 
-            url.endsWith('/auth/google-login') || 
-            url.endsWith('/auth/verify-email') || 
-            url.endsWith('/auth/forgot-password') || 
-            url.endsWith('/auth/reset-password') || 
-            url.endsWith('/auth/google-client-id');
+            cleanUrl.endsWith('/auth/login') || 
+            cleanUrl.endsWith('/auth/signup') || 
+            cleanUrl.endsWith('/auth/google-login') || 
+            cleanUrl.endsWith('/auth/verify-email') || 
+            cleanUrl.endsWith('/auth/resend-verification') || 
+            cleanUrl.endsWith('/auth/forgot-password') || 
+            cleanUrl.endsWith('/auth/reset-password') || 
+            cleanUrl.endsWith('/auth/google-client-id');
 
         if ((status === 401 || status === 403) && !isPublicEndpoint) {
             // Token expired or invalid

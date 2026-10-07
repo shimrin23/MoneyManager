@@ -1,13 +1,15 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.ts';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import '../styles/AuthPages.css';
 
 export const Login = () => {
-    const [email,        setEmail]        = useState('');
+    const location = useLocation();
+    const [email,        setEmail]        = useState(() => location.state?.email || '');
     const [password,     setPassword]     = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error,        setError]        = useState('');
+    const [successMessage, setSuccessMessage] = useState(() => location.state?.message || '');
     const [loading,      setLoading]      = useState(false);
     
     // Custom Modals State
@@ -163,6 +165,12 @@ export const Login = () => {
                     <h1 className="auth-card-title">Welcome back</h1>
                     <p className="auth-card-sub">Sign in to your account</p>
                 </div>
+
+                {successMessage && (
+                    <div className="auth-alert success" style={{ marginBottom: '1.25rem', padding: '0.85rem 1rem', background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.35)', borderRadius: '8px', color: '#34d399', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                        <span style={{ fontSize: '1.1rem' }}>✓</span> <span>{successMessage}</span>
+                    </div>
+                )}
 
                 {error && (
                     <div className="auth-error">

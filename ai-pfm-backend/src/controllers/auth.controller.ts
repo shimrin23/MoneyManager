@@ -136,36 +136,42 @@ export default class AuthController {
             }
 
             // Find user with active token
-            const user = await User.findOne({
+            let user = await User.findOne({
                 verificationToken: token,
                 verificationTokenExpires: { $gt: new Date() }
             });
 
             if (!user) {
+                // Check if user was already verified with this token (e.g. StrictMode double call or reloaded link)
+                const alreadyVerifiedUser = await User.findOne({
+                    verificationToken: token,
+                    isVerified: true
+                });
+
+                if (alreadyVerifiedUser) {
+                    return res.json({ 
+                        message: "Your email has already been verified! Please sign in to your account.",
+                        alreadyVerified: true,
+                        email: alreadyVerifiedUser.email
+                    });
+                }
+
                 return res.status(400).json({ error: "Verification link is invalid or has expired." });
             }
 
             // Mark user as verified
             user.isVerified = true;
-            user.verificationToken = undefined;
-            user.verificationTokenExpires = undefined;
             await user.save();
 
-            // Send welcome email after verification success
-            await sendWelcomeEmail(user.email, user.name);
-
-            // Generate JWT Token for Auto-Login
-            const jwtToken = jwt.sign(
-                { id: user._id }, 
-                process.env.JWT_SECRET || 'fallback_secret_key_change_me', 
-                { expiresIn: '1d' }
-            );
+            // Send welcome email after verification success asynchronously
+            sendWelcomeEmail(user.email, user.name).catch(err => {
+                console.error("Welcome email background error:", err);
+            });
 
             res.json({ 
-                message: "Email verified successfully! Logging you in...",
-                token: jwtToken,
-                role: user.role,
-                user: { id: user._id, name: user.name, email: user.email, role: user.role }
+                message: "Email verified successfully! You can now log in.",
+                email: user.email,
+                role: user.role
             });
 
         } catch (error) {

@@ -191,7 +191,7 @@ function AppShell() {
 
   const pageTitleInfo = getPageTitleInfo();
 
-  const isOnAuthPage = AUTH_PAGES.includes(location.pathname);
+  const isOnAuthPage = AUTH_PAGES.some(p => location.pathname === p || location.pathname.startsWith(`${p}/`));
   const isAuthenticated = !!token;
   const showLayout = isAuthenticated && !isOnAuthPage;
 
@@ -483,11 +483,7 @@ function AppShell() {
               ? <Navigate to="/dashboard" replace />
               : <Signup />
           } />
-          <Route path="/verify-email" element={
-            isAuthenticated
-              ? <Navigate to="/dashboard" replace />
-              : <VerifyEmail />
-          } />
+          <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/reset-password" element={
             isAuthenticated
               ? <Navigate to="/dashboard" replace />
