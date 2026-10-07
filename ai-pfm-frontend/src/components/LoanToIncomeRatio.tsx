@@ -98,7 +98,7 @@ const LoanToIncomeRatio: FC<LoanToIncomeRatioProps> = ({ onRefresh }) => {
                     </div>
                 </div>
 
-                <div className="ratio-details" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+                <div className="ratio-details" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1rem', marginBottom: '2rem' }}>
                     <div className="detail-card" style={{ background: 'var(--color-surface-2)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
                         <p className="label" style={{ margin: '0 0 0.5rem', color: 'var(--color-text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Total Monthly EMI</p>
                         <p className="value" style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0, color: 'var(--color-text)', letterSpacing: '-0.02em' }}>LKR {data.totalMonthlyEMI?.toLocaleString()}</p>
@@ -125,7 +125,7 @@ const LoanToIncomeRatio: FC<LoanToIncomeRatioProps> = ({ onRefresh }) => {
 
             <div className="ratio-scale">
                 <h3 style={{ fontSize: '1.1rem', color: 'var(--color-text)', marginBottom: '1.25rem', fontWeight: 600 }}>Risk Scale Guide</h3>
-                <div className="scale-items" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
+                <div className="scale-items" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: '1rem' }}>
                     <div className="scale-item" style={{ background: 'var(--color-surface-2)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
                             <span className="scale-label" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-text)' }}>Low</span>

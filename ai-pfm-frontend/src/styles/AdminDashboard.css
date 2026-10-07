@@ -490,7 +490,7 @@
 /* Roles Grid */
 .roles-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
     gap: 1.5rem;
     margin-bottom: 2rem;
 }
@@ -596,7 +596,7 @@
 
 .permissions-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
     gap: 1.5rem;
 }
 
@@ -683,7 +683,7 @@
 /* Audit Filters */
 .audit-filters {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
     gap: 1rem;
     margin-bottom: 2rem;
     padding: 1.5rem;

@@ -696,31 +696,33 @@ export const SubscriptionsPage = () => {
                                 <div>
                                     {alternatives.length > 0 ? (
                                         <div>
-                                            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '16px' }}>
-                                                <thead>
-                                                    <tr style={{ borderBottom: '2px solid var(--border)' }}>
-                                                        <th style={{ textAlign: 'left', padding: '8px', fontWeight: '600' }}>Alternative</th>
-                                                        <th style={{ textAlign: 'center', padding: '8px', fontWeight: '600' }}>Price</th>
-                                                        <th style={{ textAlign: 'right', padding: '8px', fontWeight: '600' }}>Savings</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {alternatives.map((alt, idx) => (
-                                                        <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
-                                                            <td style={{ padding: '12px 8px' }}>
-                                                                <div style={{ fontWeight: '500' }}>{alt.name}</div>
-                                                                <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{alt.provider}</div>
-                                                            </td>
-                                                            <td style={{ textAlign: 'center', padding: '12px 8px', fontWeight: '600' }}>
-                                                                LKR {alt.price.toLocaleString()}
-                                                            </td>
-                                                            <td style={{ textAlign: 'right', padding: '12px 8px', fontWeight: '600', color: '#059669' }}>
-                                                                {alt.savings > 0 ? `+Rs. ${alt.savings.toLocaleString()}` : 'N/A'}
-                                                            </td>
+                                            <div className="table-container" style={{ overflowX: 'auto', width: '100%', marginBottom: '16px' }}>
+                                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                                    <thead>
+                                                        <tr style={{ borderBottom: '2px solid var(--border)' }}>
+                                                            <th style={{ textAlign: 'left', padding: '8px', fontWeight: '600' }}>Alternative</th>
+                                                            <th style={{ textAlign: 'center', padding: '8px', fontWeight: '600' }}>Price</th>
+                                                            <th style={{ textAlign: 'right', padding: '8px', fontWeight: '600' }}>Savings</th>
                                                         </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
+                                                    </thead>
+                                                    <tbody>
+                                                        {alternatives.map((alt, idx) => (
+                                                            <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
+                                                                <td style={{ padding: '12px 8px' }}>
+                                                                    <div style={{ fontWeight: '500' }}>{alt.name}</div>
+                                                                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{alt.provider}</div>
+                                                                </td>
+                                                                <td style={{ textAlign: 'center', padding: '12px 8px', fontWeight: '600' }}>
+                                                                    LKR {alt.price.toLocaleString()}
+                                                                </td>
+                                                                <td style={{ textAlign: 'right', padding: '12px 8px', fontWeight: '600', color: '#059669' }}>
+                                                                    {alt.savings > 0 ? `+Rs. ${alt.savings.toLocaleString()}` : 'N/A'}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
                             
                                             <div style={{ display: 'flex', gap: '8px' }}>
                                                 <button

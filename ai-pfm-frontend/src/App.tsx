@@ -283,6 +283,17 @@ function AppShell() {
                   {role === 'ops' ? 'Operations' : role === 'manager' ? 'Manager' : 'Admin'}
                 </span>
               )}
+              <button
+                type="button"
+                className="sidebar-close-btn"
+                onClick={() => setIsMobileSidebarOpen(false)}
+                aria-label="Close sidebar menu"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
             </div>
 
             <div className="nav-section">
@@ -333,6 +344,20 @@ function AppShell() {
               )}
             </div>
 
+            {/* Mobile-only language selector inside drawer */}
+            <div className="mobile-drawer-lang">
+              <span className="mobile-drawer-lang-title">Language</span>
+              <div className="mobile-drawer-lang-group">
+                {([['en','English'], ['si','සිංහල'], ['ta','தமிழ்']] as [Language, string][]).map(([l, label]) => (
+                  <button key={l} className={`lang-btn ${lang === l ? 'active' : ''}`}
+                    onClick={() => switchLang(l)}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="sidebar-footer">
               <UserHeader theme={theme} onToggleTheme={() => setTheme(p => p === 'dark' ? 'light' : 'dark')} />
             </div>
@@ -352,35 +377,19 @@ function AppShell() {
                 <span className="hamburger-line"></span>
               </button>
               <div className="header-logo-mobile">
-                <span className="header-logo-icon"><IconWallet size={24} /></span>
+                <span className="header-logo-icon"><IconWallet size={22} /></span>
                 <span className="header-logo-text">MoneyManager</span>
               </div>
             </div>
 
             {pageTitleInfo && (
-              <div className="header-center" style={{ flex: 1, display: 'flex', paddingLeft: '1.5rem', alignItems: 'center' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                  <h1 style={{ 
-                      fontSize: '1.25rem', 
-                      fontWeight: 800, 
-                      letterSpacing: '-0.02em',
-                      margin: 0, 
-                      background: 'linear-gradient(90deg, #0ea5e9, #6366f1)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                      lineHeight: 1.2
-                  }}>
+              <div className="header-center">
+                <div className="header-title-box">
+                  <h1 className="header-page-heading">
                     {pageTitleInfo.title}
                   </h1>
                   {pageTitleInfo.subtitle && (
-                    <p style={{ 
-                        fontSize: '0.8rem', 
-                        fontWeight: 500,
-                        margin: '2px 0 0 0', 
-                        color: 'var(--color-text-muted)',
-                        opacity: 0.8
-                    }}>
+                    <p className="header-page-subheading">
                       {pageTitleInfo.subtitle}
                     </p>
                   )}
@@ -389,7 +398,7 @@ function AppShell() {
             )}
 
             <div className="header-actions">
-              <div className="header-lang-row">
+              <div className="header-lang-row desktop-only-lang">
                 {([['en','En'], ['si','සිං'], ['ta','த']] as [Language, string][]).map(([l, label]) => (
                   <button key={l} className={`lang-btn ${lang === l ? 'active' : ''}`}
                     onClick={() => switchLang(l)}
@@ -401,12 +410,12 @@ function AppShell() {
               </div>
               {isCustomer && (
                 <button
-                  className="modal-close"
+                  className="header-action-btn"
                   onClick={() => setIsAiAssistantOpen(true)}
                   aria-label="AI Coach"
                   title="AI Coach"
                 >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 3 3v2a3 3 0 0 1-3 3h-1v1a4 4 0 0 1-8 0v-1H7a3 3 0 0 1-3-3v-2a3 3 0 0 1 3-3h1V6a4 4 0 0 1 4-4z"/>
                     <line x1="9" y1="10" x2="9" y2="14"/>
                     <line x1="15" y1="10" x2="15" y2="14"/>
@@ -415,12 +424,12 @@ function AppShell() {
               )}
               {isCustomer && (
                 <button
-                  className="modal-close"
+                  className="header-action-btn header-add-btn"
                   onClick={() => setShowAddTransactionModal(true)}
                   aria-label="New Transaction"
                   title="New Transaction"
                 >
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                     <line x1="12" y1="5" x2="12" y2="19"/>
                     <line x1="5" y1="12" x2="19" y2="12"/>
                   </svg>
@@ -428,13 +437,13 @@ function AppShell() {
               )}
               {isCustomer && (
                 <button
-                  className="modal-close"
+                  className="header-action-btn"
                   onClick={() => setTheme(p => p === 'dark' ? 'light' : 'dark')}
                   aria-label="Toggle Theme"
                   title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                 >
                   {theme === 'dark' ? (
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="5"></circle>
                       <line x1="12" y1="1" x2="12" y2="3"></line>
                       <line x1="12" y1="21" x2="12" y2="23"></line>
@@ -446,7 +455,7 @@ function AppShell() {
                       <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
                     </svg>
                   ) : (
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
                     </svg>
                   )}
@@ -454,12 +463,12 @@ function AppShell() {
               )}
               {isCustomer && (
                 <button
-                  className="modal-close"
+                  className="header-action-btn"
                   onClick={() => navigate('/notifications')}
                   aria-label="Notifications"
                   title="Notifications"
                 >
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                     <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                   </svg>
@@ -538,6 +547,87 @@ function AppShell() {
 
       {showLayout && isCustomer && (
         <AIAssistant open={isAiAssistantOpen} onOpenChange={setIsAiAssistantOpen} />
+      )}
+
+      {/* ── Mobile Bottom Navigation Bar (<768px) ── */}
+      {showLayout && (
+        <nav className="mobile-bottom-bar" aria-label="Mobile navigation">
+          {isCustomer ? (
+            <>
+              <NavLink to="/dashboard" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                <span className="mobile-tab-icon"><IconDashboard size={20} /></span>
+                <span className="mobile-tab-label">{T[lang].dashboard}</span>
+              </NavLink>
+              <NavLink to="/transactions" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                <span className="mobile-tab-icon"><IconReceipt size={20} /></span>
+                <span className="mobile-tab-label">{T[lang].transactions}</span>
+              </NavLink>
+              <button
+                type="button"
+                className="mobile-tab mobile-tab-add"
+                onClick={() => setShowAddTransactionModal(true)}
+                aria-label="Add transaction"
+              >
+                <span className="mobile-add-circle">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                </span>
+                <span className="mobile-tab-label">{T[lang].newTx}</span>
+              </button>
+              <NavLink to="/smart-budgets" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                <span className="mobile-tab-icon"><IconBrain size={20} /></span>
+                <span className="mobile-tab-label">{T[lang].budgets}</span>
+              </NavLink>
+              <button
+                type="button"
+                className="mobile-tab mobile-tab-more"
+                onClick={() => setIsMobileSidebarOpen(true)}
+                aria-label="Open full menu"
+              >
+                <span className="mobile-tab-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <line x1="4" y1="7" x2="20" y2="7"></line>
+                    <line x1="4" y1="12" x2="20" y2="12"></line>
+                    <line x1="4" y1="17" x2="20" y2="17"></line>
+                  </svg>
+                </span>
+                <span className="mobile-tab-label">Menu</span>
+              </button>
+            </>
+          ) : (
+            <>
+              <NavLink to="/admin" end className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                <span className="mobile-tab-icon"><IconDashboard size={20} /></span>
+                <span className="mobile-tab-label">Overview</span>
+              </NavLink>
+              <NavLink to="/admin/users" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                <span className="mobile-tab-icon"><IconUsers size={20} /></span>
+                <span className="mobile-tab-label">Users</span>
+              </NavLink>
+              <NavLink to="/admin/audit" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                <span className="mobile-tab-icon"><IconClipboardList size={20} /></span>
+                <span className="mobile-tab-label">Audit</span>
+              </NavLink>
+              <button
+                type="button"
+                className="mobile-tab mobile-tab-more"
+                onClick={() => setIsMobileSidebarOpen(true)}
+                aria-label="Open admin menu"
+              >
+                <span className="mobile-tab-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <line x1="4" y1="7" x2="20" y2="7"></line>
+                    <line x1="4" y1="12" x2="20" y2="12"></line>
+                    <line x1="4" y1="17" x2="20" y2="17"></line>
+                  </svg>
+                </span>
+                <span className="mobile-tab-label">Menu</span>
+              </button>
+            </>
+          )}
+        </nav>
       )}
 
       {showAddTransactionModal && <AddTransactionModal />}

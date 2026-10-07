@@ -150,7 +150,7 @@ export const ConnectBankPage = () => {
                 <h1 className="page-title">Connect Sri Lankan Bank</h1>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 1.2fr', gap: '1.5rem' }}>
+            <div className="connect-bank-grid" style={{ display: 'grid', gap: '1.5rem' }}>
                 {/* Bank Selection List */}
                 <div className="card" style={{ padding: '1.25rem' }}>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem', color: '#1e293b' }}>
