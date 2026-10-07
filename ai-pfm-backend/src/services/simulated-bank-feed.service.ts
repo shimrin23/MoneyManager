@@ -44,6 +44,7 @@ export interface GenerateFeedOptions {
     days?: number;
     endDate?: Date;
     seed?: string;
+    generatedAt?: string | Date;
 }
 
 const MERCHANT_POOL = [
@@ -89,7 +90,12 @@ export class SimulatedBankFeedService {
             days = 30,
             endDate = new Date(),
             seed = `${userId}-${accountId}`,
+            generatedAt,
         } = options;
+
+        const effectiveGeneratedAt = generatedAt
+            ? (typeof generatedAt === 'string' ? generatedAt : generatedAt.toISOString())
+            : (options.endDate ? options.endDate.toISOString() : endDate.toISOString());
 
         const rand = makePrng(seed);
 
@@ -133,7 +139,7 @@ export class SimulatedBankFeedService {
             userId,
             accountId,
             accountName,
-            generatedAt: new Date().toISOString(),
+            generatedAt: effectiveGeneratedAt,
             transactions,
             summary: {
                 transactionCount: transactions.length,

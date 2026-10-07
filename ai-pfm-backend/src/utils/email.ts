@@ -1,7 +1,14 @@
 import axios from 'axios';
 
+const getFrontendUrl = () => {
+    let raw = (process.env.FRONTEND_URL || 'http://localhost:5173').trim();
+    raw = raw.replace(/\/+$/, '');
+    raw = raw.replace(/\/login$/i, '');
+    return raw;
+};
+
 export const sendVerificationEmail = async (email: string, token: string) => {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = getFrontendUrl();
     const verificationUrl = `${frontendUrl}/verify-email?token=${token}`;
 
     console.log('\n==================================================');
@@ -75,7 +82,7 @@ export const sendWelcomeEmail = async (email: string, name: string) => {
                             <li>Set and optimize intelligent savings goals</li>
                         </ul>
                         <div style="text-align: center; margin: 32px 0;">
-                            <a href="${process.env.FRONTEND_URL || 'http://localhost:5173'}/login" style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 12px 28px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">Go to Login</a>
+                            <a href="${getFrontendUrl()}/login" style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 12px 28px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);">Go to Login</a>
                         </div>
                         <p style="color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-top: 32px;">Happy saving!<br>The MoneyManager Team</p>
                     </div>
@@ -95,7 +102,7 @@ export const sendWelcomeEmail = async (email: string, name: string) => {
 };
 
 export const sendResetPasswordEmail = async (email: string, token: string) => {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const frontendUrl = getFrontendUrl();
     const resetUrl = `${frontendUrl}/reset-password?token=${token}`;
 
     console.log('\n==================================================');
