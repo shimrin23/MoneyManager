@@ -1102,3 +1102,156 @@
 [data-theme='light'] .financial-health-page .insight-content p {
     color: #475569;
 }
+
+/* Forecast Page */
+.forecast-page .page-header {
+    align-items: center;
+}
+
+.forecast-confidence {
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+.forecast-confidence-high { border-color: var(--success); color: var(--success); }
+.forecast-confidence-medium { border-color: var(--accent); color: var(--accent); }
+.forecast-confidence-low { border-color: var(--text-muted); color: var(--text-muted); }
+
+.forecast-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.forecast-summary-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.forecast-summary-label {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+}
+
+.forecast-summary-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.forecast-summary-card.positive .forecast-summary-value { color: var(--success); }
+.forecast-summary-card.negative .forecast-summary-value { color: var(--danger); }
+
+.forecast-summary-range {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.forecast-chart-card,
+.forecast-categories-card,
+.forecast-notes-card,
+.forecast-empty {
+    margin-bottom: 1.5rem;
+}
+
+.forecast-chart {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.forecast-axis { stroke: var(--border); stroke-width: 1; }
+.forecast-axis-label { fill: var(--text-muted); font-size: 12px; }
+.forecast-axis-label-projected { fill: var(--text); font-weight: 600; }
+
+.forecast-bar-income { fill: var(--success); }
+.forecast-bar-expense { fill: var(--accent); }
+.forecast-bar-projected {
+    fill-opacity: 0.45;
+    stroke-width: 1.5;
+    stroke-dasharray: 4 3;
+}
+.forecast-bar-income.forecast-bar-projected { stroke: var(--success); }
+.forecast-bar-expense.forecast-bar-projected { stroke: var(--accent); }
+
+.forecast-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.forecast-swatch {
+    display: inline-block;
+    width: 0.8rem;
+    height: 0.8rem;
+    border-radius: 2px;
+    vertical-align: middle;
+}
+.forecast-swatch.forecast-bar-income { background: var(--success); }
+.forecast-swatch.forecast-bar-expense { background: var(--accent); }
+
+.forecast-chart-footnote,
+.forecast-muted {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.forecast-table-wrap { overflow-x: auto; }
+
+.forecast-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.forecast-table th,
+.forecast-table td {
+    padding: 0.65rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--table-border);
+}
+
+.forecast-table th {
+    color: var(--table-head-text);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.forecast-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+.forecast-trend-up { color: var(--danger); }
+.forecast-trend-down { color: var(--success); }
+.forecast-trend-flat { color: var(--text-muted); }
+
+.forecast-notes-card ul {
+    margin: 0 0 0.75rem 1.2rem;
+    padding: 0;
+    color: var(--text);
+}
+
+.forecast-empty { text-align: center; }
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+@media (max-width: 600px) {
+    .forecast-page.page-container { padding: 1rem; }
+    .forecast-summary-value { font-size: 1.6rem; }
+}

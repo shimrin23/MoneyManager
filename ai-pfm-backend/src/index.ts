@@ -11,6 +11,7 @@ import subscriptionsRoutes from "./routes/subscriptions.routes";
 import consentRoutes from "./routes/consent.routes";
 import adminConfigRoutes from "./routes/admin-config.routes";
 import chatCoachRoutes from "./routes/chatCoach.routes";
+import analyticsRoutes from "./routes/analytics.routes";
 import errorHandler from "./middlewares/errorHandler";
 import { authenticateToken } from "./middlewares/authMiddleware";
 
@@ -28,6 +29,7 @@ app.use("/api/goals", goalsRoutes); // Goals Routes
 app.use("/api/loans", loansRoutes); // Loans Routes
 app.use("/api/credit-cards", creditcardsRoutes); // Credit Cards Routes
 app.use("/api/coach", chatCoachRoutes); // AI Coach Routes
+app.use("/api/analytics", analyticsRoutes); // Predictive Analytics Routes
 app.use("/api/consent", consentRoutes); // Consent Management Routes (Phase 1)
 app.use("/api/admin/config", adminConfigRoutes); // Admin Configuration Routes (Phase 1)
 app.use("/api", authenticateToken, userRoutes); // User management routes (protected)

@@ -25,6 +25,12 @@ export const FinancialNavigation = () => {
             icon: '💎',
             title: 'Credit Cards',
             description: 'Track spending and manage payments'
+        },
+        {
+            path: '/forecast',
+            icon: '🔮',
+            title: 'Forecast',
+            description: 'Predict next month\'s income, spending and savings'
         }
     ];
 

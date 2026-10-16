@@ -18,6 +18,7 @@ import LoansPage from './components/LoansPage';
 import { CreditCardsPage } from './pages/CreditCardsPage';
 import { SubscriptionsPage } from './pages/SubscriptionsPage';
 import { SmartBudgetsPage } from './pages/SmartBudgetsPage';
+import { ForecastPage } from './pages/ForecastPage';
 import { ConnectBankPage } from './pages/ConnectBankPage';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { AIAssistant } from './components/AIAssistant';
@@ -146,6 +147,10 @@ function App() {
                   <NavLink to="/smart-budgets" onClick={handleNavLinkClick} className={({ isActive }) => `nav-item${isActive ? ' dashboard-item' : ''}`}>
                     <span className="nav-icon">🧠</span>
                     Smart Budgets
+                  </NavLink>
+                  <NavLink to="/forecast" onClick={handleNavLinkClick} className={({ isActive }) => `nav-item${isActive ? ' dashboard-item' : ''}`}>
+                    <span className="nav-icon">🔮</span>
+                    Forecast
                   </NavLink>
                   <NavLink to="/connect-bank" onClick={handleNavLinkClick} className={({ isActive }) => `nav-item${isActive ? ' dashboard-item' : ''}`}>
                     <span className="nav-icon">🔗</span>
@@ -350,6 +355,17 @@ function App() {
                   <ProtectedRoute>
                     <main className="page-content">
                       <SmartBudgetsPage />
+                    </main>
+                  </ProtectedRoute>
+                }
+              />
+
+              <Route
+                path="/forecast"
+                element={
+                  <ProtectedRoute>
+                    <main className="page-content">
+                      <ForecastPage />
                     </main>
                   </ProtectedRoute>
                 }
