@@ -278,22 +278,6 @@ function AppShell() {
                 <span className="logo-emoji"><IconWallet size={24} /></span>
                 <span className="logo-text">MoneyManager</span>
               </h1>
-              {isAdmin && (
-                <span className="sidebar-role-badge admin">
-                  {role === 'ops' ? 'Operations' : role === 'manager' ? 'Manager' : 'Admin'}
-                </span>
-              )}
-              <button
-                type="button"
-                className="sidebar-close-btn"
-                onClick={() => setIsMobileSidebarOpen(false)}
-                aria-label="Close sidebar menu"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
             </div>
 
             <div className="nav-section">
@@ -398,16 +382,6 @@ function AppShell() {
             )}
 
             <div className="header-actions">
-              <div className="header-lang-row desktop-only-lang">
-                {([['en','En'], ['si','සිං'], ['ta','த']] as [Language, string][]).map(([l, label]) => (
-                  <button key={l} className={`lang-btn ${lang === l ? 'active' : ''}`}
-                    onClick={() => switchLang(l)}
-                    title={l === 'en' ? 'English' : l === 'si' ? 'Sinhala' : 'Tamil'}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
               {isCustomer && (
                 <button
                   className="header-action-btn"
