@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../api/client';
+import { ADMIN_T, useAdminLang } from '../i18n/adminText';
 
 interface AuditEntry {
     id: string;
@@ -34,6 +35,8 @@ const ACTION_ICONS: Record<string, string> = {
 };
 
 export const AdminAuditPage = () => {
+    const lang = useAdminLang();
+    const t = ADMIN_T[lang];
     const [logs, setLogs]         = useState<AuditEntry[]>(mockAudit);
     const [severity, setSeverity] = useState<string>('all');
     const [search, setSearch]     = useState('');
@@ -50,6 +53,10 @@ export const AdminAuditPage = () => {
         load();
     }, []);
 
+    const severityName = (s: AuditEntry['severity']) => ({
+        info: t.sevInfo, warning: t.sevWarning, critical: t.sevCritical,
+    })[s];
+
     const filtered = logs.filter(l => {
         const matchSev    = severity === 'all' || l.severity === severity;
         const matchSearch = l.actor.toLowerCase().includes(search.toLowerCase()) ||
@@ -62,16 +69,16 @@ export const AdminAuditPage = () => {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">Audit Logs</h1>
-                    <p className="page-subtitle">Full activity trail: all admin, ops, and system actions</p>
+                    <h1 className="page-title">{t.hdrAudit}</h1>
+                    <p className="page-subtitle">{t.auditSubtitle}</p>
                 </div>
             </div>
 
             <div className="rec-summary-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
-                <div className="rec-stat-card"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{logs.length}</div><div className="rec-stat-label">Total Events</div></div></div>
-                <div className="rec-stat-card"><div className="rec-stat-icon"></div><div><div className="rec-stat-value" style={{ color: '#ef4444' }}>{logs.filter(l => l.severity === 'critical').length}</div><div className="rec-stat-label">Critical</div></div></div>
-                <div className="rec-stat-card pending"><div className="rec-stat-icon"></div><div><div className="rec-stat-value" style={{ color: '#f59e0b' }}>{logs.filter(l => l.severity === 'warning').length}</div><div className="rec-stat-label">Warnings</div></div></div>
-                <div className="rec-stat-card accepted"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{logs.filter(l => l.severity === 'info').length}</div><div className="rec-stat-label">Info</div></div></div>
+                <div className="rec-stat-card"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{logs.length}</div><div className="rec-stat-label">{t.statTotalEvents}</div></div></div>
+                <div className="rec-stat-card"><div className="rec-stat-icon"></div><div><div className="rec-stat-value" style={{ color: '#ef4444' }}>{logs.filter(l => l.severity === 'critical').length}</div><div className="rec-stat-label">{t.statCritical}</div></div></div>
+                <div className="rec-stat-card pending"><div className="rec-stat-icon"></div><div><div className="rec-stat-value" style={{ color: '#f59e0b' }}>{logs.filter(l => l.severity === 'warning').length}</div><div className="rec-stat-label">{t.statWarnings}</div></div></div>
+                <div className="rec-stat-card accepted"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{logs.filter(l => l.severity === 'info').length}</div><div className="rec-stat-label">{t.statInfo}</div></div></div>
             </div>
 
             <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
@@ -88,10 +95,10 @@ export const AdminAuditPage = () => {
                             pointerEvents: 'none',
                         }}
                     >
-                        
+
                     </span>
                     <input
-                        type="text" placeholder="Search actor, action or details..."
+                        type="text" placeholder={t.searchAudit}
                         value={search} onChange={e => setSearch(e.target.value)}
                         style={{ width: '100%', padding: '0.6rem 1rem 0.6rem 2.7rem', borderRadius: '10px',
                                  border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--text)', fontSize: '0.88rem',
@@ -100,10 +107,10 @@ export const AdminAuditPage = () => {
                 </div>
                 <div className="filter-pill-row" style={{ marginBottom: 0 }}>
                     {[
-                        { val: 'all',      label: 'All',      color: '#6366f1' },
-                        { val: 'info',     label: 'Info',     color: '#10b981' },
-                        { val: 'warning',  label: 'Warning',  color: '#f59e0b' },
-                        { val: 'critical', label: 'Critical', color: '#ef4444' },
+                        { val: 'all',      label: t.filterAll,     color: '#6366f1' },
+                        { val: 'info',     label: t.sevInfo,       color: '#10b981' },
+                        { val: 'warning',  label: t.sevWarning,    color: '#f59e0b' },
+                        { val: 'critical', label: t.sevCritical,   color: '#ef4444' },
                     ].map(({ val, label, color }) => (
                         <button key={val}
                             className={`filter-pill ${severity === val ? 'active' : ''}`}
@@ -123,7 +130,10 @@ export const AdminAuditPage = () => {
                 <div className="admin-table-wrapper">
                     <table className="admin-table" style={{ width: '100%' }}>
                         <thead>
-                            <tr><th>Time</th><th>Actor</th><th>Action</th><th>Resource</th><th>Details</th><th>Severity</th></tr>
+                            <tr>
+                                <th>{t.colTime}</th><th>{t.colActor}</th><th>{t.colEvent}</th>
+                                <th>{t.colResource}</th><th>{t.colDetails}</th><th>{t.colSeverity}</th>
+                            </tr>
                         </thead>
                         <tbody>
                             {filtered.map(l => (
@@ -147,12 +157,12 @@ export const AdminAuditPage = () => {
                                             background: SEVERITY_COLORS[l.severity] + '22',
                                             color: SEVERITY_COLORS[l.severity],
                                             border: `1px solid ${SEVERITY_COLORS[l.severity]}44`
-                                        }}>{l.severity}</span>
+                                        }}>{severityName(l.severity)}</span>
                                     </td>
                                 </tr>
                             ))}
                             {filtered.length === 0 && (
-                                <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No logs match your filter</td></tr>
+                                <tr><td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>{t.noLogs}</td></tr>
                             )}
                         </tbody>
                     </table>

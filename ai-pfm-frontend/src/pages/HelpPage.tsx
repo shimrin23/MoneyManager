@@ -1,13 +1,8 @@
 // Help & Support Page
 import { useState } from 'react';
 import { apiClient } from '../api/client.ts';
-
-interface FAQ {
-    id: number;
-    question: string;
-    answer: string;
-    category: string;
-}
+import { useAdminLang } from '../i18n/adminText';
+import { USER_T } from '../i18n/userPagesText';
 
 interface SupportTicket {
     subject: string;
@@ -16,7 +11,14 @@ interface SupportTicket {
     priority: 'low' | 'medium' | 'high';
 }
 
+// Category keys stay in English because they are sent to the server.
+const FAQ_CATEGORIES = ['account', 'features', 'security', 'features', 'account', 'features', 'account', 'troubleshooting'];
+
+const GUIDE_LINKS = ['#getting-started', '#budgets', '#health-score', '#ai-recommendations', '#security', '#data-export'];
+const GUIDE_ICONS = ['', '', '', '', '', '📥'];
+
 export const HelpPage = () => {
+    const t = USER_T[useAdminLang()];
     const [activeSection, setActiveSection] = useState<'faq' | 'contact' | 'guides'>('faq');
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedFAQ, setExpandedFAQ] = useState<number | null>(null);
@@ -27,96 +29,21 @@ export const HelpPage = () => {
         priority: 'medium'
     });
     const [ticketSubmitting, setTicketSubmitting] = useState(false);
-    const [ticketMessage, setTicketMessage] = useState('');
-    const faqs: FAQ[] = [
-        {
-            id: 1,
-            question: "How do I add my bank account?",
-            answer: "You can add transactions manually using the 'Add Transaction' form on your dashboard. For automatic bank integration, contact our support team.",
-            category: "account"
-        },
-        {
-            id: 2,
-            question: "How is my Financial Health Score calculated?",
-            answer: "Your score is based on 5 factors: liquidity ratio (25%), savings habits (20%), debt management (25%), fee frequency (15%), and income stability (15%). The score updates automatically as you add new transactions.",
-            category: "features"
-        },
-        {
-            id: 3,
-            question: "Is my financial data secure?",
-            answer: "Yes! We use bank-level encryption (AES-256) for all data. Your information is never shared with third parties and is stored securely on our servers.",
-            category: "security"
-        },
-        {
-            id: 4,
-            question: "How do I set up budget alerts?",
-            answer: "Go to your Dashboard and look for budget recommendations from our AI coach. You can accept these to automatically create budget alerts, or manually set them in Account Settings.",
-            category: "features"
-        },
-        {
-            id: 5,
-            question: "Can I export my data?",
-            answer: "Yes! Go to Account Settings > Data & Privacy > Export My Data to download all your financial information in JSON format.",
-            category: "account"
-        },
-        {
-            id: 6,
-            question: "What types of recommendations does the AI provide?",
-            answer: "Our AI analyzes your spending patterns to suggest budget optimizations, debt consolidation opportunities, subscription cleanups, savings goals, and investment recommendations.",
-            category: "features"
-        },
-        {
-            id: 7,
-            question: "How do I cancel my account?",
-            answer: "Go to Account Settings > Danger Zone > Delete Account. Note that this action is permanent and cannot be undone.",
-            category: "account"
-        },
-        {
-            id: 8,
-            question: "Why aren't my transactions showing up?",
-            answer: "Make sure you're logged in and adding transactions with the correct date format. If you're still having issues, try refreshing the page or contact support.",
-            category: "troubleshooting"
-        }
-    ];
+    const [ticketStatus, setTicketStatus] = useState<'ok' | 'fail' | ''>('');
 
-    const guides = [
-        {
-            title: "Getting Started Guide",
-            description: "Learn the basics of MoneyManager",
-            icon: "",
-            link: "#getting-started"
-        },
-        {
-            title: "Setting Up Budgets",
-            description: "Create and manage your budgets effectively",
-            icon: "",
-            link: "#budgets"
-        },
-        {
-            title: "Understanding Your Health Score",
-            description: "How to improve your financial health",
-            icon: "",
-            link: "#health-score"
-        },
-        {
-            title: "AI Recommendations",
-            description: "Making the most of AI-powered insights",
-            icon: "",
-            link: "#ai-recommendations"
-        },
-        {
-            title: "Security & Privacy",
-            description: "Keeping your data safe and secure",
-            icon: "",
-            link: "#security"
-        },
-        {
-            title: "Data Export & Backup",
-            description: "Exporting and backing up your data",
-            icon: "📥",
-            link: "#data-export"
-        }
-    ];
+    const faqs = t.faqQ.map((question, i) => ({
+        id: i + 1,
+        question,
+        answer: t.faqA[i],
+        category: FAQ_CATEGORIES[i],
+    }));
+
+    const guides = t.guideTitle.map((title, i) => ({
+        title,
+        description: t.guideDesc[i],
+        icon: GUIDE_ICONS[i],
+        link: GUIDE_LINKS[i],
+    }));
 
     const filteredFAQs = faqs.filter(faq =>
         faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -126,19 +53,19 @@ export const HelpPage = () => {
     const handleTicketSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setTicketSubmitting(true);
-        setTicketMessage('');
+        setTicketStatus('');
 
         try {
             await apiClient.post('/support/tickets', supportTicket);
-            setTicketMessage('Support ticket submitted successfully! We\'ll get back to you within 24 hours.');
+            setTicketStatus('ok');
             setSupportTicket({
                 subject: '',
                 message: '',
                 category: 'general',
                 priority: 'medium'
             });
-        } catch (err) {
-            setTicketMessage('Failed to submit ticket. Please try again or email support@moneymanager.com');
+        } catch {
+            setTicketStatus('fail');
         } finally {
             setTicketSubmitting(false);
         }
@@ -147,8 +74,8 @@ export const HelpPage = () => {
     return (
         <div className="help-page">
             <div className="help-header">
-                <h1>Help & Support</h1>
-                <p>Find answers to your questions or get in touch with our support team</p>
+                <h1>{t.hdrHelp}</h1>
+                <p>{t.hdrHelpSub}</p>
             </div>
 
             <div className="help-navigation">
@@ -156,19 +83,19 @@ export const HelpPage = () => {
                     className={`nav-btn ${activeSection === 'faq' ? 'active' : ''}`}
                     onClick={() => setActiveSection('faq')}
                 >
-                    ❓ FAQ
+                    ❓ {t.helpNavFaq}
                 </button>
                 <button
                     className={`nav-btn ${activeSection === 'guides' ? 'active' : ''}`}
                     onClick={() => setActiveSection('guides')}
                 >
-                    📚 Guides
+                    📚 {t.helpNavGuides}
                 </button>
                 <button
                     className={`nav-btn ${activeSection === 'contact' ? 'active' : ''}`}
                     onClick={() => setActiveSection('contact')}
                 >
-                    📞 Contact Support
+                    📞 {t.helpNavContact}
                 </button>
             </div>
 
@@ -178,7 +105,7 @@ export const HelpPage = () => {
                         <div className="faq-search">
                             <input
                                 type="text"
-                                placeholder="Search frequently asked questions..."
+                                placeholder={t.helpSearchPlaceholder}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="search-input"
@@ -208,8 +135,8 @@ export const HelpPage = () => {
 
                         {filteredFAQs.length === 0 && (
                             <div className="no-results">
-                                <h3>No results found</h3>
-                                <p>Try different keywords or contact our support team</p>
+                                <h3>{t.helpNoResults}</h3>
+                                <p>{t.helpNoResultsSub}</p>
                             </div>
                         )}
                     </div>
@@ -217,7 +144,7 @@ export const HelpPage = () => {
 
                 {activeSection === 'guides' && (
                     <div className="guides-section">
-                        <h2>User Guides & Tutorials</h2>
+                        <h2>{t.helpGuidesTitle}</h2>
                         <div className="guides-grid">
                             {guides.map((guide, index) => (
                                 <div key={index} className="guide-card">
@@ -225,26 +152,26 @@ export const HelpPage = () => {
                                     <h3>{guide.title}</h3>
                                     <p>{guide.description}</p>
                                     <button className="guide-btn">
-                                        Read Guide →
+                                        {t.helpReadGuide}
                                     </button>
                                 </div>
                             ))}
                         </div>
 
                         <div className="help-resources">
-                            <h3>Additional Resources</h3>
+                            <h3>{t.helpResources}</h3>
                             <div className="resource-links">
                                 <a href="#" className="resource-link">
-                                    📄 Terms of Service
+                                    📄 {t.helpTerms}
                                 </a>
                                 <a href="#" className="resource-link">
-                                    🔒 Privacy Policy
+                                    🔒 {t.helpPrivacy}
                                 </a>
                                 <a href="#" className="resource-link">
-                                    🔗 API Documentation
+                                    🔗 {t.helpApi}
                                 </a>
                                 <a href="#" className="resource-link">
-                                    📱 Mobile App Guide
+                                    📱 {t.helpMobile}
                                 </a>
                             </div>
                         </div>
@@ -255,35 +182,35 @@ export const HelpPage = () => {
                     <div className="contact-section">
                         <div className="contact-options">
                             <div className="contact-method">
-                                <h3>📧 Email Support</h3>
+                                <h3>📧 {t.helpEmailSupport}</h3>
                                 <p>support@moneymanager.com</p>
-                                <span className="response-time">Response time: 4-6 hours</span>
+                                <span className="response-time">{t.helpResponse}</span>
                             </div>
 
                             <div className="contact-method">
-                                <h3>💬 Live Chat</h3>
-                                <p>Available 24/7 for urgent issues</p>
-                                <button className="btn-primary">Start Chat</button>
+                                <h3>💬 {t.helpLiveChat}</h3>
+                                <p>{t.helpLiveChatSub}</p>
+                                <button className="btn-primary">{t.helpStartChat}</button>
                             </div>
 
                             <div className="contact-method">
-                                <h3>📞 Phone Support</h3>
+                                <h3>📞 {t.helpPhoneSupport}</h3>
                                 <p>+94 11 123 4567</p>
-                                <span className="response-time">Mon-Fri: 9AM-6PM</span>
+                                <span className="response-time">{t.helpPhoneHours}</span>
                             </div>
                         </div>
 
                         <div className="support-ticket-form">
-                            <h3>Submit a Support Ticket</h3>
-                            {ticketMessage && (
-                                <div className={`alert ${ticketMessage.includes('Failed') ? 'alert-error' : 'alert-success'}`}>
-                                    {ticketMessage}
+                            <h3>{t.helpSubmitTitle}</h3>
+                            {ticketStatus && (
+                                <div className={`alert ${ticketStatus === 'fail' ? 'alert-error' : 'alert-success'}`}>
+                                    {ticketStatus === 'fail' ? t.helpTicketFail : t.helpTicketOk}
                                 </div>
                             )}
 
                             <form onSubmit={handleTicketSubmit}>
                                 <div className="form-group">
-                                    <label>Category</label>
+                                    <label>{t.helpCategory}</label>
                                     <select
                                         value={supportTicket.category}
                                         onChange={(e) => setSupportTicket(prev => ({
@@ -291,16 +218,16 @@ export const HelpPage = () => {
                                             category: e.target.value
                                         }))}
                                     >
-                                        <option value="general">General Question</option>
-                                        <option value="technical">Technical Issue</option>
-                                        <option value="billing">Billing</option>
-                                        <option value="feature">Feature Request</option>
-                                        <option value="security">Security Concern</option>
+                                        <option value="general">{t.helpCatGeneral}</option>
+                                        <option value="technical">{t.helpCatTechnical}</option>
+                                        <option value="billing">{t.helpCatBilling}</option>
+                                        <option value="feature">{t.helpCatFeature}</option>
+                                        <option value="security">{t.helpCatSecurity}</option>
                                     </select>
                                 </div>
 
                                 <div className="form-group">
-                                    <label>Priority</label>
+                                    <label>{t.helpPriority}</label>
                                     <select
                                         value={supportTicket.priority}
                                         onChange={(e) => setSupportTicket(prev => ({
@@ -308,14 +235,14 @@ export const HelpPage = () => {
                                             priority: e.target.value as 'low' | 'medium' | 'high'
                                         }))}
                                     >
-                                        <option value="low">Low</option>
-                                        <option value="medium">Medium</option>
-                                        <option value="high">High</option>
+                                        <option value="low">{t.helpPriLow}</option>
+                                        <option value="medium">{t.helpPriMedium}</option>
+                                        <option value="high">{t.helpPriHigh}</option>
                                     </select>
                                 </div>
 
                                 <div className="form-group">
-                                    <label>Subject</label>
+                                    <label>{t.helpSubject}</label>
                                     <input
                                         type="text"
                                         value={supportTicket.subject}
@@ -324,12 +251,12 @@ export const HelpPage = () => {
                                             subject: e.target.value
                                         }))}
                                         required
-                                        placeholder="Brief description of your issue"
+                                        placeholder={t.helpPlaceSubject}
                                     />
                                 </div>
 
                                 <div className="form-group">
-                                    <label>Message</label>
+                                    <label>{t.helpMessage}</label>
                                     <textarea
                                         value={supportTicket.message}
                                         onChange={(e) => setSupportTicket(prev => ({
@@ -338,7 +265,7 @@ export const HelpPage = () => {
                                         }))}
                                         required
                                         rows={6}
-                                        placeholder="Please provide detailed information about your issue or question"
+                                        placeholder={t.helpPlaceMessage}
                                     />
                                 </div>
 
@@ -347,7 +274,7 @@ export const HelpPage = () => {
                                     className="btn-primary"
                                     disabled={ticketSubmitting}
                                 >
-                                    {ticketSubmitting ? 'Submitting...' : 'Submit Ticket'}
+                                    {ticketSubmitting ? t.helpSubmitting : t.helpSubmit}
                                 </button>
                             </form>
                         </div>

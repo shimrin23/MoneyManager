@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client.ts';
 import { IconUser, IconSettings, IconHelpCircle, IconLogOut, IconSun, IconMoon } from './Icons';
+import { useAdminLang } from '../i18n/adminText';
+import { MENU_T } from '../i18n/menuText';
 
 interface User {
     id: string;
@@ -20,6 +22,7 @@ export const UserHeader = ({ theme, onToggleTheme }: UserHeaderProps) => {
     const [showDropdown, setShowDropdown] = useState(false);
     const navigate = useNavigate();
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const m = MENU_T[useAdminLang()];
 
     useEffect(() => {
         fetchUserProfile();
@@ -85,7 +88,7 @@ export const UserHeader = ({ theme, onToggleTheme }: UserHeaderProps) => {
                             {user.email && <div className="sidebar-user-email">{user.email}</div>}
                             <div className="sidebar-user-status">
                                 <span className="sidebar-status-dot" aria-hidden="true"></span>
-                                Online
+                                {m.online}
                             </div>
                         </div>
                     </div>
@@ -94,30 +97,30 @@ export const UserHeader = ({ theme, onToggleTheme }: UserHeaderProps) => {
 
                     <div className="sidebar-user-menu-item" role="menuitem" onClick={() => goto('/profile')}>
                         <span className="sidebar-user-item-icon"><IconUser size={15} /></span>
-                        <span>Edit Profile</span>
+                        <span>{m.editProfile}</span>
                     </div>
                     <div className="sidebar-user-menu-item" role="menuitem" onClick={() => goto('/settings')}>
                         <span className="sidebar-user-item-icon"><IconSettings size={15} /></span>
-                        <span>Settings</span>
+                        <span>{m.settings}</span>
                     </div>
 
                     <div className="sidebar-user-menu-item" role="menuitem" onClick={() => { setShowDropdown(false); onToggleTheme(); }}>
                         <span className="sidebar-user-item-icon">{theme === 'dark' ? <IconSun size={15} /> : <IconMoon size={15} />}</span>
-                        <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+                        <span>{theme === 'dark' ? m.lightMode : m.darkMode}</span>
                     </div>
 
                     <div className="sidebar-user-divider" />
 
                     <div className="sidebar-user-menu-item" role="menuitem" onClick={() => goto('/help')}>
                         <span className="sidebar-user-item-icon"><IconHelpCircle size={15} /></span>
-                        <span>Help & Support</span>
+                        <span>{m.helpSupport}</span>
                     </div>
 
                     <div className="sidebar-user-divider" />
 
                     <div className="sidebar-user-menu-item logout" role="menuitem" onClick={() => { setShowDropdown(false); handleLogout(); }}>
                         <span className="sidebar-user-item-icon"><IconLogOut size={15} /></span>
-                        <span>Sign Out</span>
+                        <span>{m.signOut}</span>
                     </div>
                 </div>
             )}

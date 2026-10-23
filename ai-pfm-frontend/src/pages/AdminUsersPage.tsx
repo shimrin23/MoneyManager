@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../api/client';
+import { ADMIN_T, useAdminLang } from '../i18n/adminText';
 
 interface UserRow {
     id: string;
@@ -25,6 +26,8 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 export const AdminUsersPage = () => {
+    const lang = useAdminLang();
+    const t = ADMIN_T[lang];
     const [users, setUsers]     = useState<UserRow[]>(mockUsers);
     const [search, setSearch]   = useState('');
     const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -46,6 +49,14 @@ export const AdminUsersPage = () => {
         await apiClient.patch(`/admin/users/${id}/toggle`).catch(() => undefined);
     };
 
+    const roleName = (role: UserRow['role']) => ({
+        customer: t.roleCustomer, admin: t.roleAdmin, ops: t.roleOps, manager: t.roleManager,
+    })[role];
+
+    const segmentName = (segment: string) => ({
+        premium: t.segPremium, standard: t.segStandard, basic: t.segBasic,
+    } as Record<string, string>)[segment] ?? segment;
+
     const filtered = users.filter(u => {
         const matchSearch = u.name.toLowerCase().includes(search.toLowerCase()) ||
                             u.email.toLowerCase().includes(search.toLowerCase());
@@ -64,33 +75,33 @@ export const AdminUsersPage = () => {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">User Management</h1>
-                    <p className="page-subtitle">View, enable, disable and manage all platform users</p>
+                    <h1 className="page-title">{t.hdrUsers}</h1>
+                    <p className="page-subtitle">{t.usersSubtitle}</p>
                 </div>
             </div>
 
             <div className="rec-summary-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
-                <div className="rec-stat-card"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{stats.total}</div><div className="rec-stat-label">Total Users</div></div></div>
-                <div className="rec-stat-card accepted"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{stats.active}</div><div className="rec-stat-label">Active</div></div></div>
-                <div className="rec-stat-card"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{stats.disabled}</div><div className="rec-stat-label">Disabled</div></div></div>
-                <div className="rec-stat-card savings"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{stats.premium}</div><div className="rec-stat-label">Premium</div></div></div>
+                <div className="rec-stat-card"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{stats.total}</div><div className="rec-stat-label">{t.statTotal}</div></div></div>
+                <div className="rec-stat-card accepted"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{stats.active}</div><div className="rec-stat-label">{t.statActive}</div></div></div>
+                <div className="rec-stat-card"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{stats.disabled}</div><div className="rec-stat-label">{t.statDisabled}</div></div></div>
+                <div className="rec-stat-card savings"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{stats.premium}</div><div className="rec-stat-label">{t.statPremium}</div></div></div>
             </div>
 
             {/* Search + Filter */}
             <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.25rem', flexWrap: 'wrap' }}>
                 <input
-                    type="text" placeholder="🔍  Search by name or email..."
+                    type="text" placeholder={`🔍  ${t.searchUsers}`}
                     value={search} onChange={e => setSearch(e.target.value)}
                     style={{ flex: 1, minWidth: '200px', padding: '0.6rem 1rem', borderRadius: '10px',
                              border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--text)', fontSize: '0.88rem' }}
                 />
                 <div className="filter-pill-row" style={{ marginBottom: 0 }}>
                     {[
-                        { val: 'all',      label: 'All Roles', color: '#6366f1' },
-                        { val: 'customer', label: 'Customer',  color: '#3b82f6' },
-                        { val: 'admin',    label: 'Admin',     color: '#ef4444' },
-                        { val: 'ops',      label: 'Ops',       color: '#f59e0b' },
-                        { val: 'manager',  label: 'Manager',   color: '#8b5cf6' },
+                        { val: 'all',      label: t.filterAllRoles, color: '#6366f1' },
+                        { val: 'customer', label: t.filterCustomer, color: '#3b82f6' },
+                        { val: 'admin',    label: t.filterAdmin,    color: '#ef4444' },
+                        { val: 'ops',      label: t.filterOps,      color: '#f59e0b' },
+                        { val: 'manager',  label: t.filterManager,  color: '#8b5cf6' },
                     ].map(({ val, label, color }) => (
                         <button key={val}
                             className={`filter-pill ${roleFilter === val ? 'active' : ''}`}
@@ -108,8 +119,8 @@ export const AdminUsersPage = () => {
                     <table className="admin-table" style={{ width: '100%' }}>
                         <thead>
                             <tr>
-                                <th>Name</th><th>Email</th><th>Role</th>
-                                <th>Segment</th><th>Joined</th><th>Status</th><th>Action</th>
+                                <th>{t.colName}</th><th>{t.colEmail}</th><th>{t.colRole}</th>
+                                <th>{t.colSegment}</th><th>{t.colJoined}</th><th>{t.colStatus}</th><th>{t.colActions}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -123,24 +134,24 @@ export const AdminUsersPage = () => {
                                             fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase',
                                             background: ROLE_COLORS[u.role] + '22', color: ROLE_COLORS[u.role],
                                             border: `1px solid ${ROLE_COLORS[u.role]}44`
-                                        }}>{u.role}</span>
+                                        }}>{roleName(u.role)}</span>
                                     </td>
-                                    <td style={{ fontSize: '0.84rem', textTransform: 'capitalize' }}>{u.segment}</td>
+                                    <td style={{ fontSize: '0.84rem' }}>{segmentName(u.segment)}</td>
                                     <td style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>{u.joined}</td>
                                     <td>
                                         <span className={`admin-status-badge ${u.status === 'active' ? 'is-success' : 'is-danger'}`}>
-                                            {u.status}
+                                            {u.status === 'active' ? t.statusActive : t.statusDisabled}
                                         </span>
                                     </td>
                                     <td>
                                         <button className="secondary admin-action-btn" onClick={() => toggleUser(u.id)}>
-                                            {u.status === 'active' ? 'Disable' : 'Enable'}
+                                            {u.status === 'active' ? t.btnDisable : t.btnEnable}
                                         </button>
                                     </td>
                                 </tr>
                             ))}
                             {filtered.length === 0 && (
-                                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No users match your search</td></tr>
+                                <tr><td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>{t.noUsers}</td></tr>
                             )}
                         </tbody>
                     </table>

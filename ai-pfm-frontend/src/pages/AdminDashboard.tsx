@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../api/client';
+import { ADMIN_T, useAdminLang } from '../i18n/adminText';
 import '../styles/FinancialPages.css';
 
 interface UserRow {
@@ -18,6 +19,8 @@ interface ConfigRow {
 }
 
 export const AdminDashboard = () => {
+    const lang = useAdminLang();
+    const t = ADMIN_T[lang];
     const [users, setUsers] = useState<UserRow[]>(mockUsers);
     const [configs, setConfigs] = useState<ConfigRow[]>(mockConfigs);
 
@@ -49,52 +52,52 @@ export const AdminDashboard = () => {
     };
 
     const formatRole = (role: string) => {
-        if (role === 'ops') return 'Operations';
-        if (role === 'admin') return 'Admin';
-        return 'User';
+        if (role === 'ops') return t.roleOperations;
+        if (role === 'admin') return t.roleAdmin;
+        return t.roleUser;
     };
 
     return (
         <div className="page-container admin-dashboard-page">
             <div className="page-header">
                 <div>
-                    <h1>Admin Dashboard</h1>
-                    <p className="page-subtitle">Manage users, roles, and configuration with audit-friendly toggles.</p>
+                    <h1>{t.hdrDashboard}</h1>
+                    <p className="page-subtitle">{t.dashSubtitle}</p>
                 </div>
             </div>
 
             <div className="admin-stats-grid">
                 <div className="admin-stat-card">
-                    <span className="admin-stat-label">Total Users</span>
+                    <span className="admin-stat-label">{t.statTotalUsers}</span>
                     <span className="admin-stat-value">{users.length}</span>
                 </div>
                 <div className="admin-stat-card">
-                    <span className="admin-stat-label">Active Users</span>
+                    <span className="admin-stat-label">{t.statActiveUsers}</span>
                     <span className="admin-stat-value">{users.filter((u) => u.status === 'active').length}</span>
                 </div>
                 <div className="admin-stat-card">
-                    <span className="admin-stat-label">Disabled Users</span>
+                    <span className="admin-stat-label">{t.statDisabledUsers}</span>
                     <span className="admin-stat-value">{users.filter((u) => u.status === 'disabled').length}</span>
                 </div>
                 <div className="admin-stat-card">
-                    <span className="admin-stat-label">Config Keys</span>
+                    <span className="admin-stat-label">{t.statConfigKeys}</span>
                     <span className="admin-stat-value">{configs.length}</span>
                 </div>
             </div>
 
             <div className="card admin-section" style={{ marginBottom: '1.5rem' }}>
                 <div className="card-header admin-section-header">
-                    <h3>Users</h3>
+                    <h3>{t.sectionUsers}</h3>
                 </div>
                 <div className="admin-table-wrapper">
-                    <table className="admin-table" aria-label="Users table">
+                    <table className="admin-table" aria-label={t.sectionUsers}>
                         <thead>
                             <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Status</th>
-                                <th>Actions</th>
+                                <th>{t.colName}</th>
+                                <th>{t.colEmail}</th>
+                                <th>{t.colRole}</th>
+                                <th>{t.colStatus}</th>
+                                <th>{t.colActions}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -105,12 +108,12 @@ export const AdminDashboard = () => {
                                     <td>{formatRole(u.role)}</td>
                                     <td>
                                         <span className={`admin-status-badge ${u.status === 'active' ? 'is-success' : 'is-danger'}`}>
-                                            {u.status}
+                                            {u.status === 'active' ? t.statusActive : t.statusDisabled}
                                         </span>
                                     </td>
                                     <td>
                                         <button className="secondary admin-action-btn" onClick={() => toggleUser(u.id)}>
-                                            {u.status === 'active' ? 'Disable' : 'Enable'}
+                                            {u.status === 'active' ? t.btnDisable : t.btnEnable}
                                         </button>
                                     </td>
                                 </tr>
@@ -122,17 +125,17 @@ export const AdminDashboard = () => {
 
             <div className="card admin-section">
                 <div className="card-header admin-section-header">
-                    <h3>Configuration</h3>
+                    <h3>{t.sectionConfig}</h3>
                 </div>
                 <div className="admin-table-wrapper">
-                    <table className="admin-table" aria-label="Configuration table">
+                    <table className="admin-table" aria-label={t.sectionConfig}>
                         <thead>
                             <tr>
-                                <th>Key</th>
-                                <th>Type</th>
-                                <th>Value</th>
-                                <th>Status</th>
-                                <th>Actions</th>
+                                <th>{t.colKey}</th>
+                                <th>{t.colType}</th>
+                                <th>{t.colValue}</th>
+                                <th>{t.colStatus}</th>
+                                <th>{t.colActions}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -143,12 +146,12 @@ export const AdminDashboard = () => {
                                     <td>{c.value}</td>
                                     <td>
                                         <span className={`admin-status-badge ${c.active ? 'is-success' : 'is-danger'}`}>
-                                            {c.active ? 'active' : 'inactive'}
+                                            {c.active ? t.statusActive : t.statusInactive}
                                         </span>
                                     </td>
                                     <td>
                                         <button className="secondary admin-action-btn" onClick={() => toggleConfig(c.key)}>
-                                            {c.active ? 'Deactivate' : 'Activate'}
+                                            {c.active ? t.btnDeactivate : t.btnActivate}
                                         </button>
                                     </td>
                                 </tr>

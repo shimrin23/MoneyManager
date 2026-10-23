@@ -62,6 +62,8 @@ import { AdminAnalyticsPage } from './pages/AdminAnalyticsPage';
 import { VerifyEmail } from './pages/VerifyEmail';
 import { ResetPassword } from './pages/ResetPassword';
 import { AIAssistant } from './components/AIAssistant';
+import { ADMIN_T } from './i18n/adminText';
+import { USER_T } from './i18n/userPagesText';
 import './App.css';
 import './styles/UserPages.css';
 import './styles/FinancialPages.css';
@@ -178,13 +180,14 @@ function AppShell() {
       case '/leases': return { title: 'Leases', subtitle: 'Vehicle and equipment leases' };
       case '/pawning': return { title: 'Pawning', subtitle: 'Gold and item pawning' };
       case '/notifications': return { title: 'Notifications', subtitle: 'Recent alerts and updates' };
-      case '/profile': return { title: 'Edit Profile', subtitle: 'Update your personal info' };
-      case '/settings': return { title: 'Settings', subtitle: 'App configuration' };
-      case '/admin': return { title: 'Admin Dashboard', subtitle: 'System overview' };
-      case '/admin/users': return { title: 'User Management', subtitle: 'Manage platform users' };
-      case '/admin/config': return { title: 'System Configuration', subtitle: 'Platform settings' };
-      case '/admin/audit': return { title: 'Audit Logs', subtitle: 'System activity history' };
-      case '/admin/reports': return { title: 'Reports & Analytics', subtitle: 'Platform metrics' };
+      case '/profile': return { title: USER_T[lang].hdrProfile, subtitle: USER_T[lang].hdrProfileSub };
+      case '/settings': return { title: USER_T[lang].hdrSettings, subtitle: USER_T[lang].hdrSettingsSub };
+      case '/help': return { title: USER_T[lang].hdrHelp, subtitle: USER_T[lang].hdrHelpSub };
+      case '/admin': return { title: ADMIN_T[lang].hdrDashboard, subtitle: ADMIN_T[lang].hdrDashboardSub };
+      case '/admin/users': return { title: ADMIN_T[lang].hdrUsers, subtitle: ADMIN_T[lang].hdrUsersSub };
+      case '/admin/config': return { title: ADMIN_T[lang].hdrConfig, subtitle: ADMIN_T[lang].hdrConfigSub };
+      case '/admin/audit': return { title: ADMIN_T[lang].hdrAudit, subtitle: ADMIN_T[lang].hdrAuditSub };
+      case '/admin/reports': return { title: ADMIN_T[lang].hdrReports, subtitle: ADMIN_T[lang].hdrReportsSub };
       default: return null;
     }
   };
@@ -278,22 +281,6 @@ function AppShell() {
                 <span className="logo-emoji"><IconWallet size={24} /></span>
                 <span className="logo-text">MoneyManager</span>
               </h1>
-              {isAdmin && (
-                <span className="sidebar-role-badge admin">
-                  {role === 'ops' ? 'Operations' : role === 'manager' ? 'Manager' : 'Admin'}
-                </span>
-              )}
-              <button
-                type="button"
-                className="sidebar-close-btn"
-                onClick={() => setIsMobileSidebarOpen(false)}
-                aria-label="Close sidebar menu"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
             </div>
 
             <div className="nav-section">
@@ -398,16 +385,6 @@ function AppShell() {
             )}
 
             <div className="header-actions">
-              <div className="header-lang-row desktop-only-lang">
-                {([['en','En'], ['si','සිං'], ['ta','த']] as [Language, string][]).map(([l, label]) => (
-                  <button key={l} className={`lang-btn ${lang === l ? 'active' : ''}`}
-                    onClick={() => switchLang(l)}
-                    title={l === 'en' ? 'English' : l === 'si' ? 'Sinhala' : 'Tamil'}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
               {isCustomer && (
                 <button
                   className="header-action-btn"
