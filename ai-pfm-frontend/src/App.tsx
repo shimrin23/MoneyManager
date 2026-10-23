@@ -180,6 +180,7 @@ function AppShell() {
       case '/notifications': return { title: 'Notifications', subtitle: 'Recent alerts and updates' };
       case '/profile': return { title: 'Edit Profile', subtitle: 'Update your personal info' };
       case '/settings': return { title: 'Settings', subtitle: 'App configuration' };
+      case '/help': return { title: 'Help & Support', subtitle: 'Find answers or contact our support team' };
       case '/admin': return { title: 'Admin Dashboard', subtitle: 'System overview' };
       case '/admin/users': return { title: 'User Management', subtitle: 'Manage platform users' };
       case '/admin/config': return { title: 'System Configuration', subtitle: 'Platform settings' };
