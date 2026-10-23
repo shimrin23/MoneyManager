@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 import { apiClient } from '../api/client';
 
 type AnomalyType = 'duplicate' | 'spike' | 'unusual-merchant' | 'unusual-time' | 'geo-mismatch';
@@ -7,7 +8,6 @@ type AnomalyStatus = 'open' | 'reviewed-safe' | 'reviewed-fraud' | 'dismissed';
 interface AnomalyAlert {
     _id: string;
     type: AnomalyType;
-    icon: string;
     title: string;
     description: string;
     transactionId: string;
@@ -21,7 +21,16 @@ interface AnomalyAlert {
     detectedReason: string;
 }
 
-const mockAnomalies: AnomalyAlert[] = [];
+const typeIcons: Record<AnomalyType, string> = {
+    duplicate: '🔁',
+    spike: '📈',
+    'unusual-merchant': '🏪',
+    'unusual-time': '🌙',
+    'geo-mismatch': '📍'
+};
+
+const apiErrorMessage = (err: unknown, fallback: string) =>
+    (axios.isAxiosError(err) && err.response?.data?.error) || fallback;
 
 const riskColor = (score: number) => {
     if (score >= 85) return '#ef4444';
@@ -48,14 +57,16 @@ export const AnomalyDetectionPage = () => {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'open' | 'reviewed-safe' | 'reviewed-fraud' | 'dismissed'>('all');
     const [expanded, setExpanded] = useState<string | null>(null);
+    const [error, setError] = useState('');
 
     useEffect(() => {
         const fetch = async () => {
             try {
                 const res = await apiClient.get('/transactions/anomalies');
-                setAnomalies(res.data.anomalies || mockAnomalies);
-            } catch {
-                setAnomalies(mockAnomalies);
+                setAnomalies(res.data.anomalies || []);
+            } catch (err) {
+                setAnomalies([]);
+                setError(apiErrorMessage(err, 'Could not load anomaly alerts. Please try again later.'));
             } finally {
                 setLoading(false);
             }
@@ -63,8 +74,17 @@ export const AnomalyDetectionPage = () => {
         fetch();
     }, []);
 
-    const updateStatus = (id: string, status: AnomalyStatus) => {
+    const updateStatus = async (id: string, status: AnomalyStatus) => {
+        const previous = anomalies.find(a => a._id === id)?.status;
+        setError('');
         setAnomalies(prev => prev.map(a => a._id === id ? { ...a, status } : a));
+        try {
+            await apiClient.patch(`/transactions/anomalies/${id}/status`, { status });
+        } catch (err) {
+            // Roll back so the screen matches what is saved
+            if (previous) setAnomalies(prev => prev.map(a => a._id === id ? { ...a, status: previous } : a));
+            setError(apiErrorMessage(err, 'Could not update the alert. Please try again.'));
+        }
     };
 
     const filtered = filter === 'all' ? anomalies : anomalies.filter(a => a.status === filter);
@@ -87,31 +107,37 @@ export const AnomalyDetectionPage = () => {
                 )}
             </div>
 
+            {error && (
+                <div className="alert-error" style={{ marginBottom: '1.5rem' }}>
+                    ⚠️ {error}
+                </div>
+            )}
+
             {/* Summary */}
             <div className="rec-summary-grid">
                 <div className="rec-stat-card">
-                    <div className="rec-stat-icon"></div>
+                    <div className="rec-stat-icon">🚩</div>
                     <div>
                         <div className="rec-stat-value">{anomalies.length}</div>
                         <div className="rec-stat-label">Total Flagged</div>
                     </div>
                 </div>
                 <div className="rec-stat-card pending" style={{ '--accent-color': '#ef4444' } as React.CSSProperties}>
-                    <div className="rec-stat-icon"></div>
+                    <div className="rec-stat-icon">⚠️</div>
                     <div>
                         <div className="rec-stat-value">{highRisk}</div>
                         <div className="rec-stat-label">High Risk Open</div>
                     </div>
                 </div>
                 <div className="rec-stat-card pending">
-                    <div className="rec-stat-icon"></div>
+                    <div className="rec-stat-icon">⏳</div>
                     <div>
                         <div className="rec-stat-value">{openCount}</div>
                         <div className="rec-stat-label">Awaiting Review</div>
                     </div>
                 </div>
                 <div className="rec-stat-card accepted">
-                    <div className="rec-stat-icon"></div>
+                    <div className="rec-stat-icon">✅</div>
                     <div>
                         <div className="rec-stat-value">{anomalies.filter(a => a.status === 'reviewed-safe').length}</div>
                         <div className="rec-stat-label">Marked Safe</div>
@@ -144,7 +170,7 @@ export const AnomalyDetectionPage = () => {
                         <div key={anomaly._id} className={`anomaly-card ${anomaly.status}`}>
                             <div className="anomaly-card-header" onClick={() => setExpanded(isOpen ? null : anomaly._id)}>
                                 <div className="anomaly-left">
-                                    <span className="anomaly-icon">{anomaly.icon}</span>
+                                    <span className="anomaly-icon">{typeIcons[anomaly.type]}</span>
                                     <div>
                                         <div className="anomaly-title">{anomaly.title}</div>
                                         <div className="anomaly-meta">

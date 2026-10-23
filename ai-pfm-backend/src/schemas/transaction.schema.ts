@@ -36,6 +36,7 @@ export interface ITransaction extends Document {
   // Behavioral signals
   isAnomaly?: boolean; // Flagged as unusual spending
   anomalyScore?: number; // 0-1 anomaly confidence
+  anomalyStatus?: "open" | "reviewed-safe" | "reviewed-fraud" | "dismissed"; // User's review of an anomaly alert
 
   createdAt: Date;
   updatedAt: Date;
@@ -84,6 +85,11 @@ const TransactionSchema: Schema = new Schema(
     // Anomaly detection
     isAnomaly: { type: Boolean, default: false },
     anomalyScore: { type: Number, min: 0, max: 1 },
+    anomalyStatus: {
+      type: String,
+      enum: ["open", "reviewed-safe", "reviewed-fraud", "dismissed"],
+      default: "open",
+    },
   },
   {
     timestamps: true, // Automatically adds createdAt and updatedAt

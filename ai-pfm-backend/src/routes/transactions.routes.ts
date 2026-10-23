@@ -84,6 +84,18 @@ router.post(
   transactionsController.importStatement.bind(transactionsController),
 );
 
+// GET /api/transactions/anomalies (must stay above /:id)
+router.get(
+  "/anomalies",
+  transactionsController.getAnomalies.bind(transactionsController),
+);
+
+// PATCH /api/transactions/anomalies/:id/status
+router.patch(
+  "/anomalies/:id/status",
+  transactionsController.updateAnomalyStatus.bind(transactionsController),
+);
+
 // GET /api/transactions/:id
 router.get(
   "/:id",
