@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client.ts';
+import { useAdminLang } from '../i18n/adminText';
+import { USER_T } from '../i18n/userPagesText';
 
 interface AppSettings {
     currency: string;
@@ -37,9 +39,10 @@ interface PrivacySettings {
 }
 
 export const SettingsPage = () => {
+    const t = USER_T[useAdminLang()];
     const [activeTab, setActiveTab] = useState<'general' | 'notifications' | 'privacy' | 'advanced'>('general');
     const [loading, setLoading] = useState(false);
-    const [saveMessage, setSaveMessage] = useState('');
+    const [saveStatus, setSaveStatus] = useState<'ok' | 'fail' | ''>('');
     const navigate = useNavigate();
 
     const [appSettings, setAppSettings] = useState<AppSettings>({
@@ -75,6 +78,7 @@ export const SettingsPage = () => {
         activityTracking: true
     });
 
+    // Currency and language names are kept as they are written in their own language.
     const currencyOptions = [
         { code: 'USD', name: 'US Dollar ($)', symbol: '$' },
         { code: 'EUR', name: 'Euro (€)', symbol: '€' },
@@ -109,7 +113,7 @@ export const SettingsPage = () => {
                 apiClient.get('/settings/notifications'),
                 apiClient.get('/settings/privacy')
             ]);
-            
+
             setAppSettings(appResponse.data);
             setNotificationSettings(notificationResponse.data);
             setPrivacySettings(privacyResponse.data);
@@ -122,27 +126,27 @@ export const SettingsPage = () => {
 
     const saveSettings = async () => {
         setLoading(true);
-        setSaveMessage('');
-        
+        setSaveStatus('');
+
         try {
             await Promise.all([
                 apiClient.put('/settings/app', appSettings),
                 apiClient.put('/settings/notifications', notificationSettings),
                 apiClient.put('/settings/privacy', privacySettings)
             ]);
-            
-            setSaveMessage('Settings saved successfully!');
-            setTimeout(() => setSaveMessage(''), 3000);
-        } catch (err) {
-            setSaveMessage('Failed to save settings. Please try again.');
-            setTimeout(() => setSaveMessage(''), 3000);
+
+            setSaveStatus('ok');
+            setTimeout(() => setSaveStatus(''), 3000);
+        } catch {
+            setSaveStatus('fail');
+            setTimeout(() => setSaveStatus(''), 3000);
         } finally {
             setLoading(false);
         }
     };
 
     const resetToDefaults = () => {
-        if (confirm('Are you sure you want to reset all settings to default values?')) {
+        if (confirm(t.setResetConfirm)) {
             setAppSettings({
                 currency: 'LKR',
                 dateFormat: 'DD/MM/YYYY',
@@ -181,13 +185,13 @@ export const SettingsPage = () => {
     return (
         <div className="settings-page">
             <div className="settings-header">
-                <h1>Settings</h1>
-                <p>Customize your MoneyManager experience</p>
+                <h1>{t.setTitle}</h1>
+                <p>{t.setSub}</p>
             </div>
 
-            {saveMessage && (
-                <div className={`alert ${saveMessage.includes('Failed') ? 'alert-error' : 'alert-success'}`}>
-                    {saveMessage}
+            {saveStatus && (
+                <div className={`alert ${saveStatus === 'fail' ? 'alert-error' : 'alert-success'}`}>
+                    {saveStatus === 'fail' ? t.setSaveFailed : t.setSaved}
                 </div>
             )}
 
@@ -196,25 +200,25 @@ export const SettingsPage = () => {
                     className={`nav-btn ${activeTab === 'general' ? 'active' : ''}`}
                     onClick={() => setActiveTab('general')}
                 >
-                    General
+                    {t.tabGeneral}
                 </button>
                 <button
                     className={`nav-btn ${activeTab === 'notifications' ? 'active' : ''}`}
                     onClick={() => setActiveTab('notifications')}
                 >
-                    Notifications
+                    {t.tabNotifications}
                 </button>
                 <button
                     className={`nav-btn ${activeTab === 'privacy' ? 'active' : ''}`}
                     onClick={() => setActiveTab('privacy')}
                 >
-                    Privacy
+                    {t.tabPrivacy}
                 </button>
                 <button
                     className={`nav-btn ${activeTab === 'advanced' ? 'active' : ''}`}
                     onClick={() => setActiveTab('advanced')}
                 >
-                    Advanced
+                    {t.tabAdvanced}
                 </button>
             </div>
 
@@ -222,10 +226,10 @@ export const SettingsPage = () => {
                 {activeTab === 'general' && (
                     <div className="general-settings">
                         <div className="settings-section">
-                            <h3>Regional Settings</h3>
-                            
+                            <h3>{t.regional}</h3>
+
                             <div className="setting-group">
-                                <label>Currency</label>
+                                <label>{t.currency}</label>
                                 <select
                                     value={appSettings.currency}
                                     onChange={(e) => setAppSettings(prev => ({ ...prev, currency: e.target.value }))}
@@ -239,7 +243,7 @@ export const SettingsPage = () => {
                             </div>
 
                             <div className="setting-group">
-                                <label>Date Format</label>
+                                <label>{t.dateFormat}</label>
                                 <select
                                     value={appSettings.dateFormat}
                                     onChange={(e) => setAppSettings(prev => ({ ...prev, dateFormat: e.target.value }))}
@@ -252,7 +256,7 @@ export const SettingsPage = () => {
                             </div>
 
                             <div className="setting-group">
-                                <label>Language</label>
+                                <label>{t.language}</label>
                                 <select
                                     value={appSettings.language}
                                     onChange={(e) => setAppSettings(prev => ({ ...prev, language: e.target.value }))}
@@ -266,7 +270,7 @@ export const SettingsPage = () => {
                             </div>
 
                             <div className="setting-group">
-                                <label>Timezone</label>
+                                <label>{t.timezone}</label>
                                 <select
                                     value={appSettings.timezone}
                                     onChange={(e) => setAppSettings(prev => ({ ...prev, timezone: e.target.value }))}
@@ -281,68 +285,68 @@ export const SettingsPage = () => {
                         </div>
 
                         <div className="settings-section">
-                            <h3>Appearance</h3>
-                            
+                            <h3>{t.appearance}</h3>
+
                             <div className="setting-group">
-                                <label>Theme</label>
+                                <label>{t.theme}</label>
                                 <select
                                     value={appSettings.theme}
                                     onChange={(e) => setAppSettings(prev => ({ ...prev, theme: e.target.value as 'light' | 'dark' | 'auto' }))}
                                 >
-                                    <option value="light">Light</option>
-                                    <option value="dark">Dark</option>
-                                    <option value="auto">Auto (System)</option>
+                                    <option value="light">{t.themeLight}</option>
+                                    <option value="dark">{t.themeDark}</option>
+                                    <option value="auto">{t.themeAuto}</option>
                                 </select>
                             </div>
 
                             <div className="setting-group">
-                                <label>Dashboard Layout</label>
+                                <label>{t.dashLayout}</label>
                                 <select
                                     value={appSettings.dashboardLayout}
                                     onChange={(e) => setAppSettings(prev => ({ ...prev, dashboardLayout: e.target.value as 'compact' | 'detailed' | 'minimal' }))}
                                 >
-                                    <option value="compact">Compact</option>
-                                    <option value="detailed">Detailed</option>
-                                    <option value="minimal">Minimal</option>
+                                    <option value="compact">{t.layoutCompact}</option>
+                                    <option value="detailed">{t.layoutDetailed}</option>
+                                    <option value="minimal">{t.layoutMinimal}</option>
                                 </select>
                             </div>
 
                             <div className="setting-group">
-                                <label>Default Chart Type</label>
+                                <label>{t.chartType}</label>
                                 <select
                                     value={appSettings.chartType}
                                     onChange={(e) => setAppSettings(prev => ({ ...prev, chartType: e.target.value as 'line' | 'bar' | 'pie' }))}
                                 >
-                                    <option value="line">Line Chart</option>
-                                    <option value="bar">Bar Chart</option>
-                                    <option value="pie">Pie Chart</option>
+                                    <option value="line">{t.chartLine}</option>
+                                    <option value="bar">{t.chartBar}</option>
+                                    <option value="pie">{t.chartPie}</option>
                                 </select>
                             </div>
                         </div>
 
                         <div className="settings-section">
-                            <h3>Default Behavior</h3>
-                            
+                            <h3>{t.defaultBehavior}</h3>
+
                             <div className="setting-group">
-                                <label>Default Transaction Type</label>
+                                <label>{t.defTxType}</label>
                                 <select
                                     value={appSettings.defaultTransactionType}
                                     onChange={(e) => setAppSettings(prev => ({ ...prev, defaultTransactionType: e.target.value as 'expense' | 'income' }))}
                                 >
-                                    <option value="expense">Expense</option>
-                                    <option value="income">Income</option>
+                                    <option value="expense">{t.txExpense}</option>
+                                    <option value="income">{t.txIncome}</option>
                                 </select>
                             </div>
 
                             <div className="setting-group">
-                                <label>Category Sort Order</label>
+                                <label>{t.catSort}</label>
                                 <select
                                     value={appSettings.categoryOrder}
                                     onChange={(e) => setAppSettings(prev => ({ ...prev, categoryOrder: e.target.value as 'alphabetical' | 'frequency' | 'custom' }))}
                                 >
-                                    <option value="alphabetical">Alphabetical</option>
-                                    <option value="frequency">Most Used First</option>
-                                    <option value="custom">Custom Order</option>
+                                    <option value="alphabetical">{t.sortAlpha}</option>
+                                    <option value="frequency">{t.sortFreq}</option>
+                                    <option value="custom">{t.sortCustom}</option>
                                 </select>
                             </div>
                         </div>
@@ -352,11 +356,11 @@ export const SettingsPage = () => {
                 {activeTab === 'notifications' && (
                     <div className="notification-settings">
                         <div className="settings-section">
-                            <h3>Financial Alerts</h3>
-                            
+                            <h3>{t.finAlerts}</h3>
+
                             <div className="setting-toggle">
-                                <label>Budget Alerts</label>
-                                <span className="toggle-description">Get notified when you're close to budget limits</span>
+                                <label>{t.budgetAlerts}</label>
+                                <span className="toggle-description">{t.budgetAlertsSub}</span>
                                 <input
                                     type="checkbox"
                                     checked={notificationSettings.budgetAlerts}
@@ -365,8 +369,8 @@ export const SettingsPage = () => {
                             </div>
 
                             <div className="setting-toggle">
-                                <label>Goal Reminders</label>
-                                <span className="toggle-description">Regular reminders about your financial goals</span>
+                                <label>{t.goalReminders}</label>
+                                <span className="toggle-description">{t.goalRemindersSub}</span>
                                 <input
                                     type="checkbox"
                                     checked={notificationSettings.goalReminders}
@@ -376,11 +380,11 @@ export const SettingsPage = () => {
                         </div>
 
                         <div className="settings-section">
-                            <h3>Reports</h3>
-                            
+                            <h3>{t.reports}</h3>
+
                             <div className="setting-toggle">
-                                <label>Weekly Reports</label>
-                                <span className="toggle-description">Summary of your week's financial activity</span>
+                                <label>{t.weekly}</label>
+                                <span className="toggle-description">{t.weeklySub}</span>
                                 <input
                                     type="checkbox"
                                     checked={notificationSettings.weeklyReports}
@@ -389,8 +393,8 @@ export const SettingsPage = () => {
                             </div>
 
                             <div className="setting-toggle">
-                                <label>Monthly Reports</label>
-                                <span className="toggle-description">Detailed monthly financial analysis</span>
+                                <label>{t.monthly}</label>
+                                <span className="toggle-description">{t.monthlySub}</span>
                                 <input
                                     type="checkbox"
                                     checked={notificationSettings.monthlyReports}
@@ -400,11 +404,11 @@ export const SettingsPage = () => {
                         </div>
 
                         <div className="settings-section">
-                            <h3>Security & System</h3>
-                            
+                            <h3>{t.secSystem}</h3>
+
                             <div className="setting-toggle">
-                                <label>Security Alerts</label>
-                                <span className="toggle-description">Important security notifications</span>
+                                <label>{t.secAlerts}</label>
+                                <span className="toggle-description">{t.secAlertsSub}</span>
                                 <input
                                     type="checkbox"
                                     checked={notificationSettings.securityAlerts}
@@ -413,8 +417,8 @@ export const SettingsPage = () => {
                             </div>
 
                             <div className="setting-toggle">
-                                <label>Marketing Emails</label>
-                                <span className="toggle-description">Product updates and promotional content</span>
+                                <label>{t.marketing}</label>
+                                <span className="toggle-description">{t.marketingSub}</span>
                                 <input
                                     type="checkbox"
                                     checked={notificationSettings.marketingEmails}
@@ -424,11 +428,11 @@ export const SettingsPage = () => {
                         </div>
 
                         <div className="settings-section">
-                            <h3>Delivery Methods</h3>
-                            
+                            <h3>{t.delivery}</h3>
+
                             <div className="setting-toggle">
-                                <label>Push Notifications</label>
-                                <span className="toggle-description">In-app notifications</span>
+                                <label>{t.push}</label>
+                                <span className="toggle-description">{t.pushSub}</span>
                                 <input
                                     type="checkbox"
                                     checked={notificationSettings.pushNotifications}
@@ -437,8 +441,8 @@ export const SettingsPage = () => {
                             </div>
 
                             <div className="setting-toggle">
-                                <label>Email Notifications</label>
-                                <span className="toggle-description">Notifications via email</span>
+                                <label>{t.email}</label>
+                                <span className="toggle-description">{t.emailSub}</span>
                                 <input
                                     type="checkbox"
                                     checked={notificationSettings.emailNotifications}
@@ -447,8 +451,8 @@ export const SettingsPage = () => {
                             </div>
 
                             <div className="setting-toggle">
-                                <label>SMS Notifications</label>
-                                <span className="toggle-description">Critical alerts via SMS</span>
+                                <label>{t.sms}</label>
+                                <span className="toggle-description">{t.smsSub}</span>
                                 <input
                                     type="checkbox"
                                     checked={notificationSettings.smsNotifications}
@@ -462,11 +466,11 @@ export const SettingsPage = () => {
                 {activeTab === 'privacy' && (
                     <div className="privacy-settings">
                         <div className="settings-section">
-                            <h3>Data Collection</h3>
-                            
+                            <h3>{t.dataCollection}</h3>
+
                             <div className="setting-toggle">
-                                <label>Analytics Data</label>
-                                <span className="toggle-description">Help us improve by sharing usage analytics</span>
+                                <label>{t.analyticsData}</label>
+                                <span className="toggle-description">{t.analyticsSub}</span>
                                 <input
                                     type="checkbox"
                                     checked={privacySettings.analytics}
@@ -475,8 +479,8 @@ export const SettingsPage = () => {
                             </div>
 
                             <div className="setting-toggle">
-                                <label>Marketing Tracking</label>
-                                <span className="toggle-description">Allow tracking for personalized marketing</span>
+                                <label>{t.marketingTracking}</label>
+                                <span className="toggle-description">{t.marketingTrackingSub}</span>
                                 <input
                                     type="checkbox"
                                     checked={privacySettings.marketingTracking}
@@ -485,8 +489,8 @@ export const SettingsPage = () => {
                             </div>
 
                             <div className="setting-toggle">
-                                <label>Share Anonymous Data</label>
-                                <span className="toggle-description">Contribute to financial research (fully anonymized)</span>
+                                <label>{t.shareAnon}</label>
+                                <span className="toggle-description">{t.shareAnonSub}</span>
                                 <input
                                     type="checkbox"
                                     checked={privacySettings.shareAnonData}
@@ -495,8 +499,8 @@ export const SettingsPage = () => {
                             </div>
 
                             <div className="setting-toggle">
-                                <label>Activity Tracking</label>
-                                <span className="toggle-description">Track app usage for better recommendations</span>
+                                <label>{t.activityTracking}</label>
+                                <span className="toggle-description">{t.activityTrackingSub}</span>
                                 <input
                                     type="checkbox"
                                     checked={privacySettings.activityTracking}
@@ -506,27 +510,27 @@ export const SettingsPage = () => {
                         </div>
 
                         <div className="settings-section">
-                            <h3>Profile Privacy</h3>
-                            
+                            <h3>{t.profilePrivacy}</h3>
+
                             <div className="setting-group">
-                                <label>Profile Visibility</label>
+                                <label>{t.profVisibility}</label>
                                 <select
                                     value={privacySettings.profileVisibility}
                                     onChange={(e) => setPrivacySettings(prev => ({ ...prev, profileVisibility: e.target.value as 'private' | 'public' | 'friends' }))}
                                 >
-                                    <option value="private">Private</option>
-                                    <option value="friends">Friends Only</option>
-                                    <option value="public">Public</option>
+                                    <option value="private">{t.visPrivate}</option>
+                                    <option value="friends">{t.visFriends}</option>
+                                    <option value="public">{t.visPublic}</option>
                                 </select>
-                                <span className="setting-description">Control who can see your profile information</span>
+                                <span className="setting-description">{t.visSub}</span>
                             </div>
                         </div>
 
                         <div className="privacy-info">
-                            <h4>🔒 Your Privacy Matters</h4>
-                            <p>We take your privacy seriously. All financial data is encrypted and never shared with third parties. You can export or delete your data at any time from Account Settings.</p>
+                            <h4>🔒 {t.privacyMatters}</h4>
+                            <p>{t.privacyText}</p>
                             <button className="btn-secondary" onClick={() => navigate('/account-settings')}>
-                                View Data Settings
+                                {t.viewData}
                             </button>
                         </div>
                     </div>
@@ -535,58 +539,58 @@ export const SettingsPage = () => {
                 {activeTab === 'advanced' && (
                     <div className="advanced-settings">
                         <div className="settings-section">
-                            <h3>Data Management</h3>
+                            <h3>{t.dataMgmt}</h3>
                             <div className="advanced-options">
                                 <button className="btn-secondary" onClick={() => navigate('/account-settings')}>
-                                    Export All Data
+                                    {t.exportAll}
                                 </button>
                                 <button className="btn-secondary">
-                                    Clear Cache
+                                    {t.clearCache}
                                 </button>
                                 <button className="btn-secondary">
-                                    Download Backup
+                                    {t.downloadBackup}
                                 </button>
                             </div>
                         </div>
 
                         <div className="settings-section">
-                            <h3>Reset Options</h3>
+                            <h3>{t.resetOpts}</h3>
                             <div className="reset-options">
                                 <button className="btn-warning" onClick={resetToDefaults}>
-                                    Reset All Settings
+                                    {t.resetAll}
                                 </button>
-                                <span className="reset-description">Restore all settings to default values</span>
+                                <span className="reset-description">{t.resetSub}</span>
                             </div>
                         </div>
 
                         <div className="settings-section">
-                            <h3>Developer Options</h3>
+                            <h3>{t.devOpts}</h3>
                             <div className="developer-options">
                                 <button className="btn-secondary">
-                                    View API Usage
+                                    {t.viewApi}
                                 </button>
                                 <button className="btn-secondary">
-                                    Download Debug Logs
+                                    {t.debugLogs}
                                 </button>
                                 <button className="btn-secondary">
-                                    Test Notifications
+                                    {t.testNotif}
                                 </button>
                             </div>
                         </div>
 
                         <div className="settings-section">
-                            <h3>App Information</h3>
+                            <h3>{t.appInfo}</h3>
                             <div className="app-info">
                                 <div className="info-item">
-                                    <span>Version:</span>
+                                    <span>{t.version}</span>
                                     <span>2.1.0</span>
                                 </div>
                                 <div className="info-item">
-                                    <span>Last Updated:</span>
+                                    <span>{t.lastUpdated}</span>
                                     <span>January 2024</span>
                                 </div>
                                 <div className="info-item">
-                                    <span>Build:</span>
+                                    <span>{t.build}</span>
                                     <span>20240115.1</span>
                                 </div>
                             </div>
@@ -599,14 +603,14 @@ export const SettingsPage = () => {
                         className="btn-secondary"
                         onClick={() => navigate('/dashboard')}
                     >
-                        Cancel
+                        {t.cancel}
                     </button>
                     <button
                         className="btn-primary"
                         onClick={saveSettings}
                         disabled={loading}
                     >
-                        {loading ? 'Saving...' : 'Save Settings'}
+                        {loading ? t.saving : t.saveSettings}
                     </button>
                 </div>
             </div>

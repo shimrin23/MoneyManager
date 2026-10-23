@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client.ts';
 import { DatePicker } from '../components/DatePicker';
 import { getLocalDateString } from '../utils/date';
+import { useAdminLang } from '../i18n/adminText';
+import { USER_T } from '../i18n/userPagesText';
 
 interface UserProfile {
     id: string;
@@ -33,6 +35,7 @@ const getFallbackProfile = (): UserProfile => {
 };
 
 export const ProfilePage = () => {
+    const t = USER_T[useAdminLang()];
     const [profile, setProfile] = useState<UserProfile>(getFallbackProfile);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState('');
@@ -60,9 +63,9 @@ export const ProfilePage = () => {
 
         try {
             await apiClient.put('/auth/profile', profile);
-            setMessage('Profile updated successfully!');
+            setMessage(t.profUpdated);
         } catch (err: any) {
-            setError(err.response?.data?.error || 'Failed to update profile');
+            setError(err.response?.data?.error || t.profUpdateFailed);
         } finally {
             setSaving(false);
         }
@@ -86,13 +89,13 @@ export const ProfilePage = () => {
         <div className="profile-page">
             {/* Header: avatar → name / email / role → title */}
             <div className="profile-header profile-header-flex">
-                <h1>Edit Profile</h1>
-                <p>Manage your personal information and preferences</p>
+                <h1>{t.profTitle}</h1>
+                <p>{t.profSubtitle}</p>
                 <div className="profile-avatar-stack">
                     <div className="profile-header-avatar">
                         {getInitials(profile.name)}
                     </div>
-                    <button type="button" className="profile-avatar-camera-btn" aria-label="Change avatar">
+                    <button type="button" className="profile-avatar-camera-btn" aria-label={t.profChangeAvatar}>
                         📷
                     </button>
                 </div>
@@ -112,34 +115,34 @@ export const ProfilePage = () => {
                         {error && <div className="alert-error">{error}</div>}
 
                         <div className="form-section">
-                            <h3>Personal Information</h3>
+                            <h3>{t.profPersonal}</h3>
                             <div className="form-grid">
                                 <div className="form-group">
-                                    <label>Full Name *</label>
+                                    <label>{t.profFullName}</label>
                                     <input
                                         type="text"
                                         name="name"
                                         value={profile.name}
                                         onChange={handleInputChange}
                                         required
-                                        placeholder="Enter your full name"
+                                        placeholder={t.profPlaceName}
                                     />
                                 </div>
 
                                 <div className="form-group">
-                                    <label>Email Address *</label>
+                                    <label>{t.profEmail}</label>
                                     <input
                                         type="email"
                                         name="email"
                                         value={profile.email}
                                         onChange={handleInputChange}
                                         required
-                                        placeholder="Enter your email"
+                                        placeholder={t.profPlaceEmail}
                                     />
                                 </div>
 
                                 <div className="form-group">
-                                    <label>Phone Number</label>
+                                    <label>{t.profPhone}</label>
                                     <input
                                         type="tel"
                                         name="phone"
@@ -151,43 +154,43 @@ export const ProfilePage = () => {
 
                                 <div className="form-group">
                                     <DatePicker
-                                        label="Date of Birth"
+                                        label={t.profDob}
                                         value={profile.dateOfBirth || ''}
                                         onChange={(date: string) => setProfile(prev => ({ ...prev, dateOfBirth: date }))}
                                         maxDate={getLocalDateString()}
-                                        placeholder="Select your date of birth"
+                                        placeholder={t.profPlaceDob}
                                     />
                                 </div>
                             </div>
                         </div>
 
                         <div className="form-section">
-                            <h3>Additional Details</h3>
+                            <h3>{t.profAdditional}</h3>
                             <div className="form-grid">
                                 <div className="form-group full-width">
-                                    <label>Address</label>
+                                    <label>{t.profAddress}</label>
                                     <textarea
                                         name="address"
                                         value={profile.address || ''}
                                         onChange={handleInputChange}
                                         rows={3}
-                                        placeholder="Enter your address"
+                                        placeholder={t.profPlaceAddress}
                                     />
                                 </div>
 
                                 <div className="form-group">
-                                    <label>Occupation</label>
+                                    <label>{t.profOccupation}</label>
                                     <input
                                         type="text"
                                         name="occupation"
                                         value={profile.occupation || ''}
                                         onChange={handleInputChange}
-                                        placeholder="Your job title"
+                                        placeholder={t.profPlaceOcc}
                                     />
                                 </div>
 
                                 <div className="form-group">
-                                    <label>Monthly Income (LKR)</label>
+                                    <label>{t.profIncome}</label>
                                     <input
                                         type="number"
                                         name="monthlyIncome"
@@ -206,14 +209,14 @@ export const ProfilePage = () => {
                                 className="btn-secondary"
                                 onClick={() => navigate('/dashboard')}
                             >
-                                Cancel
+                                {t.profCancel}
                             </button>
                             <button
                                 type="submit"
                                 className="btn-primary"
                                 disabled={saving}
                             >
-                                {saving ? 'Saving...' : 'Save Changes'}
+                                {saving ? t.profSaving : t.profSave}
                             </button>
                         </div>
                     </form>

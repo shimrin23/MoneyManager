@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../api/client';
+import { ADMIN_T, useAdminLang } from '../i18n/adminText';
 
 interface ConfigRow {
     key: string;
@@ -30,6 +31,8 @@ const TYPE_COLORS: Record<string, string> = {
 };
 
 export const AdminConfigPage = () => {
+    const lang = useAdminLang();
+    const t = ADMIN_T[lang];
     const [configs, setConfigs]   = useState<ConfigRow[]>(mockConfigs);
     const [typeFilter, setTypeFilter] = useState<string>('all');
 
@@ -50,6 +53,10 @@ export const AdminConfigPage = () => {
         await apiClient.patch(`/admin/config/${key}/toggle`).catch(() => undefined);
     };
 
+    const typeName = (type: ConfigRow['type']) => ({
+        feature: t.typeFeature, threshold: t.typeThreshold, ai: t.typeAi, system: t.typeSystem,
+    })[type];
+
     const filtered = typeFilter === 'all' ? configs : configs.filter(c => c.type === typeFilter);
     const activeCount = configs.filter(c => c.active).length;
 
@@ -57,25 +64,25 @@ export const AdminConfigPage = () => {
         <div className="page-container">
             <div className="page-header">
                 <div>
-                    <h1 className="page-title">System Configuration</h1>
-                    <p className="page-subtitle">Manage feature flags, AI thresholds and system parameters</p>
+                    <h1 className="page-title">{t.hdrConfig}</h1>
+                    <p className="page-subtitle">{t.configSubtitle}</p>
                 </div>
             </div>
 
             <div className="rec-summary-grid" style={{ gridTemplateColumns: 'repeat(4,1fr)' }}>
-                <div className="rec-stat-card"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{configs.length}</div><div className="rec-stat-label">Total Keys</div></div></div>
-                <div className="rec-stat-card accepted"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{activeCount}</div><div className="rec-stat-label">Active</div></div></div>
-                <div className="rec-stat-card"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{configs.length - activeCount}</div><div className="rec-stat-label">Inactive</div></div></div>
-                <div className="rec-stat-card savings"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{configs.filter(c => c.type === 'ai').length}</div><div className="rec-stat-label">AI Keys</div></div></div>
+                <div className="rec-stat-card"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{configs.length}</div><div className="rec-stat-label">{t.statTotalKeys}</div></div></div>
+                <div className="rec-stat-card accepted"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{activeCount}</div><div className="rec-stat-label">{t.statActive}</div></div></div>
+                <div className="rec-stat-card"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{configs.length - activeCount}</div><div className="rec-stat-label">{t.statInactive}</div></div></div>
+                <div className="rec-stat-card savings"><div className="rec-stat-icon"></div><div><div className="rec-stat-value">{configs.filter(c => c.type === 'ai').length}</div><div className="rec-stat-label">{t.statAiKeys}</div></div></div>
             </div>
 
             <div className="filter-pill-row">
                 {[
-                    { val: 'all',       label: 'All Types',  color: '#6366f1' },
-                    { val: 'feature',   label: 'Feature',    color: '#6366f1' },
-                    { val: 'threshold', label: 'Threshold',  color: '#f59e0b' },
-                    { val: 'ai',        label: 'AI',         color: '#10b981' },
-                    { val: 'system',    label: 'System',     color: '#3b82f6' },
+                    { val: 'all',       label: t.filterAllTypes, color: '#6366f1' },
+                    { val: 'feature',   label: t.typeFeature,    color: '#6366f1' },
+                    { val: 'threshold', label: t.typeThreshold,  color: '#f59e0b' },
+                    { val: 'ai',        label: t.typeAi,         color: '#10b981' },
+                    { val: 'system',    label: t.typeSystem,     color: '#3b82f6' },
                 ].map(({ val, label, color }) => (
                     <button key={val}
                         className={`filter-pill ${typeFilter === val ? 'active' : ''}`}
@@ -94,7 +101,10 @@ export const AdminConfigPage = () => {
                 <div className="admin-table-wrapper">
                     <table className="admin-table" style={{ width: '100%' }}>
                         <thead>
-                            <tr><th>Key</th><th>Description</th><th>Type</th><th>Value</th><th>Status</th><th>Action</th></tr>
+                            <tr>
+                                <th>{t.colKey}</th><th>{t.colDescription}</th><th>{t.colType}</th>
+                                <th>{t.colValue}</th><th>{t.colStatus}</th><th>{t.colActions}</th>
+                            </tr>
                         </thead>
                         <tbody>
                             {filtered.map(c => (
@@ -107,17 +117,17 @@ export const AdminConfigPage = () => {
                                             fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase',
                                             background: TYPE_COLORS[c.type] + '22', color: TYPE_COLORS[c.type],
                                             border: `1px solid ${TYPE_COLORS[c.type]}44`
-                                        }}>{c.type}</span>
+                                        }}>{typeName(c.type)}</span>
                                     </td>
                                     <td style={{ fontFamily: 'monospace', fontSize: '0.84rem' }}>{String(c.value)}</td>
                                     <td>
                                         <span className={`admin-status-badge ${c.active ? 'is-success' : 'is-danger'}`}>
-                                            {c.active ? 'active' : 'inactive'}
+                                            {c.active ? t.statusActive : t.statusInactive}
                                         </span>
                                     </td>
                                     <td>
                                         <button className="secondary admin-action-btn" onClick={() => toggleConfig(c.key)}>
-                                            {c.active ? 'Deactivate' : 'Activate'}
+                                            {c.active ? t.btnDeactivate : t.btnActivate}
                                         </button>
                                     </td>
                                 </tr>
