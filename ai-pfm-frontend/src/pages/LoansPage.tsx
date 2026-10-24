@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
+import { notify } from '../utils/systemMessages';
 
 interface Loan {
     _id?: string;
@@ -124,7 +125,7 @@ export const LoansPage = () => {
             setShowAddForm(false);
         } catch (error) {
             console.error('Error creating loan:', error);
-            alert('Failed to create loan. Please try again.');
+            notify.error('Failed to create loan. Please try again.');
         }
     };
 

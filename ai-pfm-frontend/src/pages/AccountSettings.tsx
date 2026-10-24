@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client.ts';
+import { confirmDialog, promptDialog } from '../utils/systemMessages';
 
 interface SecuritySettings {
     twoFactorEnabled: boolean;
@@ -95,15 +96,23 @@ export const AccountSettings = () => {
     };
 
     const handleDeleteAccount = async () => {
-        const confirmed = window.confirm(
-            'Are you sure you want to delete your account? This action cannot be undone.'
-        );
-        
+        const confirmed = await confirmDialog({
+            title: 'Delete account?',
+            message: 'Are you sure you want to delete your account? This action cannot be undone.',
+            confirmText: 'Continue',
+            danger: true,
+        });
+
         if (confirmed) {
-            const finalConfirm = window.prompt(
-                'Type "DELETE" to confirm account deletion:'
-            );
-            
+            const finalConfirm = await promptDialog({
+                title: 'Confirm account deletion',
+                message: 'Type DELETE to permanently delete your account.',
+                placeholder: 'DELETE',
+                confirmText: 'Delete account',
+                danger: true,
+                validate: (value) => (value === 'DELETE' ? null : 'Please type DELETE exactly to confirm.'),
+            });
+
             if (finalConfirm === 'DELETE') {
                 try {
                     await apiClient.delete('/auth/account');

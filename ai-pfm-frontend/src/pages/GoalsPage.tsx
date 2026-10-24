@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
+import { apiClient, getApiErrorMessage } from '../api/client';
 import { DatePicker } from '../components/DatePicker';
 import { getLocalDateString } from '../utils/date';
+import { notify, confirmDialog, promptDialog } from '../utils/systemMessages';
+import { IconUser, IconLandmark, IconLightbulb, IconAlertTriangle, IconBuilding, IconTrendingUp, IconCar, IconWallet, IconTarget } from '../components/Icons';
+
+const DAY_MS = 1000 * 60 * 60 * 24;
 
 interface Goal {
     _id?: string;
@@ -13,6 +17,7 @@ interface Goal {
     category?: string;
     priority?: 'High' | 'Medium' | 'Low';
     description?: string;
+    createdAt?: string;
 }
 
 export const GoalsPage = () => {
@@ -53,12 +58,14 @@ export const GoalsPage = () => {
         e.preventDefault();
         try {
             const response = await apiClient.post('/goals', newGoal);
-            setGoals([...goals, response.data.goal]);
+            // Newest first, matching the order the server returns
+            setGoals([response.data.goal, ...goals]);
             setNewGoal({ title: '', targetAmount: 0, currentAmount: 0, deadline: '', status: 'In Progress', category: 'Personal', priority: 'Medium', description: '' });
             setShowForm(false);
+            notify.success(`Goal "${response.data.goal.title}" created.`);
         } catch (error) {
             console.error('Error creating goal:', error);
-            alert('Failed to create goal. Please try again.');
+            notify.error(getApiErrorMessage(error, 'Failed to create goal. Please try again.'));
         }
     };
 
@@ -71,37 +78,64 @@ export const GoalsPage = () => {
             setGoals(goals.map(g => g._id === editingGoal._id ? response.data.goal : g));
             setEditingGoal(null);
             setShowDetailsModal(false);
-            alert('Goal updated successfully!');
+            notify.success('Goal updated successfully.');
         } catch (error) {
             console.error('Error updating goal:', error);
-            alert('Failed to update goal. Please try again.');
+            notify.error(getApiErrorMessage(error, 'Failed to update goal. Please try again.'));
         }
     };
 
     const handleDeleteGoal = async (goalId: string) => {
-        if (window.confirm('Are you sure you want to delete this goal?')) {
-            try {
-                await apiClient.delete(`/goals/${goalId}`);
-                setGoals(goals.filter(g => g._id !== goalId));
-                setShowDetailsModal(false);
-                alert('Goal deleted successfully!');
-            } catch (error) {
-                console.error('Error deleting goal:', error);
-                alert('Failed to delete goal. Please try again.');
-            }
+        const confirmed = await confirmDialog({
+            title: 'Delete goal?',
+            message: 'This goal and its saved progress will be removed. This cannot be undone.',
+            confirmText: 'Delete',
+            danger: true,
+        });
+        if (!confirmed) return;
+
+        try {
+            await apiClient.delete(`/goals/${goalId}`);
+            setGoals(goals.filter(g => g._id !== goalId));
+            setShowDetailsModal(false);
+            notify.success('Goal deleted.');
+        } catch (error) {
+            console.error('Error deleting goal:', error);
+            notify.error(getApiErrorMessage(error, 'Failed to delete goal. Please try again.'));
         }
     };
 
     const handleAddProgress = async (goalId: string, amount: number) => {
         try {
             const response = await apiClient.post(`/goals/${goalId}/progress`, { amount });
-            setGoals(goals.map(goal => 
-                goal._id === goalId ? response.data.goal : goal
+            const updated: Goal = response.data.goal;
+            setGoals(goals.map(goal =>
+                goal._id === goalId ? updated : goal
             ));
+            if (updated.status === 'Completed') notify.success(`Goal "${updated.title}" reached. Well done!`);
+            else notify.success(`${formatCurrency(amount)} added to "${updated.title}".`);
         } catch (error) {
             console.error('Error adding progress:', error);
-            alert('Failed to add progress. Please try again.');
+            notify.error(getApiErrorMessage(error, 'Failed to add progress. Please try again.'));
         }
+    };
+
+    const handleContributionClick = async (goal: Goal, monthlyRequired: number) => {
+        if (!goal._id) return;
+        const input = await promptDialog({
+            title: 'Add contribution',
+            message: `${goal.title}: ${formatCurrency(goal.currentAmount)} of ${formatCurrency(goal.targetAmount)} saved. Monthly needed: ${formatCurrency(monthlyRequired)}.`,
+            label: 'Amount (LKR)',
+            inputType: 'number',
+            placeholder: String(monthlyRequired || ''),
+            confirmText: 'Add',
+            validate: (value) => {
+                const amount = Number(value);
+                return !value.trim() || !Number.isFinite(amount) || amount <= 0 ? 'Please enter an amount greater than 0.' : null;
+            },
+        });
+        if (input === null) return; // Cancelled
+        handleAddProgress(goal._id, Number(input));
     };
 
     const getProgressPercentage = (current: number, target: number) => {
@@ -116,19 +150,26 @@ export const GoalsPage = () => {
         return Math.ceil(remaining / months);
     };
 
-    const getGoalRiskStatus = (currentAmount: number, targetAmount: number, deadline: string) => {
-        const progress = getProgressPercentage(currentAmount, targetAmount);
-        const daysRemaining = Math.ceil((new Date(deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-        // Calculate what progress should be by now
-        const totalDays = Math.ceil((new Date(deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-        const initialDate = new Date(deadline);
-        initialDate.setDate(initialDate.getDate() - totalDays);
-        const daysPassed = totalDays - Math.max(0, daysRemaining);
-        const expectedProgressPercentage = (daysPassed / totalDays) * 100;
+    const getGoalRiskStatus = (goal: Goal) => {
+        const highRisk = { status: 'High Risk', color: '#ef4444', icon: '🔴' };
+        const progress = getProgressPercentage(goal.currentAmount, goal.targetAmount);
+        if (goal.status === 'Completed' || progress >= 100) return { status: 'Completed', color: '#10b981', icon: '✅' };
+
+        const now = Date.now();
+        const deadline = new Date(goal.deadline).getTime();
+        const daysRemaining = Math.ceil((deadline - now) / DAY_MS);
+        if (daysRemaining <= 0) return highRisk; // Overdue
+        // Less than a month left and under half saved: very unlikely to make it
+        if (daysRemaining <= 30 && progress < 50) return highRisk;
+
+        // Compare progress with how much of the time (from creation to deadline) has already passed
+        const start = goal.createdAt ? new Date(goal.createdAt).getTime() : now;
+        const totalSpan = deadline - start;
+        const expectedProgressPercentage = totalSpan > 0 ? Math.min(100, Math.max(0, ((now - start) / totalSpan) * 100)) : 0;
 
         if (progress >= expectedProgressPercentage) return { status: 'On Track', color: '#10b981', icon: '✅' };
         if (progress >= expectedProgressPercentage - 10) return { status: 'Slightly Behind', color: '#f59e0b', icon: '⚠️' };
-        return { status: 'High Risk', color: '#ef4444', icon: '🔴' };
+        return highRisk;
     };
 
     const formatCurrency = (amount: number) => {
@@ -143,8 +184,10 @@ export const GoalsPage = () => {
     };
 
     const getAISuggestion = (goal: Goal) => {
-        const riskStatus = getGoalRiskStatus(goal.currentAmount, goal.targetAmount, goal.deadline);
-        if (riskStatus.status === 'On Track') {
+        const riskStatus = getGoalRiskStatus(goal);
+        if (riskStatus.status === 'Completed') {
+            return `Goal reached! You saved ${formatCurrency(goal.currentAmount)}.`;
+        } else if (riskStatus.status === 'On Track') {
             return `You're on track! Continue saving Rs. ${getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline).toLocaleString('en-US')} monthly.`;
         } else if (riskStatus.status === 'Slightly Behind') {
             return `You're slightly behind. Increase monthly savings to Rs. ${(getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline) * 1.2).toLocaleString('en-US')} to stay on track.`;
@@ -154,15 +197,18 @@ export const GoalsPage = () => {
     };
 
     const getCategoryIcon = (category?: string) => {
-        const icons: { [key: string]: string } = {
-            'Travel': '',
-            'Home': '',
-            'Vehicle': '',
-            'Emergency': '',
-            'Personal': '',
-            'Retirement': ''
+        const icons: { [key: string]: typeof IconTarget } = {
+            'Personal': IconUser,
+            'Travel': IconLandmark,
+            'Education': IconLightbulb,
+            'Emergency': IconAlertTriangle,
+            'Home': IconBuilding,
+            'Investment': IconTrendingUp,
+            'Vehicle': IconCar,
+            'Retirement': IconWallet
         };
-        return icons[category || 'Personal'] || '';
+        const Icon = icons[category || 'Personal'] || IconTarget;
+        return <Icon size={24} />;
     };
 
     if (loading) return <div className="loading">Loading your goals...</div>;
@@ -241,14 +287,14 @@ export const GoalsPage = () => {
             <div className="goals-grid">
                 {goals.map((goal) => {
                     const progress = getProgressPercentage(goal.currentAmount, goal.targetAmount);
-                    const riskStatus = getGoalRiskStatus(goal.currentAmount, goal.targetAmount, goal.deadline);
+                    const riskStatus = getGoalRiskStatus(goal);
                     const monthlyRequired = getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline);
 
                     return (
                         <div key={goal._id} className="card goal-card">
                             <div className="goal-header">
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span style={{ fontSize: '24px' }}>{getCategoryIcon(goal.category)}</span>
+                                    <span style={{ display: 'flex', alignItems: 'center' }}>{getCategoryIcon(goal.category)}</span>
                                     <div>
                                         <h3 style={{ margin: 0 }}>{goal.title}</h3>
                                         {goal.priority && <small style={{ color: 'var(--text-muted)' }}>Priority: {goal.priority}</small>}
@@ -290,7 +336,7 @@ export const GoalsPage = () => {
                             }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                                     <span style={{ color: 'var(--text)', fontWeight: '600' }}><strong>Monthly Required:</strong> {formatCurrency(monthlyRequired)}</span>
-                                    <span style={{ color: '#059669', fontWeight: '600' }}><strong>{riskStatus.icon} Status:</strong> {riskStatus.status}</span>
+                                    <span style={{ color: riskStatus.color, fontWeight: '600' }}><strong>{riskStatus.icon} Status:</strong> {riskStatus.status}</span>
                                 </div>
                                 <div style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: '500' }}>
                                     📅 {new Date(goal.deadline).toLocaleDateString('en-LK')}
@@ -322,12 +368,7 @@ export const GoalsPage = () => {
                                 </button>
                                 <button 
                                     className="btn-primary btn-sm"
-                                    onClick={() => {
-                                        const amount = prompt(`Enter amount to add (Monthly needed: LKR ${monthlyRequired}):`);
-                                        if (amount && goal._id) {
-                                            handleAddProgress(goal._id, Number(amount));
-                                        }
-                                    }}
+                                    onClick={() => handleContributionClick(goal, monthlyRequired)}
                                 >
                                     Add Contribution
                                 </button>

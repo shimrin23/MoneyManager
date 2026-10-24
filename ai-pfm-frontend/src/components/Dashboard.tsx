@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client.ts';
+import { notify } from '../utils/systemMessages';
 import axios from 'axios';
 import { AIAssistant } from './AIAssistant';
 import { SpendingTrends } from './SpendingTrends';
@@ -73,9 +74,9 @@ export const Dashboard = () => {
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 const msg = error.response?.data?.message || error.response?.data?.error || error.response?.data?.details;
-                alert(msg ? `Sync failed: ${msg}` : 'Sync failed');
+                notify.error(msg ? `Sync failed: ${msg}` : 'Sync failed. Please try again.');
             } else {
-                alert('Sync failed');
+                notify.error('Sync failed. Please try again.');
             }
         } finally {
             setSyncing(false);

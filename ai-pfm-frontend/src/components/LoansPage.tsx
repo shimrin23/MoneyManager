@@ -1,4 +1,5 @@
 import { useState, type FC, type FormEvent } from 'react';
+import { confirmDialog } from '../utils/systemMessages';
 import { useLoans } from '../hooks/useLoans';
 import LoanCalculator from './LoanCalculator';
 import ActiveLoanCards from './ActiveLoanCards';
@@ -97,7 +98,12 @@ const LoansPage: FC = () => {
     };
 
     const handleDeleteLoan = async (loanId: string) => {
-        const confirmed = window.confirm('Delete this loan? This cannot be undone.');
+        const confirmed = await confirmDialog({
+            title: 'Delete loan?',
+            message: 'This loan will be removed. This cannot be undone.',
+            confirmText: 'Delete',
+            danger: true,
+        });
         if (!confirmed) return;
 
         try {

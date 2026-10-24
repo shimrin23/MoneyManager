@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
+import { notify } from '../utils/systemMessages';
 
 interface Subscription {
     _id?: string;
@@ -173,7 +174,7 @@ export const SubscriptionsPage = () => {
             await fetchSubscriptions();
         } catch (error) {
             console.error('Failed to cancel subscription:', error);
-            alert('Failed to cancel subscription. Please try again.');
+            notify.error('Failed to cancel subscription. Please try again.');
         }
     };
 
@@ -187,7 +188,7 @@ export const SubscriptionsPage = () => {
         try {
             // Validation
             if (!newSubscription.name || !newSubscription.provider || !newSubscription.amount || !newSubscription.nextPayment) {
-                alert('Please fill in all required fields');
+                notify.warning('Please fill in all required fields.');
                 return;
             }
 
@@ -210,7 +211,7 @@ export const SubscriptionsPage = () => {
             await fetchSubscriptions();
         } catch (error) {
             console.error('Failed to create subscription:', error);
-            alert('Failed to create subscription. Please try again.');
+            notify.error('Failed to create subscription. Please try again.');
         }
     };
 
@@ -472,7 +473,7 @@ export const SubscriptionsPage = () => {
                             await fetchSubscriptions();
                         } catch (error) {
                             console.error('Failed to cancel zombie subscriptions:', error);
-                            alert('Failed to cancel subscriptions. Please try again.');
+                            notify.error('Failed to cancel subscriptions. Please try again.');
                         }
                     }}>
                         Cancel All Zombies
@@ -628,7 +629,7 @@ export const SubscriptionsPage = () => {
                                         fontSize: '13px',
                                         fontWeight: '500'
                                     }}
-                                    onClick={() => alert('Downgrade feature coming soon')}
+                                    onClick={() => notify.info('Downgrade is coming soon.')}
                                 >
                                     Downgrade
                                 </button>
@@ -736,7 +737,7 @@ export const SubscriptionsPage = () => {
                                                         cursor: 'pointer',
                                                         fontWeight: '500'
                                                     }}
-                                                    onClick={() => alert('Switch plan feature coming soon')}
+                                                    onClick={() => notify.info('Switch plan is coming soon.')}
                                                 >
                                                     Switch Plan
                                                 </button>

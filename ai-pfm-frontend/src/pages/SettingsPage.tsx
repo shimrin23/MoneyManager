@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client.ts';
 import { useAdminLang } from '../i18n/adminText';
 import { USER_T } from '../i18n/userPagesText';
+import { confirmDialog } from '../utils/systemMessages';
 
 interface AppSettings {
     currency: string;
@@ -145,8 +146,8 @@ export const SettingsPage = () => {
         }
     };
 
-    const resetToDefaults = () => {
-        if (confirm(t.setResetConfirm)) {
+    const resetToDefaults = async () => {
+        if (await confirmDialog({ title: t.resetAll, message: t.setResetConfirm, confirmText: t.resetAll, danger: true })) {
             setAppSettings({
                 currency: 'LKR',
                 dateFormat: 'DD/MM/YYYY',

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
+import { notify } from '../utils/systemMessages';
 
 interface CreditCard {
     _id?: string;
@@ -50,7 +51,7 @@ export const CreditCardsPage = () => {
             setShowAddForm(false);
         } catch (error) {
             console.error('Error creating credit card:', error);
-            alert('Failed to create credit card. Please try again.');
+            notify.error('Failed to create credit card. Please try again.');
         }
     };
 

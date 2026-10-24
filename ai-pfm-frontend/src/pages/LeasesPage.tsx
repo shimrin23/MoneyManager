@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
+import { notify, confirmDialog } from '../utils/systemMessages';
 
 interface Lease {
     _id: string;
@@ -88,7 +89,7 @@ export const LeasesPage = () => {
             await fetchLeases();
         } catch (err) {
             console.error('Failed to create lease:', err);
-            alert('Failed to create lease. Please try again.');
+            notify.error('Failed to create lease. Please try again.');
         } finally {
             setSubmitting(false);
         }
@@ -104,12 +105,20 @@ export const LeasesPage = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!window.confirm('Are you sure you want to delete this lease?')) return;
+        const confirmed = await confirmDialog({
+            title: 'Delete lease?',
+            message: 'Are you sure you want to delete this lease?',
+            confirmText: 'Delete',
+            danger: true,
+        });
+        if (!confirmed) return;
         try {
             await apiClient.delete(`/leases/${id}`);
             setLeases(prev => prev.filter(l => l._id !== id));
+            notify.success('Lease deleted.');
         } catch (err) {
             console.error('Failed to delete lease:', err);
+            notify.error('Failed to delete lease. Please try again.');
         }
     };
 
