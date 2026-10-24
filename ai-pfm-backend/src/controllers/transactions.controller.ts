@@ -11,6 +11,13 @@ import SyncState from "../schemas/sync_state.schema";
 import Transaction from "../schemas/transaction.schema";
 import { AdvancedAnalyticsService } from "../services/advanced-analytics.service";
 import { parseBankStatementCSV, SupportedSriLankanBank } from "../services/bank-statement-parser.service";
+import AnomalyDetectionService, {
+  ANOMALY_STATUSES,
+  AnomalyStatus,
+  AnomalyInputTransaction,
+  detectAnomalies,
+} from "../services/anomaly-detection.service";
+import mongoose from "mongoose";
 
 export default class TransactionsController {
   private transactionsService: TransactionsService;
@@ -19,6 +26,7 @@ export default class TransactionsController {
 
   private bankingIntegration: BankingIntegration;
   private advancedAnalyticsService: AdvancedAnalyticsService;
+  private anomalyDetectionService: AnomalyDetectionService;
 
   constructor() {
     this.transactionsService = new TransactionsService();
@@ -27,6 +35,52 @@ export default class TransactionsController {
 
     this.bankingIntegration = new BankingIntegration();
     this.advancedAnalyticsService = new AdvancedAnalyticsService();
+    this.anomalyDetectionService = new AnomalyDetectionService();
+  }
+
+  // GET /api/transactions/anomalies
+  async getAnomalies(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const anomalies = await this.anomalyDetectionService.getAnomalies(userId);
+      res.json({ count: anomalies.length, anomalies });
+    } catch (error) {
+      console.error("Error detecting anomalies:", error);
+      res.status(500).json({ error: "Could not load anomaly alerts" });
+    }
+  }
+
+  // PATCH /api/transactions/anomalies/:id/status
+  async updateAnomalyStatus(req: AuthRequest, res: Response) {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const id = req.params.id as string;
+      const { status } = req.body || {};
+      if (!ANOMALY_STATUSES.includes(status)) {
+        return res.status(400).json({ error: `Status must be one of: ${ANOMALY_STATUSES.join(", ")}` });
+      }
+      if (!mongoose.isValidObjectId(id)) {
+        return res.status(404).json({ error: "Transaction not found" });
+      }
+
+      const updated = await this.anomalyDetectionService.updateStatus(userId, id, status as AnomalyStatus);
+      if (!updated) {
+        return res.status(404).json({ error: "Transaction not found" });
+      }
+
+      res.json({ message: "Anomaly status updated", status: updated.anomalyStatus });
+    } catch (error) {
+      console.error("Error updating anomaly status:", error);
+      res.status(500).json({ error: "Could not update anomaly status" });
+    }
   }
 
   // POST /api/transactions
@@ -140,12 +194,21 @@ export default class TransactionsController {
         return res.status(401).json({ error: "User not authenticated" });
       }
 
-      const transactions = await this.transactionsService.getAll(userId);
+      const transactions = (await this.transactionsService.getAll(userId)).map((t) => t.toObject());
+
+      // Mark the same transactions the Anomaly Detection page flags, so the "Anomaly" badge matches it
+      const flagged = new Map(
+        detectAnomalies(transactions as AnomalyInputTransaction[]).map((a) => [a.transactionId, a.riskScore]),
+      );
+      const data = transactions.map((t) => {
+        const riskScore = flagged.get(String(t._id));
+        return riskScore === undefined ? t : { ...t, isAnomaly: true, anomalyScore: riskScore / 100 };
+      });
 
       res.json({
         message: "Transactions list",
-        count: transactions.length,
-        data: transactions,
+        count: data.length,
+        data,
       });
     } catch (error) {
       res.status(500).json({ error: "Could not fetch transactions" });
