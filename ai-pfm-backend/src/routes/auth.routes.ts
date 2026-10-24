@@ -28,6 +28,7 @@ router.post('/forgot-password', authController.forgotPassword.bind(authControlle
 
 // Route: POST /api/auth/reset-password
 router.post('/reset-password', authController.resetPassword.bind(authController));
+router.put('/change-password', authenticateToken, authController.changePassword.bind(authController));
 
 // Route: GET /api/auth/profile (protected)
 router.get('/profile', authenticateToken, authController.getProfile.bind(authController));

@@ -124,17 +124,6 @@ router.put('/settings/privacy', (req: Request, res: Response) => {
 });
 
 // Account management routes
-router.post('/security/change-password', (req: Request, res: Response) => {
-  const userId = (req as any).user?.id;
-  const { currentPassword, newPassword } = req.body;
-  
-  // TODO: Validate current password and update
-  console.log('Password change request for user:', userId);
-  
-  // Simulate success
-  res.json({ message: 'Password changed successfully' });
-});
-
 router.post('/security/enable-2fa', (req: Request, res: Response) => {
   const userId = (req as any).user?.id;
   

@@ -507,6 +507,43 @@ export default class AuthController {
         }
     }
 
+    // PUT /api/auth/change-password (logged-in user)
+    async changePassword(req: AuthRequest, res: Response) {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+
+            const { currentPassword, newPassword } = req.body;
+            if (!currentPassword || !newPassword) {
+                return res.status(400).json({ error: 'Current and new password are required' });
+            }
+            if (!isStrongPassword(newPassword)) {
+                return res.status(400).json({ error: 'Password must be at least 8 characters and include a letter and a number' });
+            }
+
+            const user = await User.findById(userId);
+            if (!user || !user.passwordHash) {
+                return res.status(400).json({ error: 'This account has no password set. Use Continue with Google or Forgot password.' });
+            }
+
+            const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+            if (!isMatch) {
+                return res.status(400).json({ error: 'Current password is incorrect' });
+            }
+
+            const salt = await bcrypt.genSalt(10);
+            user.passwordHash = await bcrypt.hash(newPassword, salt);
+            await user.save();
+
+            res.json({ message: 'Password updated successfully' });
+        } catch (error) {
+            console.error('Change Password Error:', error);
+            res.status(500).json({ error: 'Internal Server Error' });
+        }
+    }
+
     // GET /api/auth/google-client-id
     async getGoogleClientId(req: Request, res: Response) {
         try {
