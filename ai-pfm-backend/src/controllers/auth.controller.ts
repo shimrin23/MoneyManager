@@ -10,6 +10,17 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const MAX_NAME_LENGTH = 100;
+
+// Emails are stored and compared in lower case (AUT-004)
+const normalizeEmail = (value: unknown): string =>
+    typeof value === 'string' ? value.trim().toLowerCase() : '';
+
+// At least 8 characters, with a letter and a number (AUT-002)
+const isStrongPassword = (value: unknown): boolean =>
+    typeof value === 'string' && value.length >= 8 && /[A-Za-z]/.test(value) && /\d/.test(value);
+
 export default class AuthController {
     
     // POST /api/auth/signup
@@ -18,13 +29,25 @@ export default class AuthController {
             const { name, email, password } = req.body;
             console.log("\n📥 POST /api/auth/signup received:", { name, email });
             
-            // 1. Validation
-            if (!name || !email || !password) {
+            // 1. Validation (AUT-003: trim the name; AUT-001: check the email format)
+            const cleanName = typeof name === 'string' ? name.trim() : '';
+            const cleanEmail = normalizeEmail(email);
+            if (!cleanName || !cleanEmail || !password) {
                 return res.status(400).json({ error: "Please provide all fields" });
+            }
+            if (cleanName.length > MAX_NAME_LENGTH) {
+                return res.status(400).json({ error: `Name must be ${MAX_NAME_LENGTH} characters or fewer` });
+            }
+            if (!EMAIL_PATTERN.test(cleanEmail)) {
+                return res.status(400).json({ error: "Please enter a valid email address" });
+            }
+            // AUT-002: password rule
+            if (!isStrongPassword(password)) {
+                return res.status(400).json({ error: "Password must be at least 8 characters and include a letter and a number" });
             }
 
             // 2. Check if user already exists
-            const existingUser = await User.findOne({ email });
+            const existingUser = await User.findOne({ email: cleanEmail });
             if (existingUser) {
                 // Account linking case: user has a Google account but no email/password set up yet
                 if (!existingUser.passwordHash && existingUser.isGoogleAccount) {
@@ -49,8 +72,8 @@ export default class AuthController {
 
             // 5. Create the User
             const newUser = await User.create({
-                name,
-                email,
+                name: cleanName,
+                email: cleanEmail,
                 passwordHash,
                 isVerified: false,
                 verificationToken: token,
@@ -78,7 +101,7 @@ export default class AuthController {
             console.log("\n📥 POST /api/auth/login received for email:", email);
 
             // 1. Find user by email
-            const user = await User.findOne({ email });
+            const user = await User.findOne({ email: normalizeEmail(email) });
             if (!user) {
                 return res.status(400).json({ error: "Invalid credentials" });
             }
@@ -189,7 +212,7 @@ export default class AuthController {
                 return res.status(400).json({ error: "Email address is required" });
             }
 
-            const user = await User.findOne({ email });
+            const user = await User.findOne({ email: normalizeEmail(email) });
 
             if (!user) {
                 return res.status(404).json({ error: "User not found" });
@@ -228,7 +251,7 @@ export default class AuthController {
                 return res.status(400).json({ error: "Email address is required" });
             }
 
-            const user = await User.findOne({ email });
+            const user = await User.findOne({ email: normalizeEmail(email) });
 
             // For security, do not disclose if the email exists or not
             if (!user) {
@@ -266,6 +289,9 @@ export default class AuthController {
 
             if (!token || !password) {
                 return res.status(400).json({ error: "Token and password are required" });
+            }
+            if (!isStrongPassword(password)) {
+                return res.status(400).json({ error: "Password must be at least 8 characters and include a letter and a number" });
             }
 
             // Find user with matching unexpired reset token
@@ -331,7 +357,7 @@ export default class AuthController {
             }
 
             // Find or create user
-            let user = await User.findOne({ email });
+            let user = await User.findOne({ email: normalizeEmail(email) });
 
             if (user) {
                 // Link account if it wasn't marked as Google account yet
