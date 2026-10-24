@@ -13,6 +13,10 @@ export const apiClient = axios.create({
     },
 });
 
+// The server's error message (e.g. "Target amount must be more than 0"), or a fallback
+export const getApiErrorMessage = (error: unknown, fallback: string): string =>
+    (axios.isAxiosError(error) && typeof error.response?.data?.error === 'string' && error.response.data.error) || fallback;
+
 // Add request interceptor to include auth token
 apiClient.interceptors.request.use(
     (config) => {

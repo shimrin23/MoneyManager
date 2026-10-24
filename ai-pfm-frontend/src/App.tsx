@@ -36,6 +36,7 @@ import { TransactionList } from './components/TransactionList';
 import { AddTransactionForm } from './components/AddTransactionForm';
 import { UserHeader } from './components/UserHeader';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { SystemMessages } from './components/SystemMessages';
 import { ProfilePage } from './pages/ProfilePage';
 import { AccountSettings } from './pages/AccountSettings';
 import { NotificationsPage } from './pages/NotificationsPage';
@@ -619,6 +620,7 @@ function App() {
       <BrowserRouter>
         <AppShell />
       </BrowserRouter>
+      <SystemMessages />
     </ErrorBoundary>
   );
 }

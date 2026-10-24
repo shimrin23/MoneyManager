@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
+import { notify, confirmDialog } from '../utils/systemMessages';
 
 interface User {
     id: string;
@@ -89,7 +90,7 @@ export const UserManagement = () => {
             );
         } catch (err) {
             console.error('Failed to update user status:', err);
-            alert('Failed to update user status');
+            notify.error('Failed to update user status. Please try again.');
         } finally {
             setActionLoading(false);
         }
@@ -111,14 +112,20 @@ export const UserManagement = () => {
             }
         } catch (err) {
             console.error('Failed to update user role:', err);
-            alert('Failed to update user role');
+            notify.error('Failed to update user role. Please try again.');
         } finally {
             setActionLoading(false);
         }
     };
 
     const handleDeleteUser = async (userId: string) => {
-        if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+        const confirmed = await confirmDialog({
+            title: 'Delete user?',
+            message: 'Are you sure you want to delete this user? This action cannot be undone.',
+            confirmText: 'Delete',
+            danger: true,
+        });
+        if (!confirmed) {
             return;
         }
 
@@ -130,7 +137,7 @@ export const UserManagement = () => {
             setSelectedUser(null);
         } catch (err) {
             console.error('Failed to delete user:', err);
-            alert('Failed to delete user');
+            notify.error('Failed to delete user. Please try again.');
         } finally {
             setActionLoading(false);
         }

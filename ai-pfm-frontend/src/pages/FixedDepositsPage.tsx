@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
+import { notify, confirmDialog } from '../utils/systemMessages';
 
 interface FixedDeposit {
     _id: string;
@@ -88,7 +89,7 @@ export const FixedDepositsPage = () => {
             await fetchFDs();
         } catch (err) {
             console.error('Failed to create FD:', err);
-            alert('Failed to create fixed deposit. Please try again.');
+            notify.error('Failed to create fixed deposit. Please try again.');
         } finally {
             setSubmitting(false);
         }
@@ -104,12 +105,20 @@ export const FixedDepositsPage = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!window.confirm('Are you sure you want to delete this fixed deposit?')) return;
+        const confirmed = await confirmDialog({
+            title: 'Delete fixed deposit?',
+            message: 'Are you sure you want to delete this fixed deposit?',
+            confirmText: 'Delete',
+            danger: true,
+        });
+        if (!confirmed) return;
         try {
             await apiClient.delete(`/fixed-deposits/${id}`);
             setFDs(prev => prev.filter(f => f._id !== id));
+            notify.success('Fixed deposit deleted.');
         } catch (err) {
             console.error('Failed to delete FD:', err);
+            notify.error('Failed to delete fixed deposit. Please try again.');
         }
     };
 

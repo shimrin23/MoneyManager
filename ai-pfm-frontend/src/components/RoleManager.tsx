@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { apiClient } from '../api/client';
+import { notify } from '../utils/systemMessages';
 
 interface Role {
     id: string;
@@ -33,7 +34,7 @@ export const RoleManager = () => {
             setSelectedRole(null);
         } catch (err) {
             console.error('Failed to save role:', err);
-            alert('Failed to save role');
+            notify.error('Failed to save role. Please try again.');
         } finally {
             setActionLoading(false);
         }

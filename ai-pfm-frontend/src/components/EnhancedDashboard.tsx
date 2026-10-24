@@ -1,6 +1,7 @@
 // Enhanced Financial Health Dashboard Component
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.ts';
+import { notify } from '../utils/systemMessages';
 
 interface HealthScoreBreakdown {
     liquidity: number;
@@ -79,7 +80,7 @@ export const EnhancedDashboard = () => {
         try {
             const result = await apiClient.post(`/recommendations/${recommendationId}/execute`);
             if (result.data.success) {
-                alert('Recommendation executed successfully!');
+                notify.success('Recommendation applied successfully.');
                 fetchDashboardData(); // Refresh all data
             }
         } catch (error) {

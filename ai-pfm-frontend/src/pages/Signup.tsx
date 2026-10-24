@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.ts';
+import { notify } from '../utils/systemMessages';
 import { useNavigate, Link } from 'react-router-dom';
 import '../styles/AuthPages.css';
 
@@ -76,7 +77,7 @@ export const Signup = () => {
                 console.warn("Google prompt error:", e);
             }
         }
-        alert("Google Sign-In is not configured yet. Please add GOOGLE_CLIENT_ID to your backend .env file and restart the server.");
+        notify.warning("Google Sign-In is not configured yet. Please add GOOGLE_CLIENT_ID to your backend .env file and restart the server.");
     };
 
     const handleGoogleCredentialResponse = async (response: any) => {

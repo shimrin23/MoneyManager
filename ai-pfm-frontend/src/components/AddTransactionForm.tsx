@@ -1,5 +1,5 @@
 // Add Transaction Form — Premium Responsive Layout
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.ts';
 import { DatePicker } from './DatePicker';
 import { getLocalDateString } from '../utils/date';
@@ -18,7 +18,10 @@ const CATEGORY_ICONS: Record<string, string> = {
     'Business': '', 'Investment': '', 'Gift': '', 'Other': '',
 };
 
-export const AddTransactionForm = ({ onTransactionAdded, onCancel, initialData, isEditMode }: TransactionFormProps) => {
+const DEFAULT_EXPENSE_CATEGORIES = ['Food & Dining', 'Shopping', 'Entertainment', 'Transport',
+    'Bills & Utilities', 'Healthcare', 'Education', 'Travel', 'Other'];
+
+export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, isEditMode }: TransactionFormProps) => {
     const today = getLocalDateString();
     const [formData, setFormData] = useState({
         amount: initialData?.amount?.toString() || '',
@@ -30,10 +33,23 @@ export const AddTransactionForm = ({ onTransactionAdded, onCancel, initialData, 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState(false);
+    const [customCategories, setCustomCategories] = useState<string[]>([]);
+
+    // Budget categories the user created (e.g. "Vacation") so their spending can be tracked
+    useEffect(() => {
+        apiClient.get('/budgets')
+            .then((res) => {
+                const known = new Set(DEFAULT_EXPENSE_CATEGORIES.map(c => c.toLowerCase()));
+                const names: string[] = (res.data?.budgets || [])
+                    .map((b: { category: string }) => b.category)
+                    .filter((c: string) => c && !known.has(c.toLowerCase()));
+                setCustomCategories(names);
+            })
+            .catch(() => setCustomCategories([])); // Default categories still work
+    }, []);
 
     const categories: Record<'expense' | 'income', string[]> = {
-        expense: ['Food & Dining', 'Shopping', 'Entertainment', 'Transport',
-            'Bills & Utilities', 'Healthcare', 'Education', 'Travel', 'Other'],
+        expense: [...DEFAULT_EXPENSE_CATEGORIES.slice(0, -1), ...customCategories, 'Other'],
         income: ['Salary', 'Freelance', 'Business', 'Investment', 'Gift', 'Other']
     };
 

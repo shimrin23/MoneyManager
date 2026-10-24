@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { apiClient } from '../api/client';
+import { apiClient, getApiErrorMessage } from '../api/client';
+import { notify, confirmDialog } from '../utils/systemMessages';
 import { IconDollarSign, IconBarChart, IconActivity, IconAlertTriangle, IconCheckCircle, IconTarget, IconBell, IconTrendingUp, IconTrendingDown, IconLightbulb } from '../components/Icons';
 
 interface Budget {
@@ -12,6 +13,8 @@ interface Budget {
     percentageUsed: number;
     aiRecommendation: string;
     isOverBudget: boolean;
+    alertThreshold?: number | null;
+    alertTriggered?: boolean;
     trends: {
         lastMonth: number;
         change: number;
@@ -37,6 +40,11 @@ export const SmartBudgetsPage = () => {
     const [newCategoryName, setNewCategoryName] = useState('');
     const [newCategoryAmount, setNewCategoryAmount] = useState('');
     const [isAdding, setIsAdding] = useState(false);
+
+    // Budget Alert Modal State
+    const [alertBudget, setAlertBudget] = useState<Budget | null>(null);
+    const [alertLevel, setAlertLevel] = useState<string>('80');
+    const [isSavingAlert, setIsSavingAlert] = useState(false);
 
     useEffect(() => {
         fetchBudgets();
@@ -69,8 +77,53 @@ export const SmartBudgetsPage = () => {
         navigate('/recommendations');
     };
 
-    const handleSetAlert = (_category?: string) => {
-        navigate('/notifications');
+    const handleSetAlert = (budget: Budget) => {
+        setAlertBudget(budget);
+        setAlertLevel(String(budget.alertThreshold ?? 80));
+    };
+
+    const handleSaveAlert = async (remove = false) => {
+        if (!alertBudget?._id) return;
+        const level = parseFloat(alertLevel);
+        if (!remove && (isNaN(level) || level < 1 || level > 100)) {
+            notify.warning('Please enter an alert level between 1 and 100 percent.');
+            return;
+        }
+
+        setIsSavingAlert(true);
+        try {
+            await apiClient.patch(`/budgets/${alertBudget._id}/alert`, { alertThreshold: remove ? null : level });
+            notify.success(remove
+                ? `Alert removed for ${alertBudget.category}.`
+                : `Alert set: you'll be warned when ${alertBudget.category} reaches ${level}%.`);
+            setAlertBudget(null);
+            fetchBudgets();
+        } catch (error) {
+            console.error('Failed to set budget alert:', error);
+            notify.error(getApiErrorMessage(error, 'Failed to set the alert. Please try again.'));
+        } finally {
+            setIsSavingAlert(false);
+        }
+    };
+
+    const handleDeleteBudget = async (budget: Budget) => {
+        if (!budget._id) return;
+        const confirmed = await confirmDialog({
+            title: 'Delete budget?',
+            message: `The ${budget.category} budget will be removed.`,
+            confirmText: 'Delete',
+            danger: true,
+        });
+        if (!confirmed) return;
+
+        try {
+            await apiClient.delete(`/budgets/${budget._id}`);
+            notify.success(`${budget.category} budget deleted.`);
+            fetchBudgets();
+        } catch (error) {
+            console.error('Failed to delete budget:', error);
+            notify.error(getApiErrorMessage(error, 'Failed to delete budget. Please try again.'));
+        }
     };
 
     const handleEditClick = (budget: Budget) => {
@@ -80,17 +133,21 @@ export const SmartBudgetsPage = () => {
 
     const handleSaveBudget = async () => {
         if (!editingBudget || !editingBudget._id) return;
-        const amount = parseInt(editAmount);
-        if (isNaN(amount) || amount < 0) return;
+        const amount = parseFloat(editAmount);
+        if (isNaN(amount) || amount < 0) {
+            notify.warning('Please enter a budget limit of 0 or more.');
+            return;
+        }
 
         setIsSaving(true);
         try {
             await apiClient.put(`/budgets/${editingBudget._id}`, { allocatedAmount: amount });
+            notify.success(`${editingBudget.category} limit updated to LKR ${amount.toLocaleString()}.`);
             setEditingBudget(null);
             fetchBudgets(); // Refresh data to update progress bars
         } catch (error) {
             console.error('Failed to update budget:', error);
-            alert('Failed to update budget. Please try again.');
+            notify.error(getApiErrorMessage(error, 'Failed to update budget. Please try again.'));
         } finally {
             setIsSaving(false);
         }
@@ -98,18 +155,26 @@ export const SmartBudgetsPage = () => {
 
     const handleAddCategory = async (e: React.FormEvent) => {
         e.preventDefault();
-        const amount = parseInt(newCategoryAmount);
-        if (!newCategoryName.trim() || isNaN(amount) || amount < 0) return;
+        const amount = parseFloat(newCategoryAmount);
+        if (!newCategoryName.trim()) {
+            notify.warning('Please enter a category name.');
+            return;
+        }
+        if (isNaN(amount) || amount < 0) {
+            notify.warning('Please enter a budget limit of 0 or more.');
+            return;
+        }
 
         setIsAdding(true);
         try {
             await apiClient.post('/budgets', { category: newCategoryName.trim(), allocatedAmount: amount });
+            notify.success(`${newCategoryName.trim()} budget added.`);
             setNewCategoryName('');
             setNewCategoryAmount('');
             fetchBudgets(); // Refresh to show new category
-        } catch (error: any) {
+        } catch (error) {
             console.error('Failed to add category:', error);
-            alert(error.response?.data?.error || 'Failed to add category. Please try again.');
+            notify.error(getApiErrorMessage(error, 'Failed to add category. Please try again.'));
         } finally {
             setIsAdding(false);
         }
@@ -149,7 +214,7 @@ export const SmartBudgetsPage = () => {
                     <div className="summary-icon"><IconDollarSign size={24} /></div>
                     <div className="summary-content">
                         <h3 className="metric-value">LKR {totalIncome.toLocaleString()}</h3>
-                        <p className="metric-label">Monthly Income</p>
+                        <p className="metric-label">{totalIncome > 0 ? 'Monthly Income' : 'No income recorded this month'}</p>
                     </div>
                 </div>
                 <div className="summary-card">
@@ -162,7 +227,7 @@ export const SmartBudgetsPage = () => {
                 <div className="summary-card">
                     <div className="summary-icon"><IconActivity size={24} /></div>
                     <div className="summary-content">
-                        <h3 className="metric-value">{Math.round((totalAllocated / totalIncome) * 100)}%</h3>
+                        <h3 className="metric-value">{totalIncome > 0 ? `${Math.round((totalAllocated / totalIncome) * 100)}%` : '—'}</h3>
                         <p className="metric-label">Income Allocated</p>
                     </div>
                 </div>
@@ -179,6 +244,16 @@ export const SmartBudgetsPage = () => {
             <div className="card ai-insights">
                 <h3 className="section-title">AI Budget Insights</h3>
                 <div className="insights-grid">
+                    {budgets.filter(b => b.alertTriggered).map((budget) => (
+                        <div key={`alert-${budget._id}`} className="insight-item critical">
+                            <span className="insight-icon" style={{ display: 'flex', alignItems: 'center' }}><IconBell size={20} /></span>
+                            <div className="insight-content">
+                                <h4>Budget Alert: {budget.category}</h4>
+                                <p>You have used {budget.percentageUsed}% of your {budget.category} budget (alert set at {budget.alertThreshold}%).</p>
+                            </div>
+                        </div>
+                    ))}
+
                     {budgets.filter(b => b.isOverBudget).length > 0 ? (
                         budgets.filter(b => b.isOverBudget).slice(0, 1).map((budget, idx) => (
                             <div key={`critical-${idx}`} className="insight-item critical">
@@ -271,6 +346,11 @@ export const SmartBudgetsPage = () => {
                                     {Math.abs(budget.trends.change).toFixed(1)}% vs last month
                                 </span>
                             </div>
+                            {budget.alertThreshold != null && (
+                                <span className={`status-badge ${budget.alertTriggered ? 'danger' : 'warning'}`} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                    <IconBell size={12} /> Alert at {budget.alertThreshold}%
+                                </span>
+                            )}
                         </div>
 
                         <div className="ai-recommendation">
@@ -288,9 +368,9 @@ export const SmartBudgetsPage = () => {
                             <button
                                 className="action-btn secondary"
                                 style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-                                onClick={() => handleSetAlert(budget.category)}
+                                onClick={() => handleSetAlert(budget)}
                             >
-                                <IconBell size={16} /> Set Alert
+                                <IconBell size={16} /> {budget.alertThreshold != null ? 'Edit Alert' : 'Set Alert'}
                             </button>
                         </div>
                     </div>
@@ -369,11 +449,73 @@ export const SmartBudgetsPage = () => {
                                         <h4>{budget.category}</h4>
                                         <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)' }}>Limit: LKR {budget.allocatedAmount.toLocaleString()}</p>
                                     </div>
-                                    <button className="action-btn secondary" onClick={() => handleEditClick(budget)}>
-                                        Edit Limit
-                                    </button>
+                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                        <button className="action-btn secondary" onClick={() => handleEditClick(budget)}>
+                                            Edit Limit
+                                        </button>
+                                        <button className="action-btn danger" onClick={() => handleDeleteBudget(budget)}>
+                                            Delete
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Budget Alert Modal */}
+            {alertBudget && (
+                <div className="modal-overlay" onClick={() => setAlertBudget(null)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">Budget Alert: {alertBudget.category}</h2>
+                            <button className="modal-close" onClick={() => setAlertBudget(null)}>×</button>
+                        </div>
+
+                        <div className="modal-body" style={{ marginTop: '16px' }}>
+                            <div className="form-group" style={{ marginBottom: '20px' }}>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Alert me when I have used (%)</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    max="100"
+                                    className="form-input"
+                                    value={alertLevel}
+                                    onChange={(e) => setAlertLevel(e.target.value)}
+                                    style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', fontSize: '16px' }}
+                                />
+                                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '8px' }}>
+                                    Currently used: {alertBudget.percentageUsed}% (LKR {alertBudget.spentAmount.toLocaleString()} of LKR {alertBudget.allocatedAmount.toLocaleString()})
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="modal-footer" style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
+                            {alertBudget.alertThreshold != null && (
+                                <button
+                                    className="action-btn danger"
+                                    onClick={() => handleSaveAlert(true)}
+                                    disabled={isSavingAlert}
+                                    style={{ marginRight: 'auto' }}
+                                >
+                                    Remove Alert
+                                </button>
+                            )}
+                            <button
+                                className="action-btn secondary"
+                                onClick={() => setAlertBudget(null)}
+                                disabled={isSavingAlert}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="action-btn primary"
+                                onClick={() => handleSaveAlert()}
+                                disabled={isSavingAlert || !alertLevel}
+                            >
+                                {isSavingAlert ? 'Saving...' : 'Save Alert'}
+                            </button>
                         </div>
                     </div>
                 </div>

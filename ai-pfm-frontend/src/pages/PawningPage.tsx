@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
+import { notify, confirmDialog } from '../utils/systemMessages';
 
 interface PawnItem {
     _id: string;
@@ -89,7 +90,7 @@ export const PawningPage = () => {
             await fetchItems();
         } catch (err) {
             console.error('Failed to create pawning item:', err);
-            alert('Failed to create pawning item. Please try again.');
+            notify.error('Failed to create pawning item. Please try again.');
         } finally {
             setSubmitting(false);
         }
@@ -105,12 +106,20 @@ export const PawningPage = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!window.confirm('Are you sure you want to delete this pawning item?')) return;
+        const confirmed = await confirmDialog({
+            title: 'Delete pawning item?',
+            message: 'Are you sure you want to delete this pawning item?',
+            confirmText: 'Delete',
+            danger: true,
+        });
+        if (!confirmed) return;
         try {
             await apiClient.delete(`/pawning/${id}`);
             setItems(prev => prev.filter(i => i._id !== id));
+            notify.success('Pawning item deleted.');
         } catch (err) {
             console.error('Failed to delete pawning item:', err);
+            notify.error('Failed to delete pawning item. Please try again.');
         }
     };
 

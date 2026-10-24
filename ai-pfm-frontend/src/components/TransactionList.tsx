@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiClient } from '../api/client.ts';
+import { notify } from '../utils/systemMessages';
 import axios from 'axios';
 import { AddTransactionForm } from './AddTransactionForm';
 
@@ -45,10 +46,10 @@ export const TransactionList = () => {
                     error.response?.data?.message ||
                     error.response?.data?.error ||
                     error.response?.data?.details;
-                alert(apiMessage ? `Sync failed: ${apiMessage}` : 'Sync failed');
+                notify.error(apiMessage ? `Sync failed: ${apiMessage}` : 'Sync failed. Please try again.');
                 return;
             }
-            alert('Sync failed');
+            notify.error('Sync failed. Please try again.');
         }
     };
 
@@ -88,7 +89,7 @@ export const TransactionList = () => {
             }
         } catch (error) {
             console.error('Failed to delete transaction', error);
-            alert('Failed to delete transaction');
+            notify.error('Failed to delete transaction. Please try again.');
         } finally {
             setDeletingId(null);
         }

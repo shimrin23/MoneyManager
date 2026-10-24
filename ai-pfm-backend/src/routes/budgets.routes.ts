@@ -5,6 +5,34 @@ import Transaction from '../schemas/transaction.schema';
 
 const router = Router();
 
+const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const categoryKey = (c: string) => c.trim().toLowerCase();
+
+// Totals per category, ignoring letter case
+const totalsByCategory = (rows: { _id: string; totalSpent: number }[]) => {
+    const totals = new Map<string, number>();
+    for (const r of rows) totals.set(categoryKey(r._id), (totals.get(categoryKey(r._id)) || 0) + r.totalSpent);
+    return totals;
+};
+
+// Case-insensitive lookup so "vacation" and "Vacation" are treated as the same budget
+const findBudgetByCategory = (userId: string, category: string) =>
+    Budget.findOne({ userId, category: { $regex: `^${escapeRegex(category.trim())}$`, $options: 'i' } });
+
+// GET /api/budgets - plain list of the user's budgets (no AI), e.g. for category pickers
+router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+        const budgets = await Budget.find({ userId }).sort({ category: 1 });
+        res.json({ budgets });
+    } catch (error) {
+        console.error('Error listing budgets:', error);
+        res.status(500).json({ error: 'Failed to fetch budgets' });
+    }
+});
+
 router.get('/smart', authenticateToken, async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.id;
@@ -26,17 +54,18 @@ router.get('/smart', authenticateToken, async (req: AuthRequest, res: Response) 
             { $match: { userId, type: 'expense', date: { $gte: startOfLastMonth, $lte: endOfLastMonth } } },
             { $group: { _id: '$category', totalSpent: { $sum: '$amount' } } }
         ]);
-        const lastMonthMap = new Map(lastMonthSpending.map(s => [s._id, s.totalSpent]));
+        const lastMonthMap = totalsByCategory(lastMonthSpending);
 
         // 3. Get existing defined budgets
         let userBudgets = await Budget.find({ userId });
 
         // 4. If spending exists in a category without a budget, create a baseline
-        const existingBudgetCategories = new Set(userBudgets.map(b => b.category));
+        const existingBudgetCategories = new Set(userBudgets.map(b => categoryKey(b.category)));
         const newBudgetsToCreate = [];
 
         for (const spend of currentMonthSpending) {
-            if (!existingBudgetCategories.has(spend._id)) {
+            if (!existingBudgetCategories.has(categoryKey(spend._id))) {
+                existingBudgetCategories.add(categoryKey(spend._id));
                 // Auto-generate budget (e.g., 20% higher than current spend, minimum 5000)
                 const autoAllocated = Math.max(5000, Math.ceil((spend.totalSpent * 1.2) / 1000) * 1000);
                 newBudgetsToCreate.push({
@@ -63,22 +92,19 @@ router.get('/smart', authenticateToken, async (req: AuthRequest, res: Response) 
         ]);
         if (incomeAgg.length > 0) {
             totalIncome = incomeAgg[0].total;
-        } else {
-             // Fallback income if no income transactions
-             totalIncome = 150000;
         }
 
-        const spendMap = new Map(currentMonthSpending.map(s => [s._id, s.totalSpent]));
+        const spendMap = totalsByCategory(currentMonthSpending);
 
         for (const budget of userBudgets) {
-            const spentAmount = spendMap.get(budget.category) || 0;
+            const spentAmount = spendMap.get(categoryKey(budget.category)) || 0;
             const remainingAmount = budget.allocatedAmount - spentAmount;
             const percentageUsed = budget.allocatedAmount > 0 
                 ? (spentAmount / budget.allocatedAmount) * 100 
                 : 100;
             const isOverBudget = spentAmount > budget.allocatedAmount;
 
-            const lastMonth = lastMonthMap.get(budget.category) || 0;
+            const lastMonth = lastMonthMap.get(categoryKey(budget.category)) || 0;
             let change = 0;
             if (lastMonth > 0) {
                 change = ((spentAmount - lastMonth) / lastMonth) * 100;
@@ -93,6 +119,8 @@ router.get('/smart', authenticateToken, async (req: AuthRequest, res: Response) 
                 percentageUsed: Math.round(percentageUsed),
                 aiRecommendation: "", // Will be filled by Gemini below
                 isOverBudget,
+                alertThreshold: budget.alertThreshold ?? null,
+                alertTriggered: budget.alertThreshold != null && spentAmount > 0 && percentageUsed >= budget.alertThreshold,
                 trends: {
                     lastMonth,
                     change: Math.round(change * 10) / 10
@@ -167,20 +195,21 @@ router.put('/:id', authenticateToken, async (req: AuthRequest, res: Response) =>
 router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.id;
-        const { category, allocatedAmount } = req.body;
+        const { allocatedAmount } = req.body;
+        const category = typeof req.body.category === 'string' ? req.body.category.trim() : '';
 
         if (!userId) return res.status(401).json({ error: 'Unauthorized' });
-        if (!category || typeof category !== 'string') {
+        if (!category) {
             return res.status(400).json({ error: 'Valid category name is required' });
         }
-        if (typeof allocatedAmount !== 'number' || allocatedAmount < 0) {
+        if (typeof allocatedAmount !== 'number' || !Number.isFinite(allocatedAmount) || allocatedAmount < 0) {
             return res.status(400).json({ error: 'Invalid allocated amount' });
         }
 
-        // Check if budget for this category already exists
-        const existingBudget = await Budget.findOne({ userId, category });
+        // Check if budget for this category already exists (ignoring letter case)
+        const existingBudget = await findBudgetByCategory(userId, category);
         if (existingBudget) {
-            return res.status(400).json({ error: `Budget for ${category} already exists` });
+            return res.status(400).json({ error: `Budget for ${existingBudget.category} already exists` });
         }
 
         const newBudget = new Budget({
@@ -195,6 +224,68 @@ router.post('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     } catch (error) {
         console.error('Error creating budget:', error);
         res.status(500).json({ error: 'Failed to create budget' });
+    }
+});
+
+// SET or CLEAR a budget alert (alertThreshold: 1-100, or null to remove)
+router.patch('/:id/alert', authenticateToken, async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+        const { alertThreshold } = req.body;
+        const clearing = alertThreshold === null;
+        if (!clearing && (typeof alertThreshold !== 'number' || !Number.isFinite(alertThreshold) || alertThreshold < 1 || alertThreshold > 100)) {
+            return res.status(400).json({ error: 'Alert level must be between 1 and 100 percent' });
+        }
+
+        const updatedBudget = await Budget.findOneAndUpdate(
+            { _id: req.params.id, userId },
+            clearing ? { $unset: { alertThreshold: 1 } } : { alertThreshold },
+            { new: true }
+        );
+        if (!updatedBudget) {
+            return res.status(404).json({ error: 'Budget not found' });
+        }
+
+        res.json({ message: clearing ? 'Budget alert removed' : 'Budget alert set', budget: updatedBudget });
+    } catch (error) {
+        console.error('Error setting budget alert:', error);
+        res.status(500).json({ error: 'Failed to set budget alert' });
+    }
+});
+
+// DELETE a budget category
+router.delete('/:id', authenticateToken, async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+        const budget = await Budget.findOne({ _id: req.params.id, userId });
+        if (!budget) {
+            return res.status(404).json({ error: 'Budget not found' });
+        }
+
+        // A category with spending this month would be re-created automatically on the next load
+        const now = new Date();
+        const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const hasSpendingThisMonth = await Transaction.exists({
+            userId,
+            type: 'expense',
+            category: { $regex: `^${escapeRegex(budget.category)}$`, $options: 'i' },
+            date: { $gte: startOfCurrentMonth },
+        });
+        if (hasSpendingThisMonth) {
+            return res.status(400).json({
+                error: `${budget.category} has spending this month, so it can't be removed. You can change its limit instead.`,
+            });
+        }
+
+        await budget.deleteOne();
+        res.json({ message: 'Budget deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting budget:', error);
+        res.status(500).json({ error: 'Failed to delete budget' });
     }
 });
 
