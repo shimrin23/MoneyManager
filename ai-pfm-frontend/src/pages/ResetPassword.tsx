@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
+import { PasswordRules, isPasswordValid } from '../components/PasswordRules';
 import '../styles/AuthPages.css';
 
 export const ResetPassword = () => {
@@ -11,7 +12,7 @@ export const ResetPassword = () => {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
-    
+
     const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
     const [message, setMessage] = useState('');
 
@@ -25,15 +26,15 @@ export const ResetPassword = () => {
             return;
         }
 
-        if (password !== confirmPassword) {
+        if (!isPasswordValid(password)) {
             setStatus('error');
-            setMessage('Passwords do not match. Please verify both fields.');
+            setMessage('Password does not meet all the requirements.');
             return;
         }
 
-        if (password.length < 6) {
+        if (password !== confirmPassword) {
             setStatus('error');
-            setMessage('Password must be at least 6 characters long.');
+            setMessage('Passwords do not match. Please verify both fields.');
             return;
         }
 
@@ -120,12 +121,13 @@ export const ResetPassword = () => {
                                             value={password}
                                             onChange={e => setPassword(e.target.value)}
                                             required
-                                            placeholder="At least 6 characters"
+                                            placeholder="At least 8 characters"
                                             disabled={status === 'loading'}
-                                            minLength={6}
+                                            minLength={8}
                                             className="auth-input"
                                         />
                                     </div>
+                                    <PasswordRules password={password} />
                                 </div>
 
                                 {/* Confirm Password */}
@@ -144,10 +146,10 @@ export const ResetPassword = () => {
                                     </div>
                                 </div>
 
-                                <button 
-                                    type="submit" 
-                                    className="auth-submit-btn" 
-                                    disabled={status === 'loading'}
+                                <button
+                                    type="submit"
+                                    className="auth-submit-btn"
+                                    disabled={status === 'loading' || !isPasswordValid(password)}
                                 >
                                     {status === 'loading' ? (
                                         <span className="auth-spinner">⏳ Saving password…</span>
@@ -157,9 +159,9 @@ export const ResetPassword = () => {
                                 </button>
                             </form>
 
-                            <button 
-                                type="button" 
-                                className="forgot-cancel-btn" 
+                            <button
+                                type="button"
+                                className="forgot-cancel-btn"
                                 onClick={() => navigate('/login')}
                                 style={{ marginTop: '1rem', width: '100%', display: 'block' }}
                             >

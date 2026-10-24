@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client.ts';
+import { PasswordRules, isPasswordValid } from '../components/PasswordRules';
 import { confirmDialog, promptDialog } from '../utils/systemMessages';
 
 interface SecuritySettings {
@@ -68,8 +69,8 @@ export const AccountSettings = () => {
             return;
         }
 
-        if (passwordForm.newPassword.length < 6) {
-            setError('Password must be at least 6 characters');
+        if (!isPasswordValid(passwordForm.newPassword)) {
+            setError('Password does not meet all the requirements');
             return;
         }
 
@@ -236,8 +237,9 @@ export const AccountSettings = () => {
                                 }))}
                                 required
                                 placeholder="Enter new password"
-                                minLength={6}
+                                minLength={8}
                             />
+                            <PasswordRules password={passwordForm.newPassword} />
                         </div>
 
                         <div className="form-group">
@@ -251,14 +253,14 @@ export const AccountSettings = () => {
                                 }))}
                                 required
                                 placeholder="Confirm new password"
-                                minLength={6}
+                                minLength={8}
                             />
                         </div>
 
                         <button
                             type="submit"
                             className="btn-primary"
-                            disabled={loading}
+                            disabled={loading || !isPasswordValid(passwordForm.newPassword)}
                         >
                             {loading ? 'Updating...' : 'Update Password'}
                         </button>

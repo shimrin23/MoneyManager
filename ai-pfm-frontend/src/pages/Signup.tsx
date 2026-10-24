@@ -98,6 +98,7 @@ export const Signup = () => {
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!passwordValid) return;
         setError('');
         setLoading(true);
         try {
@@ -110,22 +111,39 @@ export const Signup = () => {
         }
     };
 
-    const strength = password.length === 0 ? 0
-        : password.length < 6  ? 1
-        : password.length < 10 ? 2
-        : 3;
-    const strengthLabel = ['', 'Weak', 'Good', 'Strong'][strength];
-    const strengthColor = ['', '#ef4444', '#f59e0b', '#10b981'][strength];
+    // Password rules (must match the server: AUT-002)
+    const passwordRules = [
+        { label: 'At least 8 characters', ok: password.length >= 8 },
+        { label: 'Contains a letter', ok: /[A-Za-z]/.test(password) },
+        { label: 'Contains a number', ok: /\d/.test(password) },
+    ];
+    const passwordValid = passwordRules.every(rule => rule.ok);
 
     return (
-        <div className="auth-center-page">
+        <div className="auth-center-page signup-compact">
+            {/* Tighter spacing so the whole sign-up form fits on one screen */}
+            <style>{`
+                .signup-compact { padding: 1rem; }
+                .signup-compact .auth-center-card { padding: 1.5rem 2rem 1.25rem; }
+                .signup-compact .auth-card-header { margin-bottom: 1rem; }
+                .signup-compact .auth-field { margin-bottom: 0.6rem; }
+                .signup-compact .auth-label { margin-bottom: 0.25rem; }
+                .signup-compact .auth-input { padding-top: 0.55rem; padding-bottom: 0.55rem; padding-left: 0.9rem; padding-right: 2.6rem; }
+                .signup-compact .auth-eye-btn { left: auto; right: 0.85rem; }
+                .signup-compact .auth-input-no-icon { padding-left: 0.9rem; }
+                .signup-compact .auth-submit-btn { padding-top: 0.6rem; padding-bottom: 0.6rem; }
+                .signup-compact .auth-google-btn { padding-top: 0.55rem; padding-bottom: 0.55rem; }
+                .signup-compact .auth-divider { margin-bottom: 0.9rem; }
+                .signup-compact .auth-switch-row { margin-top: 0.75rem; line-height: 1.1; }
+                .signup-compact .auth-switch-row .auth-link { display: block; margin-top: 0.6rem; font-size: 0.92rem; }
+            `}</style>
             <div className="auth-orb auth-orb-1" />
             <div className="auth-orb auth-orb-2" />
             <div className="auth-orb auth-orb-3" />
 
             <div className="auth-center-card">
                 {/* Logo */}
-                <div className="auth-logo">
+                <div className="auth-logo" style={{ marginBottom: '0.25rem' }}>
                     <span className="auth-logo-icon"></span>
                     <span className="auth-logo-name">MoneyManager</span>
                 </div>
@@ -147,7 +165,7 @@ export const Signup = () => {
                     </div>
                 ) : (
                     <>
-                        <div className="auth-card-header">
+                        <div className="auth-card-header" style={{ marginTop: 0 }}>
                             <h1 className="auth-card-title">Create account</h1>
                             <p className="auth-card-sub">Get started for free today</p>
                         </div>
@@ -222,26 +240,32 @@ export const Signup = () => {
                                         value={password}
                                         onChange={e => setPassword(e.target.value)}
                                         required
-                                        placeholder="Min. 6 characters"
+                                        placeholder="At least 8 characters"
                                         disabled={loading}
                                         autoComplete="new-password"
-                                        minLength={6}
+                                        minLength={8}
                                         className="auth-input"
                                     />
                                 </div>
-                                {password.length > 0 && (
-                                    <div className="auth-strength">
-                                        <div className="auth-strength-bar">
-                                            {[1,2,3].map(n => (
-                                                <div key={n} className="auth-strength-seg" style={{ background: n <= strength ? strengthColor : 'rgba(255,255,255,0.1)' }} />
-                                            ))}
-                                        </div>
-                                        <span className="auth-strength-label" style={{ color: strengthColor }}>{strengthLabel}</span>
-                                    </div>
+                                {/* Password rules: green tick when met */}
+                                <ul style={{ listStyle: 'none', padding: 0, margin: '0.6rem 0 0', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                                    {passwordRules.map(rule => (
+                                        <li key={rule.label} style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', fontSize: '0.8rem', color: rule.ok ? '#059669' : '#6b7280' }}>
+                                            <span aria-hidden="true" style={{ display: 'inline-flex', width: '16px', height: '16px', borderRadius: '50%', alignItems: 'center', justifyContent: 'center', border: rule.ok ? 'none' : '1px solid #9ca3af', background: rule.ok ? '#10b981' : 'transparent', color: '#fff', fontSize: '0.7rem' }}>
+                                                {rule.ok ? '✓' : ''}
+                                            </span>
+                                            {rule.label}
+                                        </li>
+                                    ))}
+                                </ul>
+                                {password.length > 0 && !passwordValid && (
+                                    <p role="alert" style={{ color: '#ef4444', fontSize: '0.8rem', margin: '0.5rem 0 0' }}>
+                                        Password does not meet all the requirements above.
+                                    </p>
                                 )}
                             </div>
 
-                            <button type="submit" className="auth-submit-btn" disabled={loading}>
+                            <button type="submit" className="auth-submit-btn" disabled={loading || !passwordValid}>
                                 {loading ? (
                                     <span className="auth-spinner">⏳ Creating account…</span>
                                 ) : (
