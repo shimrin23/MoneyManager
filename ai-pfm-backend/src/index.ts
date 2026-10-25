@@ -24,6 +24,8 @@ const app: Application = express();
 
 // Middleware
 app.use(cors());
+// Bank statements are sent as CSV text in the body, so allow more than the default 100 KB there
+app.use("/api/transactions/import-statement", json({ limit: "5mb" }));
 app.use(json());
 
 // Routes

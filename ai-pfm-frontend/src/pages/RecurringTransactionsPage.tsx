@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
+import { apiClient, getApiErrorMessage } from '../api/client';
+import { notify } from '../utils/systemMessages';
 
 type RecurringStatus = 'unconfirmed' | 'confirmed' | 'dismissed';
 
@@ -17,6 +18,29 @@ interface RecurringTransaction {
     status: RecurringStatus;
     detectedAt: string;
     totalPaidThisYear: number;
+}
+
+// Subscription as returned by GET /api/subscriptions
+interface SubscriptionResponse {
+    _id: string;
+    name: string;
+    provider: string;
+    category: string;
+    amount: number;
+    frequency: 'monthly' | 'yearly';
+    nextPayment: string;
+    lastUsed?: string;
+    isActive: boolean;
+    isZombie: boolean;
+    createdAt: string;
+}
+
+interface ConfirmAction {
+    id: string;
+    type: 'pay' | 'delete';
+    name: string;
+    date?: string;
+    amount?: number;
 }
 
 
@@ -41,14 +65,16 @@ export const RecurringTransactionsPage = () => {
     const [newAmount, setNewAmount] = useState('');
     const [newCategory, setNewCategory] = useState('');
     const [newDate, setNewDate] = useState('');
+    const [newFrequency, setNewFrequency] = useState<'monthly' | 'yearly'>('monthly');
     const [isAdding, setIsAdding] = useState(false);
     const [isScanning, setIsScanning] = useState(false);
-    const [confirmAction, setConfirmAction] = useState<{ id: string; type: 'pay' | 'delete'; date?: string } | null>(null);
+    const [confirmAction, setConfirmAction] = useState<ConfirmAction | null>(null);
 
     const fetchSubscriptions = async () => {
         try {
-            const res = await apiClient.get('/subscriptions');
-            const mappedData = res.data.subscriptions.map((sub: any) => ({
+            // includeInactive brings back dismissed items so the Dismissed tab can show and restore them
+            const res = await apiClient.get('/subscriptions', { params: { includeInactive: true } });
+            const mappedData = res.data.subscriptions.map((sub: SubscriptionResponse) => ({
                 _id: sub._id,
                 merchantName: sub.name,
                 normalizedName: sub.provider,
@@ -78,7 +104,14 @@ export const RecurringTransactionsPage = () => {
 
     const handleAddSubscription = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!newName || !newProvider || !newAmount || !newCategory || !newDate) return;
+        if (!newName.trim() || !newProvider.trim() || !newAmount || !newCategory.trim() || !newDate) {
+            notify.warning('Please fill in provider, name, amount, category and next due date.');
+            return;
+        }
+        if (!(Number(newAmount) > 0)) {
+            notify.warning('Amount must be greater than 0.');
+            return;
+        }
         setIsAdding(true);
         try {
             await apiClient.post('/subscriptions', {
@@ -87,16 +120,19 @@ export const RecurringTransactionsPage = () => {
                 amount: Number(newAmount),
                 category: newCategory,
                 nextPayment: newDate,
-                frequency: 'monthly'
+                frequency: newFrequency
             });
             setNewName('');
             setNewProvider('');
             setNewAmount('');
             setNewCategory('');
             setNewDate('');
+            setNewFrequency('monthly');
+            notify.success('Subscription added.');
             fetchSubscriptions();
         } catch (error) {
             console.error('Failed to add subscription', error);
+            notify.error(getApiErrorMessage(error, 'Failed to add subscription. Please try again.'));
         } finally {
             setIsAdding(false);
         }
@@ -108,18 +144,25 @@ export const RecurringTransactionsPage = () => {
             const isZombie = status === 'unconfirmed';
             await apiClient.put(`/subscriptions/${id}`, { isActive, isZombie });
             setItems(prev => prev.map(i => i._id === id ? { ...i, status } : i));
+            if (status === 'dismissed') notify.success('Moved to Dismissed. You can restore it from there.');
+            else if (status === 'unconfirmed') notify.success('Restored. Confirm it to track payments again.');
+            else notify.success('Confirmed as recurring.');
         } catch (error) {
             console.error('Failed to update subscription status', error);
+            notify.error(getApiErrorMessage(error, 'Failed to update subscription. Please try again.'));
         }
     };
 
     const handleRunScan = async () => {
         setIsScanning(true);
         try {
-            await apiClient.post('/subscriptions/detect');
+            const res = await apiClient.post('/subscriptions/detect');
+            const found = res.data?.detectedCount || 0;
+            notify.info(found > 0 ? `Found ${found} new recurring payment${found > 1 ? 's' : ''}.` : 'No new recurring payments found.');
             await fetchSubscriptions(); // Refresh list to show newly detected items
         } catch (error) {
             console.error('Failed to run AI scan', error);
+            notify.error(getApiErrorMessage(error, 'AI scan failed. Please try again.'));
         } finally {
             setIsScanning(false);
         }
@@ -127,10 +170,13 @@ export const RecurringTransactionsPage = () => {
 
     const handlePay = async (id: string) => {
         try {
-            await apiClient.post(`/subscriptions/${id}/pay`);
+            const res = await apiClient.post(`/subscriptions/${id}/pay`);
+            const next = res.data?.nextPayment ? new Date(res.data.nextPayment).toLocaleDateString() : null;
+            notify.success(next ? `Payment logged. Next payment due ${next}.` : 'Payment logged.');
             await fetchSubscriptions();
         } catch (error) {
             console.error('Failed to log payment', error);
+            notify.error(getApiErrorMessage(error, 'Failed to log payment. Please try again.'));
         } finally {
             setConfirmAction(null);
         }
@@ -138,17 +184,23 @@ export const RecurringTransactionsPage = () => {
 
     const handleDelete = async (id: string) => {
         try {
-            await apiClient.delete(`/subscriptions/${id}`);
+            // Delete only appears on dismissed items, so remove it for good
+            await apiClient.delete(`/subscriptions/${id}`, { params: { permanent: true } });
             setItems(prev => prev.filter(i => i._id !== id));
+            notify.success('Subscription deleted.');
         } catch (error) {
             console.error('Failed to delete subscription', error);
+            notify.error(getApiErrorMessage(error, 'Failed to delete subscription. Please try again.'));
         } finally {
             setConfirmAction(null);
         }
     };
 
     const filtered = filter === 'all' ? items : items.filter(i => i.status === filter);
-    const totalMonthly = items.filter(i => i.frequency === 'monthly' && i.status !== 'dismissed').reduce((s, i) => s + i.amount, 0);
+    // Yearly subscriptions count as 1/12 of their price per month
+    const totalMonthly = items
+        .filter(i => i.status !== 'dismissed')
+        .reduce((s, i) => s + (i.frequency === 'yearly' ? i.amount / 12 : i.amount), 0);
     const unconfirmedCount = items.filter(i => i.status === 'unconfirmed').length;
     const dueSoon = items.filter(i => getDaysUntil(i.nextDueDate) <= 7 && i.status !== 'dismissed').length;
 
@@ -181,6 +233,13 @@ export const RecurringTransactionsPage = () => {
                     <div className="form-group" style={{ flex: 1, minWidth: '120px', marginBottom: 0 }}>
                         <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Category</label>
                         <input type="text" className="form-input" placeholder="Entertainment" value={newCategory} onChange={(e) => setNewCategory(e.target.value)} />
+                    </div>
+                    <div className="form-group" style={{ flex: 1, minWidth: '120px', marginBottom: 0 }}>
+                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Frequency</label>
+                        <select className="form-input" value={newFrequency} onChange={(e) => setNewFrequency(e.target.value as 'monthly' | 'yearly')}>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
                     </div>
                     <div className="form-group" style={{ flex: 1, minWidth: '120px', marginBottom: 0 }}>
                         <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Next Due</label>
@@ -256,6 +315,11 @@ export const RecurringTransactionsPage = () => {
                                 <div className="recurring-icon">{item.icon}</div>
                                 <div className="recurring-info">
                                     <div className="recurring-name">{item.merchantName}</div>
+                                    {item.normalizedName && item.normalizedName !== item.merchantName && (
+                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                            {item.normalizedName}
+                                        </div>
+                                    )}
                                     <div className="recurring-meta">
                                         <span className="recurring-category">{item.category}</span>
                                         <span className="recurring-freq">{freqLabel[item.frequency]}</span>
@@ -292,7 +356,7 @@ export const RecurringTransactionsPage = () => {
                                                     Paid — due in {days}d
                                                 </span>
                                             ) : (
-                                                <button className="rec-action-btn accept small" onClick={() => setConfirmAction({ id: item._id, type: 'pay', date: item.nextDueDate, amount: item.amount, name: item.merchantName } as any)}>
+                                                <button className="rec-action-btn accept small" onClick={() => setConfirmAction({ id: item._id, type: 'pay', date: item.nextDueDate, amount: item.amount, name: item.merchantName })}>
                                                     Pay
                                                 </button>
                                             )}
@@ -307,7 +371,7 @@ export const RecurringTransactionsPage = () => {
                                         <button className="rec-action-btn restore small" onClick={() => updateStatus(item._id, 'unconfirmed')}>
                                             Restore
                                         </button>
-                                        <button className="rec-action-btn decline small" onClick={() => setConfirmAction({ id: item._id, type: 'delete', name: item.merchantName } as any)}>
+                                        <button className="rec-action-btn decline small" onClick={() => setConfirmAction({ id: item._id, type: 'delete', name: item.merchantName })}>
                                             Delete
                                         </button>
                                     </div>
@@ -333,10 +397,10 @@ export const RecurringTransactionsPage = () => {
                         <>
                             <div style={{ padding: '1.25rem 0', color: 'var(--color-text)' }}>
                                 <p style={{ marginBottom: '8px' }}>You are about to log a payment for:</p>
-                                <p style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '4px' }}>{(confirmAction as any).name}</p>
-                                <p style={{ fontSize: '1.5rem', fontWeight: 800, margin: '8px 0' }}>LKR {((confirmAction as any).amount || 0).toLocaleString()}</p>
+                                <p style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '4px' }}>{confirmAction.name}</p>
+                                <p style={{ fontSize: '1.5rem', fontWeight: 800, margin: '8px 0' }}>LKR {(confirmAction.amount || 0).toLocaleString()}</p>
                                 <p style={{ color: 'var(--color-text-muted, #aaa)', fontSize: '0.875rem' }}>
-                                    Payment date: <strong>{(confirmAction as any).date}</strong>
+                                    Payment date: <strong>{confirmAction.date}</strong>
                                 </p>
                             </div>
                             <div style={{ display: 'flex', gap: '1rem' }}>
@@ -347,7 +411,7 @@ export const RecurringTransactionsPage = () => {
                     ) : (
                         <>
                             <div style={{ padding: '1rem 0 2rem 0', color: 'var(--color-text)' }}>
-                                Are you sure you want to delete <strong>{(confirmAction as any).name}</strong>? This action cannot be undone.
+                                Are you sure you want to delete <strong>{confirmAction.name}</strong>? This action cannot be undone.
                             </div>
                             <div style={{ display: 'flex', gap: '1rem' }}>
                                 <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setConfirmAction(null)}>Cancel</button>

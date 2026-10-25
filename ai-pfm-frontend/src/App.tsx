@@ -175,6 +175,7 @@ function AppShell() {
       case '/smart-budgets': return { title: 'Smart Budgets', subtitle: 'AI-assisted budgeting' };
       case '/goals': return { title: 'Financial Goals', subtitle: 'Track your saving progress' };
       case '/recurring': return { title: 'Cash Flow', subtitle: 'Subscriptions and recurring payments' };
+      case '/subscriptions': return { title: T[lang].subscriptions, subtitle: 'Track costs, unused services and cheaper options' };
       case '/connect-bank': return { title: 'Connect Bank Account', subtitle: 'Link external accounts' };
       case '/fixed-deposits': return { title: 'Fixed Deposits', subtitle: 'Manage term deposits' };
       case '/loans': return { title: 'Loans & Debt', subtitle: 'Track your liabilities' };
@@ -303,6 +304,7 @@ function AppShell() {
                     {navItem('/smart-budgets', <IconBrain size={20} />, T[lang].budgets)}
                     {navItem('/goals', <IconTarget size={20} />, T[lang].goals)}
                     {navItem('/recurring', <IconRepeat size={20} />, T[lang].cashFlow)}
+                    {navItem('/subscriptions', <IconRefreshCw size={20} />, T[lang].subscriptions)}
                   </NavGroup>
 
                   <NavGroup title={T[lang].grpBanking}>

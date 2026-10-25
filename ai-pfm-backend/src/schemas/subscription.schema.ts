@@ -11,6 +11,8 @@ export interface ISubscription extends Document {
     isActive: boolean;
     lastUsed?: Date;
     isZombie: boolean;
+    cancelReason?: string;
+    cancelledAt?: Date;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -30,7 +32,9 @@ const SubscriptionSchema: Schema = new Schema({
     category: { type: String, required: true },
     isActive: { type: Boolean, default: true },
     lastUsed: { type: Date },
-    isZombie: { type: Boolean, default: false }
+    isZombie: { type: Boolean, default: false },
+    cancelReason: { type: String },
+    cancelledAt: { type: Date }
 }, { 
     timestamps: true 
 });

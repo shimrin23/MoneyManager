@@ -1,14 +1,29 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
+import mongoose from 'mongoose';
 import { AuthRequest, authenticateToken } from '../middlewares/authMiddleware';
-import { SubscriptionsService } from '../services/subscriptions.service';
+import {
+    CANCEL_REASONS,
+    SubscriptionsService,
+    advanceNextPayment,
+    monthlyCostOf,
+    validateSubscriptionInput,
+} from '../services/subscriptions.service';
 
 const router = Router();
 const subscriptionsService = new SubscriptionsService();
+
+// Finds a subscription that belongs to the user; null for a bad id or someone else's subscription
+const findOwned = async (id: unknown, userId: string) => {
+    if (typeof id !== 'string' || !mongoose.isValidObjectId(id)) return null;
+    const sub = await subscriptionsService.findById(id);
+    return sub && sub.userId === userId ? sub : null;
+};
 
 // Apply authentication middleware to all routes
 router.use(authenticateToken);
 
 // GET /api/subscriptions - Get all active subscriptions for user
+// (?includeInactive=true also returns cancelled / dismissed ones so they can be restored)
 router.get('/', async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.id;
@@ -18,21 +33,20 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 
         // Update zombie status first
         await subscriptionsService.updateZombieStatus(userId);
-        
-        const subscriptions = await subscriptionsService.getAll(userId);
+
+        const subscriptions = req.query.includeInactive === 'true'
+            ? await subscriptionsService.getAllIncludingInactive(userId)
+            : await subscriptionsService.getAll(userId);
         const totalMonthlyCost = await subscriptionsService.calculateMonthlyCost(userId);
         const zombieSubscriptions = await subscriptionsService.getZombieSubscriptions(userId);
-        
+
         res.json({
             subscriptions,
             summary: {
-                total: subscriptions.length,
+                total: subscriptions.filter(s => s.isActive).length,
                 totalMonthlyCost,
                 zombieCount: zombieSubscriptions.length,
-                potentialSavings: zombieSubscriptions.reduce((sum, sub) => {
-                    const monthlyCost = sub.frequency === 'yearly' ? sub.amount / 12 : sub.amount;
-                    return sum + monthlyCost;
-                }, 0)
+                potentialSavings: zombieSubscriptions.reduce((sum, sub) => sum + monthlyCostOf(sub), 0)
             }
         });
     } catch (error) {
@@ -49,17 +63,13 @@ router.post('/', async (req: AuthRequest, res: Response) => {
             return res.status(401).json({ error: 'User not authenticated' });
         }
 
-        const subscriptionData = { ...req.body, userId };
-        
-        // Validation
-        if (!subscriptionData.name || !subscriptionData.provider || !subscriptionData.amount || !subscriptionData.nextPayment) {
-            return res.status(400).json({ 
-                error: 'Name, provider, amount, and nextPayment are required' 
-            });
+        const validation = validateSubscriptionInput(req.body);
+        if ('error' in validation) {
+            return res.status(400).json({ error: validation.error });
         }
 
-        const subscription = await subscriptionsService.create(subscriptionData);
-        
+        const subscription = await subscriptionsService.create({ ...validation.data, userId });
+
         res.status(201).json({
             message: 'Subscription created successfully',
             data: subscription
@@ -70,7 +80,7 @@ router.post('/', async (req: AuthRequest, res: Response) => {
     }
 });
 
-// PUT /api/subscriptions/:id - Update subscription
+// PUT /api/subscriptions/:id - Update subscription (also used to dismiss and restore)
 router.put('/:id', async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.id;
@@ -79,16 +89,28 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
         }
 
         const { id } = req.params;
-        const updates = req.body;
-        
+
         // Verify subscription belongs to user
-        const existingSubscription = await subscriptionsService.findById(id as string);
-        if (!existingSubscription || existingSubscription.userId !== userId) {
+        const existingSubscription = await findOwned(id, userId);
+        if (!existingSubscription) {
             return res.status(404).json({ error: 'Subscription not found' });
         }
 
+        const validation = validateSubscriptionInput(req.body, true);
+        if ('error' in validation) {
+            return res.status(400).json({ error: validation.error });
+        }
+        const updates: Record<string, unknown> = { ...validation.data };
+        // Restoring a cancelled subscription clears the cancellation details
+        if (updates.isActive === true && !existingSubscription.isActive) {
+            updates.$unset = { cancelReason: 1, cancelledAt: 1 };
+        }
+        if (updates.isActive === false && existingSubscription.isActive) {
+            updates.cancelledAt = new Date();
+        }
+
         const updatedSubscription = await subscriptionsService.update(id as string, updates);
-        
+
         res.json({
             message: 'Subscription updated successfully',
             data: updatedSubscription
@@ -99,7 +121,7 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
     }
 });
 
-// DELETE /api/subscriptions/:id - Cancel subscription
+// DELETE /api/subscriptions/:id - Cancel subscription (body: { reason }), or ?permanent=true to remove it for good
 router.delete('/:id', async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.id;
@@ -108,15 +130,25 @@ router.delete('/:id', async (req: AuthRequest, res: Response) => {
         }
 
         const { id } = req.params;
-        
+
         // Verify subscription belongs to user
-        const existingSubscription = await subscriptionsService.findById(id as string);
-        if (!existingSubscription || existingSubscription.userId !== userId) {
+        const existingSubscription = await findOwned(id, userId);
+        if (!existingSubscription) {
             return res.status(404).json({ error: 'Subscription not found' });
         }
 
-        const cancelled = await subscriptionsService.delete(id as string);
-        
+        if (req.query.permanent === 'true') {
+            await subscriptionsService.permanentlyDelete(id as string);
+            return res.json({ message: 'Subscription deleted' });
+        }
+
+        const reason = req.body?.reason;
+        if (reason !== undefined && reason !== '' && !CANCEL_REASONS.includes(reason)) {
+            return res.status(400).json({ error: 'Invalid cancel reason' });
+        }
+
+        const cancelled = await subscriptionsService.delete(id as string, reason || undefined);
+
         if (!cancelled) {
             return res.status(404).json({ error: 'Subscription not found' });
         }
@@ -137,13 +169,10 @@ router.get('/zombies', async (req: AuthRequest, res: Response) => {
         }
 
         const zombieSubscriptions = await subscriptionsService.getZombieSubscriptions(userId);
-        
+
         res.json({
             zombies: zombieSubscriptions,
-            potentialSavings: zombieSubscriptions.reduce((sum, sub) => {
-                const monthlyCost = sub.frequency === 'yearly' ? sub.amount / 12 : sub.amount;
-                return sum + monthlyCost;
-            }, 0)
+            potentialSavings: zombieSubscriptions.reduce((sum, sub) => sum + monthlyCostOf(sub), 0)
         });
     } catch (error) {
         console.error('Error fetching zombie subscriptions:', error);
@@ -160,13 +189,16 @@ router.post('/bulk-cancel', async (req: AuthRequest, res: Response) => {
         }
 
         const { subscriptionIds } = req.body;
-        
+
         if (!Array.isArray(subscriptionIds) || subscriptionIds.length === 0) {
             return res.status(400).json({ error: 'subscriptionIds array is required' });
         }
+        if (!subscriptionIds.every((id) => typeof id === 'string' && mongoose.isValidObjectId(id))) {
+            return res.status(400).json({ error: 'Invalid subscription id' });
+        }
 
         const cancelledCount = await subscriptionsService.bulkCancel(userId, subscriptionIds);
-        
+
         res.json({
             message: `Successfully cancelled ${cancelledCount} subscription(s)`,
             cancelledCount
@@ -174,6 +206,22 @@ router.post('/bulk-cancel', async (req: AuthRequest, res: Response) => {
     } catch (error) {
         console.error('Error bulk cancelling subscriptions:', error);
         res.status(500).json({ error: 'Failed to cancel subscriptions' });
+    }
+});
+
+// GET /api/subscriptions/trends - Real subscription spending for the last 6 months
+router.get('/trends', async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) {
+            return res.status(401).json({ error: 'User not authenticated' });
+        }
+
+        const trends = await subscriptionsService.getMonthlyTrend(userId, 6);
+        res.json({ trends });
+    } catch (error) {
+        console.error('Error fetching subscription trends:', error);
+        res.status(500).json({ error: 'Failed to fetch subscription trends' });
     }
 });
 
@@ -187,7 +235,7 @@ router.get('/upcoming', async (req: AuthRequest, res: Response) => {
 
         const days = parseInt(req.query.days as string) || 7;
         const upcomingPayments = await subscriptionsService.getUpcomingPayments(userId, days);
-        
+
         res.json({ upcomingPayments });
     } catch (error) {
         console.error('Error fetching upcoming payments:', error);
@@ -204,10 +252,10 @@ router.post('/detect', async (req: AuthRequest, res: Response) => {
         }
 
         const detectedCount = await subscriptionsService.detectRecurring(userId);
-        
-        res.json({ 
+
+        res.json({
             message: 'Scan complete',
-            detectedCount 
+            detectedCount
         });
     } catch (error) {
         console.error('Error detecting recurring subscriptions:', error);
@@ -226,9 +274,12 @@ router.post('/:id/pay', async (req: AuthRequest, res: Response) => {
         const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
 
         // Get the subscription
-        const sub = await subscriptionsService.findById(id);
-        if (!sub || sub.userId !== userId) {
+        const sub = await findOwned(id, userId);
+        if (!sub) {
             return res.status(404).json({ error: 'Subscription not found' });
+        }
+        if (!sub.isActive) {
+            return res.status(400).json({ error: 'Restore this subscription before logging a payment' });
         }
 
         // Create a real transaction from this subscription payment
@@ -246,9 +297,8 @@ router.post('/:id/pay', async (req: AuthRequest, res: Response) => {
             recurringFrequency: sub.frequency,
         });
 
-        // Advance the subscription's next payment date by 1 month and update lastUsed
-        const nextPayment = new Date(sub.nextPayment);
-        nextPayment.setMonth(nextPayment.getMonth() + 1);
+        // Advance the next payment date by one billing period (1 month, or 1 year for yearly) and update lastUsed
+        const nextPayment = advanceNextPayment(sub.nextPayment, sub.frequency);
         await subscriptionsService.update(id, {
             lastUsed: new Date(),
             nextPayment,
@@ -269,7 +319,7 @@ router.get('/ai-insights', async (req: AuthRequest, res: Response) => {
         if (!userId) {
             return res.status(401).json({ error: 'User not authenticated' });
         }
-        
+
         const subscriptions = await subscriptionsService.getAll(userId);
         if (subscriptions.length === 0) {
             return res.json({ insights: {} });
@@ -277,11 +327,11 @@ router.get('/ai-insights', async (req: AuthRequest, res: Response) => {
 
         const { FinancialAgent } = await import('../ai/agent');
         const agent = new FinancialAgent();
-        
+
         const prompt = `Analyze these subscriptions for a user:
 ${JSON.stringify(subscriptions, null, 2)}
 
-For each subscription, provide a brief financial insight (max 1 sentence) and 1-2 real-world cheaper alternatives if applicable (in Sri Lankan Rupees LKR). 
+For each subscription, provide a brief financial insight (max 1 sentence) and 1-2 real-world cheaper alternatives if applicable (in Sri Lankan Rupees LKR).
 Return exactly in this JSON format:
 {
   "insights": {
@@ -303,7 +353,7 @@ Do not include markdown blocks like \`\`\`json, just return the raw JSON object.
             console.error("Failed to parse Gemini response:", responseString);
             return res.status(500).json({ error: 'Failed to parse AI response' });
         }
-        
+
         res.json(parsed);
     } catch (error) {
         console.error('Error generating subscription insights:', error);

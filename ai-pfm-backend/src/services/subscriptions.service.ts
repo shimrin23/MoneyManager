@@ -1,5 +1,63 @@
 import Subscription, { ISubscription } from '../schemas/subscription.schema';
 import Transaction from '../schemas/transaction.schema';
+import { addMonths } from './fd-lease-pawning.service';
+
+export const SUBSCRIPTION_FREQUENCIES = ['monthly', 'yearly'];
+export const CANCEL_REASONS = ['too-expensive', 'not-used', 'found-alternative', 'temporary-pause', 'other', 'zombie-bulk-cancel'];
+
+// Fields a user may set when adding or editing a subscription
+const EDITABLE_FIELDS = ['name', 'provider', 'amount', 'frequency', 'nextPayment', 'category', 'isActive', 'isZombie'];
+
+/**
+ * Checks a new subscription (partial = false) or an edit (partial = true).
+ * Returns the cleaned fields, or an error message.
+ */
+export const validateSubscriptionInput = (
+    body: Record<string, unknown>,
+    partial = false
+): { error: string } | { data: Partial<ISubscription> } => {
+    const data: Record<string, unknown> = {};
+    for (const field of EDITABLE_FIELDS) {
+        if (body[field] !== undefined) data[field] = body[field];
+    }
+
+    const requireText = (field: string, label: string) => {
+        if (data[field] === undefined && partial) return null;
+        if (typeof data[field] !== 'string' || !(data[field] as string).trim()) return `${label} is required`;
+        data[field] = (data[field] as string).trim();
+        return null;
+    };
+    const textError = requireText('name', 'Name') || requireText('provider', 'Provider') || requireText('category', 'Category');
+    if (textError) return { error: textError };
+
+    if (data.amount !== undefined || !partial) {
+        const amount = Number(data.amount);
+        if (data.amount === '' || data.amount === null || !Number.isFinite(amount)) return { error: 'Amount is required' };
+        if (amount <= 0) return { error: 'Amount must be greater than 0' };
+        data.amount = amount;
+    }
+    if (data.frequency !== undefined || !partial) {
+        if (data.frequency === undefined) data.frequency = 'monthly';
+        if (!SUBSCRIPTION_FREQUENCIES.includes(data.frequency as string)) return { error: 'Frequency must be monthly or yearly' };
+    }
+    if (data.nextPayment !== undefined || !partial) {
+        const next = new Date(data.nextPayment as string);
+        if (!data.nextPayment || isNaN(next.getTime())) return { error: 'A valid next payment date is required' };
+        data.nextPayment = next;
+    }
+    for (const flag of ['isActive', 'isZombie']) {
+        if (data[flag] !== undefined && typeof data[flag] !== 'boolean') return { error: `${flag} must be true or false` };
+    }
+    return { data: data as Partial<ISubscription> };
+};
+
+// The next due date after a payment: one month later for monthly, a year later for yearly
+export const advanceNextPayment = (nextPayment: Date, frequency: string) =>
+    addMonths(new Date(nextPayment), frequency === 'yearly' ? 12 : 1);
+
+export const monthlyCostOf = (sub: { amount: number; frequency: string }) =>
+    sub.frequency === 'yearly' ? sub.amount / 12 : sub.amount;
+
 export class SubscriptionsService {
     
     async create(subscriptionData: Partial<ISubscription>): Promise<ISubscription> {
@@ -11,6 +69,50 @@ export class SubscriptionsService {
         return await Subscription.find({ userId, isActive: true }).sort({ nextPayment: 1 });
     }
 
+    // Active subscriptions plus cancelled / dismissed ones, so they can be shown and restored
+    async getAllIncludingInactive(userId: string): Promise<ISubscription[]> {
+        return await Subscription.find({ userId }).sort({ isActive: -1, nextPayment: 1 });
+    }
+
+    async permanentlyDelete(id: string): Promise<boolean> {
+        const result = await Subscription.findByIdAndDelete(id);
+        return !!result;
+    }
+
+    /**
+     * Real subscription spending for each of the last `months` months (oldest first):
+     * recurring payments logged from the app plus expenses from the same providers.
+     */
+    async getMonthlyTrend(userId: string, months = 6): Promise<{ month: string; amount: number }[]> {
+        const now = new Date();
+        const start = new Date(now.getFullYear(), now.getMonth() - (months - 1), 1);
+
+        const subscriptions = await Subscription.find({ userId });
+        const providers = [...new Set(subscriptions.flatMap((s) => [s.provider, s.name]).filter(Boolean))];
+
+        const expenses = await Transaction.find({
+            userId,
+            type: 'expense',
+            date: { $gte: start },
+            $or: [
+                { isRecurring: true },
+                { merchantName: { $in: providers } },
+                { normalizedMerchant: { $in: providers } },
+            ],
+        }).select('amount date');
+
+        const buckets = Array.from({ length: months }, (_, i) => {
+            const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
+            return { key: `${d.getFullYear()}-${d.getMonth()}`, month: d.toLocaleString('en-LK', { month: 'short', year: '2-digit' }), amount: 0 };
+        });
+        for (const tx of expenses) {
+            const d = new Date(tx.date);
+            const bucket = buckets.find((b) => b.key === `${d.getFullYear()}-${d.getMonth()}`);
+            if (bucket) bucket.amount += tx.amount;
+        }
+        return buckets.map(({ month, amount }) => ({ month, amount: Math.round(amount * 100) / 100 }));
+    }
+
     async findById(id: string): Promise<ISubscription | null> {
         return await Subscription.findById(id);
     }
@@ -19,10 +121,10 @@ export class SubscriptionsService {
         return await Subscription.findByIdAndUpdate(id, updates, { new: true });
     }
 
-    async delete(id: string): Promise<boolean> {
+    async delete(id: string, reason?: string): Promise<boolean> {
         const result = await Subscription.findByIdAndUpdate(
             id, 
-            { isActive: false }, 
+            { isActive: false, cancelledAt: new Date(), ...(reason ? { cancelReason: reason } : {}) }, 
             { new: true }
         );
         return !!result;
@@ -64,7 +166,7 @@ export class SubscriptionsService {
                 userId,
                 isActive: true
             },
-            { $set: { isActive: false } }
+            { $set: { isActive: false, cancelledAt: new Date(), cancelReason: 'zombie-bulk-cancel' } }
         );
         
         return result.modifiedCount;
@@ -73,10 +175,7 @@ export class SubscriptionsService {
     async calculateMonthlyCost(userId: string): Promise<number> {
         const subscriptions = await this.getAll(userId);
         
-        return subscriptions.reduce((total, sub) => {
-            const monthlyCost = sub.frequency === 'yearly' ? sub.amount / 12 : sub.amount;
-            return total + monthlyCost;
-        }, 0);
+        return subscriptions.reduce((total, sub) => total + monthlyCostOf(sub), 0);
     }
 
     async getUpcomingPayments(userId: string, days: number = 7): Promise<ISubscription[]> {

@@ -10,7 +10,7 @@ import transactionSyncService, { buildTransactionSyncKey } from "../services/tra
 import SyncState from "../schemas/sync_state.schema";
 import Transaction from "../schemas/transaction.schema";
 import { AdvancedAnalyticsService } from "../services/advanced-analytics.service";
-import { parseBankStatementCSV, SupportedSriLankanBank } from "../services/bank-statement-parser.service";
+import { parseBankStatement, statementOccurrences, SupportedSriLankanBank } from "../services/bank-statement-parser.service";
 import AnomalyDetectionService, {
   ANOMALY_STATUSES,
   AnomalyStatus,
@@ -269,27 +269,38 @@ export default class TransactionsController {
         return res.status(400).json({ error: "csvContent string is required" });
       }
 
-      const parsedTransactions = parseBankStatementCSV(
+      if (!csvContent.trim()) {
+        return res.status(400).json({ error: "The statement file is empty." });
+      }
+
+      const { transactions: parsedTransactions, skippedRows } = parseBankStatement(
         csvContent,
         (bankType as SupportedSriLankanBank) || "generic"
       );
 
       if (parsedTransactions.length === 0) {
+        const firstProblem = skippedRows[0];
         return res.status(400).json({
-          error: "No valid transactions could be parsed from the provided statement.",
+          error: firstProblem
+            ? `No valid transactions could be read. ${skippedRows.length} row(s) were skipped, e.g. row ${firstProblem.row}: ${firstProblem.reason}.`
+            : "No valid transactions could be parsed from the provided statement.",
+          skippedRows: skippedRows.slice(0, 20),
         });
       }
 
       let insertedCount = 0;
       let skippedDuplicates = 0;
+      const occurrences = statementOccurrences(parsedTransactions);
 
-      for (const txn of parsedTransactions) {
+      for (const [index, txn] of parsedTransactions.entries()) {
+        // The 2nd, 3rd... identical row in the same file is a separate real transaction, so it gets its own key
+        const occurrence = occurrences[index];
         const syncKey = buildTransactionSyncKey({
           userId,
           sourceAccount: txn.sourceAccount,
           externalTransactionId: txn.reference,
           amount: txn.amount,
-          description: txn.description,
+          description: occurrence > 1 ? `${txn.description}#${occurrence}` : txn.description,
           merchantName: txn.description,
           date: txn.date,
         });
@@ -324,8 +335,10 @@ export default class TransactionsController {
           totalParsed: parsedTransactions.length,
           inserted: insertedCount,
           skippedDuplicates,
+          invalidRows: skippedRows.length,
           bankType: bankType || "generic",
         },
+        skippedRows: skippedRows.slice(0, 20),
       });
     } catch (error: any) {
       console.error("Error importing statement:", error);
