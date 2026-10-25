@@ -1,7 +1,8 @@
 import { getAppPrefs } from '../utils/appFormat';
 import { useState, useRef, useEffect } from 'react';
-import { apiClient } from '../api/client';
-import { IconBrain, IconUser, IconLogOut, IconRefreshCw } from './Icons';
+import { apiClient, getApiErrorMessage } from '../api/client';
+import { confirmDialog, notify } from '../utils/systemMessages';
+import { IconBrain, IconUser, IconRefreshCw } from './Icons';
 
 interface Message {
     id: string;
@@ -9,6 +10,21 @@ interface Message {
     content: string;
     timestamp: Date;
 }
+
+// A message as the server stores it
+interface StoredMessage {
+    id: string;
+    role: 'user' | 'assistant' | 'system';
+    content: string;
+    timestamp: string;
+}
+
+const fromStored = (m: StoredMessage): Message => ({
+    id: m.id,
+    type: m.role === 'user' ? 'user' : 'ai',
+    content: m.content,
+    timestamp: new Date(m.timestamp),
+});
 
 interface AIAssistantProps {
     open?: boolean;
@@ -21,12 +37,28 @@ export const AIAssistant = ({ open = false, onOpenChange }: AIAssistantProps) =>
     const [messages, setMessages] = useState<Message[]>([]);
     const [loading, setLoading] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const [sessionId] = useState(() => `session-${Date.now()}`);
-    const [userId] = useState(() => localStorage.getItem('userId') || `user-${Date.now()}`);
+    // The conversation is saved on the server for the logged-in user, so it survives a refresh
+    const [sessionId, setSessionId] = useState<string | null>(null);
+    const [historyLoaded, setHistoryLoaded] = useState(false);
 
     useEffect(() => {
         setIsOpen(open);
     }, [open]);
+
+    // Restore the latest conversation the first time the chat is opened
+    useEffect(() => {
+        if (!isOpen || historyLoaded) return;
+        setHistoryLoaded(true);
+        apiClient.get('/coach/session/latest')
+            .then(response => {
+                const data = response.data?.data;
+                if (data?.sessionId) {
+                    setSessionId(data.sessionId);
+                    setMessages((data.messages || []).filter((m: StoredMessage) => m.role !== 'system').map(fromStored));
+                }
+            })
+            .catch(error => console.error('Could not load chat history:', error));
+    }, [isOpen, historyLoaded]);
 
     const handleOpenChange = (newOpen: boolean) => {
         setIsOpen(newOpen);
@@ -57,28 +89,22 @@ export const AIAssistant = ({ open = false, onOpenChange }: AIAssistantProps) =>
         setLoading(true);
 
         try {
-            const response = await apiClient.post('/coach/chat', { 
-                userId,
+            // The server adds the user's own financial data, so the coach can answer about it
+            const response = await apiClient.post('/coach/chat', {
                 sessionId,
                 message: question,
-                includeFinancialContext: false
+                includeFinancialContext: true
             });
             
-            const aiMessage: Message = {
-                id: (Date.now() + 1).toString(),
-                type: 'ai',
-                content: response.data.data.message.content,
-                timestamp: new Date()
-            };
-            
-            setMessages(prev => [...prev, aiMessage]);
-        } catch (error: any) {
+            setSessionId(response.data.data.sessionId);
+            setMessages(prev => [...prev, fromStored(response.data.data.message)]);
+        } catch (error) {
             console.error('Error asking AI:', error);
             
             const errorMessage: Message = {
                 id: (Date.now() + 1).toString(),
                 type: 'ai',
-                content: error?.response?.data?.error || 'Sorry, I encountered an error while processing your question. Please try again.',
+                content: getApiErrorMessage(error, 'Sorry, I encountered an error while processing your question. Please try again.'),
                 timestamp: new Date()
             };
             
@@ -88,8 +114,23 @@ export const AIAssistant = ({ open = false, onOpenChange }: AIAssistantProps) =>
         }
     };
 
-    const clearChat = () => {
-        setMessages([]);
+    // Deletes the conversation on the server too, so the coach really forgets it
+    const clearChat = async () => {
+        const confirmed = await confirmDialog({
+            title: 'Clear conversation?',
+            message: 'This deletes the whole chat. The coach will not remember it.',
+            confirmText: 'Clear',
+            danger: true,
+        });
+        if (!confirmed) return;
+        try {
+            if (sessionId) await apiClient.delete(`/coach/session/${sessionId}`);
+            setMessages([]);
+            setSessionId(null);
+        } catch (error) {
+            console.error('Could not clear chat:', error);
+            notify.error(getApiErrorMessage(error, 'Could not clear the conversation. Please try again.'));
+        }
     };
 
     const closeModal = () => {
@@ -100,7 +141,7 @@ export const AIAssistant = ({ open = false, onOpenChange }: AIAssistantProps) =>
         "How can I improve my credit score?",
         "What's the best debt repayment strategy?",
         "How much should I save for an emergency fund?",
-        "What are the benefits of diversifying investments?"
+        "Where did most of my money go this month?"
     ];
 
     const handleSampleQuestion = (sample: string) => {

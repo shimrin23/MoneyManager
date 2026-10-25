@@ -38,6 +38,7 @@ export interface SendMessageResponse {
 export interface UserFinancialContext {
   userId: string;
   currency: string;
+  period?: string; // the dates the income, expense and category figures cover
   monthlyIncome: number;
   monthlyExpenses: number;
   savingsRate: number;

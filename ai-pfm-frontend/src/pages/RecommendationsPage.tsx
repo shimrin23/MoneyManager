@@ -1,10 +1,25 @@
 import { formatMoney } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
+import { useNavigate } from 'react-router-dom';
+import { apiClient, getApiErrorMessage } from '../api/client';
+import { notify } from '../utils/systemMessages';
 
 type RecommendationStatus = 'pending' | 'accepted' | 'declined' | 'snoozed';
 type RecommendationCategory = 'all' | 'budget' | 'goal' | 'debt' | 'subscription' | 'alert';
-type ExecStep = 'confirm' | 'progress' | 'done';
+type ExecStep = 'confirm' | 'progress' | 'done' | 'error';
+
+// What the server did when a recommendation was executed
+interface ExecutionResult {
+    message: string;
+    link: string;
+}
+
+const LINK_LABELS: Record<string, string> = {
+    '/goals': 'Open Goals',
+    '/smart-budgets': 'Open Smart Budgets',
+    '/loans': 'Open Loans',
+    '/credit-cards': 'Open Cards',
+};
 
 interface Recommendation {
     _id: string;
@@ -37,32 +52,33 @@ const statusColors: Record<RecommendationStatus, string> = {
 
 /* One-tap execution modal */
 const ExecutionModal = ({
-    rec, onClose, onConfirm
-}: { rec: Recommendation; onClose: () => void; onConfirm: () => void; }) => {
+    rec, onClose, onExecuted
+}: { rec: Recommendation; onClose: () => void; onExecuted: (updated: Recommendation) => void; }) => {
+    const navigate = useNavigate();
     const [step, setStep] = useState<ExecStep>('confirm');
-    const [progress, setProgress] = useState(0);
+    const [result, setResult] = useState<ExecutionResult | null>(null);
+    const [error, setError] = useState('');
 
-    const handleExecute = () => {
+    const handleExecute = async () => {
         setStep('progress');
-        let p = 0;
-        const interval = setInterval(() => {
-            p += Math.random() * 18 + 8;
-            if (p >= 100) {
-                p = 100;
-                clearInterval(interval);
-                setTimeout(() => setStep('done'), 400);
-            }
-            setProgress(Math.min(p, 100));
-        }, 180);
+        try {
+            const response = await apiClient.post(`/recommendations/${rec._id}/execute`);
+            setResult({ message: response.data.message, link: response.data.link });
+            onExecuted(response.data.recommendation);
+            setStep('done');
+        } catch (err) {
+            setError(getApiErrorMessage(err, 'Could not apply this recommendation. Please try again.'));
+            setStep('error');
+        }
     };
 
-    const handleDone = () => {
-        onConfirm();
+    const goToLink = () => {
+        if (result?.link) navigate(result.link);
         onClose();
     };
 
     return (
-        <div className="modal-overlay" onClick={step === 'confirm' ? onClose : undefined}>
+        <div className="modal-overlay" onClick={step !== 'progress' ? onClose : undefined}>
             <div className="modal-content onetap-modal" onClick={e => e.stopPropagation()}>
                 {step === 'confirm' && (
                     <>
@@ -97,28 +113,35 @@ const ExecutionModal = ({
                 {step === 'progress' && (
                     <div className="onetap-body onetap-center">
                         <div className="onetap-spinner">⚙️</div>
-                        <div className="onetap-title">Setting up...</div>
-                        <div className="onetap-text" style={{ marginBottom: '1.5rem' }}>
-                            Applying your recommendation. This takes just a moment.
-                        </div>
-                        <div className="onetap-progress-track">
-                            <div className="onetap-progress-fill" style={{ width: `${progress}%` }} />
-                        </div>
-                        <div className="onetap-pct">{Math.round(progress)}%</div>
+                        <div className="onetap-title">Applying...</div>
+                        <div className="onetap-text">Applying your recommendation.</div>
                     </div>
                 )}
 
-                {step === 'done' && (
+                {step === 'done' && result && (
                     <div className="onetap-body onetap-center">
                         <div className="onetap-success-icon">✅</div>
-                        <div className="onetap-title" style={{ color: '#10b981' }}>Done!</div>
-                        <div className="onetap-text" style={{ marginBottom: '0.5rem' }}>
-                            Recommendation has been applied successfully.
+                        <div className="onetap-title" style={{ color: '#10b981' }}>Done</div>
+                        <div className="onetap-text" style={{ marginBottom: '1.5rem' }}>
+                            {result.message}
                         </div>
-                        <div className="onetap-impact" style={{ marginBottom: '1.5rem' }}>
-                            {rec.projectedImpact}
+                        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                            <button className="action-btn primary" onClick={goToLink}>
+                                {LINK_LABELS[result.link] || 'Open'}
+                            </button>
+                            <button className="action-btn secondary" onClick={onClose}>Close</button>
                         </div>
-                        <button className="action-btn primary" onClick={handleDone}>Close</button>
+                    </div>
+                )}
+
+                {step === 'error' && (
+                    <div className="onetap-body onetap-center">
+                        <div className="onetap-title" style={{ color: '#ef4444' }}>Not applied</div>
+                        <div className="onetap-text" style={{ marginBottom: '1.5rem' }}>{error}</div>
+                        <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+                            <button className="action-btn primary" onClick={handleExecute}>Try Again</button>
+                            <button className="action-btn secondary" onClick={onClose}>Close</button>
+                        </div>
                     </div>
                 )}
             </div>
@@ -130,7 +153,8 @@ export const RecommendationsPage = () => {
     const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState<RecommendationCategory>('all');
-    const [totalSavingsAchieved] = useState(38400);
+    const [hasData, setHasData] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [executingRec, setExecutingRec] = useState<Recommendation | null>(null);
 
     useEffect(() => {
@@ -138,8 +162,10 @@ export const RecommendationsPage = () => {
             try {
                 const response = await apiClient.get('/recommendations');
                 setRecommendations(response.data.recommendations || []);
+                setHasData(response.data.hasData !== false);
             } catch (error) {
                 console.error('Failed to fetch recommendations', error);
+                setLoadError(getApiErrorMessage(error, 'Could not load recommendations. Please refresh the page.'));
                 setRecommendations([]);
             } finally {
                 setLoading(false);
@@ -156,8 +182,10 @@ export const RecommendationsPage = () => {
         
         try {
             await apiClient.patch(`/recommendations/${id}`, { status: newStatus });
+            notify.success(newStatus === 'snoozed' ? 'Snoozed for 7 days.' : newStatus === 'declined' ? 'Recommendation declined.' : 'Moved back to pending.');
         } catch (error) {
             console.error('Failed to update status', error);
+            notify.error(getApiErrorMessage(error, 'Could not update the recommendation.'));
             // Revert on failure (simple reload for now)
             const response = await apiClient.get('/recommendations');
             setRecommendations(response.data.recommendations || []);
@@ -174,6 +202,10 @@ export const RecommendationsPage = () => {
 
     const pending = recommendations.filter(r => r.status === 'pending').length;
     const accepted = recommendations.filter(r => r.status === 'accepted').length;
+    // Extra monthly savings from the recommendations the user accepted (only ones with a worked-out amount)
+    const plannedSavings = recommendations
+        .filter(r => r.status === 'accepted')
+        .reduce((sum, r) => sum + (r.savingsAmount || 0), 0);
 
     if (loading) return <div className="loading-spinner">Loading recommendations...</div>;
 
@@ -211,8 +243,8 @@ export const RecommendationsPage = () => {
                 <div className="rec-stat-card savings">
                     <div className="rec-stat-icon">💰</div>
                     <div>
-                        <div className="rec-stat-value">{formatMoney(totalSavingsAchieved)}</div>
-                        <div className="rec-stat-label">Savings Achieved</div>
+                        <div className="rec-stat-value">{formatMoney(plannedSavings)}</div>
+                        <div className="rec-stat-label">Planned Monthly Savings</div>
                     </div>
                 </div>
             </div>
@@ -224,7 +256,7 @@ export const RecommendationsPage = () => {
                         className={`rec-filter-btn ${activeFilter === f ? 'active' : ''}`}
                         onClick={() => setActiveFilter(f)}
                     >
-                        {f.charAt(0).toUpperCase() + f.slice(1)}
+                        {f === 'all' ? 'All' : categoryLabels[f]}
                         {f !== 'all' && (
                             <span className="rec-filter-count">
                                 {recommendations.filter(r => r.category === f).length}
@@ -235,7 +267,17 @@ export const RecommendationsPage = () => {
             </div>
 
             <div className="rec-list">
-                {filtered.length === 0 && (
+                {loadError && (
+                    <div className="rec-empty" style={{ color: '#ef4444' }}>{loadError}</div>
+                )}
+                {!loadError && recommendations.length === 0 && (
+                    <div className="rec-empty">
+                        {hasData
+                            ? 'No recommendations right now. Your finances look on track.'
+                            : 'Add your income and expenses for the last 30 days to get personalised recommendations.'}
+                    </div>
+                )}
+                {!loadError && recommendations.length > 0 && filtered.length === 0 && (
                     <div className="rec-empty">No recommendations in this category.</div>
                 )}
                 {filtered.map(rec => (
@@ -283,7 +325,7 @@ export const RecommendationsPage = () => {
                                                         padding: '3px 8px', 
                                                         borderRadius: '6px',
                                                         border: '1px solid rgba(255,255,255,0.1)',
-                                                        color: rec.status === 'accepted' ? '#10b981' : '#f59e0b',
+                                                        color: statusColors[rec.status],
                                                         fontWeight: '600',
                                                         textTransform: 'uppercase'
                                                     }}
@@ -344,7 +386,7 @@ export const RecommendationsPage = () => {
                 <ExecutionModal
                     rec={executingRec}
                     onClose={() => setExecutingRec(null)}
-                    onConfirm={() => updateStatus(executingRec._id, 'accepted')}
+                    onExecuted={(updated) => setRecommendations(prev => prev.map(r => r._id === updated._id ? updated : r))}
                 />
             )}
         </div>

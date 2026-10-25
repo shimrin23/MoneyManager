@@ -1,91 +1,129 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
+import mongoose from 'mongoose';
 import { authenticateToken, AuthRequest } from '../middlewares/authMiddleware';
 import Recommendation from '../schemas/recommendation.schema';
+import Goal from '../schemas/goal.schema';
 import { FinancialHealthService } from '../services/financial-health.service';
+import { isEmergencyGoal } from '../services/health-score.utils';
+import {
+    RECOMMENDATION_LINKS,
+    buildRecommendations,
+    emergencyFundTarget,
+    recommendationKeyOf,
+} from '../services/recommendation-rules';
 
 const router = Router();
 const healthService = new FinancialHealthService();
 
+const RECOMMENDATION_STATUSES = ['pending', 'accepted', 'declined', 'snoozed'];
+// Snoozed recommendations come back after this long
+const SNOOZE_DAYS = 7;
+
+const isValidId = (id: unknown): id is string => typeof id === 'string' && mongoose.isValidObjectId(id);
+
+/**
+ * GET /api/recommendations
+ * Re-checks the user's current numbers on every visit: new problems get a recommendation,
+ * pending ones are updated with the latest numbers, and pending ones that no longer
+ * apply are removed. Accepted and declined ones are left as the user set them.
+ */
 router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.id;
         if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
-        // Fetch existing pending or snoozed recommendations
-        let recs = await Recommendation.find({ userId });
+        const health = await healthService.getHealthReport(userId);
+        const rules = health.hasData ? buildRecommendations(health.metrics) : [];
+        const existing = await Recommendation.find({ userId });
 
-        // If none exist, let's generate some based on current metrics
-        if (recs.length === 0) {
-            const health = await healthService.getHealthReport(userId);
-            const metrics = health.metrics;
-            const newRecs: any[] = [];
+        const snoozeCutoff = new Date(Date.now() - SNOOZE_DAYS * 24 * 60 * 60 * 1000);
+        const activeKeys = new Set(rules.map(r => r.key));
 
-            if (metrics.savingsRate < 0.1) {
-                newRecs.push({
-                    userId,
-                    category: 'budget',
-                    icon: '',
-                    title: 'Increase Your Savings Rate',
-                    reason: 'Your savings rate is currently below the recommended 10% minimum threshold.',
-                    action: 'Set up an automated transfer to savings on payday.',
-                    projectedImpact: 'Build a safety net and increase your financial health score.',
-                    executionPath: 'Smart Budgets → Create Budget → Savings Goal',
-                    priority: 'critical'
-                });
-            }
-
-            if (metrics.debtToIncomeRatio > 0.3) {
-                newRecs.push({
-                    userId,
-                    category: 'debt',
-                    icon: '',
-                    title: 'Reduce High Debt-to-Income',
-                    reason: 'Your debt obligations consume more than 30% of your income.',
-                    action: 'Prioritize paying down high-interest debt like credit cards.',
-                    projectedImpact: 'Free up cash flow and reduce interest payments.',
-                    executionPath: 'Loans → View Debt → Apply extra payment',
-                    priority: 'high'
-                });
-            }
-
-            if (metrics.emergencyFundMonths < 3) {
-                newRecs.push({
-                    userId,
-                    category: 'goal',
-                    icon: '',
-                    title: 'Build Emergency Fund',
-                    reason: 'You have less than 3 months of expenses saved for emergencies.',
-                    action: 'Set up a dedicated Emergency Fund goal.',
-                    projectedImpact: 'Create a 3-6 month safety buffer for unexpected events.',
-                    executionPath: 'Goals → New Goal → Emergency Fund',
-                    priority: 'high'
-                });
-            }
-
-            if (metrics.creditUtilization > 0.3) {
-                newRecs.push({
-                    userId,
-                    category: 'alert',
-                    icon: '',
-                    title: 'High Credit Utilization',
-                    reason: 'Using more than 30% of your credit limit negatively impacts your credit score.',
-                    action: 'Pay down credit card balances before the statement date.',
-                    projectedImpact: 'Improve credit score and reduce interest charges.',
-                    executionPath: 'Cards → Select Card → Pay Bill',
-                    priority: 'medium'
-                });
-            }
-
-            if (newRecs.length > 0) {
-                await Recommendation.insertMany(newRecs);
-                recs = await Recommendation.find({ userId });
+        for (const rule of rules) {
+            const match = existing.find(r => recommendationKeyOf(r) === rule.key);
+            if (!match) {
+                await Recommendation.create({ userId, icon: '', ...rule });
+            } else if (match.status === 'pending' || (match.status === 'snoozed' && match.updatedAt < snoozeCutoff)) {
+                match.set({ ...rule, status: 'pending' });
+                await match.save();
             }
         }
 
-        res.json({ recommendations: recs });
+        // A pending recommendation whose problem is fixed is no longer needed
+        for (const rec of existing) {
+            const key = recommendationKeyOf(rec);
+            if (rec.status === 'pending' && key && !activeKeys.has(key)) {
+                await rec.deleteOne();
+            }
+        }
+
+        const recommendations = await Recommendation.find({ userId }).sort({ createdAt: 1 });
+        res.json({ recommendations, hasData: health.hasData });
     } catch (error) {
         console.error('Error fetching recommendations:', error);
         res.status(500).json({ error: 'Failed to fetch recommendations' });
+    }
+});
+
+/**
+ * POST /api/recommendations/:id/execute
+ * Does the recommendation where the app can (creates the Emergency Fund goal),
+ * otherwise returns the page where the user can act on it. Marks it accepted.
+ */
+router.post('/:id/execute', authenticateToken, async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+        if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Recommendation not found' });
+
+        const rec = await Recommendation.findOne({ _id: req.params.id, userId });
+        if (!rec) return res.status(404).json({ error: 'Recommendation not found' });
+
+        const key = recommendationKeyOf(rec);
+        const link = key ? RECOMMENDATION_LINKS[key] : '/dashboard';
+        let message: string;
+        let goal = null;
+
+        if (key === 'emergency-fund') {
+            const goals = await Goal.find({ userId });
+            const existingGoal = goals.find(g => isEmergencyGoal(g) && g.status !== 'Completed');
+            if (existingGoal) {
+                message = `You already have an "${existingGoal.title}" goal. Add contributions to it on the Goals page.`;
+                goal = existingGoal;
+            } else {
+                const health = await healthService.getHealthReport(userId);
+                const target = Math.max(1, emergencyFundTarget(health.metrics));
+                const deadline = new Date();
+                deadline.setFullYear(deadline.getFullYear() + 1);
+                goal = await Goal.create({
+                    userId,
+                    title: 'Emergency Fund',
+                    targetAmount: target,
+                    currentAmount: 0,
+                    deadline,
+                    category: 'Emergency',
+                    priority: 'High',
+                    description: 'Created from the "Build Emergency Fund" recommendation: 3 months of expenses.',
+                });
+                message = `Created an "Emergency Fund" goal of LKR ${target.toLocaleString('en-US')} due in 12 months.`;
+            }
+        } else if (key === 'savings-rate') {
+            message = 'Open Smart Budgets to set spending limits for your biggest categories.';
+        } else if (key === 'debt-to-income') {
+            message = 'Open Loans and use the Strategies tab to plan extra payments.';
+        } else if (key === 'credit-utilization') {
+            message = 'Open Cards and use Make Payment to bring your balances down.';
+        } else {
+            message = 'Recommendation accepted.';
+        }
+
+        rec.status = 'accepted';
+        await rec.save();
+
+        res.json({ recommendation: rec, message, link, goal });
+    } catch (error) {
+        console.error('Error executing recommendation:', error);
+        res.status(500).json({ error: 'Failed to execute recommendation' });
     }
 });
 
@@ -93,13 +131,17 @@ router.patch('/:id', authenticateToken, async (req: AuthRequest, res: Response) 
     try {
         const userId = req.user?.id;
         const { status } = req.body;
-        
+
         if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+        if (!RECOMMENDATION_STATUSES.includes(status)) {
+            return res.status(400).json({ error: 'Status must be pending, accepted, declined or snoozed' });
+        }
+        if (!isValidId(req.params.id)) return res.status(404).json({ error: 'Recommendation not found' });
 
         const updated = await Recommendation.findOneAndUpdate(
             { _id: req.params.id, userId },
             { status },
-            { new: true }
+            { new: true, runValidators: true }
         );
 
         if (!updated) {

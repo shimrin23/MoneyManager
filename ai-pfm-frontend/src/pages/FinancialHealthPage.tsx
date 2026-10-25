@@ -1,15 +1,18 @@
 import { formatMoney } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
+import { apiClient, getApiErrorMessage } from '../api/client';
 import { AIAssistant } from '../components/AIAssistant';
+import { getHealthStatus, noScoreMessage } from '../utils/healthScore';
 
 interface HealthMetrics {
-    score: number;
-    riskLevel: string;
+    hasData: boolean;
+    noDataReason: string | null;
+    score: number | null;
     liquidityRatio: number;
     debtToIncomeRatio: number;
     savingsRate: number;
     creditUtilization: number;
+    emergencyFund: number;
     emergencyFundMonths: number;
     netWorth: number;
     discretionaryRatio: number;
@@ -21,21 +24,41 @@ interface PeerBenchmark {
     userValue: number;
     peerAverage: number;
     percentile: number;
+    higherIsBetter: boolean;
     comparison: 'above' | 'below' | 'average';
 }
 
-const normalizeHealthMetrics = (payload: any): HealthMetrics => ({
-    score: Number(payload?.score ?? 0),
-    riskLevel: payload?.riskLevel ?? 'Medium',
-    liquidityRatio: Number(payload?.metrics?.liquidityRatio ?? payload?.liquidityRatio ?? 0),
-    debtToIncomeRatio: Number(payload?.metrics?.debtToIncomeRatio ?? payload?.debtToIncomeRatio ?? 0),
-    savingsRate: Number(payload?.metrics?.savingsRate ?? payload?.savingsRate ?? 0),
-    creditUtilization: Number(payload?.metrics?.creditUtilization ?? payload?.creditUtilization ?? 0),
-    emergencyFundMonths: Number(payload?.metrics?.emergencyFundMonths ?? payload?.emergencyFundMonths ?? 0),
-    netWorth: Number(payload?.metrics?.netWorth ?? payload?.netWorth ?? 0),
-    discretionaryRatio: Number(payload?.metrics?.discretionaryRatio ?? payload?.discretionaryRatio ?? 0),
-    recommendations: Array.isArray(payload?.recommendations) ? payload.recommendations : []
-});
+interface PeerInfo {
+    peerCount: number;
+    reason?: 'no-data' | 'not-enough-peers';
+    minPeers?: number;
+}
+
+interface HealthResponse {
+    hasData?: boolean;
+    noDataReason?: string | null;
+    score?: number | null;
+    metrics?: Partial<Record<string, number>>;
+    recommendations?: string[];
+}
+
+const normalizeHealthMetrics = (payload: HealthResponse): HealthMetrics => {
+    const m = payload?.metrics ?? {};
+    return {
+        hasData: payload?.hasData !== false && typeof payload?.score === 'number',
+        noDataReason: payload?.noDataReason ?? null,
+        score: typeof payload?.score === 'number' ? payload.score : null,
+        liquidityRatio: Number(m.liquidityRatio ?? 0),
+        debtToIncomeRatio: Number(m.debtToIncomeRatio ?? 0),
+        savingsRate: Number(m.savingsRate ?? 0),
+        creditUtilization: Number(m.creditUtilization ?? 0),
+        emergencyFund: Number(m.emergencyFund ?? 0),
+        emergencyFundMonths: Number(m.emergencyFundMonths ?? 0),
+        netWorth: Number(m.netWorth ?? 0),
+        discretionaryRatio: Number(m.discretionaryRatio ?? 0),
+        recommendations: Array.isArray(payload?.recommendations) ? payload.recommendations : []
+    };
+};
 
 const renderBenchmarkValue = (category: string, value: number) => {
     if (category === 'Net Worth') return `${formatMoney(value)}`;
@@ -44,54 +67,29 @@ const renderBenchmarkValue = (category: string, value: number) => {
     return `${value}%`;
 };
 
-const buildPeerBenchmarks = (healthMetrics: HealthMetrics): PeerBenchmark[] => [
-    {
-        category: 'Financial Health Score',
-        userValue: healthMetrics.score,
-        peerAverage: 65,
-        percentile: Math.max(5, Math.min(95, healthMetrics.score)),
-        comparison: healthMetrics.score >= 65 ? 'above' : 'below'
-    },
-    {
-        category: 'Savings Rate',
-        userValue: Number((healthMetrics.savingsRate * 100).toFixed(1)),
-        peerAverage: 18,
-        percentile: healthMetrics.savingsRate >= 0.18 ? 70 : 25,
-        comparison: healthMetrics.savingsRate >= 0.18 ? 'above' : 'below'
-    },
-    {
-        category: 'Debt-to-Income Ratio',
-        userValue: Number((healthMetrics.debtToIncomeRatio * 100).toFixed(1)),
-        peerAverage: 35,
-        percentile: healthMetrics.debtToIncomeRatio <= 0.35 ? 75 : 30,
-        comparison: healthMetrics.debtToIncomeRatio <= 0.35 ? 'below' : 'above'
-    },
-    {
-        category: 'Liquidity Ratio',
-        userValue: Number((healthMetrics.liquidityRatio * 100).toFixed(1)),
-        peerAverage: 30,
-        percentile: healthMetrics.liquidityRatio >= 0.3 ? 70 : 20,
-        comparison: healthMetrics.liquidityRatio >= 0.3 ? 'above' : 'below'
-    }
-];
+// "Better" depends on the metric: a higher savings rate is good, a higher debt ratio is not
+const benchmarkVerdict = (b: PeerBenchmark): 'better' | 'worse' | 'same' => {
+    if (b.comparison === 'average') return 'same';
+    const higher = b.comparison === 'above';
+    return higher === b.higherIsBetter ? 'better' : 'worse';
+};
+
+const keyFinding = (benchmarks: PeerBenchmark[]) => {
+    const better = benchmarks.filter(b => benchmarkVerdict(b) === 'better').map(b => b.category);
+    const worse = benchmarks.filter(b => benchmarkVerdict(b) === 'worse').map(b => b.category);
+    if (worse.length === 0) return 'You are at or above the average of other users on every measure. Keep it up.';
+    if (better.length === 0) return `You are behind the average on every measure. Start with ${worse[0]}.`;
+    return `You are ahead of other users on ${better.join(', ')}. Focus next on ${worse.join(', ')}.`;
+};
 
 export const FinancialHealthPage = () => {
     const [aiOpen, setAiOpen] = useState(false);
-    const [health, setHealth] = useState<HealthMetrics>({
-        score: 0,
-        riskLevel: 'Medium',
-        liquidityRatio: 0,
-        debtToIncomeRatio: 0,
-        savingsRate: 0,
-        creditUtilization: 0,
-        emergencyFundMonths: 0,
-        netWorth: 0,
-        discretionaryRatio: 0,
-        recommendations: []
-    });
+    const [health, setHealth] = useState<HealthMetrics | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [loadError, setLoadError] = useState<string | null>(null);
     const [peerBenchmarks, setPeerBenchmarks] = useState<PeerBenchmark[]>([]);
+    const [peerInfo, setPeerInfo] = useState<PeerInfo>({ peerCount: 0 });
 
     useEffect(() => {
         refreshHealthData();
@@ -124,58 +122,50 @@ export const FinancialHealthPage = () => {
                 apiClient.get('/transactions/peer-benchmarks')
             ]);
 
-            const normalized = normalizeHealthMetrics(scoreResponse.data);
-            setHealth(normalized);
-
-            const backendBenchmarks = benchmarkResponse.data?.benchmarks || [];
-            setPeerBenchmarks(backendBenchmarks);
-        } catch (error) {
-            console.error('Error fetching health score:', error);
-            const fallback = normalizeHealthMetrics({
-                score: 0,
-                riskLevel: 'Medium',
-                metrics: {
-                    liquidityRatio: 0,
-                    debtToIncomeRatio: 0,
-                    savingsRate: 0,
-                    creditUtilization: 0,
-                    emergencyFundMonths: 0,
-                    netWorth: 0,
-                    discretionaryRatio: 0
-                },
-                recommendations: []
+            setHealth(normalizeHealthMetrics(scoreResponse.data));
+            setPeerBenchmarks(benchmarkResponse.data?.benchmarks || []);
+            setPeerInfo({
+                peerCount: benchmarkResponse.data?.peerCount ?? 0,
+                reason: benchmarkResponse.data?.reason,
+                minPeers: benchmarkResponse.data?.minPeers
             });
-            setHealth(fallback);
-            setPeerBenchmarks(buildPeerBenchmarks(fallback));
+            setLoadError(null);
+        } catch (error) {
+            // Keep showing the last real numbers (if any) and say that the refresh failed
+            console.error('Error fetching health score:', error);
+            setLoadError(getApiErrorMessage(error, 'Could not load your financial health right now.'));
         } finally {
             setLoading(false);
             setRefreshing(false);
         }
     };
 
-    const getScoreColor = (score: number) => {
-        if (score >= 70) return '#10b981';
-        if (score >= 40) return '#f59e0b';
-        return '#ef4444';
-    };
+    if (loading) return <div className="loading">Analyzing your financial health...</div>;
 
-    const getScoreStatus = (score: number) => {
-        if (score >= 70) {
-            return { label: 'Excellent', description: 'Outstanding financial health', risk: 'Low' };
-        }
-        if (score >= 40) {
-            return { label: 'Good', description: 'Healthy financial profile', risk: 'Medium' };
-        }
-        return { label: 'Critical', description: 'Immediate attention needed', risk: 'High' };
-    };
+    // Nothing loaded at all: show the error instead of a made-up score of 0
+    if (!health) {
+        return (
+            <div className="page-container financial-health-page">
+                <div className="ds-card" style={{ padding: '2rem', textAlign: 'center' }}>
+                    <h3 style={{ marginTop: 0 }}>Financial health is unavailable</h3>
+                    <p style={{ color: 'var(--color-text-muted)' }}>{loadError || 'Could not load your financial health right now.'}</p>
+                    <button className="action-btn primary" onClick={() => refreshHealthData()} disabled={refreshing}>
+                        {refreshing ? 'Retrying...' : 'Retry'}
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
-    const scoreStatus = getScoreStatus(health.score);
-    const scoreColor = getScoreColor(health.score);
+    const hasScore = health.hasData && health.score !== null;
+    const score = health.score ?? 0;
+    const scoreStatus = hasScore
+        ? getHealthStatus(score)
+        : { label: 'No score yet', riskClass: 'none', color: '#94a3b8', description: noScoreMessage(health.noDataReason), risk: '-' };
+    const scoreColor = scoreStatus.color;
     const RADIUS = 54;
     const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-    const dashOffset = CIRCUMFERENCE - (health.score / 100) * CIRCUMFERENCE;
-
-    if (loading) return <div className="loading">Analyzing your financial health...</div>;
+    const dashOffset = CIRCUMFERENCE - (score / 100) * CIRCUMFERENCE;
 
     return (
         <div className="page-container financial-health-page">
@@ -185,13 +175,20 @@ export const FinancialHealthPage = () => {
                 </div>
             )}
 
+            {loadError && (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', marginBottom: '1rem', padding: '0.75rem 1rem', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.35)', color: '#ef4444' }}>
+                    <span>{loadError} Showing your last loaded numbers.</span>
+                    <button className="action-btn secondary small" onClick={() => refreshHealthData()}>Retry</button>
+                </div>
+            )}
+
             <div className="content-grid">
                 {/* Health Score Card */}
                 <div className="ds-card health-score-card" style={{ padding: '2rem' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2rem' }}>
                         <div style={{ textAlign: 'center' }}>
                             <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.25rem' }}>Your Financial Health Score</h3>
-                            <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>Overview of your financial stability</p>
+                            <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>Based on the last 30 days</p>
                         </div>
                         
                         <div className="score-ring-container" style={{ position: 'relative', width: '160px', height: '160px' }}>
@@ -223,7 +220,7 @@ export const FinancialHealthPage = () => {
                             </svg>
                             <div className="score-ring-center" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
                                 <span className="score-number" style={{ color: scoreColor, fontSize: '2.5rem', fontWeight: '800', lineHeight: '1', marginTop: '10px' }}>
-                                    {health.score}
+                                    {hasScore ? score : '—'}
                                 </span>
                                 <span style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)', fontWeight: '600' }}>Score</span>
                             </div>
@@ -231,13 +228,18 @@ export const FinancialHealthPage = () => {
 
                         {/* Status */}
                         <div className="score-status" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
-                            <span className={`status-text status-${scoreStatus.risk.toLowerCase()}`} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <span className={`status-text status-${scoreStatus.riskClass}`} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <span className="status-dot" aria-hidden="true" style={{ marginRight: '6px' }}>●</span>
                                 {scoreStatus.label}
                             </span>
                             <p className="status-description" style={{ marginTop: '0.25rem', margin: 0, textAlign: 'center' }}>
                                 {scoreStatus.description}
                             </p>
+                            {hasScore && (
+                                <p className="status-description" style={{ margin: 0, textAlign: 'center' }}>
+                                    Risk: <strong>{scoreStatus.risk}</strong>
+                                </p>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -274,7 +276,7 @@ export const FinancialHealthPage = () => {
                             <span className="score-stat-value" style={{ color: health.emergencyFundMonths >= 3 ? '#10b981' : '#f43f5e' }}>
                                 {health.emergencyFundMonths.toFixed(1)}m
                             </span>
-                            <span className="score-stat-label">Emergency Fund</span>
+                            <span className="score-stat-label" title={`Saved in emergency goals: ${formatMoney(health.emergencyFund)}, divided by the last 30 days of expenses`}>Emergency Fund</span>
                         </div>
                         <div className="score-stat-item">
                             <span className="score-stat-value">
@@ -315,17 +317,28 @@ export const FinancialHealthPage = () => {
                 <div className="ds-card peer-benchmarks-card full-width" style={{ padding: '2rem' }}>
                     <div style={{ marginBottom: '1.5rem' }}>
                         <h3 style={{ margin: '0 0 0.5rem 0' }}>How You Compare to Peers</h3>
-                        <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>Based on users with similar income levels</p>
+                        <p style={{ margin: 0, color: 'var(--color-text-muted)' }}>
+                            {peerBenchmarks.length > 0
+                                ? `Compared with ${peerInfo.peerCount} other MoneyManager users who have a score`
+                                : peerInfo.reason === 'not-enough-peers'
+                                    ? `The comparison appears once at least ${peerInfo.minPeers ?? 3} other users have a score (${peerInfo.peerCount} so far).`
+                                    : 'Get your own score first to compare with other users.'}
+                        </p>
                     </div>
+                    {peerBenchmarks.length > 0 && (
                     <div className="benchmarks-grid">
                         {peerBenchmarks.map((benchmark, index) => (
                             <div key={index} className="benchmark-item">
                                 <div className="benchmark-header">
                                     <h4>{benchmark.category}</h4>
-                                    <span className={`comparison-badge ${benchmark.comparison}`}>
-                                        {benchmark.comparison === 'above' ? 'Above Average' :
-                                            benchmark.comparison === 'below' ? 'Below Average' : 'Average'}
-                                    </span>
+                                    {(() => {
+                                        const verdict = benchmarkVerdict(benchmark);
+                                        return (
+                                            <span className={`comparison-badge ${verdict === 'better' ? 'above' : verdict === 'worse' ? 'below' : 'average'}`}>
+                                                {verdict === 'better' ? 'Better than average' : verdict === 'worse' ? 'Worse than average' : 'Average'}
+                                            </span>
+                                        );
+                                    })()}
                                 </div>
                                 <div className="benchmark-values">
                                     <div className="user-value">
@@ -338,7 +351,7 @@ export const FinancialHealthPage = () => {
                                     </div>
                                 </div>
                                 <div className="percentile">
-                                    <span>You're in the {benchmark.percentile}th percentile</span>
+                                    <span>Better than {benchmark.percentile}% of users</span>
                                     <div className="percentile-bar">
                                         <div
                                             className="percentile-fill"
@@ -349,14 +362,17 @@ export const FinancialHealthPage = () => {
                             </div>
                         ))}
                     </div>
+                    )}
+                    {peerBenchmarks.length > 0 && (
                     <div className="benchmark-insights" style={{ marginTop: '1.5rem' }}>
                         <div className="insight-card" style={{ display: 'flex', gap: '1rem', padding: '1.25rem', background: 'var(--color-surface-1)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
                             <div className="insight-content">
                                 <h4 style={{ margin: '0 0 0.25rem 0', color: 'var(--color-text)' }}>Key Finding</h4>
-                                <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.95rem' }}>Your financial health is significantly below peers. Focus on reducing entertainment spending and building emergency savings.</p>
+                                <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.95rem' }}>{keyFinding(peerBenchmarks)}</p>
                             </div>
                         </div>
                     </div>
+                    )}
                 </div>
             </div>
             <AIAssistant open={aiOpen} onOpenChange={setAiOpen} />

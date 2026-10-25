@@ -8,6 +8,7 @@ import {
   formatChatHistory,
 } from "../ai/prompts/chatCoach.prompt";
 import { ChatSessionService } from "./chatSession.service";
+import { loadFinancialContext } from "./coach-context.service";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -47,26 +48,29 @@ export class ChatCoachService {
 
   // ─── Send Message ─────────────────────────────────────────────────────────
 
-  async sendMessage(
-    request: SendMessageRequest,
-    financialContext?: UserFinancialContext,
-  ): Promise<SendMessageResponse> {
-    // 1️⃣ Get or create session
+  async sendMessage(request: SendMessageRequest): Promise<SendMessageResponse> {
+    // 1️⃣ Get the user's own session, or start a new one
     let session = request.sessionId
-      ? this.sessionService.getSession(request.sessionId)
+      ? await this.sessionService.getSession(request.sessionId, request.userId)
       : null;
 
     if (!session) {
-      session = this.sessionService.createSession(request.userId);
+      session = await this.sessionService.createSession(request.userId);
     }
 
     // 2️⃣ Save user message to session
-    this.sessionService.addMessage(session.sessionId, "user", request.message);
+    await this.sessionService.addMessage(session.sessionId, request.userId, "user", request.message);
 
-    // 3️⃣ Build system prompt (with or without financial context)
-    const systemPrompt = buildCoachSystemPrompt(
-      request.includeFinancialContext ? financialContext : undefined,
-    );
+    // 3️⃣ Build system prompt with the user's real data (loaded on the server, never taken from the request)
+    let financialContext: UserFinancialContext | undefined;
+    if (request.includeFinancialContext !== false) {
+      try {
+        financialContext = await loadFinancialContext(request.userId);
+      } catch (error) {
+        console.error("Could not load financial context for the coach:", error);
+      }
+    }
+    const systemPrompt = buildCoachSystemPrompt(financialContext);
 
     // 4️⃣ Format chat history for Gemini
     const chatHistory = formatChatHistory(
@@ -124,8 +128,9 @@ export class ChatCoachService {
       "Sorry, I couldn't generate a response. Please try again.";
 
     // 7️⃣ Save AI reply to session
-    const aiMessage = this.sessionService.addMessage(
+    const aiMessage = await this.sessionService.addMessage(
       session.sessionId,
+      request.userId,
       "assistant",
       aiText,
     );
@@ -140,15 +145,20 @@ export class ChatCoachService {
 
   // ─── Get Chat History ─────────────────────────────────────────────────────
 
-  getChatHistory(sessionId: string) {
-    const session = this.sessionService.getSession(sessionId);
+  async getChatHistory(sessionId: string, userId: string) {
+    const session = await this.sessionService.getSession(sessionId, userId);
     if (!session) throw new Error(`Session ${sessionId} not found`);
     return session.messages;
   }
 
+  // The user's latest conversation, so the chat can be restored after a refresh
+  async getLatestSession(userId: string) {
+    return this.sessionService.getLatestSession(userId);
+  }
+
   // ─── Clear Chat ───────────────────────────────────────────────────────────
 
-  clearChat(sessionId: string): void {
-    this.sessionService.clearSession(sessionId);
+  async clearChat(sessionId: string, userId: string): Promise<boolean> {
+    return this.sessionService.clearSession(sessionId, userId);
   }
 }

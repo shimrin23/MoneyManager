@@ -7,7 +7,8 @@ import { notify } from '../utils/systemMessages';
 import axios from 'axios';
 import { AIAssistant } from './AIAssistant';
 import { SpendingTrends } from './SpendingTrends';
-import { IconActivity, IconRefreshCw, IconRepeat, IconBrain } from './Icons';
+import { IconRefreshCw, IconRepeat, IconBrain } from './Icons';
+import { getHealthStatus, noScoreMessage } from '../utils/healthScore';
 
 // Minimal layout: balance across all recorded transactions, and this month's income and expenses
 const BalanceSummary = () => {
@@ -66,6 +67,9 @@ export const Dashboard = () => {
     const navigate = useNavigate();
     const [aiOpen, setAiOpen] = useState(false);
     const [score, setScore] = useState<number>(0);
+    // 'none' = not enough data for a score yet; 'error' = the score could not be loaded
+    const [scoreState, setScoreState] = useState<'ok' | 'none' | 'error'>('ok');
+    const [noDataReason, setNoDataReason] = useState<string | null>(null);
     const [savingsRate, setSavingsRate] = useState<number | null>(null);
     const [loadingScore, setLoadingScore] = useState<boolean>(true);
     const [transactions, setTransactions] = useState<any[]>([]);
@@ -89,12 +93,19 @@ export const Dashboard = () => {
         const fetchScore = async () => {
             try {
                 const response = await apiClient.get('/transactions/score');
-                setScore(response.data.score);
-                if (response.data.metrics && typeof response.data.metrics.savingsRate === 'number') {
-                    setSavingsRate(response.data.metrics.savingsRate);
+                if (typeof response.data.score === 'number') {
+                    setScore(response.data.score);
+                    setScoreState('ok');
+                    if (response.data.metrics && typeof response.data.metrics.savingsRate === 'number') {
+                        setSavingsRate(response.data.metrics.savingsRate);
+                    }
+                } else {
+                    setScoreState('none');
+                    setNoDataReason(response.data.noDataReason ?? null);
                 }
             } catch {
                 console.error('Failed to fetch score');
+                setScoreState('error');
             } finally {
                 setLoadingScore(false);
             }
@@ -138,23 +149,17 @@ export const Dashboard = () => {
         }
     };
 
-    const getScoreColor = (s: number) => {
-        if (s >= 70) return '#10b981';
-        if (s >= 40) return '#f59e0b';
-        return '#ef4444';
-    };
-
-    const getStatusLabel = (s: number) => {
-        if (s >= 70) return 'Excellent';
-        if (s >= 40) return 'Needs Work';
-        return 'Critical';
-    };
-
-    const getRiskLevel = (s: number) => {
-        if (s >= 70) return 'Low';
-        if (s >= 40) return 'Medium';
-        return 'High';
-    };
+    // Same scale as the Financial Health page
+    const hasScore = scoreState === 'ok';
+    const healthStatus = hasScore
+        ? getHealthStatus(score)
+        : {
+            label: scoreState === 'error' ? 'Unavailable' : 'No score yet',
+            risk: '—',
+            riskClass: 'none',
+            color: '#94a3b8',
+            description: scoreState === 'error' ? 'Could not load your score. Please refresh the page.' : noScoreMessage(noDataReason),
+        };
 
     const formatDate = (dateString: string) => {
         return formatAppDate(dateString);
@@ -168,7 +173,7 @@ export const Dashboard = () => {
     // SVG ring values
     const RADIUS = 54;
     const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
-    const scoreColor = getScoreColor(score);
+    const scoreColor = healthStatus.color;
     const dashOffset = CIRCUMFERENCE - (displayScore / 100) * CIRCUMFERENCE;
 
     return (
@@ -184,7 +189,7 @@ export const Dashboard = () => {
                     <div className="score-card-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%', margin: 0 }}>
                         <div>
                             <div className="ds-card-title">Financial Health</div>
-                            <div className="ds-card-subtitle">Based on your transactions</div>
+                            <div className="ds-card-subtitle">Based on the last 30 days</div>
                         </div>
                     </div>
 
@@ -229,21 +234,19 @@ export const Dashboard = () => {
                             {/* Center label */}
                             <div className="score-ring-center">
                                 <span className="score-number" style={{ color: scoreColor }}>
-                                    {loadingScore ? '…' : displayScore}
+                                    {loadingScore ? '…' : hasScore ? displayScore : '—'}
                                 </span>
                             </div>
                         </div>
 
                         {/* Status */}
                         <div className="score-status" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
-                            <span className={`status-text status-${getRiskLevel(score).toLowerCase()}`} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <span className={`status-text status-${healthStatus.riskClass}`} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                                 <span className="status-dot" aria-hidden="true">●</span>
-                                {getStatusLabel(score)}
+                                {healthStatus.label}
                             </span>
                             <p className="status-description" style={{ marginTop: '0.25rem', margin: 0 }}>
-                                {score >= 70 ? 'Great financial habits! Keep it up.' :
-                                 score >= 40 ? 'Good start — there\'s room to grow.' :
-                                 'Attention needed — let\'s improve together.'}
+                                {healthStatus.description}
                             </p>
                         </div>
                     </div>
@@ -257,18 +260,18 @@ export const Dashboard = () => {
                     >
                         <div className="score-stat-item">
                             <span className="score-stat-value" style={{ color: scoreColor }}>
-                                {loadingScore ? '—' : `${score}%`}
+                                {loadingScore || !hasScore ? '—' : score}
                             </span>
                             <span className="score-stat-label">Score</span>
                         </div>
                         <div className="score-stat-item">
                             <span className="score-stat-value" style={{ color: savingsRate !== null && savingsRate >= 0 ? '#10b981' : '#f43f5e' }}>
-                                {loadingScore ? '—' : savingsRate !== null ? `${Math.round(savingsRate * 100)}%` : '0%'}
+                                {loadingScore || !hasScore ? '—' : savingsRate !== null ? `${Math.round(savingsRate * 100)}%` : '0%'}
                             </span>
                             <span className="score-stat-label">Savings</span>
                         </div>
                         <div className="score-stat-item">
-                            <span className="score-stat-value">{getRiskLevel(score)}</span>
+                            <span className="score-stat-value">{loadingScore ? '—' : healthStatus.risk}</span>
                             <span className="score-stat-label">Risk</span>
                         </div>
                     </div>

@@ -1,11 +1,11 @@
 import { randomUUID } from "crypto";
+import ChatSessionModel from "../schemas/chat_session.schema";
 import { ChatSession, ChatMessage, MessageRole } from "../types/chat.types";
 
 /**
- * In-memory session store (replace with Redis/DB in production)
+ * Chat sessions are stored in MongoDB, so a conversation is still there after a page
+ * refresh or a server restart. Every lookup is limited to the session's owner.
  */
-const sessionStore = new Map<string, ChatSession>();
-
 export class ChatSessionService {
   private maxHistory: number;
 
@@ -13,36 +13,53 @@ export class ChatSessionService {
     this.maxHistory = Number(process.env.CHAT_MAX_HISTORY) || 20;
   }
 
+  private toSession(doc: any): ChatSession {
+    return {
+      sessionId: doc.sessionId,
+      userId: doc.userId,
+      messages: (doc.messages || []).map((m: ChatMessage) => ({
+        id: m.id,
+        role: m.role,
+        content: m.content,
+        timestamp: m.timestamp,
+      })),
+      createdAt: new Date(doc.createdAt).toISOString(),
+      updatedAt: new Date(doc.updatedAt).toISOString(),
+    };
+  }
+
   // ─── Create Session ─────────────────────────────────────────────────────────
 
-  createSession(userId: string): ChatSession {
-    const session: ChatSession = {
+  async createSession(userId: string): Promise<ChatSession> {
+    const doc = await ChatSessionModel.create({
       sessionId: randomUUID(),
       userId,
       messages: [],
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    sessionStore.set(session.sessionId, session);
-    return session;
+    });
+    return this.toSession(doc);
   }
 
-  // ─── Get Session ────────────────────────────────────────────────────────────
+  // ─── Get Session (only the owner's) ─────────────────────────────────────────
 
-  getSession(sessionId: string): ChatSession | null {
-    return sessionStore.get(sessionId) || null;
+  async getSession(sessionId: string, userId: string): Promise<ChatSession | null> {
+    const doc = await ChatSessionModel.findOne({ sessionId, userId }).lean();
+    return doc ? this.toSession(doc) : null;
+  }
+
+  // The user's most recent conversation, used to restore the chat when it is opened
+  async getLatestSession(userId: string): Promise<ChatSession | null> {
+    const doc = await ChatSessionModel.findOne({ userId }).sort({ updatedAt: -1 }).lean();
+    return doc ? this.toSession(doc) : null;
   }
 
   // ─── Add Message ────────────────────────────────────────────────────────────
 
-  addMessage(
+  async addMessage(
     sessionId: string,
+    userId: string,
     role: MessageRole,
     content: string,
-  ): ChatMessage {
-    const session = this.getSession(sessionId);
-    if (!session) throw new Error(`Session ${sessionId} not found`);
-
+  ): Promise<ChatMessage> {
     const message: ChatMessage = {
       id: randomUUID(),
       role,
@@ -50,27 +67,27 @@ export class ChatSessionService {
       timestamp: new Date().toISOString(),
     };
 
-    session.messages.push(message);
-    session.updatedAt = new Date().toISOString();
-
     // Keep only last N messages to manage token limits
-    if (session.messages.length > this.maxHistory) {
-      session.messages = session.messages.slice(-this.maxHistory);
-    }
-
-    sessionStore.set(sessionId, session);
+    const updated = await ChatSessionModel.findOneAndUpdate(
+      { sessionId, userId },
+      { $push: { messages: { $each: [message], $slice: -this.maxHistory } } },
+      { new: true },
+    );
+    if (!updated) throw new Error(`Session ${sessionId} not found`);
     return message;
   }
 
   // ─── Clear Session ───────────────────────────────────────────────────────────
 
-  clearSession(sessionId: string): void {
-    sessionStore.delete(sessionId);
+  async clearSession(sessionId: string, userId: string): Promise<boolean> {
+    const result = await ChatSessionModel.deleteOne({ sessionId, userId });
+    return result.deletedCount > 0;
   }
 
   // ─── Get All Sessions for User ───────────────────────────────────────────────
 
-  getUserSessions(userId: string): ChatSession[] {
-    return Array.from(sessionStore.values()).filter((s) => s.userId === userId);
+  async getUserSessions(userId: string): Promise<ChatSession[]> {
+    const docs = await ChatSessionModel.find({ userId }).sort({ updatedAt: -1 }).lean();
+    return docs.map((d) => this.toSession(d));
   }
 }

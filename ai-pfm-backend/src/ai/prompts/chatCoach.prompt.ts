@@ -47,12 +47,13 @@ ${context.financialGoals
 👤 USER FINANCIAL PROFILE
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Currency        : ${context.currency}
-Monthly Income  : ${context.currency}${context.monthlyIncome.toFixed(2)}
+Figures cover   : ${context.period || "the current month"}
+Monthly Income  :${context.currency}${context.monthlyIncome.toFixed(2)}
 Monthly Expenses: ${context.currency}${context.monthlyExpenses.toFixed(2)}
 Savings Rate    : ${context.savingsRate.toFixed(1)}%
 
-Top Spending Categories:
-${context.topSpendingCategories
+Spending by Category:
+${context.topSpendingCategories.length === 0 ? "  - No expenses recorded yet" : ""}${context.topSpendingCategories
   .map(
     (c) =>
       `  - ${c.name}: ${context.currency}${c.amount.toFixed(
@@ -73,7 +74,9 @@ ${context.recentTransactions
   .join("\n")}
 ${goalsSection}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-Use this data to give personalized advice. Reference specific numbers when relevant.`;
+Use this data to give personalized advice. Reference specific numbers when relevant.
+This is the user's own data from the app: answer questions about their spending from it.
+If something isn't in this data, say so instead of guessing.`;
 
   return `${basePrompt}\n\n${contextPrompt}`;
 };
