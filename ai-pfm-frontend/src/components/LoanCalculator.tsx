@@ -1,23 +1,40 @@
 import { useState, type FC } from 'react';
 import { useLoans } from '../hooks/useLoans';
+import { notify } from '../utils/systemMessages';
 import './LoanCalculator.css';
+
+interface LoanFormValues {
+    type: string;
+    provider: string;
+    principal: string;
+    interestRate: string;
+    tenure: string;
+    startDate: string;
+    customNotes: string;
+}
 
 interface LoanCalculatorProps {
     onLoanCreated?: () => void;
+    // Pre-fills the form, e.g. when "Recalculate" is clicked on an existing loan
+    initialValues?: LoanFormValues;
+    // Recalculate an existing loan: show the numbers but don't offer to create a new loan
+    previewOnly?: boolean;
 }
 
-const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated }) => {
+const emptyForm = (): LoanFormValues => ({
+    type: 'Personal',
+    provider: '',
+    principal: '',
+    interestRate: '',
+    tenure: '',
+    startDate: new Date().toISOString().split('T')[0],
+    customNotes: ''
+});
+
+const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues, previewOnly = false }) => {
     const { calculateEMI, getSchedule, createLoan } = useLoans();
 
-    const [formData, setFormData] = useState({
-        type: 'Personal',
-        provider: '',
-        principal: '',
-        interestRate: '',
-        tenure: '',
-        startDate: new Date().toISOString().split('T')[0],
-        customNotes: ''
-    });
+    const [formData, setFormData] = useState<LoanFormValues>(initialValues || emptyForm());
 
     const [result, setResult] = useState<any>(null);
     const [schedule, setSchedule] = useState<any[]>([]);
@@ -27,6 +44,7 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated }) => {
 
     const handleCalculate = async () => {
         const newErrors: string[] = [];
+        if (!previewOnly && !formData.provider.trim()) newErrors.push('Enter the provider / bank name');
         if (!formData.principal || Number(formData.principal) <= 0) newErrors.push('Enter valid principal amount');
         if (formData.interestRate === '' || Number(formData.interestRate) < 0) newErrors.push('Enter valid interest rate');
         if (!formData.tenure || Number(formData.tenure) <= 0) newErrors.push('Enter valid tenure (months)');
@@ -76,18 +94,11 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated }) => {
                 customNotes: formData.customNotes
             });
 
-            setFormData({
-                type: 'Personal',
-                provider: '',
-                principal: '',
-                interestRate: '',
-                tenure: '',
-                startDate: new Date().toISOString().split('T')[0],
-                customNotes: ''
-            });
+            setFormData(emptyForm());
             setResult(null);
             setSchedule([]);
             setStep(1);
+            notify.success('Loan created.');
             onLoanCreated?.();
         } catch (err: any) {
             setErrors([err.message]);
@@ -99,6 +110,12 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated }) => {
     return (
         <div className="loan-calculator">
             <h2>EMI Calculator</h2>
+            {previewOnly && (
+                <p style={{ color: 'var(--color-text-muted)', marginTop: 0 }}>
+                    Recalculating {formData.type} loan from {formData.provider}. Change the values to compare.
+                    To change the loan itself, use <strong>Edit</strong> on the loan card.
+                </p>
+            )}
 
             {errors.length > 0 && (
                 <div className="error-box">
@@ -235,9 +252,11 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated }) => {
                         <button onClick={() => setStep(1)} className="btn-secondary">
                             Back
                         </button>
-                        <button onClick={handleCreateLoan} disabled={loading} className="btn-primary">
-                            {loading ? 'Creating...' : 'Create Loan'}
-                        </button>
+                        {!previewOnly && (
+                            <button onClick={handleCreateLoan} disabled={loading} className="btn-primary">
+                                {loading ? 'Creating...' : 'Create Loan'}
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
@@ -275,9 +294,11 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated }) => {
                         <button onClick={() => setStep(2)} className="btn-secondary">
                             Back
                         </button>
-                        <button onClick={handleCreateLoan} disabled={loading} className="btn-primary">
-                            {loading ? 'Creating...' : 'Create Loan'}
-                        </button>
+                        {!previewOnly && (
+                            <button onClick={handleCreateLoan} disabled={loading} className="btn-primary">
+                                {loading ? 'Creating...' : 'Create Loan'}
+                            </button>
+                        )}
                     </div>
                 </div>
             )}

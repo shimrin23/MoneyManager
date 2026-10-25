@@ -1,5 +1,5 @@
-import { useState, type FC, type FormEvent } from 'react';
-import { confirmDialog } from '../utils/systemMessages';
+import { useEffect, useState, type FC, type FormEvent } from 'react';
+import { confirmDialog, notify, promptDialog } from '../utils/systemMessages';
 import { useLoans } from '../hooks/useLoans';
 import LoanCalculator from './LoanCalculator';
 import ActiveLoanCards from './ActiveLoanCards';
@@ -14,9 +14,12 @@ import './LoansPage.css';
 type TabType = 'overview' | 'calculator' | 'schedule' | 'strategies' | 'simulation' | 'insights' | 'ratio';
 
 const LoansPage: FC = () => {
-    const { loans, loading, error, fetchLoans, updateLoan, deleteLoan } = useLoans();
+    const { loans, loading, error, fetchLoans, updateLoan, deleteLoan, recordPayment, getDebtPayoffStrategies } = useLoans();
     const [activeTab, setActiveTab] = useState<TabType>('overview');
     const [selectedLoan, setSelectedLoan] = useState<string | null>(null);
+    const [recalculateLoanId, setRecalculateLoanId] = useState<string | null>(null);
+    const [strategies, setStrategies] = useState<Parameters<typeof DebtPayoffStrategies>[0]['strategies']>([]);
+    const [strategiesLoading, setStrategiesLoading] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editError, setEditError] = useState<string | null>(null);
     const [editForm, setEditForm] = useState({
@@ -31,6 +34,21 @@ const LoansPage: FC = () => {
 
     const activeLoan = selectedLoan ? loans.find(l => l._id === selectedLoan) : null;
     const activeLoanIds = loans.filter(l => l.status === 'Active').map(l => l._id);
+    const recalculateLoan = recalculateLoanId ? loans.find(l => l._id === recalculateLoanId) : null;
+
+    // Load the real snowball / avalanche comparison whenever the Strategies tab is opened
+    useEffect(() => {
+        if (activeTab !== 'strategies') return;
+        setStrategiesLoading(true);
+        getDebtPayoffStrategies()
+            .then((result) => setStrategies(result || []))
+            .catch((err) => {
+                setStrategies([]);
+                notify.error(err.message || 'Failed to load payoff strategies.');
+            })
+            .finally(() => setStrategiesLoading(false));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [activeTab, loans]);
 
     const handleViewSchedule = (loanId: string) => {
         setSelectedLoan(loanId);
@@ -38,16 +56,44 @@ const LoansPage: FC = () => {
     };
 
     const handleRecalculate = (loanId: string) => {
-        setSelectedLoan(loanId);
+        setRecalculateLoanId(loanId);
         setActiveTab('calculator');
     };
 
-    const handleMakePayment = (loanId: string) => {
-        // This would open a payment modal
-        setSelectedLoan(loanId);
+    const handleMakePayment = async (loanId: string) => {
+        const loan = loans.find(l => l._id === loanId);
+        if (!loan) return;
+
+        const remaining = Number(loan.remainingAmount);
+        const suggested = Math.min(Number(loan.monthlyInstallment), remaining);
+        const input = await promptDialog({
+            title: 'Pay EMI',
+            message: `${loan.type} loan (${loan.provider}): Rs ${remaining.toFixed(2)} remaining. Monthly EMI: Rs ${Number(loan.monthlyInstallment).toFixed(2)}.`,
+            label: 'Payment amount (Rs)',
+            inputType: 'number',
+            defaultValue: suggested.toFixed(2),
+            confirmText: 'Pay',
+            validate: (value) => {
+                const amount = Number(value);
+                if (!value.trim() || !Number.isFinite(amount) || amount <= 0) return 'Please enter an amount greater than 0.';
+                if (amount > remaining + 0.01) return `Payment cannot be more than the remaining Rs ${remaining.toFixed(2)}.`;
+                return null;
+            },
+        });
+        if (input === null) return; // Cancelled
+
+        try {
+            const updated = await recordPayment(loanId, Number(input));
+            await fetchLoans();
+            if (updated?.status === 'Closed') notify.success(`Loan fully paid and closed. Well done!`);
+            else notify.success(`Payment of Rs ${Number(input).toFixed(2)} recorded.`);
+        } catch (err) {
+            notify.error(err instanceof Error ? err.message : 'Failed to record payment.');
+        }
     };
 
     const handleAddLoan = () => {
+        setRecalculateLoanId(null);
         setActiveTab('calculator');
     };
 
@@ -82,16 +128,17 @@ const LoansPage: FC = () => {
         setEditError(null);
 
         try {
+            // EMI is not sent: the server recalculates it from the rate and tenure
             await updateLoan(editForm.loanId, {
                 provider: editForm.provider,
                 interestRate: Number(editForm.interestRate),
                 tenure: Number(editForm.tenure),
-                monthlyInstallment: Number(editForm.monthlyInstallment),
                 status: editForm.status,
                 nextDueDate: editForm.nextDueDate ? new Date(editForm.nextDueDate) : undefined
             });
             setShowEditModal(false);
-            fetchLoans();
+            await fetchLoans();
+            notify.success('Loan updated.');
         } catch (err: any) {
             setEditError(err.message || 'Failed to update loan');
         }
@@ -108,11 +155,32 @@ const LoansPage: FC = () => {
 
         try {
             await deleteLoan(loanId);
-            fetchLoans();
-        } catch (err: any) {
-            setEditError(err.message || 'Failed to delete loan');
+            if (selectedLoan === loanId) setSelectedLoan(null);
+            await fetchLoans();
+            notify.success('Loan deleted.');
+        } catch (err) {
+            notify.error(err instanceof Error ? err.message : 'Failed to delete loan.');
         }
     };
+
+    // Lets the Schedule and Simulation tabs pick a loan directly
+    const loanSelector = (
+        <div className="form-group loan-selector" style={{ maxWidth: '420px', marginBottom: '1.25rem' }}>
+            <label htmlFor="loan-selector">Loan</label>
+            <select
+                id="loan-selector"
+                value={selectedLoan || ''}
+                onChange={(e) => setSelectedLoan(e.target.value || null)}
+            >
+                <option value="">Select a loan…</option>
+                {loans.map(l => (
+                    <option key={l._id} value={l._id}>
+                        {l.type} – {l.provider} (Rs {Number(l.principal).toLocaleString()}){l.status !== 'Active' ? ` · ${l.status}` : ''}
+                    </option>
+                ))}
+            </select>
+        </div>
+    );
 
     if (loading) {
         return <div className="loans-page loading">Loading loans...</div>;
@@ -143,7 +211,7 @@ const LoansPage: FC = () => {
                 </button>
                 <button
                     className={`rec-filter-btn ${activeTab === 'calculator' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('calculator')}
+                    onClick={handleAddLoan}
                 >
                     Calculator
                 </button>
@@ -206,47 +274,61 @@ const LoansPage: FC = () => {
 
                 {activeTab === 'calculator' && (
                     <div className="tab-pane">
-                        <LoanCalculator onLoanCreated={() => { fetchLoans(); setActiveTab('overview'); }} />
-                    </div>
-                )}
-
-                {activeTab === 'schedule' && activeLoan && (
-                    <div className="tab-pane">
-                        <RepaymentSchedule
-                            schedule={activeLoan.paymentSchedule || []}
-                            loanType={activeLoan.type}
-                            monthlyEMI={activeLoan.monthlyInstallment}
+                        <LoanCalculator
+                            key={recalculateLoan?._id || 'new'}
+                            initialValues={recalculateLoan ? {
+                                type: recalculateLoan.type,
+                                provider: recalculateLoan.provider,
+                                principal: String(recalculateLoan.principal),
+                                interestRate: String(recalculateLoan.interestRate),
+                                tenure: String(recalculateLoan.tenure),
+                                startDate: new Date(recalculateLoan.startDate).toISOString().split('T')[0],
+                                customNotes: recalculateLoan.customNotes || ''
+                            } : undefined}
+                            previewOnly={!!recalculateLoan}
+                            onLoanCreated={() => { fetchLoans(); setActiveTab('overview'); }}
                         />
                     </div>
                 )}
 
-                {activeTab === 'schedule' && !activeLoan && (
+                {activeTab === 'schedule' && (
                     <div className="tab-pane">
-                        <p className="empty-state">Select a loan to view its schedule</p>
+                        {loanSelector}
+                        {activeLoan ? (
+                            <RepaymentSchedule
+                                schedule={activeLoan.paymentSchedule || []}
+                                loanType={activeLoan.type}
+                                monthlyEMI={activeLoan.monthlyInstallment}
+                            />
+                        ) : (
+                            <p className="empty-state">Select a loan to view its schedule</p>
+                        )}
                     </div>
                 )}
 
                 {activeTab === 'strategies' && (
                     <div className="tab-pane">
-                        <DebtPayoffStrategies strategies={[]} />
+                        {strategiesLoading
+                            ? <p className="empty-state">Comparing payoff strategies…</p>
+                            : <DebtPayoffStrategies strategies={strategies} />}
                     </div>
                 )}
 
-                {activeTab === 'simulation' && activeLoan && (
+                {activeTab === 'simulation' && (
                     <div className="tab-pane">
-                        <WhatIfSimulation
-                            loanId={activeLoan._id}
-                            currentEMI={activeLoan.monthlyInstallment}
-                            remainingBalance={activeLoan.remainingAmount}
-                            tenure={activeLoan.tenure}
-                            interestRate={activeLoan.interestRate}
-                        />
-                    </div>
-                )}
-
-                {activeTab === 'simulation' && !activeLoan && (
-                    <div className="tab-pane">
-                        <p className="empty-state">Select a loan to run simulations</p>
+                        {loanSelector}
+                        {activeLoan ? (
+                            <WhatIfSimulation
+                                key={activeLoan._id}
+                                loanId={activeLoan._id}
+                                currentEMI={activeLoan.monthlyInstallment}
+                                remainingBalance={activeLoan.remainingAmount}
+                                tenure={activeLoan.tenure}
+                                interestRate={activeLoan.interestRate}
+                            />
+                        ) : (
+                            <p className="empty-state">Select a loan to run simulations</p>
+                        )}
                     </div>
                 )}
 
@@ -306,12 +388,10 @@ const LoansPage: FC = () => {
                                 </div>
                                 <div className="form-group">
                                     <label>Monthly EMI (Rs)</label>
-                                    <input
-                                        type="number"
-                                        value={editForm.monthlyInstallment}
-                                        onChange={(e) => handleEditChange('monthlyInstallment', e.target.value)}
-                                        required
-                                    />
+                                    <input type="text" value={Number(editForm.monthlyInstallment).toFixed(2)} readOnly disabled />
+                                    <small style={{ color: 'var(--color-text-muted)' }}>
+                                        Recalculated automatically when you change the rate or tenure.
+                                    </small>
                                 </div>
                             </div>
                             <div className="form-row">

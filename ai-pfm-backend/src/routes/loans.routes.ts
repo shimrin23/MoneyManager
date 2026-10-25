@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { Request, Response } from 'express';
+import mongoose from 'mongoose';
 import Loan from '../schemas/loan.schema';
 import User from '../schemas/user.schema';
 import LoanService from '../services/loan.service';
@@ -10,13 +11,34 @@ const router = Router();
 // Apply authentication middleware to all routes
 router.use(authenticateToken);
 
+const LOAN_TYPES = ['Personal', 'Home', 'Vehicle', 'Education', 'Lease', 'Pawning'];
+const LOAN_STATUSES = ['Active', 'Closed', 'Overdue'];
+
+const toNumber = (value: unknown) => (value === '' || value === null || value === undefined ? NaN : Number(value));
+
+// Returns an error message, or null when the loan terms are usable
+const validateLoanTerms = (principal: number, interestRate: number, tenure: number) => {
+    if (!Number.isFinite(principal) || principal <= 0) return 'Principal must be more than 0';
+    if (!Number.isFinite(interestRate) || interestRate < 0 || interestRate > 100) return 'Interest rate must be between 0 and 100';
+    if (!Number.isInteger(tenure) || tenure <= 0 || tenure > 600) return 'Tenure must be a whole number of months between 1 and 600';
+    return null;
+};
+
+// The user's own monthly income from Profile, or 0 when they have not entered one
+const getMonthlyIncome = async (userId: string) => {
+    const user = await User.findById(userId).select('monthlyIncome');
+    const income = Number(user?.monthlyIncome);
+    return Number.isFinite(income) && income > 0 ? income : 0;
+};
+
 // POST /api/loans/calculate-emi - Calculate EMI
 router.post('/calculate-emi', async (req: Request, res: Response) => {
     try {
         const { principal, annualInterestRate, tenureMonths } = req.body;
 
-        if (!principal || annualInterestRate === undefined || !tenureMonths) {
-            return res.status(400).json({ error: 'Principal, interest rate, and tenure are required' });
+        const termsError = validateLoanTerms(toNumber(principal), toNumber(annualInterestRate), toNumber(tenureMonths));
+        if (termsError) {
+            return res.status(400).json({ error: termsError });
         }
 
         const result = LoanService.calculateEMI({
@@ -37,8 +59,9 @@ router.post('/repayment-schedule', async (req: Request, res: Response) => {
     try {
         const { principal, annualInterestRate, tenureMonths, startDate } = req.body;
 
-        if (!principal || annualInterestRate === undefined || !tenureMonths) {
-            return res.status(400).json({ error: 'Principal, interest rate, and tenure are required' });
+        const termsError = validateLoanTerms(toNumber(principal), toNumber(annualInterestRate), toNumber(tenureMonths));
+        if (termsError) {
+            return res.status(400).json({ error: termsError });
         }
 
         const schedule = LoanService.generateRepaymentSchedule(
@@ -93,16 +116,28 @@ router.get('/loan-to-income-ratio', async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user.id;
         const loans = await Loan.find({ userId, status: 'Active' });
+        const monthlyIncome = await getMonthlyIncome(userId);
 
-        const user = await User.findById(userId);
-        const monthlyIncome = user?.monthlyIncome || 50000;
+        const totalMonthlyEMI = Math.round(loans.reduce((sum, loan) => sum + loan.monthlyInstallment, 0) * 100) / 100;
 
-        const totalMonthlyEMI = loans.reduce((sum, loan) => sum + loan.monthlyInstallment, 0);
+        // Without a real income the ratio would be made up, so ask the user for it instead
+        if (monthlyIncome === 0) {
+            return res.json({
+                totalMonthlyEMI,
+                monthlyIncome: 0,
+                incomeMissing: true,
+                ratio: null,
+                riskLevel: null,
+                recommendation: 'Add your monthly income in your Profile to see your debt-to-income ratio.'
+            });
+        }
+
         const ratio = LoanService.calculateLoanToIncomeRatio(totalMonthlyEMI, monthlyIncome);
 
         res.json({
             totalMonthlyEMI,
             monthlyIncome,
+            incomeMissing: false,
             ...ratio
         });
     } catch (error) {
@@ -116,9 +151,7 @@ router.get('/ai-insights', async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user.id;
         const loans = await Loan.find({ userId });
-
-        const user = await User.findById(userId);
-        const monthlyIncome = user?.monthlyIncome || 50000;
+        const monthlyIncome = await getMonthlyIncome(userId);
 
         const insights = await LoanService.generateLoanInsights(loans, monthlyIncome);
 
@@ -145,23 +178,35 @@ router.get('/', async (req: Request, res: Response) => {
 router.post('/', async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user.id;
-        const { type, provider, principal, interestRate, tenure, startDate, customNotes } = req.body;
+        const { type, interestRate, tenure, startDate, customNotes } = req.body;
+        const provider = typeof req.body.provider === 'string' ? req.body.provider.trim() : '';
+        const principal = toNumber(req.body.principal);
 
-        if (!type || !provider || !principal || interestRate === undefined || !tenure) {
-            return res.status(400).json({ error: 'Type, provider, principal, interest rate, and tenure are required' });
+        if (!LOAN_TYPES.includes(type)) {
+            return res.status(400).json({ error: 'Please choose a valid loan type' });
+        }
+        if (!provider) {
+            return res.status(400).json({ error: 'Provider / bank is required' });
+        }
+        const termsError = validateLoanTerms(principal, toNumber(interestRate), toNumber(tenure));
+        if (termsError) {
+            return res.status(400).json({ error: termsError });
+        }
+        const scheduleStartDate = startDate ? new Date(startDate) : new Date();
+        if (isNaN(scheduleStartDate.getTime())) {
+            return res.status(400).json({ error: 'Start date is not valid' });
         }
 
         // Calculate EMI
         const emiResult = LoanService.calculateEMI({
-            principal: Number(principal),
+            principal,
             annualInterestRate: Number(interestRate),
             tenureMonths: Number(tenure)
         });
 
         // Generate repayment schedule
-        const scheduleStartDate = startDate ? new Date(startDate) : new Date();
         const paymentSchedule = LoanService.generateRepaymentSchedule(
-            Number(principal),
+            principal,
             Number(interestRate),
             Number(tenure),
             scheduleStartDate
@@ -175,7 +220,7 @@ router.post('/', async (req: Request, res: Response) => {
             userId,
             type,
             provider,
-            principal: Number(principal),
+            principal,
             totalAmount: emiResult.totalPayable,
             remainingAmount: emiResult.totalPayable,
             interestRate: Number(interestRate),
@@ -183,7 +228,8 @@ router.post('/', async (req: Request, res: Response) => {
             monthlyInstallment: emiResult.monthlyEMI,
             totalInterest: emiResult.totalInterest,
             startDate: scheduleStartDate,
-            nextDueDate: new Date(scheduleStartDate.getTime() + 30 * 24 * 60 * 60 * 1000),
+            // First installment is due one month after the start date (same as the schedule)
+            nextDueDate: paymentSchedule[0].dueDate,
             endDate,
             status: 'Active',
             paymentSchedule,
@@ -203,18 +249,71 @@ router.put('/:id', async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user.id;
         const { id } = req.params;
-        const updates = req.body;
 
-        const loan = await Loan.findOneAndUpdate(
-            { _id: id, userId },
-            updates,
-            { new: true }
-        );
-
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(404).json({ error: 'Loan not found' });
+        }
+        const loan = await Loan.findOne({ _id: id, userId });
         if (!loan) {
             return res.status(404).json({ error: 'Loan not found' });
         }
 
+        // Only these fields can be changed; EMI and totals are always recalculated, never typed in
+        const { type, status, nextDueDate, customNotes } = req.body;
+        if (req.body.provider !== undefined) {
+            const provider = typeof req.body.provider === 'string' ? req.body.provider.trim() : '';
+            if (!provider) return res.status(400).json({ error: 'Provider / bank is required' });
+            loan.provider = provider;
+        }
+        if (type !== undefined) {
+            if (!LOAN_TYPES.includes(type)) return res.status(400).json({ error: 'Please choose a valid loan type' });
+            loan.type = type;
+        }
+        if (status !== undefined) {
+            if (!LOAN_STATUSES.includes(status)) return res.status(400).json({ error: 'Invalid status' });
+            loan.status = status;
+        }
+        if (nextDueDate !== undefined && nextDueDate !== null) {
+            const due = new Date(nextDueDate);
+            if (isNaN(due.getTime())) return res.status(400).json({ error: 'Next due date is not valid' });
+            loan.nextDueDate = due;
+        }
+        if (customNotes !== undefined) loan.customNotes = customNotes;
+
+        const newRate = req.body.interestRate !== undefined ? toNumber(req.body.interestRate) : loan.interestRate;
+        const newTenure = req.body.tenure !== undefined ? toNumber(req.body.tenure) : loan.tenure;
+
+        if (newRate !== loan.interestRate || newTenure !== loan.tenure) {
+            const termsError = validateLoanTerms(loan.principal, newRate, newTenure);
+            if (termsError) return res.status(400).json({ error: termsError });
+
+            // Recalculate EMI, totals and schedule, keeping the installments already paid
+            const amountPaid = Math.max(0, loan.totalAmount - loan.remainingAmount);
+            const oldSchedule = loan.paymentSchedule || [];
+            const emiResult = LoanService.calculateEMI({ principal: loan.principal, annualInterestRate: newRate, tenureMonths: newTenure });
+            const schedule = LoanService.generateRepaymentSchedule(loan.principal, newRate, newTenure, loan.startDate);
+            schedule.forEach((item, i) => {
+                if (oldSchedule[i]?.paid) {
+                    item.paid = true;
+                    item.paidDate = oldSchedule[i].paidDate;
+                }
+            });
+
+            const endDate = new Date(loan.startDate);
+            endDate.setMonth(endDate.getMonth() + newTenure);
+
+            loan.interestRate = newRate;
+            loan.tenure = newTenure;
+            loan.monthlyInstallment = emiResult.monthlyEMI;
+            loan.totalInterest = emiResult.totalInterest;
+            loan.totalAmount = emiResult.totalPayable;
+            loan.remainingAmount = Math.max(0, Math.round((emiResult.totalPayable - amountPaid) * 100) / 100);
+            loan.paymentSchedule = schedule;
+            loan.endDate = endDate;
+            if (loan.remainingAmount === 0) loan.status = 'Closed';
+        }
+
+        await loan.save();
         res.json({ loan });
     } catch (error) {
         console.error('Error updating loan:', error);
@@ -245,18 +344,29 @@ router.post('/:id/payment', async (req: Request, res: Response) => {
     try {
         const userId = (req as any).user.id;
         const { id } = req.params;
-        const { amount, paidDate } = req.body;
+        const { paidDate } = req.body;
+        const amount = toNumber(req.body.amount);
 
-        if (!amount || amount <= 0) {
-            return res.status(400).json({ error: 'Valid payment amount is required' });
+        if (!Number.isFinite(amount) || amount <= 0) {
+            return res.status(400).json({ error: 'Please enter a payment amount greater than 0' });
         }
 
+        if (!mongoose.isValidObjectId(id)) {
+            return res.status(404).json({ error: 'Loan not found' });
+        }
         const loan = await Loan.findOne({ _id: id, userId });
         if (!loan) {
             return res.status(404).json({ error: 'Loan not found' });
         }
+        if (loan.status === 'Closed') {
+            return res.status(400).json({ error: 'This loan is already fully paid' });
+        }
+        // Allow a few cents of rounding, but not paying more than is owed
+        if (amount > loan.remainingAmount + 0.01) {
+            return res.status(400).json({ error: `Payment is more than the remaining amount (Rs ${loan.remainingAmount.toFixed(2)})` });
+        }
 
-        loan.remainingAmount = Math.max(loan.remainingAmount - Number(amount), 0);
+        loan.remainingAmount = Math.max(Math.round((loan.remainingAmount - amount) * 100) / 100, 0);
         
         // Update payment schedule
         if (loan.paymentSchedule && loan.paymentSchedule.length > 0) {
@@ -298,9 +408,8 @@ router.get('/:id/alerts', async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'Loan not found' });
         }
 
-        // Get user income for alert calculation
-        const user = await User.findById(userId);
-        const monthlyIncome = user?.monthlyIncome || 50000;
+        // Get user income for alert calculation (0 = not entered, so no ratio alert)
+        const monthlyIncome = await getMonthlyIncome(userId);
 
         const alerts = await LoanService.generateLoanAlerts(loan, monthlyIncome);
         res.json({ alerts });
@@ -385,14 +494,15 @@ router.post('/:id/simulate-refinance', async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'Loan not found' });
         }
 
-        if (!newInterestRate === undefined || newInterestRate < 0) {
+        const rate = toNumber(newInterestRate);
+        if (!Number.isFinite(rate) || rate < 0 || rate > 100) {
             return res.status(400).json({ error: 'Valid new interest rate is required' });
         }
 
         const simulation = LoanService.simulateRefinancing(
             loan.principal,
             loan.interestRate,
-            Number(newInterestRate),
+            rate,
             loan.tenure
         );
 
