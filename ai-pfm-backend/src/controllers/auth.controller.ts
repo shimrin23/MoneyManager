@@ -12,6 +12,9 @@ dotenv.config();
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_NAME_LENGTH = 100;
+// Account lock: 7 failed sign-ins locks the account for 15 minutes
+const MAX_FAILED_LOGINS = 7;
+const LOCK_MINUTES = 15;
 
 // Emails are stored and compared in lower case (AUT-004)
 const normalizeEmail = (value: unknown): string =>
@@ -49,15 +52,10 @@ export default class AuthController {
             // 2. Check if user already exists
             const existingUser = await User.findOne({ email: cleanEmail });
             if (existingUser) {
-                // Account linking case: user has a Google account but no email/password set up yet
+                // AUT-006: a Google-only account cannot get a password through sign-up.
+                // Its owner must sign in with Google.
                 if (!existingUser.passwordHash && existingUser.isGoogleAccount) {
-                    const salt = await bcrypt.genSalt(10);
-                    existingUser.passwordHash = await bcrypt.hash(password, salt);
-                    existingUser.isVerified = true; // Google accounts are pre-verified
-                    await existingUser.save();
-                    return res.status(201).json({ 
-                        message: "Password added. Your account is now linked and verified." 
-                    });
+                    return res.status(400).json({ error: "This email is linked to Google Sign-In. Use Continue with Google." });
                 }
                 return res.status(400).json({ error: "User already exists" });
             }
@@ -113,10 +111,30 @@ export default class AuthController {
                 });
             }
 
+            // Account lock check (per account): 15 minutes after 7 failed sign-ins
+            if (user.lockedUntil && user.lockedUntil > new Date()) {
+                return res.status(429).json({ error: "Too many failed sign-in attempts. Try again after 15 minutes." });
+            }
+
             // 2. Compare password
             const isMatch = await bcrypt.compare(password, user.passwordHash || '');
             if (!isMatch) {
+                user.failedLoginCount = (user.failedLoginCount || 0) + 1;
+                if (user.failedLoginCount >= MAX_FAILED_LOGINS) {
+                    user.lockedUntil = new Date(Date.now() + LOCK_MINUTES * 60 * 1000);
+                    user.failedLoginCount = 0;
+                    await user.save();
+                    return res.status(429).json({ error: "Too many failed sign-in attempts. Try again after 15 minutes." });
+                }
+                await user.save();
                 return res.status(400).json({ error: "Invalid credentials" });
+            }
+
+            // Correct password: clear the failed-attempt count
+            if (user.failedLoginCount || user.lockedUntil) {
+                user.failedLoginCount = 0;
+                user.lockedUntil = undefined;
+                await user.save();
             }
 
             // 3. Check email verification status
@@ -215,7 +233,8 @@ export default class AuthController {
             const user = await User.findOne({ email: normalizeEmail(email) });
 
             if (!user) {
-                return res.status(404).json({ error: "User not found" });
+                // Same reply as an existing account, so the response does not reveal which emails are registered
+                return res.json({ message: "If an account matches that email, a verification link has been sent." });
             }
 
             if (user.isVerified) {
@@ -311,6 +330,10 @@ export default class AuthController {
             // Clear reset token fields
             user.resetPasswordToken = undefined;
             user.resetPasswordExpires = undefined;
+
+            // A password reset clears any account lock
+            user.failedLoginCount = 0;
+            user.lockedUntil = undefined;
             
             // Mark verified if they weren't (since they verified email ownership)
             user.isVerified = true;
@@ -531,6 +554,11 @@ export default class AuthController {
             const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
             if (!isMatch) {
                 return res.status(400).json({ error: 'Current password is incorrect' });
+            }
+
+            const isSameAsCurrent = await bcrypt.compare(newPassword, user.passwordHash);
+            if (isSameAsCurrent) {
+                return res.status(400).json({ error: 'New password must be different from the current password' });
             }
 
             const salt = await bcrypt.genSalt(10);
