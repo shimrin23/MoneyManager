@@ -1196,8 +1196,10 @@ input, select, textarea { font-family: inherit; }
   width: fit-content;
 }
 .status-text.status-low    { background: rgba(16,185,129,0.12); color: #34d399; border: 1px solid rgba(16,185,129,0.2); }
-.status-text.status-medium { background: rgba(245,158,11,0.12); color: #fbbf24; border: 1px solid rgba(245,158,11,0.2); }
-.status-text.status-high   { background: rgba(239,68,68,0.12);  color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+.status-text.status-medium { background: rgba(132,204,22,0.12); color: #84cc16; border: 1px solid rgba(132,204,22,0.25); }
+.status-text.status-high   { background: rgba(245,158,11,0.12); color: #f59e0b; border: 1px solid rgba(245,158,11,0.25); }
+.status-text.status-critical { background: rgba(239,68,68,0.12);  color: #f87171; border: 1px solid rgba(239,68,68,0.2); }
+.status-text.status-none   { background: rgba(148,163,184,0.12); color: var(--color-text-muted); border: 1px solid rgba(148,163,184,0.25); }
 .status-dot { font-size: 8px; }
 .status-description { font-size: var(--font-sm); color: var(--color-text-muted); line-height: 1.5; }
 

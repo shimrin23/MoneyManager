@@ -5,6 +5,17 @@ import Loan from '../schemas/loan.schema';
 import CreditCard from '../schemas/creditcard.schema';
 import User from '../schemas/user.schema';
 import { FinancialAgent } from '../ai/agent'; // Import the real AI agent
+import {
+    HEALTH_WINDOW_DAYS,
+    HealthMetrics,
+    calculateFinancialMetrics,
+    calculateHealthScore,
+    getHealthStatus,
+    percentileAmong,
+} from './health-score.utils';
+
+// Peer comparison needs at least this many other users with a score
+const MIN_PEERS = 3;
 
 export class FinancialHealthService {
     private financialAgent: FinancialAgent;
@@ -24,8 +35,7 @@ export class FinancialHealthService {
                 User.findById(userId).select('monthlyIncome')
             ]);
 
-            // Calculate basic financial metrics
-            const metrics = this.calculateFinancialMetrics(
+            const { metrics, noDataReason } = calculateFinancialMetrics(
                 transactions,
                 loans,
                 creditCards,
@@ -33,21 +43,40 @@ export class FinancialHealthService {
                 goals
             );
 
+            // Without income and spending in the last 30 days a score would be made up
+            if (noDataReason) {
+                const healthData = {
+                    userId,
+                    hasData: false,
+                    noDataReason,
+                    score: null,
+                    status: null,
+                    riskLevel: null,
+                    windowDays: HEALTH_WINDOW_DAYS,
+                    metrics,
+                    recommendations: [] as string[]
+                };
+                await FinancialHealth.findOneAndUpdate({ userId }, healthData, { upsert: true, new: true });
+                return healthData;
+            }
+
             // Calculate score based on multiple factors
-            const score = this.calculateHealthScore(metrics, goals, loans, creditCards);
+            const score = calculateHealthScore(metrics, goals);
+            const { status, riskLevel } = getHealthStatus(score);
 
-            // Generate AI-powered recommendations
-            const recommendations = await this.generateRecommendations(userId, metrics, score);
-
-            // Save to database
             const healthData = {
                 userId,
+                hasData: true,
+                noDataReason: null,
                 score,
-                riskLevel: this.getRiskLevel(score),
+                status,
+                riskLevel,
+                windowDays: HEALTH_WINDOW_DAYS,
                 metrics,
-                recommendations
+                recommendations: this.generateRecommendations(metrics)
             };
 
+            // Save to database
             await FinancialHealth.findOneAndUpdate(
                 { userId },
                 healthData,
@@ -61,120 +90,7 @@ export class FinancialHealthService {
         }
     }
 
-    private calculateFinancialMetrics(
-        transactions: any[],
-        loans: any[],
-        creditCards: any[],
-        monthlyIncomeBaseline: number,
-        goals: any[]
-    ) {
-        const now = new Date();
-        const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-
-        // Recent transactions (last 30 days)
-        const recentTransactions = transactions.filter(t => new Date(t.date) >= lastMonth);
-
-        const transactionIncome = recentTransactions
-            .filter(t => t.type === 'income')
-            .reduce((sum, t) => sum + t.amount, 0);
-
-        const totalIncome = transactionIncome > 0
-            ? transactionIncome
-            : monthlyIncomeBaseline;
-
-        const totalExpenses = recentTransactions
-            .filter(t => t.type === 'expense')
-            .reduce((sum, t) => sum + t.amount, 0);
-            
-        // Discretionary Ratio
-        const discretionaryCategories = ['Food & Dining', 'Shopping', 'Entertainment', 'Travel', 'Personal Care'];
-        const discretionaryExpenses = recentTransactions
-            .filter(t => t.type === 'expense' && discretionaryCategories.includes(t.category))
-            .reduce((sum, t) => sum + t.amount, 0);
-            
-        const discretionaryRatio = totalIncome > 0 ? discretionaryExpenses / totalIncome : 0;
-
-        const savings = totalIncome - totalExpenses;
-        const savingsRate = totalIncome > 0 ? savings / totalIncome : 0;
-
-        // Debt calculations
-        const totalDebt = loans.reduce((sum, loan) => sum + loan.remainingAmount, 0);
-        const monthlyDebtPayments = loans.reduce((sum, loan) => sum + loan.monthlyInstallment, 0);
-        const debtToIncomeRatio = totalIncome > 0 ? monthlyDebtPayments / totalIncome : 0;
-
-        // Credit utilization
-        const totalCreditLimit = creditCards.reduce((sum, card) => sum + card.creditLimit, 0);
-        const totalCreditBalance = creditCards.reduce((sum, card) => sum + card.currentBalance, 0);
-        const creditUtilization = totalCreditLimit > 0 ? totalCreditBalance / totalCreditLimit : 0;
-        
-        // Net Worth
-        const totalAssets = goals.reduce((sum, goal) => sum + (goal.currentAmount || 0), 0);
-        const netWorth = totalAssets - totalDebt - totalCreditBalance;
-
-        // Emergency fund (simplified - based on savings rate)
-        const monthlyExpenses = totalExpenses;
-        const emergencyFundMonths = monthlyExpenses > 0 ? Math.max(savings, 0) / monthlyExpenses : 0;
-
-        return {
-            totalIncome,
-            totalExpenses,
-            savings,
-            savingsRate,
-            totalDebt,
-            debtToIncomeRatio,
-            creditUtilization,
-            emergencyFundMonths,
-            liquidityRatio: savingsRate,
-            netWorth,
-            discretionaryRatio
-        };
-    }
-
-    private calculateHealthScore(metrics: any, goals: any[], loans: any[], creditCards: any[]): number {
-        let score = 100;
-
-        // Savings rate (30 points)
-        if (metrics.savingsRate < 0.1) score -= 20;
-        else if (metrics.savingsRate < 0.2) score -= 10;
-        else if (metrics.savingsRate >= 0.3) score += 10;
-
-        // Debt to income ratio (25 points)
-        if (metrics.debtToIncomeRatio > 0.4) score -= 25;
-        else if (metrics.debtToIncomeRatio > 0.3) score -= 15;
-        else if (metrics.debtToIncomeRatio > 0.2) score -= 5;
-
-        // Credit utilization (20 points)
-        if (metrics.creditUtilization > 0.7) score -= 20;
-        else if (metrics.creditUtilization > 0.5) score -= 10;
-        else if (metrics.creditUtilization > 0.3) score -= 5;
-        else if (metrics.creditUtilization < 0.1) score += 5;
-
-        // Emergency fund (15 points)
-        if (metrics.emergencyFundMonths < 1) score -= 15;
-        else if (metrics.emergencyFundMonths < 3) score -= 5;
-        else if (metrics.emergencyFundMonths >= 6) score += 10;
-
-        // Goals progress (10 points)
-        const activeGoals = goals.filter(g => g.status === 'In Progress');
-        if (activeGoals.length === 0) score -= 5;
-        else {
-            const avgProgress = activeGoals.reduce((sum, goal) =>
-                sum + (goal.currentAmount / goal.targetAmount), 0) / activeGoals.length;
-            if (avgProgress > 0.7) score += 10;
-            else if (avgProgress > 0.4) score += 5;
-        }
-
-        return Math.max(0, Math.min(100, Math.round(score)));
-    }
-
-    private getRiskLevel(score: number): string {
-        if (score >= 80) return 'Low';
-        if (score >= 60) return 'Medium';
-        if (score >= 40) return 'Moderate';
-        return 'High';
-    }
-
-    private async generateRecommendations(userId: string, metrics: any, score: number): Promise<string[]> {
+    private generateRecommendations(metrics: HealthMetrics): string[] {
         const recommendations: string[] = [];
 
         // Basic rule-based recommendations
@@ -208,117 +124,58 @@ export class FinancialHealthService {
         }
     }
 
+    /**
+     * Compares the user with other users who have a score. Averages and percentiles
+     * come from those users only (never the user's own record), and nothing is shown
+     * until there are enough of them to compare with.
+     */
     async getPeerBenchmarks(userId: string): Promise<any> {
         try {
             const health = await this.getHealthReport(userId);
-            const metrics = health.metrics || {};
+            if (!health.hasData) {
+                return { benchmarks: [], peerCount: 0, reason: 'no-data' };
+            }
+            const metrics: HealthMetrics = health.metrics;
 
-            // Calculate real peer averages from the database
-            const peerStats = await FinancialHealth.aggregate([
-                {
-                    $group: {
-                        _id: null,
-                        avgScore: { $avg: '$score' },
-                        avgSavingsRate: { $avg: '$metrics.savingsRate' },
-                        avgDebtRatio: { $avg: '$metrics.debtToIncomeRatio' },
-                        avgLiquidityRatio: { $avg: '$metrics.liquidityRatio' },
-                        avgCreditUtilization: { $avg: '$metrics.creditUtilization' },
-                        avgEmergencyFundMonths: { $avg: '$metrics.emergencyFundMonths' },
-                        avgNetWorth: { $avg: '$metrics.netWorth' },
-                        avgDiscretionaryRatio: { $avg: '$metrics.discretionaryRatio' }
-                    }
-                }
-            ]);
+            const peers = await FinancialHealth.find({ userId: { $ne: userId }, score: { $ne: null } })
+                .select('score metrics')
+                .lean();
+            if (peers.length < MIN_PEERS) {
+                return { benchmarks: [], peerCount: peers.length, reason: 'not-enough-peers', minPeers: MIN_PEERS };
+            }
 
-            const stats = peerStats.length > 0 ? peerStats[0] : {
-                avgScore: 65,
-                avgSavingsRate: 0.18,
-                avgDebtRatio: 0.35,
-                avgLiquidityRatio: 0.30,
-                avgCreditUtilization: 0.25,
-                avgEmergencyFundMonths: 3,
-                avgNetWorth: 500000,
-                avgDiscretionaryRatio: 0.30
-            };
+            const pct = (v: number) => Number((v * 100).toFixed(1));
+            const values = (pick: (p: any) => number | undefined) =>
+                peers.map(pick).filter((v): v is number => typeof v === 'number' && Number.isFinite(v));
+            const avg = (list: number[]) => (list.length ? list.reduce((s, v) => s + v, 0) / list.length : 0);
 
-            const peerScore = Number((stats.avgScore ?? 65).toFixed(0));
-            const peerSavings = Number(((stats.avgSavingsRate ?? 0.18) * 100).toFixed(1));
-            const peerDebt = Number(((stats.avgDebtRatio ?? 0.35) * 100).toFixed(1));
-            const peerLiquidity = Number(((stats.avgLiquidityRatio ?? 0.30) * 100).toFixed(1));
-            const peerCreditUtil = Number(((stats.avgCreditUtilization ?? 0.25) * 100).toFixed(1));
-            const peerEmergencyFund = Number((stats.avgEmergencyFundMonths ?? 3).toFixed(1));
-            const peerNetWorth = Number((stats.avgNetWorth ?? 500000).toFixed(0));
-            const peerDiscretionary = Number(((stats.avgDiscretionaryRatio ?? 0.30) * 100).toFixed(1));
+            // [label, user value, peer values, higher is better, display transform]
+            const rows: [string, number, number[], boolean, (v: number) => number][] = [
+                ['Financial Health Score', health.score, values(p => p.score), true, v => Math.round(v)],
+                ['Savings Rate', metrics.savingsRate, values(p => p.metrics?.savingsRate), true, pct],
+                ['Debt-to-Income Ratio', metrics.debtToIncomeRatio, values(p => p.metrics?.debtToIncomeRatio), false, pct],
+                ['Liquidity Ratio', metrics.liquidityRatio, values(p => p.metrics?.liquidityRatio), true, pct],
+                ['Credit Utilization', metrics.creditUtilization, values(p => p.metrics?.creditUtilization), false, pct],
+                ['Emergency Fund Health', metrics.emergencyFundMonths, values(p => p.metrics?.emergencyFundMonths), true, v => Number(v.toFixed(1))],
+                ['Net Worth', metrics.netWorth, values(p => p.metrics?.netWorth), true, v => Math.round(v)],
+                ['Discretionary Ratio', metrics.discretionaryRatio, values(p => p.metrics?.discretionaryRatio), false, pct],
+            ];
 
-            const userScore = Number(health.score ?? 0);
-            const userSavings = Number(((metrics.savingsRate ?? 0) * 100).toFixed(1));
-            const userDebt = Number(((metrics.debtToIncomeRatio ?? 0) * 100).toFixed(1));
-            const userLiquidity = Number(((metrics.liquidityRatio ?? 0) * 100).toFixed(1));
-            const userCreditUtil = Number(((metrics.creditUtilization ?? 0) * 100).toFixed(1));
-            const userEmergencyFund = Number((metrics.emergencyFundMonths ?? 0).toFixed(1));
-            const userNetWorth = Number((metrics.netWorth ?? 0).toFixed(0));
-            const userDiscretionary = Number(((metrics.discretionaryRatio ?? 0) * 100).toFixed(1));
+            const benchmarks = rows.map(([category, userRaw, peerValues, higherIsBetter, show]) => {
+                const userValue = show(userRaw);
+                const peerAverage = show(avg(peerValues));
+                const comparison = userValue === peerAverage ? 'average' : userValue > peerAverage ? 'above' : 'below';
+                return {
+                    category,
+                    userValue,
+                    peerAverage,
+                    percentile: percentileAmong(userRaw, peerValues, higherIsBetter),
+                    higherIsBetter,
+                    comparison
+                };
+            });
 
-            return {
-                benchmarks: [
-                    {
-                        category: 'Financial Health Score',
-                        userValue: userScore,
-                        peerAverage: peerScore,
-                        percentile: Math.max(5, Math.min(95, userScore)),
-                        comparison: userScore >= peerScore ? 'above' : 'below'
-                    },
-                    {
-                        category: 'Savings Rate',
-                        userValue: userSavings,
-                        peerAverage: peerSavings,
-                        percentile: (metrics.savingsRate ?? 0) >= (stats.avgSavingsRate ?? 0.18) ? 70 : 25,
-                        comparison: userSavings >= peerSavings ? 'above' : 'below'
-                    },
-                    {
-                        category: 'Debt-to-Income Ratio',
-                        userValue: userDebt,
-                        peerAverage: peerDebt,
-                        percentile: (metrics.debtToIncomeRatio ?? 0) <= (stats.avgDebtRatio ?? 0.35) ? 75 : 30,
-                        comparison: userDebt <= peerDebt ? 'below' : 'above'
-                    },
-                    {
-                        category: 'Liquidity Ratio',
-                        userValue: userLiquidity,
-                        peerAverage: peerLiquidity,
-                        percentile: (metrics.liquidityRatio ?? 0) >= (stats.avgLiquidityRatio ?? 0.30) ? 70 : 20,
-                        comparison: userLiquidity >= peerLiquidity ? 'above' : 'below'
-                    },
-                    {
-                        category: 'Credit Utilization',
-                        userValue: userCreditUtil,
-                        peerAverage: peerCreditUtil,
-                        percentile: (metrics.creditUtilization ?? 0) <= (stats.avgCreditUtilization ?? 0.25) ? 80 : 20,
-                        comparison: userCreditUtil <= peerCreditUtil ? 'below' : 'above'
-                    },
-                    {
-                        category: 'Emergency Fund Health',
-                        userValue: userEmergencyFund,
-                        peerAverage: peerEmergencyFund,
-                        percentile: (metrics.emergencyFundMonths ?? 0) >= (stats.avgEmergencyFundMonths ?? 3) ? 75 : 25,
-                        comparison: userEmergencyFund >= peerEmergencyFund ? 'above' : 'below'
-                    },
-                    {
-                        category: 'Net Worth',
-                        userValue: userNetWorth,
-                        peerAverage: peerNetWorth,
-                        percentile: (metrics.netWorth ?? 0) >= (stats.avgNetWorth ?? 500000) ? 60 : 40,
-                        comparison: userNetWorth >= peerNetWorth ? 'above' : 'below'
-                    },
-                    {
-                        category: 'Discretionary Ratio',
-                        userValue: userDiscretionary,
-                        peerAverage: peerDiscretionary,
-                        percentile: (metrics.discretionaryRatio ?? 0) <= (stats.avgDiscretionaryRatio ?? 0.30) ? 75 : 25,
-                        comparison: userDiscretionary <= peerDiscretionary ? 'below' : 'above'
-                    }
-                ]
-            };
+            return { benchmarks, peerCount: peers.length };
         } catch (error) {
             console.error('Error getting peer benchmarks:', error);
             throw error;

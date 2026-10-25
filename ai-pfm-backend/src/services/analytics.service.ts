@@ -54,7 +54,7 @@ export class AnalyticsService {
     // Helper to just get the current score
     async getScore(userId: string): Promise<number> {
         const health = await FinancialHealth.findOne({ userId: userId });
-        return health ? health.score : 0;
+        return health?.score ?? 0;
     }
 
     // --- NEW METHOD WITH FIX ---

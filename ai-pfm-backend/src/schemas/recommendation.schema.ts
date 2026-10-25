@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IRecommendation extends Document {
     userId: string;
+    key?: string; // which rule created it, e.g. 'emergency-fund'
     category: 'budget' | 'goal' | 'debt' | 'subscription' | 'alert';
     icon: string;
     title: string;
@@ -18,7 +19,8 @@ export interface IRecommendation extends Document {
 
 const RecommendationSchema: Schema = new Schema({
     userId: { type: String, required: true, index: true },
-    category: { 
+    key: { type: String },
+    category: {
         type: String, 
         enum: ['budget', 'goal', 'debt', 'subscription', 'alert'],
         required: true 
