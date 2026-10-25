@@ -143,8 +143,8 @@ export const Signup = () => {
 
             <div className="auth-center-card">
                 {/* Logo */}
-                <div className="auth-logo" style={{ marginBottom: '0.25rem' }}>
-                    <span className="auth-logo-icon"></span>
+                <div className="auth-logo" style={{ marginBottom: '0.25rem', marginRight: '0.5rem' }}>
+                    <span className="auth-logo-icon">💰</span>
                     <span className="auth-logo-name">MoneyManager</span>
                 </div>
 
@@ -156,8 +156,8 @@ export const Signup = () => {
                             </svg>
                         </div>
                         <h2 className="auth-card-title" style={{ marginBottom: '0.75rem' }}>Account Created!</h2>
-                        <p className="verify-sub" style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.6', marginBottom: '2rem' }}>
-                            We have sent a verification link to <strong>{email}</strong>. Please check your inbox and click the link to verify your email.
+                        <p className="verify-sub" style={{ fontSize: '0.9rem', color: '#6b7280', lineHeight: '1.6', margin: '0.75rem 0 1.5rem' }}>
+                            We have sent a verification link to <strong>{email.replace(/^(.)[^@]*(?=@)/, '$1***')}</strong>. Please check your inbox and click the link to verify your email.
                         </p>
                         <button className="auth-submit-btn" onClick={() => navigate('/login')}>
                             Go to Sign In <span className="auth-btn-arrow">→</span>

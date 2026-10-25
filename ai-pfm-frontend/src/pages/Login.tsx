@@ -149,7 +149,16 @@ export const Login = () => {
     };
 
     return (
-        <div className="auth-center-page">
+        <div className="auth-center-page login-compact">
+            {/* Tighter spacing so the sign-in card fits on one screen */}
+            <style>{`
+                .login-compact .auth-center-card { padding: 1.75rem 2rem 1.5rem; }
+                .login-compact .auth-logo { margin-bottom: 0.25rem; margin-right: 0.5rem; }
+                .login-compact .auth-card-header { margin-bottom: 1rem; }
+                .login-compact .auth-card-title { margin-top: 0; }
+                .login-compact .auth-eye-btn { left: auto; right: 0.85rem; }
+                .login-compact input[type="password"].auth-input { padding-left: 0.9rem; padding-right: 2.6rem; }
+            `}</style>
             {/* Background orbs */}
             <div className="auth-orb auth-orb-1" />
             <div className="auth-orb auth-orb-2" />
@@ -158,7 +167,7 @@ export const Login = () => {
             <div className="auth-center-card">
                 {/* Logo */}
                 <div className="auth-logo">
-                    <span className="auth-logo-icon"></span>
+                    <span className="auth-logo-icon">💰</span>
                     <span className="auth-logo-name">MoneyManager</span>
                 </div>
 
@@ -335,10 +344,9 @@ export const Login = () => {
                         )}
                         {forgotStatus === 'success' && (
                             <div className="forgot-success" style={{ textAlign: 'center', padding: '1rem 0' }}>
-                                <span className="success-icon" style={{ fontSize: '2.5rem', display: 'block', marginBottom: '1rem' }}></span>
                                 <h3>Check your email</h3>
-                                <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5', margin: '1rem 0' }}>
-                                    A password reset link has been sent to <strong>{forgotEmail}</strong> if an account exists.
+                                <p style={{ fontSize: '0.9rem', color: '#6b7280', lineHeight: '1.5', margin: '0.75rem 0 1.25rem' }}>
+                                    A password reset link has been sent to <strong>{forgotEmail.replace(/^(.)[^@]*(?=@)/, '$1***')}</strong> if an account exists.
                                 </p>
                                 <button className="auth-submit-btn" onClick={() => { setShowForgotPassword(false); setForgotStatus('idle'); setForgotEmail(''); }}>Close</button>
                             </div>
