@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
+import { apiClient, getApiErrorMessage } from '../api/client';
 import { notify, confirmDialog } from '../utils/systemMessages';
 
 interface FixedDeposit {
@@ -24,11 +24,21 @@ const getDaysUntilMaturity = (dateStr: string) => {
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
 };
 
-const getMaturityStatus = (daysLeft: number) => {
-    if (daysLeft < 0) return { label: 'Matured', color: '#10b981' };
+// Whole calendar months from today to the date, so a 12-month FD shows "12mo left" (not 365 / 30 = 13)
+const getMonthsUntil = (dateStr: string) => {
+    const now = new Date();
+    const target = new Date(dateStr);
+    let months = (target.getFullYear() - now.getFullYear()) * 12 + (target.getMonth() - now.getMonth());
+    if (target.getDate() < now.getDate()) months--;
+    return months;
+};
+
+const getMaturityStatus = (dateStr: string) => {
+    const daysLeft = getDaysUntilMaturity(dateStr);
+    if (daysLeft <= 0) return { label: 'Matures today', color: '#10b981' };
     if (daysLeft <= 30) return { label: `${daysLeft}d left`, color: '#f59e0b' };
     if (daysLeft <= 90) return { label: `${daysLeft}d left`, color: '#6366f1' };
-    return { label: `${Math.ceil(daysLeft / 30)}mo left`, color: '#64748b' };
+    return { label: `${getMonthsUntil(dateStr)}mo left`, color: '#64748b' };
 };
 
 export const FixedDepositsPage = () => {
@@ -86,21 +96,48 @@ export const FixedDepositsPage = () => {
             });
             setNewFD({ principalAmount: '', interestRate: '', tenure: '', tenureUnit: 'months', type: 'Standard', bank: '', autoRenewal: false });
             setShowNewFDForm(false);
+            notify.success('Fixed deposit opened.');
             await fetchFDs();
         } catch (err) {
             console.error('Failed to create FD:', err);
-            notify.error('Failed to create fixed deposit. Please try again.');
+            notify.error(getApiErrorMessage(err, 'Failed to create fixed deposit. Please try again.'));
         } finally {
             setSubmitting(false);
         }
     };
 
-    const handleUpdateStatus = async (id: string, status: FixedDeposit['status']) => {
+    const handleWithdrawEarly = async (fd: FixedDeposit) => {
+        const confirmed = await confirmDialog({
+            title: 'Withdraw early?',
+            message: `Close ${fd.accountNumber} before its maturity date? This can't be undone, and banks usually pay less interest on early withdrawal.`,
+            confirmText: 'Withdraw Early',
+            danger: true,
+        });
+        if (!confirmed) return;
         try {
-            await apiClient.put(`/fixed-deposits/${id}`, { status });
+            await apiClient.put(`/fixed-deposits/${fd._id}`, { status: 'prematurely-closed' });
+            notify.success('Fixed deposit withdrawn early.');
             await fetchFDs();
         } catch (err) {
             console.error('Failed to update FD:', err);
+            notify.error(getApiErrorMessage(err, 'Failed to withdraw fixed deposit. Please try again.'));
+        }
+    };
+
+    const handleRenew = async (fd: FixedDeposit) => {
+        const confirmed = await confirmDialog({
+            title: 'Renew fixed deposit?',
+            message: `Start a new ${fd.tenure} ${fd.tenureUnit} term from today at ${fd.interestRate}% with LKR ${fd.maturityAmount.toLocaleString()} (principal plus interest).`,
+            confirmText: 'Renew',
+        });
+        if (!confirmed) return;
+        try {
+            await apiClient.post(`/fixed-deposits/${fd._id}/renew`);
+            notify.success('Fixed deposit renewed.');
+            await fetchFDs();
+        } catch (err) {
+            console.error('Failed to renew FD:', err);
+            notify.error(getApiErrorMessage(err, 'Failed to renew fixed deposit. Please try again.'));
         }
     };
 
@@ -190,6 +227,7 @@ export const FixedDepositsPage = () => {
                                 <label>Principal Amount (LKR)</label>
                                 <input
                                     type="number"
+                                    min="1"
                                     placeholder="e.g. 100000"
                                     value={newFD.principalAmount}
                                     onChange={e => setNewFD({ ...newFD, principalAmount: e.target.value })}
@@ -200,7 +238,9 @@ export const FixedDepositsPage = () => {
                                 <label>Interest Rate (%)</label>
                                 <input
                                     type="number"
-                                    step="0.1"
+                                    step="0.01"
+                                    min="0.01"
+                                    max="100"
                                     placeholder="e.g. 12.5"
                                     value={newFD.interestRate}
                                     onChange={e => setNewFD({ ...newFD, interestRate: e.target.value })}
@@ -209,14 +249,15 @@ export const FixedDepositsPage = () => {
                             </div>
                             <div className="form-group">
                                 <label>Tenure</label>
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                <div className="fd-tenure-row">
                                     <input
                                         type="number"
+                                        min="1"
+                                        step="1"
                                         placeholder="e.g. 12"
                                         value={newFD.tenure}
                                         onChange={e => setNewFD({ ...newFD, tenure: e.target.value })}
                                         required
-                                        style={{ flex: 1 }}
                                     />
                                     <select
                                         value={newFD.tenureUnit}
@@ -270,8 +311,11 @@ export const FixedDepositsPage = () => {
             {/* FD Cards */}
             <div className="fd-list">
                 {fds.map(fd => {
-                    const daysLeft = getDaysUntilMaturity(fd.maturityDate);
-                    const matStatus = getMaturityStatus(daysLeft);
+                    const matStatus = fd.status === 'active'
+                        ? getMaturityStatus(fd.maturityDate)
+                        : fd.status === 'matured'
+                            ? { label: `Matured on ${new Date(fd.maturityDate).toLocaleDateString()}`, color: '#6366f1' }
+                            : { label: 'Withdrawn early', color: '#ef4444' };
                     const progress = fd.status === 'active'
                         ? Math.min(100, Math.max(0, ((new Date().getTime() - new Date(fd.startDate).getTime()) /
                             (new Date(fd.maturityDate).getTime() - new Date(fd.startDate).getTime())) * 100))
@@ -334,7 +378,7 @@ export const FixedDepositsPage = () => {
                             <div className="fd-card-actions">
                                 {fd.status === 'active' && (
                                     <>
-                                        <button className="action-btn danger small" onClick={() => handleUpdateStatus(fd._id, 'prematurely-closed')}>
+                                        <button className="action-btn danger small" onClick={() => handleWithdrawEarly(fd)}>
                                             Withdraw Early
                                         </button>
                                         <button className="action-btn secondary small" onClick={() => handleDelete(fd._id)}>
@@ -344,7 +388,7 @@ export const FixedDepositsPage = () => {
                                 )}
                                 {fd.status === 'matured' && (
                                     <>
-                                        <button className="action-btn primary small" onClick={() => handleUpdateStatus(fd._id, 'active')}>
+                                        <button className="action-btn primary small" onClick={() => handleRenew(fd)}>
                                             Renew FD
                                         </button>
                                         <button className="action-btn secondary small" onClick={() => handleDelete(fd._id)}>

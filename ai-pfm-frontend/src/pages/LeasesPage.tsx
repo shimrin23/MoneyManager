@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
-import { notify, confirmDialog } from '../utils/systemMessages';
+import { apiClient, getApiErrorMessage } from '../api/client';
+import { notify, confirmDialog, promptDialog } from '../utils/systemMessages';
 
 interface Lease {
     _id: string;
@@ -15,12 +15,13 @@ interface Lease {
     outstandingBalance: number;
     startDate: string;
     endDate: string;
-    nextPaymentDate: string;
+    nextPaymentDate: string | null;
+    payments?: { amount: number; date: string }[];
     status: 'active' | 'completed' | 'defaulted';
     icon: string;
 }
 
-const getDaysUntil = (dateStr: string) => {
+const getDaysUntil = (dateStr: string | null) => {
     if (!dateStr || dateStr === '-') return null;
     const diff = new Date(dateStr).getTime() - new Date().getTime();
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
@@ -57,7 +58,7 @@ export const LeasesPage = () => {
         try {
             const res = await apiClient.get('/leases');
             setLeases(res.data.leases || []);
-        } catch (err: any) {
+        } catch (err) {
             console.error('Failed to fetch leases:', err);
             setError('Unable to load leases. Please try again.');
             setLeases([]);
@@ -72,6 +73,25 @@ export const LeasesPage = () => {
 
     const handleNewLeaseSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // All the monthly payments together should at least cover the amount borrowed
+        const principal = Number(newLease.principalAmount);
+        const monthly = Number(newLease.monthlyPayment);
+        const tenure = Number(newLease.tenureMonths);
+        const totalPayments = monthly * tenure;
+        if (totalPayments < principal) {
+            const proceed = await confirmDialog({
+                title: "Payments don't cover the principal",
+                message: `${tenure} payments of LKR ${monthly.toLocaleString()} add up to LKR ${totalPayments.toLocaleString()}, `
+                    + `which is less than the principal of LKR ${principal.toLocaleString()}. `
+                    + 'Check the monthly payment and tenure. Save anyway?',
+                confirmText: 'Save Anyway',
+                cancelText: 'Go Back',
+                danger: true,
+            });
+            if (!proceed) return;
+        }
+
         setSubmitting(true);
         try {
             await apiClient.post('/leases', {
@@ -86,21 +106,54 @@ export const LeasesPage = () => {
                 assetName: '', assetType: 'vehicle', lessor: '', principalAmount: '',
                 monthlyPayment: '', interestRate: '', tenureMonths: '', startDate: '', icon: '🚗'
             });
+            notify.success('Lease added.');
             await fetchLeases();
         } catch (err) {
             console.error('Failed to create lease:', err);
-            notify.error('Failed to create lease. Please try again.');
+            notify.error(getApiErrorMessage(err, 'Failed to create lease. Please try again.'));
         } finally {
             setSubmitting(false);
         }
     };
 
-    const handleUpdateStatus = async (id: string, status: Lease['status']) => {
+    const handleMarkCompleted = async (lease: Lease) => {
+        const confirmed = await confirmDialog({
+            title: 'Mark lease as completed?',
+            message: `This sets ${lease.assetName} as fully paid (LKR ${Math.round(lease.outstandingBalance).toLocaleString()} outstanding, ${lease.remainingMonths} months left) and can't be undone.`,
+            confirmText: 'Mark Completed',
+        });
+        if (!confirmed) return;
         try {
-            await apiClient.put(`/leases/${id}`, { status });
+            await apiClient.put(`/leases/${lease._id}`, { status: 'completed' });
+            notify.success('Lease marked as completed.');
             await fetchLeases();
         } catch (err) {
             console.error('Failed to update lease:', err);
+            notify.error(getApiErrorMessage(err, 'Failed to update lease. Please try again.'));
+        }
+    };
+
+    const handleRecordPayment = async (lease: Lease) => {
+        const value = await promptDialog({
+            title: 'Record lease payment',
+            message: `Record one monthly payment for ${lease.assetName}.`,
+            label: 'Amount paid (LKR)',
+            inputType: 'number',
+            defaultValue: String(lease.monthlyPayment),
+            confirmText: 'Record Payment',
+            validate: (v) => (Number(v) > 0 ? null : 'Enter an amount greater than 0'),
+        });
+        if (value === null) return;
+        try {
+            const res = await apiClient.post(`/leases/${lease._id}/payments`, { amount: Number(value) });
+            const updated: Lease = res.data.lease;
+            notify.success(updated.status === 'completed'
+                ? 'Final payment recorded. Lease completed.'
+                : `Payment recorded. ${updated.remainingMonths} months remaining.`);
+            await fetchLeases();
+        } catch (err) {
+            console.error('Failed to record lease payment:', err);
+            notify.error(getApiErrorMessage(err, 'Failed to record payment. Please try again.'));
         }
     };
 
@@ -201,19 +254,19 @@ export const LeasesPage = () => {
                             </div>
                             <div className="form-group">
                                 <label>Principal Amount (LKR)</label>
-                                <input type="number" placeholder="e.g. 4500000" value={newLease.principalAmount} onChange={e => setNewLease({ ...newLease, principalAmount: e.target.value })} required />
+                                <input type="number" min="1" placeholder="e.g. 4500000" value={newLease.principalAmount} onChange={e => setNewLease({ ...newLease, principalAmount: e.target.value })} required />
                             </div>
                             <div className="form-group">
                                 <label>Monthly Payment (LKR)</label>
-                                <input type="number" placeholder="e.g. 95000" value={newLease.monthlyPayment} onChange={e => setNewLease({ ...newLease, monthlyPayment: e.target.value })} required />
+                                <input type="number" min="1" placeholder="e.g. 95000" value={newLease.monthlyPayment} onChange={e => setNewLease({ ...newLease, monthlyPayment: e.target.value })} required />
                             </div>
                             <div className="form-group">
                                 <label>Interest Rate (% p.a.)</label>
-                                <input type="number" step="0.1" placeholder="e.g. 14.5" value={newLease.interestRate} onChange={e => setNewLease({ ...newLease, interestRate: e.target.value })} required />
+                                <input type="number" step="0.01" min="0" max="100" placeholder="e.g. 14.5" value={newLease.interestRate} onChange={e => setNewLease({ ...newLease, interestRate: e.target.value })} required />
                             </div>
                             <div className="form-group">
                                 <label>Tenure (Months)</label>
-                                <input type="number" placeholder="e.g. 60" value={newLease.tenureMonths} onChange={e => setNewLease({ ...newLease, tenureMonths: e.target.value })} required />
+                                <input type="number" min="1" max="600" step="1" placeholder="e.g. 60" value={newLease.tenureMonths} onChange={e => setNewLease({ ...newLease, tenureMonths: e.target.value })} required />
                             </div>
                             <div className="form-group">
                                 <label>Start Date</label>
@@ -295,10 +348,16 @@ export const LeasesPage = () => {
                                 <div className="fd-details-row">
                                     <span>📊 {lease.interestRate}% p.a.</span>
                                     <span>📅 {lease.tenureMonths} months tenure</span>
-                                    {lease.status === 'active' && daysUntil !== null && (
-                                        <span style={{ color: daysUntil <= 7 ? '#f59e0b' : 'var(--text-muted)' }}>
-                                            ⏱ Next payment in {daysUntil}d ({new Date(lease.nextPaymentDate).toLocaleDateString()})
-                                        </span>
+                                    {lease.status === 'active' && daysUntil !== null && lease.nextPaymentDate && (
+                                        daysUntil < 0 ? (
+                                            <span style={{ color: '#ef4444', fontWeight: 600 }}>
+                                                ⏱ Payment overdue by {-daysUntil}d (due {new Date(lease.nextPaymentDate).toLocaleDateString()})
+                                            </span>
+                                        ) : (
+                                            <span style={{ color: daysUntil <= 7 ? '#f59e0b' : 'var(--text-muted)' }}>
+                                                ⏱ Next payment in {daysUntil}d ({new Date(lease.nextPaymentDate).toLocaleDateString()})
+                                            </span>
+                                        )
                                     )}
                                 </div>
 
@@ -317,7 +376,8 @@ export const LeasesPage = () => {
                             <div className="fd-card-actions">
                                 {lease.status === 'active' && (
                                     <>
-                                        <button className="action-btn secondary small" onClick={() => handleUpdateStatus(lease._id, 'completed')}>Mark Completed</button>
+                                        <button className="action-btn primary small" onClick={() => handleRecordPayment(lease)}>Record Payment</button>
+                                        <button className="action-btn secondary small" onClick={() => handleMarkCompleted(lease)}>Mark Completed</button>
                                         <button className="action-btn danger small" onClick={() => handleDelete(lease._id)}>Delete</button>
                                     </>
                                 )}

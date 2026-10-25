@@ -1,6 +1,13 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import Pawning from '../schemas/pawning.schema';
 import { AuthRequest } from '../middlewares/authMiddleware';
+import {
+    PAWN_STATUSES,
+    pawnDaysRemaining,
+    pawnInterest,
+    toNumber,
+    validatePawnInput,
+} from '../services/fd-lease-pawning.service';
 
 const router = Router();
 
@@ -9,18 +16,17 @@ router.get('/', async (req: AuthRequest, res: Response) => {
     try {
         const userId = req.user?.id || req.user?.userId;
         const pawning = await Pawning.find({ userId }).sort({ createdAt: -1 });
-        
-        // Dynamically update days remaining and total interest accrued on fetch
+
+        // Dynamically update days remaining and total interest accrued on fetch.
+        // Days go negative once the redemption date has passed, so the page can show the item as overdue.
         const now = new Date();
         const updatedPawning = await Promise.all(pawning.map(async (item) => {
             if (item.status === 'active') {
-                const diffTime = Math.max(0, item.redemptionDate.getTime() - now.getTime());
-                item.daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                
-                const monthsElapsed = Math.max(0, (now.getFullYear() - item.pledgeDate.getFullYear()) * 12 + (now.getMonth() - item.pledgeDate.getMonth()));
-                item.totalInterestAccrued = item.monthlyInterest * monthsElapsed;
-                item.totalDue = item.loanAmount + item.totalInterestAccrued;
-                
+                item.daysRemaining = pawnDaysRemaining(item.redemptionDate, now);
+                const { totalInterestAccrued, totalDue } = pawnInterest(item.loanAmount, item.interestRate, item.pledgeDate, now);
+                item.totalInterestAccrued = totalInterestAccrued;
+                item.totalDue = totalDue;
+
                 await item.save();
             }
             return item;
@@ -35,42 +41,34 @@ router.get('/', async (req: AuthRequest, res: Response) => {
 // POST new pawning item
 router.post('/', async (req: AuthRequest, res: Response) => {
     try {
-        const { itemDescription, itemType, pledgedValue, loanAmount, interestRate, pledgeDate, redemptionDate, branch, ticketNumber, icon } = req.body;
-        
-        const start = new Date(pledgeDate);
-        const end = new Date(redemptionDate);
-        
-        const monthlyInterest = (Number(loanAmount) * (Number(interestRate) / 100)) / 12;
-        
-        const now = new Date();
-        let daysRemaining = 0;
-        let totalInterestAccrued = 0;
-        
-        if (now < end) {
-            const diffTime = end.getTime() - now.getTime();
-            daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        }
+        const validationError = validatePawnInput(req.body);
+        if (validationError) return res.status(400).json({ error: validationError });
 
-        const monthsElapsed = Math.max(0, (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth()));
-        totalInterestAccrued = monthlyInterest * monthsElapsed;
-        
-        const totalDue = Number(loanAmount) + totalInterestAccrued;
+        const { itemDescription, itemType, branch, ticketNumber, icon } = req.body;
+        const pledgedValue = toNumber(req.body.pledgedValue);
+        const loanAmount = toNumber(req.body.loanAmount);
+        const interestRate = toNumber(req.body.interestRate);
+        const start = new Date(req.body.pledgeDate);
+        const end = new Date(req.body.redemptionDate);
+
+        const now = new Date();
+        const { monthlyInterest, totalInterestAccrued, totalDue } = pawnInterest(loanAmount, interestRate, start, now);
 
         const userId = req.user?.id || req.user?.userId;
         const newPawning = new Pawning({
             userId,
-            itemDescription,
+            itemDescription: itemDescription.trim(),
             itemType,
             icon: icon || '💍',
-            pledgedValue: Number(pledgedValue),
-            loanAmount: Number(loanAmount),
-            interestRate: Number(interestRate),
+            pledgedValue,
+            loanAmount,
+            interestRate,
             monthlyInterest,
             pledgeDate: start,
             redemptionDate: end,
-            branch,
-            ticketNumber,
-            daysRemaining,
+            branch: branch.trim(),
+            ticketNumber: ticketNumber.trim(),
+            daysRemaining: pawnDaysRemaining(end, now),
             totalInterestAccrued,
             totalDue
         });
@@ -86,6 +84,8 @@ router.post('/', async (req: AuthRequest, res: Response) => {
 router.put('/:id', async (req: AuthRequest, res: Response) => {
     try {
         const { status } = req.body;
+        if (!PAWN_STATUSES.includes(status)) return res.status(400).json({ error: 'Invalid pawning status' });
+
         const userId = req.user?.id || req.user?.userId;
         const item = await Pawning.findOneAndUpdate(
             { _id: req.params.id, userId },
@@ -93,7 +93,7 @@ router.put('/:id', async (req: AuthRequest, res: Response) => {
             { new: true }
         );
         if (!item) {
-            return res.status(404).json({ message: 'Pawning item not found' });
+            return res.status(404).json({ error: 'Pawning item not found' });
         }
         res.json({ message: 'Pawning item updated', pawning: item });
     } catch (error: any) {

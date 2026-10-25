@@ -1243,6 +1243,10 @@
 @media (max-width: 600px) { .fd-form-grid { grid-template-columns: 1fr; } }
 .fd-form-check { margin-bottom: 1rem; font-size: 0.88rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.5rem; }
 .fd-form-actions { display: flex; gap: 0.75rem; }
+/* Tenure number + unit on one line: the number takes the space, the unit keeps a fixed width */
+.fd-tenure-row { display: flex; gap: 0.5rem; }
+.fd-tenure-row input { flex: 1 1 0; min-width: 0; }
+.fd-tenure-row select { flex: 0 0 120px; width: 120px; }
 
 /* Form group reuse */
 .form-group label { display: block; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.35rem; font-weight: 600; }

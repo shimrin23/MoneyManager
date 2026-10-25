@@ -11,9 +11,12 @@ export interface ILease extends Document {
     tenureMonths: number;
     remainingMonths: number;
     outstandingBalance: number;
+    // Installments paid so far: the ones already due when the lease was added, plus recorded payments
+    paidMonths?: number;
+    payments: { amount: number; date: Date }[];
     startDate: Date;
     endDate: Date;
-    nextPaymentDate: Date;
+    nextPaymentDate: Date | null;
     status: 'active' | 'completed' | 'defaulted';
     icon: string;
 }
@@ -29,6 +32,11 @@ const LeaseSchema = new Schema<ILease>({
     tenureMonths: { type: Number, required: true },
     remainingMonths: { type: Number, required: true },
     outstandingBalance: { type: Number, required: true },
+    paidMonths: { type: Number },
+    payments: [{
+        amount: { type: Number, required: true },
+        date: { type: Date, required: true }
+    }],
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
     nextPaymentDate: { type: Date },
