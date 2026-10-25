@@ -52,15 +52,10 @@ export default class AuthController {
             // 2. Check if user already exists
             const existingUser = await User.findOne({ email: cleanEmail });
             if (existingUser) {
-                // Account linking case: user has a Google account but no email/password set up yet
+                // AUT-006: a Google-only account cannot get a password through sign-up.
+                // Its owner must sign in with Google.
                 if (!existingUser.passwordHash && existingUser.isGoogleAccount) {
-                    const salt = await bcrypt.genSalt(10);
-                    existingUser.passwordHash = await bcrypt.hash(password, salt);
-                    existingUser.isVerified = true; // Google accounts are pre-verified
-                    await existingUser.save();
-                    return res.status(201).json({ 
-                        message: "Password added. Your account is now linked and verified." 
-                    });
+                    return res.status(400).json({ error: "This email is linked to Google Sign-In. Use Continue with Google." });
                 }
                 return res.status(400).json({ error: "User already exists" });
             }
