@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
+import { apiClient, getApiErrorMessage } from '../api/client';
 import { notify, confirmDialog } from '../utils/systemMessages';
 
 interface PawnItem {
@@ -59,7 +59,7 @@ export const PawningPage = () => {
         try {
             const res = await apiClient.get('/pawning');
             setItems(res.data.pawning || []);
-        } catch (err: any) {
+        } catch (err) {
             console.error('Failed to fetch pawning items:', err);
             setError('Unable to load pawning items. Please try again.');
             setItems([]);
@@ -87,21 +87,30 @@ export const PawningPage = () => {
                 itemDescription: '', itemType: 'gold', pledgedValue: '', loanAmount: '',
                 interestRate: '', pledgeDate: '', redemptionDate: '', branch: '', ticketNumber: '', icon: '💍'
             });
+            notify.success('Pawn item added.');
             await fetchItems();
         } catch (err) {
             console.error('Failed to create pawning item:', err);
-            notify.error('Failed to create pawning item. Please try again.');
+            notify.error(getApiErrorMessage(err, 'Failed to create pawning item. Please try again.'));
         } finally {
             setSubmitting(false);
         }
     };
 
-    const handleUpdateStatus = async (id: string, status: PawnItem['status']) => {
+    const handleRedeem = async (item: PawnItem) => {
+        const confirmed = await confirmDialog({
+            title: 'Redeem item?',
+            message: `Mark ${item.itemDescription} (#${item.ticketNumber}) as redeemed? Total due now is LKR ${Math.round(item.totalDue).toLocaleString()}. This can't be undone.`,
+            confirmText: 'Redeem',
+        });
+        if (!confirmed) return;
         try {
-            await apiClient.put(`/pawning/${id}`, { status });
+            await apiClient.put(`/pawning/${item._id}`, { status: 'redeemed' });
+            notify.success('Item marked as redeemed.');
             await fetchItems();
         } catch (err) {
             console.error('Failed to update pawning item:', err);
+            notify.error(getApiErrorMessage(err, 'Failed to update pawning item. Please try again.'));
         }
     };
 
@@ -173,7 +182,7 @@ export const PawningPage = () => {
                     <div className="rec-stat-icon">⚠️</div>
                     <div>
                         <div className="rec-stat-value">{urgentItems}</div>
-                        <div className="rec-stat-label">Due in &lt; 21 Days</div>
+                        <div className="rec-stat-label">Overdue or Due in &lt; 21 Days</div>
                     </div>
                 </div>
             </div>
@@ -200,15 +209,15 @@ export const PawningPage = () => {
                             </div>
                             <div className="form-group">
                                 <label>Pledged Value (LKR)</label>
-                                <input type="number" placeholder="e.g. 180000" value={newItem.pledgedValue} onChange={e => setNewItem({ ...newItem, pledgedValue: e.target.value })} required />
+                                <input type="number" min="1" placeholder="e.g. 180000" value={newItem.pledgedValue} onChange={e => setNewItem({ ...newItem, pledgedValue: e.target.value })} required />
                             </div>
                             <div className="form-group">
                                 <label>Loan Amount (LKR)</label>
-                                <input type="number" placeholder="e.g. 126000" value={newItem.loanAmount} onChange={e => setNewItem({ ...newItem, loanAmount: e.target.value })} required />
+                                <input type="number" min="1" placeholder="e.g. 126000" value={newItem.loanAmount} onChange={e => setNewItem({ ...newItem, loanAmount: e.target.value })} required />
                             </div>
                             <div className="form-group">
                                 <label>Interest Rate (% p.a.)</label>
-                                <input type="number" step="0.1" placeholder="e.g. 24" value={newItem.interestRate} onChange={e => setNewItem({ ...newItem, interestRate: e.target.value })} required />
+                                <input type="number" step="0.01" min="0" max="100" placeholder="e.g. 24" value={newItem.interestRate} onChange={e => setNewItem({ ...newItem, interestRate: e.target.value })} required />
                             </div>
                             <div className="form-group">
                                 <label>Branch</label>
@@ -224,7 +233,7 @@ export const PawningPage = () => {
                             </div>
                             <div className="form-group">
                                 <label>Redemption Date</label>
-                                <input type="date" value={newItem.redemptionDate} onChange={e => setNewItem({ ...newItem, redemptionDate: e.target.value })} required />
+                                <input type="date" min={newItem.pledgeDate || undefined} value={newItem.redemptionDate} onChange={e => setNewItem({ ...newItem, redemptionDate: e.target.value })} required />
                             </div>
                         </div>
                         <div className="fd-form-actions">
@@ -310,9 +319,11 @@ export const PawningPage = () => {
                                         </div>
                                         <div style={{ textAlign: 'right' }}>
                                             <div style={{ fontSize: '1.1rem', fontWeight: 700, color: urgencyColor(item.daysRemaining) }}>
-                                                {item.daysRemaining} Days
+                                                {item.daysRemaining < 0 ? 'Overdue' : `${item.daysRemaining} Days`}
                                             </div>
-                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Remaining to Redeem</div>
+                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                                                {item.daysRemaining < 0 ? `${-item.daysRemaining} days past redemption date` : 'Remaining to Redeem'}
+                                            </div>
                                         </div>
                                     </div>
                                     <div className="fd-progress-bar" style={{ height: '4px', background: 'rgba(255,255,255,0.1)' }}>
@@ -328,7 +339,7 @@ export const PawningPage = () => {
                         <div className="fd-card-actions">
                             {item.status === 'active' && (
                                 <>
-                                    <button className="action-btn secondary small" onClick={() => handleUpdateStatus(item._id, 'redeemed')}>Redeem Item</button>
+                                    <button className="action-btn secondary small" onClick={() => handleRedeem(item)}>Redeem Item</button>
                                     <button className="action-btn danger small" onClick={() => handleDelete(item._id)}>Delete</button>
                                 </>
                             )}
