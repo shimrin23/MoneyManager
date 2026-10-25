@@ -40,6 +40,10 @@ export interface IUser extends Document {
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
 
+  // Account lock (7 failed sign-ins locks for 15 minutes)
+  failedLoginCount?: number;
+  lockedUntil?: Date;
+
   createdAt: Date;
   updatedAt: Date;
 }
@@ -87,6 +91,10 @@ const UserSchema: Schema = new Schema(
     isGoogleAccount: { type: Boolean, default: false },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
+
+    // Account lock
+    failedLoginCount: { type: Number, default: 0 },
+    lockedUntil: { type: Date },
 
     // Enhanced fields
     pfmOptIn: { type: Boolean, default: false, index: true },

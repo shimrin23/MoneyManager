@@ -60,7 +60,7 @@ export const ResetPassword = () => {
 
             <div className="auth-center-card">
                 <div className="auth-logo">
-                    <span className="auth-logo-icon"></span>
+                    <span className="auth-logo-icon">💰</span>
                     <span className="auth-logo-name">MoneyManager</span>
                 </div>
 
@@ -149,7 +149,7 @@ export const ResetPassword = () => {
                                 <button
                                     type="submit"
                                     className="auth-submit-btn"
-                                    disabled={status === 'loading' || !isPasswordValid(password)}
+                                    disabled={status === 'loading'}
                                 >
                                     {status === 'loading' ? (
                                         <span className="auth-spinner">⏳ Saving password…</span>
