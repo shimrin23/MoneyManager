@@ -153,6 +153,23 @@ export const SubscriptionsPage = () => {
 
 
 
+    // Whole days from today to the next payment date (negative = overdue), compared by calendar date
+    const getDaysUntilPayment = (nextPayment: string) => {
+        const [y, m, d] = nextPayment.slice(0, 10).split('-').map(Number);
+        const due = new Date(y, m - 1, d);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    };
+
+    const getDueStatus = (subscription: Subscription) => {
+        const days = getDaysUntilPayment(subscription.nextPayment);
+        if (days < 0) return { overdue: true, label: `Overdue by ${-days} day${days === -1 ? '' : 's'}`, color: '#ef4444' };
+        if (days === 0) return { overdue: false, label: 'Due today', color: '#f59e0b' };
+        if (days <= 7) return { overdue: false, label: `Due in ${days} day${days === 1 ? '' : 's'}`, color: '#f59e0b' };
+        return { overdue: false, label: `Due in ${days} days`, color: 'var(--text-muted)' };
+    };
+
     // Feature 5: Renewal Risk Detection
     const getRenewalRisk = (subscription: Subscription) => {
         const nextPaymentDate = new Date(subscription.nextPayment);
@@ -229,6 +246,21 @@ export const SubscriptionsPage = () => {
         setSelectedSubscription(subscription);
         setShowAlternativesModal(true);
     };
+
+    const closeAlternativesModal = () => {
+        setShowAlternativesModal(false);
+        setSelectedSubscription(null);
+    };
+
+    // Esc closes the alternatives popup
+    useEffect(() => {
+        if (!showAlternativesModal) return;
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') closeAlternativesModal();
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, [showAlternativesModal]);
 
     const handleCreateSubscription = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -426,7 +458,6 @@ export const SubscriptionsPage = () => {
                                     type="date"
                                     value={newSubscription.nextPayment}
                                     onChange={(e) => setNewSubscription({...newSubscription, nextPayment: e.target.value})}
-                                    min={new Date().toISOString().split('T')[0]}
                                     required
                                 />
                             </div>
@@ -559,12 +590,13 @@ export const SubscriptionsPage = () => {
                     const insight = insightData?.insight
                         || (insightsStatus === 'loading' ? 'Loading AI insight...' : 'AI insight is not available right now. Please try again later.');
                     const renewalRisk = getRenewalRisk(subscription);
+                    const dueStatus = getDueStatus(subscription);
                     const monthlyAmount = subscription.frequency === 'yearly' ? subscription.amount / 12 : subscription.amount;
-                    
+
                     return (
                         <div key={subscription._id} style={{
                             background: 'var(--card)',
-                            border: renewalRisk.risk ? '2px solid #ef4444' : '1px solid var(--border)',
+                            border: renewalRisk.risk || dueStatus.overdue ? '2px solid #ef4444' : '1px solid var(--border)',
                             borderRadius: '12px',
                             padding: '20px',
                             marginBottom: '16px',
@@ -582,6 +614,23 @@ export const SubscriptionsPage = () => {
                                     fontSize: '14px'
                                 }}>
                                     {renewalRisk.message}
+                                </div>
+                            )}
+
+                            {/* Payment date has passed */}
+                            {dueStatus.overdue && (
+                                <div style={{
+                                    background: 'rgba(239, 68, 68, 0.12)',
+                                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                                    padding: '10px 12px',
+                                    borderRadius: '8px',
+                                    marginBottom: '12px',
+                                    color: '#ef4444',
+                                    fontSize: '14px',
+                                    fontWeight: 600
+                                }}>
+                                    Payment overdue: was due {new Date(subscription.nextPayment).toLocaleDateString('en-LK')} ({dueStatus.label.toLowerCase()}).
+                                    Log the payment on the Recurring page, or cancel if you no longer use it.
                                 </div>
                             )}
 
@@ -629,7 +678,8 @@ export const SubscriptionsPage = () => {
                                 </div>
                                 <div>
                                     <div style={{ fontSize: '14px', color: 'var(--text)', marginBottom: '4px', fontWeight: '600' }}>Next Renewal</div>
-                                    <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text)' }}>{formatDate(subscription.nextPayment)}</div>
+                                    <div style={{ fontSize: '15px', fontWeight: '700', color: dueStatus.overdue ? '#ef4444' : 'var(--text)' }}>{formatDate(subscription.nextPayment)}</div>
+                                    <div style={{ fontSize: '12px', fontWeight: 600, color: dueStatus.color, marginTop: '2px' }}>{dueStatus.label}</div>
                                 </div>
                             </div>
 
@@ -776,28 +826,56 @@ export const SubscriptionsPage = () => {
 
             {/* Modal: Cheaper Alternatives - Feature 4 */}
             {showAlternativesModal && selectedSubscription && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: 'rgba(0,0,0,0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000
-                }}>
-                    <div style={{
-                        background: 'var(--card)',
-                        borderRadius: '12px',
-                        padding: '24px',
-                        maxWidth: '500px',
-                        width: '90%',
-                        maxHeight: '80vh',
-                        overflow: 'auto'
-                    }}>
-                        <h3 style={{ marginTop: '0' }}>Cheaper Alternatives for {selectedSubscription.name}</h3>
+                <div
+                    onClick={closeAlternativesModal}
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(0,0,0,0.5)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 1000
+                    }}
+                >
+                    <div
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="alternatives-title"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            background: 'var(--card)',
+                            borderRadius: '12px',
+                            padding: '24px',
+                            maxWidth: '500px',
+                            width: '90%',
+                            maxHeight: '80vh',
+                            overflow: 'auto'
+                        }}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
+                            <h3 id="alternatives-title" style={{ margin: 0 }}>Cheaper Alternatives for {selectedSubscription.name}</h3>
+                            <button
+                                type="button"
+                                onClick={closeAlternativesModal}
+                                aria-label="Close"
+                                title="Close"
+                                style={{
+                                    background: 'none',
+                                    border: 'none',
+                                    fontSize: '24px',
+                                    lineHeight: 1,
+                                    color: 'var(--text-muted)',
+                                    cursor: 'pointer',
+                                    padding: '0 4px'
+                                }}
+                            >
+                                ×
+                            </button>
+                        </div>
                         
                         {(() => {
                             const insightData = selectedSubscription._id ? insightsMap[selectedSubscription._id] : null;
@@ -862,14 +940,36 @@ export const SubscriptionsPage = () => {
                                                         cursor: 'pointer',
                                                         fontWeight: '500'
                                                     }}
-                                                    onClick={() => setShowAlternativesModal(false)}
+                                                    onClick={closeAlternativesModal}
                                                 >
                                                     Close
                                                 </button>
                                             </div>
                                         </div>
                                     ) : (
-                                        <p>No cheaper alternatives available at this time.</p>
+                                        <div>
+                                            <p style={{ marginTop: 0 }}>
+                                                {insightsStatus === 'failed'
+                                                    ? 'Cheaper alternatives could not be loaded right now. Please try again later.'
+                                                    : 'No cheaper alternatives available at this time.'}
+                                            </p>
+                                            <button
+                                                type="button"
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '10px',
+                                                    background: 'var(--card-hover)',
+                                                    color: 'var(--text)',
+                                                    border: '1px solid var(--border)',
+                                                    borderRadius: '6px',
+                                                    cursor: 'pointer',
+                                                    fontWeight: '500'
+                                                }}
+                                                onClick={closeAlternativesModal}
+                                            >
+                                                Close
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             );
