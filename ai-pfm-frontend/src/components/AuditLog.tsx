@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime } from '../utils/appFormat';
 import { useEffect, useState } from 'react';
 import { apiClient } from '../api/client';
 
@@ -183,7 +184,7 @@ export const AuditLog = () => {
                                     <div className="entry-meta">
                                         <span className="user-id">{log.userId}</span>
                                         <span className="timestamp">
-                                            {new Date(log.timestamp).toLocaleString()}
+                                            {formatDateTime(log.timestamp)}
                                         </span>
                                         {log.ipAddress && (
                                             <span className="ip-address">{log.ipAddress}</span>

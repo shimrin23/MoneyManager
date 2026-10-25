@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.ts';
 import { DatePicker } from './DatePicker';
 import { getLocalDateString } from '../utils/date';
+import { currencyCode, fromLkr, toLkr } from '../utils/appFormat';
 
 interface TransactionFormProps {
     onTransactionAdded: () => void;
@@ -23,11 +24,13 @@ const DEFAULT_EXPENSE_CATEGORIES = ['Food & Dining', 'Shopping', 'Entertainment'
 
 export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, isEditMode }: TransactionFormProps) => {
     const today = getLocalDateString();
+    // Default type comes from Settings (saved on the device when Settings is saved)
+    const defaultType: 'income' | 'expense' = localStorage.getItem('pfm_default_tx_type') === 'income' ? 'income' : 'expense';
     const [formData, setFormData] = useState({
-        amount: initialData?.amount?.toString() || '',
+        amount: initialData?.amount !== undefined ? String(fromLkr(Number(initialData.amount))) : '',
         category: initialData?.category || '',
         description: initialData?.description || '',
-        type: initialData?.type || 'expense' as 'income' | 'expense',
+        type: initialData?.type || defaultType,
         date: initialData?.date ? initialData.date.split('T')[0] : today
     });
     const [loading, setLoading] = useState(false);
@@ -65,16 +68,16 @@ export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, i
             if (!token) throw new Error('Please login again');
 
             if (isEditMode && initialData?._id) {
-                await apiClient.put(`/transactions/${initialData._id}`, { ...formData, amount }, {
+                await apiClient.put(`/transactions/${initialData._id}`, { ...formData, amount: toLkr(amount) }, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
             } else {
-                await apiClient.post('/transactions', { ...formData, amount }, {
+                await apiClient.post('/transactions', { ...formData, amount: toLkr(amount) }, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
             }
 
-            setFormData({ amount: '', category: '', description: '', type: 'expense', date: getLocalDateString() });
+            setFormData({ amount: '', category: '', description: '', type: defaultType, date: getLocalDateString() });
             setSuccess(true);
             setTimeout(() => {
                 setSuccess(false);
@@ -141,9 +144,9 @@ export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, i
 
                 {/* Amount */}
                 <div className="form-group">
-                    <label>Amount (Rs.) <span className="required">*</span></label>
+                    <label>Amount ({currencyCode()}) <span className="required">*</span></label>
                     <div className="input-with-icon">
-                        <span className="input-prefix">Rs.</span>
+                        <span className="input-prefix">{currencyCode()}</span>
                         <input
                             type="number"
                             step="0.01"

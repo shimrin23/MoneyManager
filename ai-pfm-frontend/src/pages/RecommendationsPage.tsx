@@ -1,3 +1,4 @@
+import { formatMoney } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
 
@@ -210,7 +211,7 @@ export const RecommendationsPage = () => {
                 <div className="rec-stat-card savings">
                     <div className="rec-stat-icon">💰</div>
                     <div>
-                        <div className="rec-stat-value">LKR {totalSavingsAchieved.toLocaleString()}</div>
+                        <div className="rec-stat-value">{formatMoney(totalSavingsAchieved)}</div>
                         <div className="rec-stat-label">Savings Achieved</div>
                     </div>
                 </div>

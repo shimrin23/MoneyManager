@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime, formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient, getApiErrorMessage } from '../api/client';
@@ -207,7 +208,7 @@ export const SubscriptionsPage = () => {
     const handleCancelAllZombies = async () => {
         const confirmed = await confirmDialog({
             title: `Cancel ${zombieSubs.length} zombie subscription${zombieSubs.length > 1 ? 's' : ''}?`,
-            message: `This cancels ${zombieSubs.map(s => s.name).join(', ')} and saves LKR ${savings.toLocaleString()}/month. You can restore them later from Cancelled Subscriptions.`,
+            message: `This cancels ${zombieSubs.map(s => s.name).join(', ')} and saves ${formatMoney(savings)}/month. You can restore them later from Cancelled Subscriptions.`,
             confirmText: 'Cancel All',
             cancelText: 'Keep Them',
             danger: true,
@@ -242,7 +243,7 @@ export const SubscriptionsPage = () => {
                 return;
             }
 
-            await apiClient.post('/subscriptions', newSubscription);
+            await apiClient.post('/subscriptions', { ...newSubscription, amount: toLkr(newSubscription.amount) });
             
             // Reset form
             setNewSubscription({
@@ -338,7 +339,7 @@ export const SubscriptionsPage = () => {
                     <div>
                         <h3 style={{ margin: '0 0 8px 0', fontSize: '18px' }}>Subscription Health Score</h3>
                         <p style={{ margin: '0', opacity: 0.9 }}>
-                            You spend LKR {totalMonthlyCost.toLocaleString()}/month on subscriptions. To see what share of your income that is,{' '}
+                            You spend {formatMoney(totalMonthlyCost)}/month on subscriptions. To see what share of your income that is,{' '}
                             <Link to="/profile" style={{ color: 'white', fontWeight: 600, textDecoration: 'underline' }}>add your monthly income in Profile</Link>.
                         </p>
                     </div>
@@ -375,7 +376,7 @@ export const SubscriptionsPage = () => {
                         
                         <div className="form-row">
                             <div className="form-group">
-                                <label>Amount (LKR)</label>
+                                <label>Amount ({currencyCode()})</label>
                                 <input
                                     type="number"
                                     value={newSubscription.amount || ''}
@@ -448,7 +449,7 @@ export const SubscriptionsPage = () => {
                 <div className="rec-stat-card">
                     <div className="rec-stat-icon">💰</div>
                     <div>
-                        <div className="rec-stat-value">LKR {totalMonthlyCost.toLocaleString()}</div>
+                        <div className="rec-stat-value">{formatMoney(totalMonthlyCost)}</div>
                         <div className="rec-stat-label">Monthly Total</div>
                     </div>
                 </div>
@@ -469,7 +470,7 @@ export const SubscriptionsPage = () => {
                 <div className="rec-stat-card savings">
                     <div className="rec-stat-icon">💸</div>
                     <div>
-                        <div className="rec-stat-value">LKR {savings.toLocaleString()}</div>
+                        <div className="rec-stat-value">{formatMoney(savings)}</div>
                         <div className="rec-stat-label">Potential Monthly Savings</div>
                     </div>
                 </div>
@@ -489,7 +490,7 @@ export const SubscriptionsPage = () => {
                         {trends.map((trend, idx) => {
                             const maxAmount = Math.max(...trends.map(t => t.amount));
                             return (
-                                <div key={idx} style={{ textAlign: 'center' }} title={`LKR ${trend.amount.toLocaleString()}`}>
+                                <div key={idx} style={{ textAlign: 'center' }} title={`${formatMoney(trend.amount)}`}>
                                     <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px' }}>
                                         {trend.amount > 0 ? `${(trend.amount / 1000).toFixed(1)}K` : '0'}
                                     </div>
@@ -525,8 +526,8 @@ export const SubscriptionsPage = () => {
                     <h4 style={{ margin: '0 0 12px 0', color: '#92400e' }}>AI Consolidation Opportunity</h4>
                     {consolidationSuggestions().map((suggestion, idx) => (
                         <div key={idx} style={{ marginBottom: '8px', color: '#92400e' }}>
-                            <strong>{suggestion.category}:</strong> You have {suggestion.count} subscriptions costing LKR {suggestion.totalCost.toLocaleString()}/month.
-                            Consolidating could save <strong>LKR {suggestion.potentialSavings.toLocaleString()}/month</strong>.
+                            <strong>{suggestion.category}:</strong> You have {suggestion.count} subscriptions costing {formatMoney(suggestion.totalCost)}/month.
+                            Consolidating could save <strong>{formatMoney(suggestion.potentialSavings)}/month</strong>.
                         </div>
                     ))}
                 </div>
@@ -539,7 +540,7 @@ export const SubscriptionsPage = () => {
                         <span className="alert-icon" style={{ display: 'none' }}></span>
                         <div>
                             <h4>Zombie Subscriptions Detected!</h4>
-                            <p>You have {zombieSubs.length} subscriptions you haven't used in 3+ months. Cancel them to save LKR {savings.toLocaleString()}/month.</p>
+                            <p>You have {zombieSubs.length} subscriptions you haven't used in 3+ months. Cancel them to save {formatMoney(savings)}/month.</p>
                         </div>
                     </div>
                     <button className="alert-action" onClick={handleCancelAllZombies}>
@@ -619,7 +620,7 @@ export const SubscriptionsPage = () => {
                             }}>
                                 <div>
                                     <div style={{ fontSize: '14px', color: 'var(--text)', marginBottom: '4px', fontWeight: '600' }}>Cost</div>
-                                    <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text)' }}>LKR {monthlyAmount.toLocaleString()}</div>
+                                    <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text)' }}>{formatMoney(monthlyAmount)}</div>
                                     <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '600' }}>/month</div>
                                 </div>
                                 <div>
@@ -628,7 +629,7 @@ export const SubscriptionsPage = () => {
                                 </div>
                                 <div>
                                     <div style={{ fontSize: '14px', color: 'var(--text)', marginBottom: '4px', fontWeight: '600' }}>Next Renewal</div>
-                                    <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text)' }}>{new Date(subscription.nextPayment).toLocaleDateString('en-LK')}</div>
+                                    <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text)' }}>{formatDate(subscription.nextPayment)}</div>
                                 </div>
                             </div>
 
@@ -656,9 +657,9 @@ export const SubscriptionsPage = () => {
                                 color: '#166534'
                             }}>
                                 <strong>If you cancel:</strong><br />
-                                • Save LKR {monthlyAmount.toLocaleString()}/month<br />
+                                • Save {formatMoney(monthlyAmount)}/month<br />
                                 {monthlyIncome && <>• Frees up {((monthlyAmount / monthlyIncome) * 100).toFixed(1)}% of your monthly income<br /></>}
-                                • Annual savings: LKR {(monthlyAmount * 12).toLocaleString()}
+                                • Annual savings: {formatMoney((monthlyAmount * 12))}
                             </div>
 
                             {/* Action Buttons */}
@@ -756,8 +757,8 @@ export const SubscriptionsPage = () => {
                             <div>
                                 <div style={{ fontWeight: 600, color: 'var(--text)' }}>{sub.name}</div>
                                 <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                                    {sub.provider} · LKR {sub.amount.toLocaleString()}/{sub.frequency === 'yearly' ? 'year' : 'month'}
-                                    {sub.cancelledAt && ` · Cancelled ${new Date(sub.cancelledAt).toLocaleDateString()}`}
+                                    {sub.provider} · {formatMoney(sub.amount)}/{sub.frequency === 'yearly' ? 'year' : 'month'}
+                                    {sub.cancelledAt && ` · Cancelled ${formatDate(sub.cancelledAt)}`}
                                     {sub.cancelReason && ` · ${CANCEL_REASON_LABELS[sub.cancelReason] || sub.cancelReason}`}
                                 </div>
                             </div>
@@ -823,10 +824,10 @@ export const SubscriptionsPage = () => {
                                                                     <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{alt.provider}</div>
                                                                 </td>
                                                                 <td style={{ textAlign: 'center', padding: '12px 8px', fontWeight: '600' }}>
-                                                                    LKR {alt.price.toLocaleString()}
+                                                                    {formatMoney(alt.price)}
                                                                 </td>
                                                                 <td style={{ textAlign: 'right', padding: '12px 8px', fontWeight: '600', color: '#059669' }}>
-                                                                    {alt.savings > 0 ? `+Rs. ${alt.savings.toLocaleString()}` : 'N/A'}
+                                                                    {alt.savings > 0 ? `+${formatMoney(alt.savings)}` : 'N/A'}
                                                                 </td>
                                                             </tr>
                                                         ))}
@@ -911,9 +912,9 @@ export const SubscriptionsPage = () => {
                             color: '#166534'
                         }}>
                             <strong>Cancelling this will:</strong><br />
-                            • Save LKR {(selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount).toLocaleString()}/month<br />
+                            • Save {formatMoney((selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount))}/month<br />
                             {monthlyIncome && <>• Free up {(((selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount) / monthlyIncome) * 100).toFixed(1)}% of your monthly income<br /></>}
-                            • Annual savings: LKR {((selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount) * 12).toLocaleString()}
+                            • Annual savings: {formatMoney(((selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount) * 12))}
                         </div>
 
                         {/* Feature 8: Cancel Reason Tracking */}

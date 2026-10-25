@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime, formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { apiClient, getApiErrorMessage } from '../api/client';
 import { notify, confirmDialog } from '../utils/systemMessages';
@@ -78,8 +79,8 @@ export const PawningPage = () => {
         try {
             await apiClient.post('/pawning', {
                 ...newItem,
-                pledgedValue: Number(newItem.pledgedValue),
-                loanAmount: Number(newItem.loanAmount),
+                pledgedValue: toLkr(Number(newItem.pledgedValue)),
+                loanAmount: toLkr(Number(newItem.loanAmount)),
                 interestRate: Number(newItem.interestRate)
             });
             setShowNewForm(false);
@@ -100,7 +101,7 @@ export const PawningPage = () => {
     const handleRedeem = async (item: PawnItem) => {
         const confirmed = await confirmDialog({
             title: 'Redeem item?',
-            message: `Mark ${item.itemDescription} (#${item.ticketNumber}) as redeemed? Total due now is LKR ${Math.round(item.totalDue).toLocaleString()}. This can't be undone.`,
+            message: `Mark ${item.itemDescription} (#${item.ticketNumber}) as redeemed? Total due now is ${formatMoney(Math.round(item.totalDue))}. This can't be undone.`,
             confirmText: 'Redeem',
         });
         if (!confirmed) return;
@@ -167,14 +168,14 @@ export const PawningPage = () => {
                 <div className="rec-stat-card pending">
                     <div className="rec-stat-icon">💸</div>
                     <div>
-                        <div className="rec-stat-value">LKR {(totalLoan / 1000).toFixed(0)}K</div>
+                        <div className="rec-stat-value">{formatMoney(totalLoan)}</div>
                         <div className="rec-stat-label">Total Loan Taken</div>
                     </div>
                 </div>
                 <div className="rec-stat-card savings">
                     <div className="rec-stat-icon">💎</div>
                     <div>
-                        <div className="rec-stat-value">LKR {(totalPledged / 1000).toFixed(0)}K</div>
+                        <div className="rec-stat-value">{formatMoney(totalPledged)}</div>
                         <div className="rec-stat-label">Pledged Value</div>
                     </div>
                 </div>
@@ -208,11 +209,11 @@ export const PawningPage = () => {
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label>Pledged Value (LKR)</label>
+                                <label>Pledged Value ({currencyCode()})</label>
                                 <input type="number" min="1" placeholder="e.g. 180000" value={newItem.pledgedValue} onChange={e => setNewItem({ ...newItem, pledgedValue: e.target.value })} required />
                             </div>
                             <div className="form-group">
-                                <label>Loan Amount (LKR)</label>
+                                <label>Loan Amount ({currencyCode()})</label>
                                 <input type="number" min="1" placeholder="e.g. 126000" value={newItem.loanAmount} onChange={e => setNewItem({ ...newItem, loanAmount: e.target.value })} required />
                             </div>
                             <div className="form-group">
@@ -293,21 +294,21 @@ export const PawningPage = () => {
                             <div className="fd-amounts-row">
                                 <div className="fd-amount-item">
                                     <div className="fd-amount-label">Loan Amount</div>
-                                    <div className="fd-amount-value">LKR {item.loanAmount.toLocaleString()}</div>
+                                    <div className="fd-amount-value">{formatMoney(item.loanAmount)}</div>
                                 </div>
                                 <div className="fd-amount-item highlight" style={{ background: 'rgba(245,158,11,0.1)' }}>
                                     <div className="fd-amount-label" style={{ color: '#f59e0b' }}>Total Due Now</div>
-                                    <div className="fd-amount-value" style={{ color: '#f59e0b' }}>LKR {Math.round(item.totalDue).toLocaleString()}</div>
+                                    <div className="fd-amount-value" style={{ color: '#f59e0b' }}>{formatMoney(Math.round(item.totalDue))}</div>
                                 </div>
                                 <div className="fd-amount-item">
                                     <div className="fd-amount-label">Pledged Value</div>
-                                    <div className="fd-amount-value">LKR {item.pledgedValue.toLocaleString()}</div>
+                                    <div className="fd-amount-value">{formatMoney(item.pledgedValue)}</div>
                                 </div>
                             </div>
 
                             <div className="fd-details-row">
-                                <span>📈 {item.interestRate}% p.a. (LKR {Math.round(item.monthlyInterest)}/mo)</span>
-                                <span>💰 Accrued Interest: LKR {Math.round(item.totalInterestAccrued).toLocaleString()}</span>
+                                <span>📈 {item.interestRate}% p.a. ({formatMoney(Math.round(item.monthlyInterest))}/mo)</span>
+                                <span>💰 Accrued Interest: {formatMoney(Math.round(item.totalInterestAccrued))}</span>
                             </div>
 
                             {item.status === 'active' && (
@@ -315,7 +316,7 @@ export const PawningPage = () => {
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                                         <div style={{ fontSize: '0.85rem' }}>
                                             <div style={{ color: 'var(--text-muted)' }}>Redemption Date</div>
-                                            <div style={{ fontWeight: 600 }}>{new Date(item.redemptionDate).toLocaleDateString()}</div>
+                                            <div style={{ fontWeight: 600 }}>{formatDate(item.redemptionDate)}</div>
                                         </div>
                                         <div style={{ textAlign: 'right' }}>
                                             <div style={{ fontSize: '1.1rem', fontWeight: 700, color: urgencyColor(item.daysRemaining) }}>

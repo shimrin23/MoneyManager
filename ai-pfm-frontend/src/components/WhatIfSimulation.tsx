@@ -1,3 +1,4 @@
+import { formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useState, type FC } from 'react';
 import { useLoans } from '../hooks/useLoans';
 
@@ -118,7 +119,7 @@ const WhatIfSimulation: FC<WhatIfSimulationProps> = ({
                         <p className="description">See how increasing your EMI can help you pay off the loan faster and save interest.</p>
 
                         <div className="form-group">
-                            <label>New Monthly EMI: Rs {increasedEMI.toFixed(2)}</label>
+                            <label>New Monthly EMI: {formatMoney(increasedEMI, 2)}</label>
                             <input
                                 type="range"
                                 min={currentEMI}
@@ -127,7 +128,7 @@ const WhatIfSimulation: FC<WhatIfSimulationProps> = ({
                                 onChange={(e) => setIncreasedEMI(Number(e.target.value))}
                                 step={100}
                             />
-                            <p className="help-text">Current EMI: Rs {currentEMI.toFixed(2)}</p>
+                            <p className="help-text">Current EMI: {formatMoney(currentEMI, 2)}</p>
                         </div>
 
                         <button onClick={handleSimulateEMI} disabled={loading} className="btn-primary">
@@ -142,15 +143,15 @@ const WhatIfSimulation: FC<WhatIfSimulationProps> = ({
                         <p className="description">Make an extra payment to reduce your loan balance and interest.</p>
 
                         <div className="form-group">
-                            <label>Lump Sum Amount</label>
+                            <label>Lump Sum Amount ({currencyCode()})</label>
                             <input
                                 type="number"
-                                value={lumpSumAmount}
-                                onChange={(e) => setLumpSumAmount(Number(e.target.value))}
+                                value={fromLkr(lumpSumAmount)}
+                                onChange={(e) => setLumpSumAmount(toLkr(Number(e.target.value)))}
                                 min={0}
                                 max={remainingBalance}
                             />
-                            <p className="help-text">Max available: Rs {remainingBalance.toFixed(2)}</p>
+                            <p className="help-text">Max available: {formatMoney(remainingBalance, 2)}</p>
                         </div>
 
                         <div className="form-group">
@@ -206,11 +207,11 @@ const WhatIfSimulation: FC<WhatIfSimulationProps> = ({
                             <div className="results-grid">
                                 <div className="result-item">
                                     <span className="label">Monthly EMI</span>
-                                    <span className="value">Rs {result.monthlyEMI.toFixed(2)}</span>
+                                    <span className="value">{formatMoney(result.monthlyEMI, 2)}</span>
                                 </div>
                                 <div className="result-item">
                                     <span className="label">Total Interest</span>
-                                    <span className="value">Rs {result.totalInterest.toFixed(2)}</span>
+                                    <span className="value">{formatMoney(result.totalInterest, 2)}</span>
                                 </div>
                                 <div className="result-item">
                                     <span className="label">Time to Payoff</span>
@@ -221,7 +222,7 @@ const WhatIfSimulation: FC<WhatIfSimulationProps> = ({
                             {result.savings && (
                                 <div className="savings-box">
                                     <h5>Potential Savings</h5>
-                                    <p className="saving">Interest Saved: <strong>Rs {result.savings.interestSaved.toFixed(2)}</strong></p>
+                                    <p className="saving">Interest Saved: <strong>{formatMoney(result.savings.interestSaved, 2)}</strong></p>
                                     {result.savings.timeSaved > 0 && (
                                         <p className="saving">Time Saved: <strong>{result.savings.timeSaved} months</strong></p>
                                     )}

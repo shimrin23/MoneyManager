@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime, formatMoney } from '../utils/appFormat';
 import { type FC } from 'react';
 
 interface Loan {
@@ -74,12 +75,12 @@ const ActiveLoanCards: FC<ActiveLoanCardsProps> = ({
                         <div className="card-content">
                             <div className="info-row">
                                 <span className="label">Monthly EMI:</span>
-                                <span className="value">Rs {loan.monthlyInstallment?.toFixed(2)}</span>
+                                <span className="value">{formatMoney(loan.monthlyInstallment, 2)}</span>
                             </div>
 
                             <div className="info-row">
                                 <span className="label">Remaining Amount:</span>
-                                <span className="value">Rs {loan.remainingAmount?.toFixed(2)}</span>
+                                <span className="value">{formatMoney(loan.remainingAmount, 2)}</span>
                             </div>
 
                             <div className="info-row">
@@ -89,7 +90,7 @@ const ActiveLoanCards: FC<ActiveLoanCardsProps> = ({
 
                             <div className="info-row">
                                 <span className="label">Next Due Date:</span>
-                                <span className="value">{new Date(loan.nextDueDate).toLocaleDateString()}</span>
+                                <span className="value">{formatDate(loan.nextDueDate)}</span>
                             </div>
 
                             <div className="info-row">

@@ -4,7 +4,11 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import axios from 'axios';
+import mongoose from 'mongoose';
 import User from '../schemas/user.schema';
+import Transaction from '../schemas/transaction.schema';
+import Budget from '../schemas/budget.schema';
+import Goal from '../schemas/goal.schema';
 import { sendVerificationEmail, sendWelcomeEmail, sendResetPasswordEmail } from '../utils/email';
 import dotenv from 'dotenv';
 
@@ -430,6 +434,79 @@ export default class AuthController {
     }
 
     // GET /api/auth/profile
+    // GET /api/auth/export-data - the signed-in user's own profile, settings and financial records as a JSON file
+    async exportData(req: AuthRequest, res: Response) {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+
+            const user = await User.findById(userId)
+                .select('name email phone dateOfBirth address occupation monthlyIncome role settings createdAt')
+                .lean();
+            if (!user) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            const [transactions, budgets, goals] = await Promise.all([
+                Transaction.find({ userId }).lean(),
+                Budget.find({ userId }).lean(),
+                Goal.find({ userId }).lean(),
+            ]);
+
+            const payload = {
+                exportedAt: new Date().toISOString(),
+                profile: {
+                    name: user.name,
+                    email: user.email,
+                    phone: user.phone || '',
+                    dateOfBirth: user.dateOfBirth || '',
+                    address: user.address || '',
+                    occupation: user.occupation || '',
+                    monthlyIncome: user.monthlyIncome ?? 0,
+                    role: user.role,
+                    createdAt: user.createdAt,
+                },
+                settings: user.settings || {},
+                transactions,
+                budgets,
+                goals,
+            };
+
+            res.setHeader('Content-Type', 'application/json');
+            res.setHeader('Content-Disposition', 'attachment; filename="my-financial-data.json"');
+            res.send(JSON.stringify(payload, null, 2));
+        } catch (error) {
+            console.error('Export data error:', error);
+            res.status(500).json({ error: 'Could not export data' });
+        }
+    }
+
+    // DELETE /api/auth/account - permanently deletes the signed-in user and their records (audit logs are kept)
+    async deleteAccount(req: AuthRequest, res: Response) {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+
+            for (const name of mongoose.modelNames()) {
+                if (/audit/i.test(name)) continue;
+                const model = mongoose.model(name);
+                if (model.schema.path('userId')) {
+                    await model.deleteMany({ userId: String(userId) });
+                }
+            }
+            await User.deleteOne({ _id: userId });
+
+            res.json({ message: 'Account deleted successfully' });
+        } catch (error) {
+            console.error('Delete account error:', error);
+            res.status(500).json({ error: 'Could not delete account' });
+        }
+    }
+
     async getProfile(req: AuthRequest, res: Response) {
         try {
             const userId = req.user?.id;

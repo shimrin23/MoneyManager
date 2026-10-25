@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime, formatMoney } from '../utils/appFormat';
 import { useEffect, useState } from 'react';
 import { apiClient } from '../api/client.ts';
 import { notify } from '../utils/systemMessages';
@@ -122,7 +123,7 @@ export const TransactionList = () => {
                             return (
                                 <tr key={t._id} className={t.type}>
                                     <td data-label="Date">
-                                        {new Date(t.date).toLocaleDateString()}
+                                        {formatDate(t.date)}
                                     </td>
                                     <td data-label="Description" className="description-cell">
                                         <span className="description-text">{t.description}</span>
@@ -143,7 +144,7 @@ export const TransactionList = () => {
                                         <span className="category-tag">{t.category}</span>
                                     </td>
                                     <td data-label="Amount" className="amount">
-                                        {t.type === 'income' ? '+' : '-'}Rs. {t.amount.toLocaleString()}
+                                        {t.type === 'income' ? '+' : '-'}{formatMoney(t.amount)}
                                     </td>
                                     <td data-label="Actions">
                                         <div className="table-actions">

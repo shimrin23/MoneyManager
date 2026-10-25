@@ -1,161 +1,151 @@
+import { formatDate } from '../utils/appFormat';
 // Notifications Page
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
+import '../styles/NotificationPreferences.css';
 
 interface Notification {
     id: string;
     type: 'info' | 'warning' | 'success' | 'alert';
     title: string;
     message: string;
-    timestamp: string;
-    read: boolean;
+    link?: string;
     actionRequired?: boolean;
+    read: boolean;
+    timestamp: string;
 }
 
-interface NotificationSettings {
-    budgetAlerts: boolean;
-    transactionAlerts: boolean;
-    weeklyReports: boolean;
-    monthlyReports: boolean;
-    securityAlerts: boolean;
-    marketingEmails: boolean;
-}
+// Same preference data as the Settings page (/settings/notifications)
+type Preferences = Record<string, boolean>;
+
+const PREFERENCE_GROUPS = [
+    {
+        title: 'Financial Alerts',
+        items: [
+            { key: 'budgetAlerts', label: 'Budget Alerts', description: 'Get notified when approaching budget limits' },
+            { key: 'transactionAlerts', label: 'Transaction Alerts', description: 'Alerts for large transactions and unusual activity' },
+            { key: 'goalReminders', label: 'Goal Reminders', description: 'Reminders about your savings goals' }
+        ]
+    },
+    {
+        title: 'Reports & Insights',
+        items: [
+            { key: 'weeklyReports', label: 'Weekly Reports', description: 'Weekly summary of your financial activity' },
+            { key: 'monthlyReports', label: 'Monthly Reports', description: 'Comprehensive monthly financial health report' }
+        ]
+    },
+    {
+        title: 'Security & Marketing',
+        items: [
+            { key: 'securityAlerts', label: 'Security Alerts', description: 'Important security notifications (always enabled)' },
+            { key: 'marketingEmails', label: 'Marketing Emails', description: 'Product updates and financial tips' }
+        ]
+    },
+    {
+        title: 'Delivery',
+        items: [
+            { key: 'pushNotifications', label: 'Push Notifications', description: 'Notifications on this device' },
+            { key: 'emailNotifications', label: 'Email Notifications', description: 'Notifications sent to your email' },
+            { key: 'smsNotifications', label: 'SMS Notifications', description: 'Notifications sent by text message' }
+        ]
+    }
+];
+
+const NOTIFICATION_ICONS: Record<Notification['type'], string> = {
+    info: 'ℹ️',
+    warning: '⚠️',
+    success: '✅',
+    alert: '🚨'
+};
 
 export const NotificationsPage = () => {
+    const navigate = useNavigate();
     const [notifications, setNotifications] = useState<Notification[]>([]);
-    const [settings, setSettings] = useState<NotificationSettings>({
-        budgetAlerts: true,
-        transactionAlerts: true,
-        weeklyReports: true,
-        monthlyReports: true,
-        securityAlerts: true,
-        marketingEmails: false
-    });
+    const [preferences, setPreferences] = useState<Preferences | null>(null);
     const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
     const [activeTab, setActiveTab] = useState<'all' | 'unread' | 'settings'>('all');
-    useEffect(() => {
-        fetchNotifications();
-        fetchNotificationSettings();
-    }, []);
+
+    // Lets the header bell refresh its unread badge
+    const notifyChanged = () => window.dispatchEvent(new Event('notifications-changed'));
 
     const fetchNotifications = async () => {
         try {
-            // Mock notifications for now - replace with real API call
-            const mockNotifications: Notification[] = [
-                {
-                    id: '1',
-                    type: 'warning',
-                    title: 'Budget Alert',
-                    message: 'You\'ve spent 85% of your dining budget this month',
-                    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-                    read: false,
-                    actionRequired: true
-                },
-                {
-                    id: '2',
-                    type: 'info',
-                    title: 'Weekly Report Ready',
-                    message: 'Your financial health score improved by 5 points this week',
-                    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-                    read: true
-                },
-                {
-                    id: '3',
-                    type: 'success',
-                    title: 'Goal Achievement',
-                    message: 'Congratulations! You\'ve reached your emergency fund goal',
-                    timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-                    read: false
-                },
-                {
-                    id: '4',
-                    type: 'alert',
-                    title: 'Security Alert',
-                    message: 'New login detected from unknown device',
-                    timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-                    read: true
-                }
-            ];
-            setNotifications(mockNotifications);
+            const response = await apiClient.get<Notification[]>('/notifications');
+            setNotifications(response.data);
+            setLoadError('');
         } catch (err) {
-            console.error('Failed to fetch notifications');
+            console.error('Failed to fetch notifications', err);
+            setLoadError('Could not load notifications. Please try again.');
         } finally {
             setLoading(false);
         }
     };
 
-    const fetchNotificationSettings = async () => {
+    const fetchPreferences = async () => {
         try {
-            const response = await apiClient.get('/notifications/settings');
-            if (response.data.settings) {
-                setSettings(response.data.settings);
-            }
+            const response = await apiClient.get<Preferences>('/settings/notifications');
+            setPreferences(response.data);
         } catch (err) {
-            console.log('Using default notification settings');
+            console.error('Failed to load notification preferences', err);
         }
     };
 
+    useEffect(() => {
+        fetchNotifications();
+        fetchPreferences();
+    }, []);
+
     const markAsRead = async (notificationId: string) => {
         setNotifications(prev =>
-            prev.map(notif =>
-                notif.id === notificationId ? { ...notif, read: true } : notif
-            )
+            prev.map(notif => (notif.id === notificationId ? { ...notif, read: true } : notif))
         );
-
         try {
             await apiClient.put(`/notifications/${notificationId}/read`);
+            notifyChanged();
         } catch (err) {
-            console.error('Failed to mark notification as read');
+            console.error('Failed to mark notification as read', err);
+            fetchNotifications();
         }
     };
 
     const markAllAsRead = async () => {
-        setNotifications(prev =>
-            prev.map(notif => ({ ...notif, read: true }))
-        );
-
+        setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
         try {
             await apiClient.put('/notifications/mark-all-read');
+            notifyChanged();
         } catch (err) {
-            console.error('Failed to mark all notifications as read');
+            console.error('Failed to mark all notifications as read', err);
+            fetchNotifications();
         }
     };
 
     const deleteNotification = async (notificationId: string) => {
-        setNotifications(prev =>
-            prev.filter(notif => notif.id !== notificationId)
-        );
-
+        setNotifications(prev => prev.filter(notif => notif.id !== notificationId));
         try {
             await apiClient.delete(`/notifications/${notificationId}`);
+            notifyChanged();
         } catch (err) {
-            console.error('Failed to delete notification');
+            console.error('Failed to delete notification', err);
+            fetchNotifications();
         }
     };
 
-    const updateNotificationSetting = async (setting: keyof NotificationSettings) => {
-        const newValue = !settings[setting];
-        setSettings(prev => ({ ...prev, [setting]: newValue }));
+    const takeAction = async (notification: Notification) => {
+        if (!notification.read) await markAsRead(notification.id);
+        if (notification.link) navigate(notification.link);
+    };
 
+    const togglePreference = async (key: string) => {
+        if (!preferences || key === 'securityAlerts') return;
+        const next = { ...preferences, [key]: !preferences[key] };
+        setPreferences(next);
         try {
-            await apiClient.put('/notifications/settings', {
-                ...settings,
-                [setting]: newValue
-            });
+            await apiClient.put('/settings/notifications', next);
         } catch (err) {
-            console.error('Failed to update notification settings');
-            // Revert on error
-            setSettings(prev => ({ ...prev, [setting]: !newValue }));
-        }
-    };
-
-    const getNotificationIcon = (type: string) => {
-        switch (type) {
-            case 'warning': return '';
-            case 'success': return '';
-            case 'alert': return '';
-            case 'info':
-            default: return '';
+            console.error('Failed to update notification preferences', err);
+            setPreferences(preferences);
         }
     };
 
@@ -168,7 +158,7 @@ export const NotificationsPage = () => {
         if (diffInHours < 24) return `${diffInHours}h ago`;
         const diffInDays = Math.floor(diffInHours / 24);
         if (diffInDays < 7) return `${diffInDays}d ago`;
-        return time.toLocaleDateString();
+        return formatDate(time);
     };
 
     const filteredNotifications = notifications.filter(notif => {
@@ -213,12 +203,11 @@ export const NotificationsPage = () => {
             <div className="notifications-content">
                 {activeTab !== 'settings' && (
                     <>
+                        {loadError && <div className="alert alert-error">{loadError}</div>}
+
                         {unreadCount > 0 && (
                             <div className="notifications-actions">
-                                <button
-                                    className="btn-secondary"
-                                    onClick={markAllAsRead}
-                                >
+                                <button className="btn-secondary" onClick={markAllAsRead}>
                                     Mark All as Read
                                 </button>
                             </div>
@@ -238,7 +227,7 @@ export const NotificationsPage = () => {
                                         className={`notification-item ${notification.read ? 'read' : 'unread'} ${notification.type}`}
                                     >
                                         <div className="notification-icon">
-                                            {getNotificationIcon(notification.type)}
+                                            {NOTIFICATION_ICONS[notification.type]}
                                         </div>
                                         <div className="notification-content">
                                             <div className="notification-header">
@@ -252,10 +241,10 @@ export const NotificationsPage = () => {
                                             </p>
                                             {notification.actionRequired && (
                                                 <div className="notification-actions">
-                                                    <button className="action-btn primary">
+                                                    <button className="action-btn primary" onClick={() => takeAction(notification)}>
                                                         Take Action
                                                     </button>
-                                                    <button className="action-btn secondary">
+                                                    <button className="action-btn secondary" onClick={() => deleteNotification(notification.id)}>
                                                         Dismiss
                                                     </button>
                                                 </div>
@@ -289,94 +278,43 @@ export const NotificationsPage = () => {
                 {activeTab === 'settings' && (
                     <div className="notification-settings">
                         <h2>Notification Preferences</h2>
-                        <p>Choose what notifications you want to receive</p>
+                        <p>Choose what notifications you want to receive. These are the same as on the Settings page.</p>
 
-                        <div className="settings-group">
-                            <h3>Financial Alerts</h3>
-                            
-                            <div className="setting-item">
-                                <div className="setting-info">
-                                    <h4>Budget Alerts</h4>
-                                    <p>Get notified when approaching budget limits</p>
-                                </div>
-                                <button
-                                    className={`toggle-btn ${settings.budgetAlerts ? 'active' : ''}`}
-                                    onClick={() => updateNotificationSetting('budgetAlerts')}
-                                >
-                                    {settings.budgetAlerts ? 'On' : 'Off'}
-                                </button>
-                            </div>
-
-                            <div className="setting-item">
-                                <div className="setting-info">
-                                    <h4>Transaction Alerts</h4>
-                                    <p>Alerts for large transactions and unusual activity</p>
-                                </div>
-                                <button
-                                    className={`toggle-btn ${settings.transactionAlerts ? 'active' : ''}`}
-                                    onClick={() => updateNotificationSetting('transactionAlerts')}
-                                >
-                                    {settings.transactionAlerts ? 'On' : 'Off'}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="settings-group">
-                            <h3>Reports & Insights</h3>
-                            
-                            <div className="setting-item">
-                                <div className="setting-info">
-                                    <h4>Weekly Reports</h4>
-                                    <p>Weekly summary of your financial activity</p>
-                                </div>
-                                <button
-                                    className={`toggle-btn ${settings.weeklyReports ? 'active' : ''}`}
-                                    onClick={() => updateNotificationSetting('weeklyReports')}
-                                >
-                                    {settings.weeklyReports ? 'On' : 'Off'}
-                                </button>
-                            </div>
-
-                            <div className="setting-item">
-                                <div className="setting-info">
-                                    <h4>Monthly Reports</h4>
-                                    <p>Comprehensive monthly financial health report</p>
-                                </div>
-                                <button
-                                    className={`toggle-btn ${settings.monthlyReports ? 'active' : ''}`}
-                                    onClick={() => updateNotificationSetting('monthlyReports')}
-                                >
-                                    {settings.monthlyReports ? 'On' : 'Off'}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="settings-group">
-                            <h3>Security & Marketing</h3>
-                            
-                            <div className="setting-item">
-                                <div className="setting-info">
-                                    <h4>Security Alerts</h4>
-                                    <p>Important security notifications (always enabled)</p>
-                                </div>
-                                <button className="toggle-btn active" disabled>
-                                    Required
-                                </button>
-                            </div>
-
-                            <div className="setting-item">
-                                <div className="setting-info">
-                                    <h4>Marketing Emails</h4>
-                                    <p>Product updates and financial tips</p>
-                                </div>
-                                <button
-                                    className={`toggle-btn ${settings.marketingEmails ? 'active' : ''}`}
-                                    onClick={() => updateNotificationSetting('marketingEmails')}
-                                >
-                                    {settings.marketingEmails ? 'On' : 'Off'}
-                                </button>
-                            </div>
-                        </div>
+                        {!preferences ? (
+                            <p className="np-loading">Loading preferences...</p>
+                        ) : (
+                            PREFERENCE_GROUPS.map(group => (
+                                <section className="np-card" key={group.title}>
+                                    <h3 className="np-group-title">{group.title}</h3>
+                                    {group.items.map(item => {
+                                        const isRequired = item.key === 'securityAlerts';
+                                        const isOn = isRequired ? true : !!preferences[item.key];
+                                        return (
+                                            <div className="np-row" key={item.key}>
+                                                <div className="np-row-text">
+                                                    <span className="np-label">
+                                                        {item.label}
+                                                        {isRequired && <span className="np-badge">Required</span>}
+                                                    </span>
+                                                    <span className="np-description">{item.description}</span>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    role="switch"
+                                                    aria-checked={isOn}
+                                                    aria-label={item.label}
+                                                    className={`np-switch ${isOn ? 'on' : ''}`}
+                                                    disabled={isRequired}
+                                                    onClick={() => togglePreference(item.key)}
+                                                >
+                                                    <span className="np-knob" />
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </section>
+                            ))
+                        )}
                     </div>
                 )}
             </div>

@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime, formatMoney } from '../utils/appFormat';
 import { type FC, useState } from 'react';
 
 interface ScheduleItem {
@@ -56,15 +57,15 @@ const RepaymentSchedule: FC<RepaymentScheduleProps> = ({ schedule, loanType, mon
             <div className="schedule-summary">
                 <div className="summary-card">
                     <p className="label">Monthly EMI</p>
-                    <p className="value">Rs {monthlyEMI?.toFixed(2)}</p>
+                    <p className="value">{formatMoney(monthlyEMI, 2)}</p>
                 </div>
                 <div className="summary-card">
                     <p className="label">Total Paid</p>
-                    <p className="value">Rs {totalPaid?.toFixed(2)}</p>
+                    <p className="value">{formatMoney(totalPaid, 2)}</p>
                 </div>
                 <div className="summary-card">
                     <p className="label">Remaining</p>
-                    <p className="value">Rs {totalRemaining?.toFixed(2)}</p>
+                    <p className="value">{formatMoney(totalRemaining, 2)}</p>
                 </div>
             </div>
 
@@ -85,11 +86,11 @@ const RepaymentSchedule: FC<RepaymentScheduleProps> = ({ schedule, loanType, mon
                         {filteredSchedule.map((item, idx) => (
                             <tr key={idx} className={item.paid ? 'paid' : 'pending'}>
                                 <td className="month">{item.month}</td>
-                                <td>{new Date(item.dueDate).toLocaleDateString()}</td>
-                                <td>Rs {item.principalPayment?.toFixed(2)}</td>
-                                <td>Rs {item.interestPayment?.toFixed(2)}</td>
-                                <td className="emi">Rs {(item.principalPayment + item.interestPayment)?.toFixed(2)}</td>
-                                <td>Rs {item.remainingBalance?.toFixed(2)}</td>
+                                <td>{formatDate(item.dueDate)}</td>
+                                <td>{formatMoney(item.principalPayment, 2)}</td>
+                                <td>{formatMoney(item.interestPayment, 2)}</td>
+                                <td className="emi">{formatMoney((item.principalPayment + item.interestPayment), 2)}</td>
+                                <td>{formatMoney(item.remainingBalance, 2)}</td>
                                 <td>
                                     <span className={`status-badge ${item.paid ? 'paid' : 'pending'}`}>
                                         {item.paid ? '✓ Paid' : '◯ Pending'}

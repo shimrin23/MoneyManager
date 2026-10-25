@@ -1,3 +1,4 @@
+import { getAppPrefs } from '../utils/appFormat';
 import { useState, useRef, useEffect } from 'react';
 import { apiClient } from '../api/client';
 import { IconBrain, IconUser, IconLogOut, IconRefreshCw } from './Icons';
@@ -110,7 +111,8 @@ export const AIAssistant = ({ open = false, onOpenChange }: AIAssistantProps) =>
         return date.toLocaleTimeString('en-US', { 
             hour: 'numeric', 
             minute: '2-digit',
-            hour12: true 
+            hour12: true,
+            timeZone: getAppPrefs().timezone 
         });
     };
 

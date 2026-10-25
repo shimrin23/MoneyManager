@@ -1,10 +1,12 @@
+import { formatDate, formatDateTime } from '../utils/appFormat';
 // Settings Page
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { apiClient } from '../api/client.ts';
 import { useAdminLang } from '../i18n/adminText';
 import { USER_T } from '../i18n/userPagesText';
 import { confirmDialog } from '../utils/systemMessages';
+import { downloadFinancialDataPdf } from '../utils/exportFinancialDataPdf';
 
 interface AppSettings {
     currency: string;
@@ -20,6 +22,7 @@ interface AppSettings {
 
 interface NotificationSettings {
     budgetAlerts: boolean;
+    transactionAlerts: boolean;
     weeklyReports: boolean;
     monthlyReports: boolean;
     goalReminders: boolean;
@@ -39,11 +42,75 @@ interface PrivacySettings {
     activityTracking: boolean;
 }
 
+const APP_DEFAULT_SETTINGS: AppSettings = {
+    currency: 'LKR',
+    dateFormat: 'DD/MM/YYYY',
+    language: 'en',
+    timezone: 'Asia/Colombo',
+    theme: 'auto',
+    defaultTransactionType: 'expense',
+    categoryOrder: 'frequency',
+    chartType: 'line',
+    dashboardLayout: 'detailed'
+};
+
+const NOTIFICATION_DEFAULT_SETTINGS: NotificationSettings = {
+    budgetAlerts: true,
+    transactionAlerts: true,
+    weeklyReports: true,
+    monthlyReports: true,
+    goalReminders: true,
+    securityAlerts: true,
+    marketingEmails: false,
+    pushNotifications: true,
+    emailNotifications: true,
+    smsNotifications: false
+};
+
+const PRIVACY_DEFAULT_SETTINGS: PrivacySettings = {
+    dataCollection: true,
+    analytics: true,
+    marketingTracking: false,
+    shareAnonData: true,
+    profileVisibility: 'private',
+    activityTracking: true
+};
+
+// Fixed in the top-right corner, so the notice shows wherever the user is on the page
+// Solid background so the text stays readable over the page header
+const toastStyle = {
+    position: 'fixed',
+    top: '5.25rem',
+    right: '1.25rem',
+    zIndex: 1000,
+    minWidth: '240px',
+    padding: '0.75rem 1rem',
+    borderRadius: '12px',
+    border: '1px solid',
+    background: '#ffffff',
+    fontWeight: 600,
+    fontSize: '0.95rem',
+    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.18)'
+} as const;
+
+const toastColors = {
+    ok: { color: '#065f46', borderColor: '#6ee7b7' },
+    fail: { color: '#991b1b', borderColor: '#fca5a5' },
+    cancelled: { color: '#1f2937', borderColor: '#d1d5db' }
+} as const;
+
 export const SettingsPage = () => {
     const t = USER_T[useAdminLang()];
-    const [activeTab, setActiveTab] = useState<'general' | 'notifications' | 'privacy' | 'advanced'>('general');
+    const location = useLocation();
+    // Other pages can open a specific tab by passing { tab } in navigation state
+    const initialTab = (location.state as { tab?: 'general' | 'notifications' | 'privacy' | 'advanced' } | null)?.tab ?? 'general';
+    const [activeTab, setActiveTab] = useState<'general' | 'notifications' | 'privacy' | 'advanced'>(initialTab);
     const [loading, setLoading] = useState(false);
-    const [saveStatus, setSaveStatus] = useState<'ok' | 'fail' | ''>('');
+    const [saveStatus, setSaveStatus] = useState<'ok' | 'fail' | 'cancelled' | ''>('');
+    // Last saved values, so Cancel can throw away unsaved edits
+    const [savedSettings, setSavedSettings] = useState<{ app: AppSettings; notifications: NotificationSettings; privacy: PrivacySettings } | null>(null);
+    const [exportError, setExportError] = useState('');
+    const [loadFailed, setLoadFailed] = useState(false);
     const navigate = useNavigate();
 
     const [appSettings, setAppSettings] = useState<AppSettings>({
@@ -60,6 +127,7 @@ export const SettingsPage = () => {
 
     const [notificationSettings, setNotificationSettings] = useState<NotificationSettings>({
         budgetAlerts: true,
+        transactionAlerts: true,
         weeklyReports: true,
         monthlyReports: true,
         goalReminders: true,
@@ -93,11 +161,6 @@ export const SettingsPage = () => {
 
     const languageOptions = [
         { code: 'en', name: 'English' },
-        { code: 'es', name: 'Español' },
-        { code: 'fr', name: 'Français' },
-        { code: 'de', name: 'Deutsch' },
-        { code: 'zh', name: '中文' },
-        { code: 'ja', name: '日本語' },
         { code: 'si', name: 'සිංහල' },
         { code: 'ta', name: 'தமிழ்' }
     ];
@@ -108,6 +171,7 @@ export const SettingsPage = () => {
 
     const loadSettings = async () => {
         setLoading(true);
+        setLoadFailed(false);
         try {
             const [appResponse, notificationResponse, privacyResponse] = await Promise.all([
                 apiClient.get('/settings/app'),
@@ -118,8 +182,10 @@ export const SettingsPage = () => {
             setAppSettings(appResponse.data);
             setNotificationSettings(notificationResponse.data);
             setPrivacySettings(privacyResponse.data);
+            setSavedSettings({ app: appResponse.data, notifications: notificationResponse.data, privacy: privacyResponse.data });
         } catch (err) {
             console.error('Failed to load settings:', err);
+            setLoadFailed(true);
         } finally {
             setLoading(false);
         }
@@ -137,6 +203,8 @@ export const SettingsPage = () => {
             ]);
 
             setSaveStatus('ok');
+            window.dispatchEvent(new CustomEvent('app-settings-changed', { detail: appSettings }));
+            setSavedSettings({ app: appSettings, notifications: notificationSettings, privacy: privacySettings });
             setTimeout(() => setSaveStatus(''), 3000);
         } catch {
             setSaveStatus('fail');
@@ -146,40 +214,57 @@ export const SettingsPage = () => {
         }
     };
 
+    // Downloads the user's data file (same export as Account Settings)
+    const exportAllData = async () => {
+        setExportError('');
+        try {
+            await downloadFinancialDataPdf();
+        } catch (err) {
+            console.error('Failed to export data:', err);
+            setExportError('Failed to export data. Please try again.');
+        }
+    };
+
+    const isDirty = savedSettings !== null && JSON.stringify([appSettings, notificationSettings, privacySettings]) !==
+        JSON.stringify([savedSettings.app, savedSettings.notifications, savedSettings.privacy]);
+
+    // Cancel throws away unsaved edits and stays on this page
+    const handleCancel = () => {
+        if (!savedSettings) return;
+        setAppSettings({ ...savedSettings.app });
+        setNotificationSettings({ ...savedSettings.notifications });
+        setPrivacySettings({ ...savedSettings.privacy });
+        if (isDirty) {
+            setSaveStatus('cancelled');
+            setTimeout(() => setSaveStatus(''), 3000);
+        }
+    };
+
+    // Restores the default values and saves them straight away
     const resetToDefaults = async () => {
-        if (await confirmDialog({ title: t.resetAll, message: t.setResetConfirm, confirmText: t.resetAll, danger: true })) {
-            setAppSettings({
-                currency: 'LKR',
-                dateFormat: 'DD/MM/YYYY',
-                language: 'en',
-                timezone: 'Asia/Colombo',
-                theme: 'auto',
-                defaultTransactionType: 'expense',
-                categoryOrder: 'frequency',
-                chartType: 'line',
-                dashboardLayout: 'detailed'
-            });
+        const confirmed = await confirmDialog({ title: t.resetAll, message: t.setResetConfirm, confirmText: t.resetAll, danger: true });
+        if (!confirmed) return;
 
-            setNotificationSettings({
-                budgetAlerts: true,
-                weeklyReports: true,
-                monthlyReports: true,
-                goalReminders: true,
-                securityAlerts: true,
-                marketingEmails: false,
-                pushNotifications: true,
-                emailNotifications: true,
-                smsNotifications: false
-            });
+        setAppSettings({ ...APP_DEFAULT_SETTINGS });
+        setNotificationSettings({ ...NOTIFICATION_DEFAULT_SETTINGS });
+        setPrivacySettings({ ...PRIVACY_DEFAULT_SETTINGS });
 
-            setPrivacySettings({
-                dataCollection: true,
-                analytics: true,
-                marketingTracking: false,
-                shareAnonData: true,
-                profileVisibility: 'private',
-                activityTracking: true
-            });
+        setLoading(true);
+        setSaveStatus('');
+        try {
+            await Promise.all([
+                apiClient.put('/settings/app', APP_DEFAULT_SETTINGS),
+                apiClient.put('/settings/notifications', NOTIFICATION_DEFAULT_SETTINGS),
+                apiClient.put('/settings/privacy', PRIVACY_DEFAULT_SETTINGS)
+            ]);
+            window.dispatchEvent(new CustomEvent('app-settings-changed', { detail: APP_DEFAULT_SETTINGS }));
+            setSavedSettings({ app: { ...APP_DEFAULT_SETTINGS }, notifications: { ...NOTIFICATION_DEFAULT_SETTINGS }, privacy: { ...PRIVACY_DEFAULT_SETTINGS } });
+            setSaveStatus('ok');
+        } catch {
+            setSaveStatus('fail');
+        } finally {
+            setLoading(false);
+            setTimeout(() => setSaveStatus(''), 3000);
         }
     };
 
@@ -190,9 +275,20 @@ export const SettingsPage = () => {
                 <p>{t.setSub}</p>
             </div>
 
+            {loadFailed && (
+                <div className="alert alert-error" role="alert">
+                    Could not load your saved settings, so the values below are defaults and may not be yours.{' '}
+                    <button type="button" className="btn-secondary" onClick={loadSettings}>Try again</button>
+                </div>
+            )}
+
             {saveStatus && (
-                <div className={`alert ${saveStatus === 'fail' ? 'alert-error' : 'alert-success'}`}>
-                    {saveStatus === 'fail' ? t.setSaveFailed : t.setSaved}
+                <div
+                    className={`alert ${saveStatus === 'fail' ? 'alert-error' : 'alert-success'}`}
+                    role="status"
+                    style={{ ...toastStyle, ...toastColors[saveStatus] }}
+                >
+                    {saveStatus === 'fail' ? t.setSaveFailed : saveStatus === 'cancelled' ? 'Unsaved changes discarded' : t.setSaved}
                 </div>
             )}
 
@@ -220,6 +316,12 @@ export const SettingsPage = () => {
                     onClick={() => setActiveTab('advanced')}
                 >
                     {t.tabAdvanced}
+                </button>
+                <button
+                    className="nav-btn"
+                    onClick={() => navigate('/account-settings')}
+                >
+                    Account Settings
                 </button>
             </div>
 
@@ -370,6 +472,16 @@ export const SettingsPage = () => {
                             </div>
 
                             <div className="setting-toggle">
+                                <label>Transaction Alerts</label>
+                                <span className="toggle-description">Alerts for large transactions and unusual activity</span>
+                                <input
+                                    type="checkbox"
+                                    checked={notificationSettings.transactionAlerts}
+                                    onChange={(e) => setNotificationSettings(prev => ({ ...prev, transactionAlerts: e.target.checked }))}
+                                />
+                            </div>
+
+                            <div className="setting-toggle">
                                 <label>{t.goalReminders}</label>
                                 <span className="toggle-description">{t.goalRemindersSub}</span>
                                 <input
@@ -409,11 +521,11 @@ export const SettingsPage = () => {
 
                             <div className="setting-toggle">
                                 <label>{t.secAlerts}</label>
-                                <span className="toggle-description">{t.secAlertsSub}</span>
+                                <span className="toggle-description">{t.secAlertsSub} (Required, always on)</span>
                                 <input
                                     type="checkbox"
-                                    checked={notificationSettings.securityAlerts}
-                                    onChange={(e) => setNotificationSettings(prev => ({ ...prev, securityAlerts: e.target.checked }))}
+                                    checked
+                                    disabled
                                 />
                             </div>
 
@@ -542,15 +654,10 @@ export const SettingsPage = () => {
                         <div className="settings-section">
                             <h3>{t.dataMgmt}</h3>
                             <div className="advanced-options">
-                                <button className="btn-secondary" onClick={() => navigate('/account-settings')}>
+                                <button className="btn-secondary" onClick={exportAllData}>
                                     {t.exportAll}
                                 </button>
-                                <button className="btn-secondary">
-                                    {t.clearCache}
-                                </button>
-                                <button className="btn-secondary">
-                                    {t.downloadBackup}
-                                </button>
+                                {exportError && <div className="alert alert-error">{exportError}</div>}
                             </div>
                         </div>
 
@@ -565,34 +672,19 @@ export const SettingsPage = () => {
                         </div>
 
                         <div className="settings-section">
-                            <h3>{t.devOpts}</h3>
-                            <div className="developer-options">
-                                <button className="btn-secondary">
-                                    {t.viewApi}
-                                </button>
-                                <button className="btn-secondary">
-                                    {t.debugLogs}
-                                </button>
-                                <button className="btn-secondary">
-                                    {t.testNotif}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="settings-section">
                             <h3>{t.appInfo}</h3>
                             <div className="app-info">
                                 <div className="info-item">
                                     <span>{t.version}</span>
-                                    <span>2.1.0</span>
+                                    <span>{__APP_VERSION__}</span>
                                 </div>
                                 <div className="info-item">
                                     <span>{t.lastUpdated}</span>
-                                    <span>January 2024</span>
+                                    <span>{formatDate(__BUILD_DATE__)}</span>
                                 </div>
                                 <div className="info-item">
                                     <span>{t.build}</span>
-                                    <span>20240115.1</span>
+                                    <span>{__BUILD_DATE__.replace(/-/g, '')}</span>
                                 </div>
                             </div>
                         </div>
@@ -602,7 +694,7 @@ export const SettingsPage = () => {
                 <div className="settings-actions">
                     <button
                         className="btn-secondary"
-                        onClick={() => navigate('/dashboard')}
+                        onClick={handleCancel}
                     >
                         {t.cancel}
                     </button>

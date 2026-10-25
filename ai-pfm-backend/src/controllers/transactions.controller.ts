@@ -18,6 +18,7 @@ import AnomalyDetectionService, {
   detectAnomalies,
 } from "../services/anomaly-detection.service";
 import mongoose from "mongoose";
+import { checkBudgetAfterExpense } from "../services/notification.service";
 
 export default class TransactionsController {
   private transactionsService: TransactionsService;
@@ -123,6 +124,10 @@ export default class TransactionsController {
       const newTransaction = await this.transactionsService.create(
         transactionData,
       );
+
+      if (newTransaction.type !== "income") {
+        await checkBudgetAfterExpense(userId, newTransaction.category, newTransaction.amount, newTransaction.date);
+      }
 
       res.status(201).json({
         message: "Transaction created successfully",

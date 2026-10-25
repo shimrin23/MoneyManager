@@ -1,3 +1,4 @@
+import { fromLkr, toLkr, currencyCode } from '../utils/appFormat';
 // Edit Profile Page
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -49,7 +50,8 @@ export const ProfilePage = () => {
     const fetchProfile = async () => {
         try {
             const response = await apiClient.get('/auth/profile');
-            setProfile(response.data.user);
+            // Income is stored in LKR; the form shows it in the chosen currency
+            setProfile({ ...response.data.user, monthlyIncome: fromLkr(response.data.user.monthlyIncome ?? 0) });
         } catch {
             console.warn('Using fallback profile data');
         }
@@ -62,7 +64,7 @@ export const ProfilePage = () => {
         setMessage('');
 
         try {
-            await apiClient.put('/auth/profile', profile);
+            await apiClient.put('/auth/profile', { ...profile, monthlyIncome: toLkr(profile.monthlyIncome || 0) });
             setMessage(t.profUpdated);
         } catch (err: any) {
             setError(err.response?.data?.error || t.profUpdateFailed);
@@ -190,7 +192,7 @@ export const ProfilePage = () => {
                                 </div>
 
                                 <div className="form-group">
-                                    <label>{t.profIncome}</label>
+                                    <label>{t.profIncome} ({currencyCode()})</label>
                                     <input
                                         type="number"
                                         name="monthlyIncome"
