@@ -170,8 +170,8 @@ class LoanService {
             });
         }
 
-        // Check EMI to income ratio
-        const emiToIncomeRatio = (loan.monthlyInstallment / userIncome) * 100;
+        // Check EMI to income ratio (only when the user has told us their income)
+        const emiToIncomeRatio = userIncome > 0 ? (loan.monthlyInstallment / userIncome) * 100 : 0;
         if (emiToIncomeRatio > 50) {
             alerts.push({
                 type: 'high-emi-ratio',
@@ -194,33 +194,75 @@ class LoanService {
     }
 
     /**
+     * Principal still owed on a loan: the balance after the last paid installment,
+     * or the original principal if nothing has been paid yet.
+     */
+    outstandingPrincipal(loan: ILoan): number {
+        const paid = (loan.paymentSchedule || []).filter(item => item.paid);
+        return paid.length > 0 ? paid[paid.length - 1].remainingBalance : loan.principal;
+    }
+
+    /**
+     * Month-by-month payoff of several loans with the same total monthly budget (sum of all EMIs).
+     * With rollover, money freed when a loan is cleared goes to the next loan in `order`;
+     * without rollover each loan is simply paid by its own EMI (the baseline).
+     */
+    private simulatePayoff(order: ILoan[], rollover: boolean): { months: number; totalInterest: number } {
+        const balances = order.map(loan => this.outstandingPrincipal(loan));
+        const budget = order.reduce((sum, loan) => sum + loan.monthlyInstallment, 0);
+        let months = 0;
+        let totalInterest = 0;
+
+        while (balances.some(b => b > 0.005) && months < 600) {
+            months++;
+            let spent = 0;
+            order.forEach((loan, i) => {
+                if (balances[i] <= 0.005) return;
+                const interest = balances[i] * (loan.interestRate / 12 / 100);
+                const payment = Math.min(loan.monthlyInstallment, balances[i] + interest);
+                totalInterest += interest;
+                balances[i] = balances[i] + interest - payment;
+                spent += payment;
+            });
+
+            // Freed-up money from cleared loans goes to the highest-priority loan still open
+            let extra = rollover ? budget - spent : 0;
+            for (let i = 0; i < order.length && extra > 0.005; i++) {
+                if (balances[i] <= 0.005) continue;
+                const applied = Math.min(extra, balances[i]);
+                balances[i] -= applied;
+                extra -= applied;
+            }
+        }
+
+        return { months, totalInterest };
+    }
+
+    private buildStrategy(method: 'snowball' | 'avalanche', order: ILoan[]): DebtPayoffStrategy {
+        const baseline = this.simulatePayoff(order, false);
+        const strategy = this.simulatePayoff(order, true);
+
+        return {
+            method,
+            totalInterestSaved: Math.round((baseline.totalInterest - strategy.totalInterest) * 100) / 100,
+            timeToPayoff: strategy.months,
+            schedule: order.map(loan => ({
+                loanId: loan._id?.toString() || '',
+                loanType: `${loan.type} (${loan.provider})`,
+                paymentAmount: loan.monthlyInstallment
+            }))
+        };
+    }
+
+    /**
      * Debt Payoff Strategy: Snowball (smallest balance first)
      * Prioritize paying off loans with smallest remaining balance
      */
     calculateSnowballStrategy(loans: ILoan[]): DebtPayoffStrategy {
-        const activeLoan = loans.filter(l => l.status === 'Active').sort((a, b) => a.remainingAmount - b.remainingAmount);
-
-        let totalInterestSaved = 0;
-        let maxMonths = 0;
-        const schedule: Array<{ loanId: string; loanType: string; paymentAmount: number }> = [];
-
-        activeLoan.forEach(loan => {
-            schedule.push({
-                loanId: loan._id?.toString() || '',
-                loanType: loan.type,
-                paymentAmount: loan.monthlyInstallment
-            });
-            totalInterestSaved += loan.totalInterest;
-            const monthsRemaining = Math.ceil(loan.remainingAmount / loan.monthlyInstallment);
-            maxMonths = Math.max(maxMonths, monthsRemaining);
-        });
-
-        return {
-            method: 'snowball',
-            totalInterestSaved,
-            timeToPayoff: maxMonths,
-            schedule
-        };
+        const order = loans
+            .filter(l => l.status === 'Active')
+            .sort((a, b) => this.outstandingPrincipal(a) - this.outstandingPrincipal(b));
+        return this.buildStrategy('snowball', order);
     }
 
     /**
@@ -228,29 +270,10 @@ class LoanService {
      * Prioritize paying off loans with highest interest rates
      */
     calculateAvalancheStrategy(loans: ILoan[]): DebtPayoffStrategy {
-        const activeLoans = loans.filter(l => l.status === 'Active').sort((a, b) => b.interestRate - a.interestRate);
-
-        let totalInterestSaved = 0;
-        let maxMonths = 0;
-        const schedule: Array<{ loanId: string; loanType: string; paymentAmount: number }> = [];
-
-        activeLoans.forEach(loan => {
-            schedule.push({
-                loanId: loan._id?.toString() || '',
-                loanType: loan.type,
-                paymentAmount: loan.monthlyInstallment
-            });
-            totalInterestSaved += loan.totalInterest;
-            const monthsRemaining = Math.ceil(loan.remainingAmount / loan.monthlyInstallment);
-            maxMonths = Math.max(maxMonths, monthsRemaining);
-        });
-
-        return {
-            method: 'avalanche',
-            totalInterestSaved,
-            timeToPayoff: maxMonths,
-            schedule
-        };
+        const order = loans
+            .filter(l => l.status === 'Active')
+            .sort((a, b) => b.interestRate - a.interestRate);
+        return this.buildStrategy('avalanche', order);
     }
 
     /**
@@ -366,6 +389,7 @@ class LoanService {
         const monthlyRate = annualInterestRate / 12 / 100;
         let remainingBalance = principal;
         let month = 0;
+        let totalInterest = 0;
         const schedule: RepaymentScheduleItem[] = [];
 
         while (remainingBalance > 0 && month < 360) {
@@ -374,18 +398,20 @@ class LoanService {
                 monthlyRate === 0
                     ? 0
                     : Math.round(remainingBalance * monthlyRate * 100) / 100;
-            const principalPayment = monthlyEMI - interestPayment;
-            remainingBalance = remainingBalance - principalPayment;
+            // Never pay more principal than is left (the last EMI is usually smaller)
+            let principalPayment = Math.min(monthlyEMI - interestPayment, remainingBalance);
 
+            // The lump sum goes straight to principal in the chosen month
             if (month === monthToApply) {
-                remainingBalance = Math.max(0, remainingBalance - lumpSumAmount);
+                principalPayment += Math.min(lumpSumAmount, remainingBalance - principalPayment);
             }
 
-            remainingBalance = Math.max(0, remainingBalance);
+            remainingBalance = Math.max(0, remainingBalance - principalPayment);
+            totalInterest += interestPayment;
 
             schedule.push({
                 month,
-                principalPayment: month === monthToApply ? principalPayment + lumpSumAmount : principalPayment,
+                principalPayment,
                 interestPayment,
                 remainingBalance,
                 dueDate: new Date(new Date().setMonth(new Date().getMonth() + month)),
@@ -395,8 +421,8 @@ class LoanService {
             if (remainingBalance === 0) break;
         }
 
-        const totalPayable = schedule.reduce((sum, item) => sum + item.principalPayment + item.interestPayment, 0) + lumpSumAmount;
-        const totalInterest = totalPayable - principal - lumpSumAmount;
+        // Every rupee paid is either principal (repaid once) or interest
+        const totalPayable = principal + totalInterest;
 
         return {
             scenarioName: `Lump Sum Payment of ${lumpSumAmount} in Month ${monthToApply}`,
@@ -466,7 +492,8 @@ class LoanService {
         try {
             const { FinancialAgent } = await import('../ai/agent');
             const agent = new FinancialAgent();
-            const prompt = `Analyze this user's loan portfolio and their monthly income of LKR ${totalIncome}:\n${JSON.stringify(loans.map(l => ({ type: l.type, principal: l.principal, remaining: l.remainingAmount, emi: l.monthlyInstallment, interestRate: l.interestRate, status: l.status })), null, 2)}\n\nProvide 3-5 concise, highly personalized financial insights or recommendations regarding their debt strategy. Return EXACTLY a JSON array of strings without markdown blocks.\nExample: ["Insight 1", "Insight 2"]`;
+            const incomeText = totalIncome > 0 ? `their monthly income of LKR ${totalIncome}` : 'an unknown monthly income (do not assume one)';
+            const prompt = `Analyze this user's loan portfolio and ${incomeText}:\n${JSON.stringify(loans.map(l => ({ type: l.type, principal: l.principal, remaining: l.remainingAmount, emi: l.monthlyInstallment, interestRate: l.interestRate, status: l.status })), null, 2)}\n\nProvide 3-5 concise, highly personalized financial insights or recommendations regarding their debt strategy. Return EXACTLY a JSON array of strings without markdown blocks.\nExample: ["Insight 1", "Insight 2"]`;
             
             const responseString = await agent.generateResearch(prompt);
             const insights = JSON.parse(responseString.replace(/```json/g, '').replace(/```/g, '').trim());

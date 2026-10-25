@@ -59,7 +59,7 @@ const UserSchema: Schema = new Schema(
     dateOfBirth: { type: String, default: '' },
     address: { type: String, default: '' },
     occupation: { type: String, default: '' },
-    monthlyIncome: { type: Number, default: 50000 }, // Default income for loan calculations
+    monthlyIncome: { type: Number }, // Set by the user in Profile; used for loan-to-income ratio
     bankAccounts: [
       {
         accountId: { type: String, required: true },

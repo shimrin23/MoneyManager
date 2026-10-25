@@ -1,4 +1,5 @@
 import { type FC, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useLoans } from '../hooks/useLoans';
 
 interface LoanToIncomeRatioProps {
@@ -8,6 +9,7 @@ interface LoanToIncomeRatioProps {
 interface RatioData {
     totalMonthlyEMI: number;
     monthlyIncome: number;
+    incomeMissing?: boolean;
     ratio: number;
     riskLevel: 'low' | 'medium' | 'high' | 'critical';
     recommendation: string;
@@ -42,6 +44,22 @@ const LoanToIncomeRatio: FC<LoanToIncomeRatioProps> = ({ onRefresh }) => {
 
     if (error || !data) {
         return <div className="loan-to-income-ratio error">{error || 'Failed to load data'}</div>;
+    }
+
+    // No income in Profile: a ratio would be made up, so ask for the income instead
+    if (data.incomeMissing) {
+        return (
+            <div className="loan-to-income-ratio card">
+                <h2 style={{ margin: '0 0 1rem', fontSize: '1.25rem', color: 'var(--color-text)' }}>Loan-to-Income Ratio</h2>
+                <p style={{ color: 'var(--color-text-2)', lineHeight: 1.6 }}>
+                    Your total monthly EMI is <strong>LKR {data.totalMonthlyEMI?.toLocaleString()}</strong>.
+                    To see how much of your income goes to loans, add your monthly income in your Profile.
+                </p>
+                <Link to="/profile" className="action-btn primary small" style={{ display: 'inline-block', marginTop: '0.5rem' }}>
+                    Add monthly income
+                </Link>
+            </div>
+        );
     }
 
     const getRiskColor = (level: string) => {

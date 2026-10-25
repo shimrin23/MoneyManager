@@ -5,6 +5,7 @@ interface Loan {
     type: string;
     provider: string;
     monthlyInstallment: number;
+    totalAmount: number;
     remainingAmount: number;
     interestRate: number;
     nextDueDate: Date;
@@ -43,7 +44,11 @@ const ActiveLoanCards: FC<ActiveLoanCardsProps> = ({
         <div className="active-loans">
             <h2>Active Loans</h2>
             <div className="loans-grid">
-                {activeLoan.map((loan) => (
+                {activeLoan.map((loan) => {
+                    const paidPercent = loan.totalAmount > 0
+                        ? Math.min(100, Math.max(0, ((loan.totalAmount - loan.remainingAmount) / loan.totalAmount) * 100))
+                        : 0;
+                    return (
                     <div key={loan._id} className="loan-card">
                         <div className="card-header">
                             <div className="header-left">
@@ -87,8 +92,19 @@ const ActiveLoanCards: FC<ActiveLoanCardsProps> = ({
                                 <span className="value">{new Date(loan.nextDueDate).toLocaleDateString()}</span>
                             </div>
 
-                            <div className="progress-bar">
-                                <div className="progress-fill"></div>
+                            <div className="info-row">
+                                <span className="label">Paid:</span>
+                                <span className="value">{paidPercent.toFixed(1)}%</span>
+                            </div>
+                            <div
+                                className="progress-bar"
+                                role="progressbar"
+                                aria-valuenow={Math.round(paidPercent)}
+                                aria-valuemin={0}
+                                aria-valuemax={100}
+                                aria-label={`${paidPercent.toFixed(1)}% of the loan paid`}
+                            >
+                                <div className="progress-fill" style={{ width: `${paidPercent}%` }}></div>
                             </div>
                         </div>
 
@@ -116,7 +132,8 @@ const ActiveLoanCards: FC<ActiveLoanCardsProps> = ({
                             </button>
                         </div>
                     </div>
-                ))}
+                    );
+                })}
             </div>
         </div>
     );
