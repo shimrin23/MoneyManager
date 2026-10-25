@@ -23,6 +23,13 @@ function isPlaceholderGeminiKey(apiKey: string): boolean {
   );
 }
 
+// Gemini answers 503 when the model is overloaded and 429 when the quota is used up
+const BUSY_STATUSES = [429, 503];
+const GEMINI_ATTEMPTS = 3;
+
+// Thrown when Gemini is still busy after retrying, so the user can be told to try again shortly
+export class CoachBusyError extends Error {}
+
 export class ChatCoachService {
   private readonly apiKey: string;
   private readonly model: string;
@@ -73,9 +80,8 @@ export class ChatCoachService {
     const systemPrompt = buildCoachSystemPrompt(financialContext);
 
     // 4️⃣ Format chat history for Gemini
-    const chatHistory = formatChatHistory(
-      session.messages.slice(0, -1), // exclude the latest user message
-    );
+    // `session` was loaded before the new message was saved, so it holds only the earlier turns
+    const chatHistory = formatChatHistory(session.messages);
 
     // 5️⃣ Build Gemini request body
     const requestBody = {
@@ -97,16 +103,27 @@ export class ChatCoachService {
       },
     };
 
-    // 6️⃣ Call Gemini API
-    const response = await fetch(`${this.apiUrl}?key=${this.apiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody),
-    });
+    // 6️⃣ Call Gemini API. When the model is overloaded (503) or rate limited (429), try again a few times.
+    const callGemini = () =>
+      fetch(`${this.apiUrl}?key=${this.apiKey}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
+
+    let response = await callGemini();
+    for (let attempt = 1; attempt < GEMINI_ATTEMPTS && BUSY_STATUSES.includes(response.status); attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 1500 * attempt));
+      response = await callGemini();
+    }
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = await response.json().catch(() => ({}));
       const message = error?.error?.message || response.statusText;
+
+      if (BUSY_STATUSES.includes(response.status)) {
+        throw new CoachBusyError(`Gemini is busy: ${message}`);
+      }
 
       if (
         String(message).includes("API key not valid") ||

@@ -1,6 +1,6 @@
 import { Response } from "express";
 import { AuthRequest } from "../middlewares/authMiddleware";
-import { ChatCoachService } from "../services/chatCoach.service";
+import { ChatCoachService, CoachBusyError } from "../services/chatCoach.service";
 
 const chatCoachService = new ChatCoachService();
 
@@ -59,6 +59,13 @@ export const sendMessage = async (
     });
   } catch (error: any) {
     console.error("❌ Chat Coach Error:", error.message);
+    if (error instanceof CoachBusyError) {
+      res.status(503).json({
+        success: false,
+        error: "The AI coach is very busy right now. Please wait a minute and send your message again.",
+      });
+      return;
+    }
     res.status(500).json({
       success: false,
       error: "Failed to process your message. Please try again.",
