@@ -1,3 +1,4 @@
+import { formatDate, formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { apiClient, getApiErrorMessage } from '../api/client';
 import { DatePicker } from '../components/DatePicker';
@@ -57,7 +58,7 @@ export const GoalsPage = () => {
     const handleCreateGoal = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const response = await apiClient.post('/goals', newGoal);
+            const response = await apiClient.post('/goals', { ...newGoal, targetAmount: toLkr(newGoal.targetAmount), currentAmount: toLkr(newGoal.currentAmount) });
             // Newest first, matching the order the server returns
             setGoals([response.data.goal, ...goals]);
             setNewGoal({ title: '', targetAmount: 0, currentAmount: 0, deadline: '', status: 'In Progress', category: 'Personal', priority: 'Medium', description: '' });
@@ -74,7 +75,7 @@ export const GoalsPage = () => {
         if (!editingGoal || !editingGoal._id) return;
 
         try {
-            const response = await apiClient.put(`/goals/${editingGoal._id}`, editingGoal);
+            const response = await apiClient.put(`/goals/${editingGoal._id}`, { ...editingGoal, targetAmount: toLkr(editingGoal.targetAmount), currentAmount: toLkr(editingGoal.currentAmount) });
             setGoals(goals.map(g => g._id === editingGoal._id ? response.data.goal : g));
             setEditingGoal(null);
             setShowDetailsModal(false);
@@ -107,13 +108,13 @@ export const GoalsPage = () => {
 
     const handleAddProgress = async (goalId: string, amount: number) => {
         try {
-            const response = await apiClient.post(`/goals/${goalId}/progress`, { amount });
+            const response = await apiClient.post(`/goals/${goalId}/progress`, { amount: toLkr(amount) });
             const updated: Goal = response.data.goal;
             setGoals(goals.map(goal =>
                 goal._id === goalId ? updated : goal
             ));
             if (updated.status === 'Completed') notify.success(`Goal "${updated.title}" reached. Well done!`);
-            else notify.success(`${formatCurrency(amount)} added to "${updated.title}".`);
+            else notify.success(`${formatCurrency(toLkr(amount))} added to "${updated.title}".`);
         } catch (error) {
             console.error('Error adding progress:', error);
             notify.error(getApiErrorMessage(error, 'Failed to add progress. Please try again.'));
@@ -125,9 +126,9 @@ export const GoalsPage = () => {
         const input = await promptDialog({
             title: 'Add contribution',
             message: `${goal.title}: ${formatCurrency(goal.currentAmount)} of ${formatCurrency(goal.targetAmount)} saved. Monthly needed: ${formatCurrency(monthlyRequired)}.`,
-            label: 'Amount (LKR)',
+            label: `Amount (${currencyCode()})`,
             inputType: 'number',
-            placeholder: String(monthlyRequired || ''),
+            placeholder: String(fromLkr(monthlyRequired) || ''),
             confirmText: 'Add',
             validate: (value) => {
                 const amount = Number(value);
@@ -173,9 +174,7 @@ export const GoalsPage = () => {
     };
 
     const formatCurrency = (amount: number) => {
-        return `Rs. ${new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 0, maximumFractionDigits: 0
-        }).format(amount)}`;
+        return formatMoney(amount);
     };
 
     const getDaysRemaining = (deadline: string) => {
@@ -188,11 +187,11 @@ export const GoalsPage = () => {
         if (riskStatus.status === 'Completed') {
             return `Goal reached! You saved ${formatCurrency(goal.currentAmount)}.`;
         } else if (riskStatus.status === 'On Track') {
-            return `You're on track! Continue saving Rs. ${getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline).toLocaleString('en-US')} monthly.`;
+            return `You're on track! Continue saving ${formatMoney(getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline))} monthly.`;
         } else if (riskStatus.status === 'Slightly Behind') {
-            return `You're slightly behind. Increase monthly savings to Rs. ${(getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline) * 1.2).toLocaleString('en-US')} to stay on track.`;
+            return `You're slightly behind. Increase monthly savings to ${formatMoney((getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline) * 1.2))} to stay on track.`;
         } else {
-            return `High risk! Try to save Rs. ${(getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline) * 1.5).toLocaleString('en-US')} monthly to catch up.`;
+            return `High risk! Try to save ${formatMoney((getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline) * 1.5))} monthly to catch up.`;
         }
     };
 
@@ -241,7 +240,7 @@ export const GoalsPage = () => {
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Target Amount (LKR)</label>
+                                <label>Target Amount ({currencyCode()})</label>
                                 <input
                                     type="number"
                                     value={newGoal.targetAmount}
@@ -253,7 +252,7 @@ export const GoalsPage = () => {
                         </div>
                         <div className="form-row">
                             <div className="form-group">
-                                <label>Current Savings (LKR)</label>
+                                <label>Current Savings ({currencyCode()})</label>
                                 <input
                                     type="number"
                                     value={newGoal.currentAmount}
@@ -339,7 +338,7 @@ export const GoalsPage = () => {
                                     <span style={{ color: riskStatus.color, fontWeight: '600' }}><strong>{riskStatus.icon} Status:</strong> {riskStatus.status}</span>
                                 </div>
                                 <div style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: '500' }}>
-                                    📅 {new Date(goal.deadline).toLocaleDateString('en-LK')}
+                                    📅 {formatDate(goal.deadline)}
                                 </div>
                             </div>
 
@@ -360,7 +359,7 @@ export const GoalsPage = () => {
                                 <button 
                                     className="btn-secondary btn-sm"
                                     onClick={() => {
-                                        setEditingGoal(goal);
+                                        setEditingGoal({ ...goal, targetAmount: fromLkr(goal.targetAmount), currentAmount: fromLkr(goal.currentAmount) });
                                         setShowDetailsModal(true);
                                     }}
                                 >
@@ -479,7 +478,7 @@ export const GoalsPage = () => {
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label>Target Amount (LKR)</label>
+                                    <label>Target Amount ({currencyCode()})</label>
                                     <input
                                         type="number"
                                         value={editingGoal.targetAmount}
@@ -488,7 +487,7 @@ export const GoalsPage = () => {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label>Current Savings (LKR)</label>
+                                    <label>Current Savings ({currencyCode()})</label>
                                     <input
                                         type="number"
                                         value={editingGoal.currentAmount}

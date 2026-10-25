@@ -1,3 +1,4 @@
+import { formatMoney } from '../utils/appFormat';
 // Enhanced Financial Health Dashboard Component
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.ts';
@@ -142,7 +143,7 @@ export const EnhancedDashboard = () => {
                                 ></div>
                                 <span className="day-label">Day {index + 1}</span>
                                 <span className="balance-amount">
-                                    LKR {day.predictedBalance.toLocaleString()}
+                                    {formatMoney(day.predictedBalance)}
                                 </span>
                             </div>
                         ))}
@@ -183,7 +184,7 @@ export const EnhancedDashboard = () => {
                                 <h5>Projected Impact:</h5>
                                 {rec.projectedImpact.financialSaving && (
                                     <div className="impact-item">
-                                        💰 Save LKR {rec.projectedImpact.financialSaving.toLocaleString()}
+                                        💰 Save {formatMoney(rec.projectedImpact.financialSaving)}
                                     </div>
                                 )}
                                 {rec.projectedImpact.timeToGoal && (
@@ -245,15 +246,15 @@ export const EnhancedDashboard = () => {
                             <div className="budget-amounts">
                                 <div className="amount-row">
                                     <span>Spent:</span>
-                                    <span>LKR {category.spent.toLocaleString()}</span>
+                                    <span>{formatMoney(category.spent)}</span>
                                 </div>
                                 <div className="amount-row">
                                     <span>Budget:</span>
-                                    <span>LKR {category.budget.toLocaleString()}</span>
+                                    <span>{formatMoney(category.budget)}</span>
                                 </div>
                                 <div className="amount-row">
                                     <span>Peer Avg:</span>
-                                    <span>LKR {category.peerAverage.toLocaleString()}</span>
+                                    <span>{formatMoney(category.peerAverage)}</span>
                                 </div>
                             </div>
                             

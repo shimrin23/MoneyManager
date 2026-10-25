@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime, formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { apiClient, getApiErrorMessage } from '../api/client';
 import { notify } from '../utils/systemMessages';
@@ -117,7 +118,7 @@ export const RecurringTransactionsPage = () => {
             await apiClient.post('/subscriptions', {
                 name: newName,
                 provider: newProvider,
-                amount: Number(newAmount),
+                amount: toLkr(Number(newAmount)),
                 category: newCategory,
                 nextPayment: newDate,
                 frequency: newFrequency
@@ -171,7 +172,7 @@ export const RecurringTransactionsPage = () => {
     const handlePay = async (id: string) => {
         try {
             const res = await apiClient.post(`/subscriptions/${id}/pay`);
-            const next = res.data?.nextPayment ? new Date(res.data.nextPayment).toLocaleDateString() : null;
+            const next = res.data?.nextPayment ? formatDate(res.data.nextPayment) : null;
             notify.success(next ? `Payment logged. Next payment due ${next}.` : 'Payment logged.');
             await fetchSubscriptions();
         } catch (error) {
@@ -227,7 +228,7 @@ export const RecurringTransactionsPage = () => {
                         <input type="text" className="form-input" placeholder="e.g. Premium Plan" value={newName} onChange={(e) => setNewName(e.target.value)} />
                     </div>
                     <div className="form-group" style={{ flex: 1, minWidth: '120px', marginBottom: 0 }}>
-                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Amount (LKR)</label>
+                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Amount ({currencyCode()})</label>
                         <input type="number" className="form-input" placeholder="0" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} />
                     </div>
                     <div className="form-group" style={{ flex: 1, minWidth: '120px', marginBottom: 0 }}>
@@ -282,7 +283,7 @@ export const RecurringTransactionsPage = () => {
                 <div className="rec-stat-card accepted">
                     <div className="rec-stat-icon">💸</div>
                     <div>
-                        <div className="rec-stat-value">LKR {totalMonthly.toLocaleString()}</div>
+                        <div className="rec-stat-value">{formatMoney(totalMonthly)}</div>
                         <div className="rec-stat-label">Monthly Total</div>
                     </div>
                 </div>
@@ -334,8 +335,8 @@ export const RecurringTransactionsPage = () => {
                                 </div>
                             </div>
                             <div className="recurring-card-right">
-                                <div className="recurring-amount">LKR {item.amount.toLocaleString()}</div>
-                                <div className="recurring-yearly">LKR {item.totalPaidThisYear.toLocaleString()} this year</div>
+                                <div className="recurring-amount">{formatMoney(item.amount)}</div>
+                                <div className="recurring-yearly">{formatMoney(item.totalPaidThisYear)} this year</div>
                                 {item.status === 'unconfirmed' && (
                                     <div className="recurring-actions">
                                         <button className="rec-action-btn accept small" onClick={() => updateStatus(item._id, 'confirmed')}>
@@ -398,7 +399,7 @@ export const RecurringTransactionsPage = () => {
                             <div style={{ padding: '1.25rem 0', color: 'var(--color-text)' }}>
                                 <p style={{ marginBottom: '8px' }}>You are about to log a payment for:</p>
                                 <p style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '4px' }}>{confirmAction.name}</p>
-                                <p style={{ fontSize: '1.5rem', fontWeight: 800, margin: '8px 0' }}>LKR {(confirmAction.amount || 0).toLocaleString()}</p>
+                                <p style={{ fontSize: '1.5rem', fontWeight: 800, margin: '8px 0' }}>{formatMoney((confirmAction.amount || 0))}</p>
                                 <p style={{ color: 'var(--color-text-muted, #aaa)', fontSize: '0.875rem' }}>
                                     Payment date: <strong>{confirmAction.date}</strong>
                                 </p>

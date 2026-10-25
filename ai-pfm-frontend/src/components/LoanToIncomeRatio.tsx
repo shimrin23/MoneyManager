@@ -1,3 +1,4 @@
+import { formatMoney } from '../utils/appFormat';
 import { type FC, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLoans } from '../hooks/useLoans';
@@ -52,7 +53,7 @@ const LoanToIncomeRatio: FC<LoanToIncomeRatioProps> = ({ onRefresh }) => {
             <div className="loan-to-income-ratio card">
                 <h2 style={{ margin: '0 0 1rem', fontSize: '1.25rem', color: 'var(--color-text)' }}>Loan-to-Income Ratio</h2>
                 <p style={{ color: 'var(--color-text-2)', lineHeight: 1.6 }}>
-                    Your total monthly EMI is <strong>LKR {data.totalMonthlyEMI?.toLocaleString()}</strong>.
+                    Your total monthly EMI is <strong>{formatMoney(data.totalMonthlyEMI)}</strong>.
                     To see how much of your income goes to loans, add your monthly income in your Profile.
                 </p>
                 <Link to="/profile" className="action-btn primary small" style={{ display: 'inline-block', marginTop: '0.5rem' }}>
@@ -119,11 +120,11 @@ const LoanToIncomeRatio: FC<LoanToIncomeRatioProps> = ({ onRefresh }) => {
                 <div className="ratio-details" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1rem', marginBottom: '2rem' }}>
                     <div className="detail-card" style={{ background: 'var(--color-surface-2)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
                         <p className="label" style={{ margin: '0 0 0.5rem', color: 'var(--color-text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Total Monthly EMI</p>
-                        <p className="value" style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0, color: 'var(--color-text)', letterSpacing: '-0.02em' }}>LKR {data.totalMonthlyEMI?.toLocaleString()}</p>
+                        <p className="value" style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0, color: 'var(--color-text)', letterSpacing: '-0.02em' }}>{formatMoney(data.totalMonthlyEMI)}</p>
                     </div>
                     <div className="detail-card" style={{ background: 'var(--color-surface-2)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
                         <p className="label" style={{ margin: '0 0 0.5rem', color: 'var(--color-text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Monthly Income</p>
-                        <p className="value" style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0, color: 'var(--color-text)', letterSpacing: '-0.02em' }}>LKR {data.monthlyIncome?.toLocaleString()}</p>
+                        <p className="value" style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0, color: 'var(--color-text)', letterSpacing: '-0.02em' }}>{formatMoney(data.monthlyIncome)}</p>
                     </div>
                     <div className="detail-card" style={{ background: 'var(--color-surface-2)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
                         <p className="label" style={{ margin: '0 0 0.5rem', color: 'var(--color-text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Risk Level</p>

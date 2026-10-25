@@ -1,3 +1,4 @@
+import { formatMoney } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { apiClient } from '../api/client';
@@ -181,7 +182,7 @@ export const AnomalyDetectionPage = () => {
                                     </div>
                                 </div>
                                 <div className="anomaly-right">
-                                    <div className="anomaly-amount">LKR {anomaly.amount.toLocaleString()}</div>
+                                    <div className="anomaly-amount">{formatMoney(anomaly.amount)}</div>
                                     <div
                                         className="anomaly-risk-badge"
                                         style={{ color: riskColor(anomaly.riskScore), borderColor: riskColor(anomaly.riskScore) }}

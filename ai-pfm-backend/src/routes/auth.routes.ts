@@ -34,6 +34,9 @@ router.post('/reset-password', resetLimiter, authController.resetPassword.bind(a
 router.put('/change-password', authenticateToken, authController.changePassword.bind(authController));
 
 // Route: GET /api/auth/profile (protected)
+router.get('/export-data', authenticateToken, authController.exportData.bind(authController));
+router.delete('/account', authenticateToken, authController.deleteAccount.bind(authController));
+
 router.get('/profile', authenticateToken, authController.getProfile.bind(authController));
 router.put('/profile', authenticateToken, authController.updateProfile.bind(authController));
 

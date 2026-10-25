@@ -1,3 +1,4 @@
+import { formatMoney } from '../utils/appFormat';
 import { useEffect, useState } from 'react';
 
 type Lang = 'en' | 'si' | 'ta';
@@ -173,7 +174,7 @@ export const AdminAnalyticsPage = () => {
                 <div className="rec-stat-card savings">
                     <div className="rec-stat-icon">💰</div>
                     <div>
-                        <div className="rec-stat-value">LKR {(totalSavings / 1000).toFixed(0)}K</div>
+                        <div className="rec-stat-value">{formatMoney(totalSavings)}</div>
                         <div className="rec-stat-label">{t.totalSavings}</div>
                     </div>
                 </div>

@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import Goal from '../schemas/goal.schema';
 import { authenticateToken } from '../middlewares/authMiddleware';
+import { createNotification } from '../services/notification.service';
 
 const router = Router();
 
@@ -95,6 +96,7 @@ router.put('/:id', async (req: Request, res: Response) => {
         if (!goal) {
             return res.status(404).json({ error: 'Goal not found' });
         }
+        const wasCompleted = goal.status === 'Completed';
 
         for (const field of EDITABLE_FIELDS) {
             if (req.body[field] === undefined) continue;
@@ -116,6 +118,14 @@ router.put('/:id', async (req: Request, res: Response) => {
         }
 
         await goal.save();
+        if (!wasCompleted && goal.status === 'Completed') {
+            await createNotification(userId, {
+                type: 'success',
+                title: 'Goal achieved',
+                message: `Congratulations! You reached your goal "${goal.title}".`,
+                link: '/goals'
+            });
+        }
         res.json({ goal });
     } catch (error) {
         console.error('Error updating goal:', error);
@@ -163,6 +173,7 @@ router.post('/:id/progress', async (req: Request, res: Response) => {
             return res.status(404).json({ error: 'Goal not found' });
         }
 
+        const wasCompleted = goal.status === 'Completed';
         goal.currentAmount = Math.min(goal.currentAmount + amount, goal.targetAmount);
         
         // Auto-complete if target reached
@@ -171,6 +182,14 @@ router.post('/:id/progress', async (req: Request, res: Response) => {
         }
 
         await goal.save();
+        if (!wasCompleted && goal.status === 'Completed') {
+            await createNotification(userId, {
+                type: 'success',
+                title: 'Goal achieved',
+                message: `Congratulations! You reached your goal "${goal.title}".`,
+                link: '/goals'
+            });
+        }
         res.json({ goal });
     } catch (error) {
         console.error('Error adding progress:', error);

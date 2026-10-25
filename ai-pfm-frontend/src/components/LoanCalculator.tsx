@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime, formatMoney, toLkr, currencyCode } from '../utils/appFormat';
 import { useState, type FC } from 'react';
 import { useLoans } from '../hooks/useLoans';
 import { notify } from '../utils/systemMessages';
@@ -59,13 +60,13 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
 
         try {
             const emiResult = await calculateEMI(
-                Number(formData.principal),
+                toLkr(Number(formData.principal)),
                 Number(formData.interestRate),
                 Number(formData.tenure)
             );
 
             const scheduleResult = await getSchedule(
-                Number(formData.principal),
+                toLkr(Number(formData.principal)),
                 Number(formData.interestRate),
                 Number(formData.tenure),
                 new Date(formData.startDate)
@@ -87,7 +88,7 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
             await createLoan({
                 type: formData.type,
                 provider: formData.provider,
-                principal: Number(formData.principal),
+                principal: toLkr(Number(formData.principal)),
                 interestRate: Number(formData.interestRate),
                 tenure: Number(formData.tenure),
                 startDate: formData.startDate,
@@ -148,7 +149,7 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Principal Amount (Rs)</label>
+                            <label>Principal Amount ({currencyCode()})</label>
                             <input
                                 type="number"
                                 placeholder="100000"
@@ -209,15 +210,15 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
                     <div className="result-cards">
                         <div className="card">
                             <p className="label">Monthly EMI</p>
-                            <p className="value">Rs {result.monthlyEMI?.toFixed(2)}</p>
+                            <p className="value">{formatMoney(result.monthlyEMI, 2)}</p>
                         </div>
                         <div className="card">
                             <p className="label">Total Interest</p>
-                            <p className="value">Rs {result.totalInterest?.toFixed(2)}</p>
+                            <p className="value">{formatMoney(result.totalInterest, 2)}</p>
                         </div>
                         <div className="card">
                             <p className="label">Total Payable</p>
-                            <p className="value">Rs {result.totalPayable?.toFixed(2)}</p>
+                            <p className="value">{formatMoney(result.totalPayable, 2)}</p>
                         </div>
                     </div>
 
@@ -236,9 +237,9 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
                                 {schedule.slice(0, 6).map((item, idx) => (
                                     <tr key={idx}>
                                         <td>{item.month}</td>
-                                        <td>Rs {item.principalPayment?.toFixed(2)}</td>
-                                        <td>Rs {item.interestPayment?.toFixed(2)}</td>
-                                        <td>Rs {item.remainingBalance?.toFixed(2)}</td>
+                                        <td>{formatMoney(item.principalPayment, 2)}</td>
+                                        <td>{formatMoney(item.interestPayment, 2)}</td>
+                                        <td>{formatMoney(item.remainingBalance, 2)}</td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -280,11 +281,11 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
                                 {schedule.map((item, idx) => (
                                     <tr key={idx}>
                                         <td>{item.month}</td>
-                                        <td>{new Date(item.dueDate).toLocaleDateString()}</td>
-                                        <td>Rs {item.principalPayment?.toFixed(2)}</td>
-                                        <td>Rs {item.interestPayment?.toFixed(2)}</td>
-                                        <td>Rs {(item.principalPayment + item.interestPayment)?.toFixed(2)}</td>
-                                        <td>Rs {item.remainingBalance?.toFixed(2)}</td>
+                                        <td>{formatDate(item.dueDate)}</td>
+                                        <td>{formatMoney(item.principalPayment, 2)}</td>
+                                        <td>{formatMoney(item.interestPayment, 2)}</td>
+                                        <td>{formatMoney((item.principalPayment + item.interestPayment), 2)}</td>
+                                        <td>{formatMoney(item.remainingBalance, 2)}</td>
                                     </tr>
                                 ))}
                             </tbody>

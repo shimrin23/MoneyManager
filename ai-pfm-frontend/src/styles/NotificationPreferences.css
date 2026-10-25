@@ -1,0 +1,194 @@
+/* Notification preferences list (Notifications > Settings tab) */
+
+.np-loading {
+  color: #6b7280;
+  font-size: 0.95rem;
+}
+
+.np-card {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  margin-bottom: 1.25rem;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+.np-group-title {
+  margin: 0;
+  padding: 0.9rem 1.25rem 0.5rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.np-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.25rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+.np-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.np-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.97rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.np-description {
+  font-size: 0.85rem;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+.np-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #4f46e5;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Switch */
+.np-switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 44px;
+  height: 24px;
+  border-radius: 999px;
+  border: none;
+  background: #d1d5db;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  padding: 0;
+}
+
+.np-switch.on {
+  background: #6366f1;
+}
+
+.np-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+  transition: transform 0.2s ease;
+}
+
+.np-switch.on .np-knob {
+  transform: translateX(20px);
+}
+
+.np-switch:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+.np-switch:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Action button used on a row (for example, Export My Data) */
+.np-action {
+  flex-shrink: 0;
+  padding: 0.55rem 1rem;
+  border-radius: 10px;
+  border: 1px solid #c7d2fe;
+  background: #eef2ff;
+  color: #4f46e5;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.np-action:hover:not(:disabled) {
+  background: #e0e7ff;
+  border-color: #a5b4fc;
+}
+
+.np-action:focus-visible {
+  outline: 2px solid #6366f1;
+  outline-offset: 2px;
+}
+
+.np-action:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Dark theme */
+[data-theme='dark'] .np-action {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(99, 102, 241, 0.4);
+  color: #a5b4fc;
+}
+
+[data-theme='dark'] .np-action:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.25);
+}
+[data-theme='dark'] .np-card {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+[data-theme='dark'] .np-row {
+  border-top-color: #374151;
+}
+
+[data-theme='dark'] .np-label {
+  color: #f3f4f6;
+}
+
+[data-theme='dark'] .np-description,
+[data-theme='dark'] .np-group-title,
+[data-theme='dark'] .np-loading {
+  color: #9ca3af;
+}
+
+[data-theme='dark'] .np-badge {
+  background: rgba(99, 102, 241, 0.2);
+  color: #a5b4fc;
+}
+
+[data-theme='dark'] .np-switch {
+  background: #4b5563;
+}
+
+[data-theme='dark'] .np-switch.on {
+  background: #6366f1;
+}
+
+/* Small screens: keep the switch on the same line as the text */
+@media (max-width: 480px) {
+  .np-row {
+    padding: 0.8rem 1rem;
+  }
+
+  .np-label {
+    font-size: 0.92rem;
+  }
+}

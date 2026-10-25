@@ -29,7 +29,7 @@ export interface UserPagesText {
   helpCatGeneral: string; helpCatTechnical: string; helpCatBilling: string; helpCatFeature: string; helpCatSecurity: string;
   helpPriLow: string; helpPriMedium: string; helpPriHigh: string;
   helpSubmitting: string; helpSubmit: string;
-  helpTicketOk: string; helpTicketFail: string;
+  helpTicketOk: string; helpTicketFail: string; helpErrSubject: string; helpErrMessage: string; helpTicketNumber: string;
   faqQ: string[]; faqA: string[];
   guideTitle: string[]; guideDesc: string[];
 
@@ -93,6 +93,7 @@ const en: UserPagesText = {
   helpSubmitting: 'Submitting...', helpSubmit: 'Submit Ticket',
   helpTicketOk: "Support ticket submitted successfully! We'll get back to you within 24 hours.",
   helpTicketFail: 'Failed to submit ticket. Please try again or email support@moneymanager.com',
+  helpErrSubject: 'Subject is required', helpErrMessage: 'Message is required', helpTicketNumber: 'Ticket number',
   faqQ: [
     'How do I add my bank account?',
     'How is my Financial Health Score calculated?',
@@ -193,6 +194,7 @@ const si: UserPagesText = {
   helpSubmitting: 'ඉදිරිපත් කරමින්...', helpSubmit: 'ටිකට්පත ඉදිරිපත් කරන්න',
   helpTicketOk: 'සහාය ටිකට්පත සාර්ථකව ඉදිරිපත් කරන ලදී! පැය 24ක් ඇතුළත අපි ඔබ වෙත පිළිතුරු දෙන්නෙමු.',
   helpTicketFail: 'ටිකට්පත ඉදිරිපත් කිරීමට නොහැකි විය. නැවත උත්සාහ කරන්න හෝ support@moneymanager.com වෙත ඊමේල් කරන්න',
+  helpErrSubject: 'මාතෘකාව අවශ්‍යයි', helpErrMessage: 'පණිවිඩය අවශ්‍යයි', helpTicketNumber: 'ටිකට්පත් අංකය',
   faqQ: [
     'මගේ බැංකු ගිණුම මා එක් කරන්නේ කෙසේද?',
     'මගේ මූල්‍ය සෞඛ්‍ය ලකුණ ගණනය කරන්නේ කෙසේද?',
@@ -293,6 +295,7 @@ const ta: UserPagesText = {
   helpSubmitting: 'சமர்ப்பிக்கிறது...', helpSubmit: 'டிக்கெட்டைச் சமர்ப்பி',
   helpTicketOk: 'ஆதரவு டிக்கெட் வெற்றிகரமாகச் சமர்ப்பிக்கப்பட்டது! 24 மணி நேரத்திற்குள் உங்களைத் தொடர்புகொள்வோம்.',
   helpTicketFail: 'டிக்கெட்டைச் சமர்ப்பிக்க முடியவில்லை. மீண்டும் முயற்சிக்கவும் அல்லது support@moneymanager.com க்கு மின்னஞ்சல் அனுப்பவும்',
+  helpErrSubject: 'தலைப்பு தேவை', helpErrMessage: 'செய்தி தேவை', helpTicketNumber: 'டிக்கெட் எண்',
   faqQ: [
     'என் வங்கிக் கணக்கை எவ்வாறு சேர்ப்பது?',
     'என் நிதி ஆரோக்கிய மதிப்பெண் எவ்வாறு கணக்கிடப்படுகிறது?',

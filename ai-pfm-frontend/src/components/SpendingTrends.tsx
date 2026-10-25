@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
+import { getAppPrefs, type ChartType, formatMoney } from '../utils/appFormat';
 
 export const BarChart = ({ data }: { data: { category: string; value: number }[] }) => {
     const max = Math.max(...data.map(d => d.value), 1);
@@ -12,7 +13,7 @@ export const BarChart = ({ data }: { data: { category: string; value: number }[]
                     <div className="bar-track">
                         <div className="bar-fill" style={{ width: `${(d.value / max) * 100}%` }} />
                     </div>
-                    <span className="bar-value">LKR {d.value.toLocaleString()}</span>
+                    <span className="bar-value">{formatMoney(d.value)}</span>
                 </div>
             ))}
         </div>
@@ -58,8 +59,48 @@ const DEFAULT_TRENDS = [
     { category: 'Utilities', value: 7500 },
 ];
 
+// Line chart of spending by category (the Bar and Pie charts are above)
+export const LineChart = ({ data }: { data: { category: string; value: number }[] }) => {
+    const width = 400;
+    const height = 200;
+    const pad = 28;
+    const max = Math.max(...data.map(d => d.value), 1);
+    const step = data.length > 1 ? (width - pad * 2) / (data.length - 1) : 0;
+    const points = data.map((d, i) => ({
+        ...d,
+        x: pad + i * step,
+        y: height - pad - (d.value / max) * (height - pad * 2)
+    }));
+    const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`).join(' ');
+    return (
+        <div className="line-chart" style={{ width: '100%' }}>
+            <svg viewBox={`0 0 ${width} ${height}`} width="100%" role="img" aria-label="Spending by category, line chart">
+                <line x1={pad} y1={height - pad} x2={width - pad} y2={height - pad} stroke="currentColor" strokeOpacity={0.2} />
+                <path d={path} fill="none" stroke="#6366f1" strokeWidth={2.5} strokeLinejoin="round" />
+                {points.map(p => (
+                    <g key={p.category}>
+                        <circle cx={p.x} cy={p.y} r={4} fill="#6366f1">
+                            <title>{`${p.category}: ${formatMoney(p.value)}`}</title>
+                        </circle>
+                        <text x={p.x} y={height - 8} textAnchor="middle" fontSize="9" fill="currentColor">{p.category}</text>
+                    </g>
+                ))}
+            </svg>
+        </div>
+    );
+};
+
+const CHART_OPTIONS: { value: ChartType; label: string }[] = [
+    { value: 'line', label: 'Line' },
+    { value: 'bar', label: 'Bar' },
+    { value: 'pie', label: 'Pie' }
+];
+
 export const SpendingTrends = () => {
     const navigate = useNavigate();
+    // The chart type from Settings is the starting view; the buttons switch it for this visit
+    const [chosenView, setChosenView] = useState<ChartType | null>(null);
+    const view = chosenView ?? getAppPrefs().chartType;
     const [chartData, setChartData] = useState<{ category: string; value: number }[]>(DEFAULT_TRENDS);
     const [isDemo, setIsDemo] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -135,9 +176,23 @@ export const SpendingTrends = () => {
                     </span>
                 )}
             </div>
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }} onClick={e => e.stopPropagation()}>
+                {CHART_OPTIONS.map(option => (
+                    <button
+                        key={option.value}
+                        type="button"
+                        className={`rec-filter-btn ${view === option.value ? 'active' : ''}`}
+                        aria-pressed={view === option.value}
+                        onClick={() => setChosenView(option.value)}
+                    >
+                        {option.label}
+                    </button>
+                ))}
+            </div>
             <div className="charts-grid">
-                <BarChart data={chartData} />
-                <PieChart data={chartData} />
+                {view === 'line' && <LineChart data={chartData} />}
+                {view === 'bar' && <BarChart data={chartData} />}
+                {view === 'pie' && <PieChart data={chartData} />}
             </div>
         </div>
     );

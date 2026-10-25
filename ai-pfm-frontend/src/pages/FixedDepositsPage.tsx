@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime, formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { apiClient, getApiErrorMessage } from '../api/client';
 import { notify, confirmDialog } from '../utils/systemMessages';
@@ -86,7 +87,7 @@ export const FixedDepositsPage = () => {
         setSubmitting(true);
         try {
             await apiClient.post('/fixed-deposits', {
-                principalAmount: Number(newFD.principalAmount),
+                principalAmount: toLkr(Number(newFD.principalAmount)),
                 interestRate: Number(newFD.interestRate),
                 tenure: Number(newFD.tenure),
                 tenureUnit: newFD.tenureUnit,
@@ -127,7 +128,7 @@ export const FixedDepositsPage = () => {
     const handleRenew = async (fd: FixedDeposit) => {
         const confirmed = await confirmDialog({
             title: 'Renew fixed deposit?',
-            message: `Start a new ${fd.tenure} ${fd.tenureUnit} term from today at ${fd.interestRate}% with LKR ${fd.maturityAmount.toLocaleString()} (principal plus interest).`,
+            message: `Start a new ${fd.tenure} ${fd.tenureUnit} term from today at ${fd.interestRate}% with ${formatMoney(fd.maturityAmount)} (principal plus interest).`,
             confirmText: 'Renew',
         });
         if (!confirmed) return;
@@ -188,14 +189,14 @@ export const FixedDepositsPage = () => {
                 <div className="rec-stat-card accepted">
                     <div className="rec-stat-icon">💵</div>
                     <div>
-                        <div className="rec-stat-value">LKR {(totalPrincipal / 1000).toFixed(0)}K</div>
+                        <div className="rec-stat-value">{formatMoney(totalPrincipal)}</div>
                         <div className="rec-stat-label">Total Principal</div>
                     </div>
                 </div>
                 <div className="rec-stat-card savings">
                     <div className="rec-stat-icon">📈</div>
                     <div>
-                        <div className="rec-stat-value">LKR {(totalMaturityValue / 1000).toFixed(1)}K</div>
+                        <div className="rec-stat-value">{formatMoney(totalMaturityValue)}</div>
                         <div className="rec-stat-label">Maturity Value</div>
                     </div>
                 </div>
@@ -224,7 +225,7 @@ export const FixedDepositsPage = () => {
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Principal Amount (LKR)</label>
+                                <label>Principal Amount ({currencyCode()})</label>
                                 <input
                                     type="number"
                                     min="1"
@@ -314,7 +315,7 @@ export const FixedDepositsPage = () => {
                     const matStatus = fd.status === 'active'
                         ? getMaturityStatus(fd.maturityDate)
                         : fd.status === 'matured'
-                            ? { label: `Matured on ${new Date(fd.maturityDate).toLocaleDateString()}`, color: '#6366f1' }
+                            ? { label: `Matured on ${formatDate(fd.maturityDate)}`, color: '#6366f1' }
                             : { label: 'Withdrawn early', color: '#ef4444' };
                     const progress = fd.status === 'active'
                         ? Math.min(100, Math.max(0, ((new Date().getTime() - new Date(fd.startDate).getTime()) /
@@ -342,15 +343,15 @@ export const FixedDepositsPage = () => {
                                 <div className="fd-amounts-row">
                                     <div className="fd-amount-item">
                                         <div className="fd-amount-label">Principal</div>
-                                        <div className="fd-amount-value">LKR {fd.principalAmount.toLocaleString()}</div>
+                                        <div className="fd-amount-value">{formatMoney(fd.principalAmount)}</div>
                                     </div>
                                     <div className="fd-amount-item highlight">
                                         <div className="fd-amount-label">At Maturity</div>
-                                        <div className="fd-amount-value">LKR {fd.maturityAmount.toLocaleString()}</div>
+                                        <div className="fd-amount-value">{formatMoney(fd.maturityAmount)}</div>
                                     </div>
                                     <div className="fd-amount-item green">
                                         <div className="fd-amount-label">Interest</div>
-                                        <div className="fd-amount-value">LKR {fd.interestEarned.toLocaleString()}</div>
+                                        <div className="fd-amount-value">{formatMoney(fd.interestEarned)}</div>
                                     </div>
                                 </div>
 
@@ -364,9 +365,9 @@ export const FixedDepositsPage = () => {
                                 {fd.status === 'active' && (
                                     <div className="fd-progress-wrap">
                                         <div className="fd-progress-labels">
-                                            <span>{new Date(fd.startDate).toLocaleDateString()}</span>
+                                            <span>{formatDate(fd.startDate)}</span>
                                             <span>{Math.round(progress)}% elapsed</span>
-                                            <span>{new Date(fd.maturityDate).toLocaleDateString()}</span>
+                                            <span>{formatDate(fd.maturityDate)}</span>
                                         </div>
                                         <div className="fd-progress-bar">
                                             <div className="fd-progress-fill" style={{ width: `${progress}%` }} />

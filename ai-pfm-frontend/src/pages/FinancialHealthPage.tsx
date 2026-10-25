@@ -1,3 +1,4 @@
+import { formatMoney } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
 import { AIAssistant } from '../components/AIAssistant';
@@ -37,7 +38,7 @@ const normalizeHealthMetrics = (payload: any): HealthMetrics => ({
 });
 
 const renderBenchmarkValue = (category: string, value: number) => {
-    if (category === 'Net Worth') return `Rs. ${value.toLocaleString()}`;
+    if (category === 'Net Worth') return `${formatMoney(value)}`;
     if (category === 'Emergency Fund Health') return `${value} months`;
     if (category === 'Financial Health Score') return `${value}`;
     return `${value}%`;
@@ -277,7 +278,7 @@ export const FinancialHealthPage = () => {
                         </div>
                         <div className="score-stat-item">
                             <span className="score-stat-value">
-                                Rs. {health.netWorth.toLocaleString()}
+                                {formatMoney(health.netWorth)}
                             </span>
                             <span className="score-stat-label">Net Worth</span>
                         </div>
