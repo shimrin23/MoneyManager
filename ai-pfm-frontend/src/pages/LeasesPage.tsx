@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime, formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { apiClient, getApiErrorMessage } from '../api/client';
 import { notify, confirmDialog, promptDialog } from '../utils/systemMessages';
@@ -82,8 +83,8 @@ export const LeasesPage = () => {
         if (totalPayments < principal) {
             const proceed = await confirmDialog({
                 title: "Payments don't cover the principal",
-                message: `${tenure} payments of LKR ${monthly.toLocaleString()} add up to LKR ${totalPayments.toLocaleString()}, `
-                    + `which is less than the principal of LKR ${principal.toLocaleString()}. `
+                message: `${tenure} payments of ${formatMoney(monthly)} add up to ${formatMoney(totalPayments)}, `
+                    + `which is less than the principal of ${formatMoney(principal)}. `
                     + 'Check the monthly payment and tenure. Save anyway?',
                 confirmText: 'Save Anyway',
                 cancelText: 'Go Back',
@@ -96,8 +97,8 @@ export const LeasesPage = () => {
         try {
             await apiClient.post('/leases', {
                 ...newLease,
-                principalAmount: Number(newLease.principalAmount),
-                monthlyPayment: Number(newLease.monthlyPayment),
+                principalAmount: toLkr(Number(newLease.principalAmount)),
+                monthlyPayment: toLkr(Number(newLease.monthlyPayment)),
                 interestRate: Number(newLease.interestRate),
                 tenureMonths: Number(newLease.tenureMonths)
             });
@@ -119,7 +120,7 @@ export const LeasesPage = () => {
     const handleMarkCompleted = async (lease: Lease) => {
         const confirmed = await confirmDialog({
             title: 'Mark lease as completed?',
-            message: `This sets ${lease.assetName} as fully paid (LKR ${Math.round(lease.outstandingBalance).toLocaleString()} outstanding, ${lease.remainingMonths} months left) and can't be undone.`,
+            message: `This sets ${lease.assetName} as fully paid (${formatMoney(Math.round(lease.outstandingBalance))} outstanding, ${lease.remainingMonths} months left) and can't be undone.`,
             confirmText: 'Mark Completed',
         });
         if (!confirmed) return;
@@ -137,15 +138,15 @@ export const LeasesPage = () => {
         const value = await promptDialog({
             title: 'Record lease payment',
             message: `Record one monthly payment for ${lease.assetName}.`,
-            label: 'Amount paid (LKR)',
+            label: `Amount paid (${currencyCode()})`,
             inputType: 'number',
-            defaultValue: String(lease.monthlyPayment),
+            defaultValue: String(fromLkr(lease.monthlyPayment)),
             confirmText: 'Record Payment',
             validate: (v) => (Number(v) > 0 ? null : 'Enter an amount greater than 0'),
         });
         if (value === null) return;
         try {
-            const res = await apiClient.post(`/leases/${lease._id}/payments`, { amount: Number(value) });
+            const res = await apiClient.post(`/leases/${lease._id}/payments`, { amount: toLkr(Number(value)) });
             const updated: Lease = res.data.lease;
             notify.success(updated.status === 'completed'
                 ? 'Final payment recorded. Lease completed.'
@@ -209,14 +210,14 @@ export const LeasesPage = () => {
                 <div className="rec-stat-card pending">
                     <div className="rec-stat-icon">💸</div>
                     <div>
-                        <div className="rec-stat-value">LKR {totalMonthly.toLocaleString()}</div>
+                        <div className="rec-stat-value">{formatMoney(totalMonthly)}</div>
                         <div className="rec-stat-label">Monthly Payment</div>
                     </div>
                 </div>
                 <div className="rec-stat-card savings">
                     <div className="rec-stat-icon">⚖️</div>
                     <div>
-                        <div className="rec-stat-value">LKR {(totalOutstanding / 1000000).toFixed(2)}M</div>
+                        <div className="rec-stat-value">{formatMoney(totalOutstanding)}</div>
                         <div className="rec-stat-label">Total Outstanding</div>
                     </div>
                 </div>
@@ -253,11 +254,11 @@ export const LeasesPage = () => {
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label>Principal Amount (LKR)</label>
+                                <label>Principal Amount ({currencyCode()})</label>
                                 <input type="number" min="1" placeholder="e.g. 4500000" value={newLease.principalAmount} onChange={e => setNewLease({ ...newLease, principalAmount: e.target.value })} required />
                             </div>
                             <div className="form-group">
-                                <label>Monthly Payment (LKR)</label>
+                                <label>Monthly Payment ({currencyCode()})</label>
                                 <input type="number" min="1" placeholder="e.g. 95000" value={newLease.monthlyPayment} onChange={e => setNewLease({ ...newLease, monthlyPayment: e.target.value })} required />
                             </div>
                             <div className="form-group">
@@ -333,11 +334,11 @@ export const LeasesPage = () => {
                                 <div className="fd-amounts-row">
                                     <div className="fd-amount-item">
                                         <div className="fd-amount-label">Monthly Payment</div>
-                                        <div className="fd-amount-value">LKR {lease.monthlyPayment.toLocaleString()}</div>
+                                        <div className="fd-amount-value">{formatMoney(lease.monthlyPayment)}</div>
                                     </div>
                                     <div className="fd-amount-item highlight">
                                         <div className="fd-amount-label">Outstanding</div>
-                                        <div className="fd-amount-value">LKR {Math.round(lease.outstandingBalance).toLocaleString()}</div>
+                                        <div className="fd-amount-value">{formatMoney(Math.round(lease.outstandingBalance))}</div>
                                     </div>
                                     <div className="fd-amount-item">
                                         <div className="fd-amount-label">Remaining</div>
@@ -351,11 +352,11 @@ export const LeasesPage = () => {
                                     {lease.status === 'active' && daysUntil !== null && lease.nextPaymentDate && (
                                         daysUntil < 0 ? (
                                             <span style={{ color: '#ef4444', fontWeight: 600 }}>
-                                                ⏱ Payment overdue by {-daysUntil}d (due {new Date(lease.nextPaymentDate).toLocaleDateString()})
+                                                ⏱ Payment overdue by {-daysUntil}d (due {formatDate(lease.nextPaymentDate)})
                                             </span>
                                         ) : (
                                             <span style={{ color: daysUntil <= 7 ? '#f59e0b' : 'var(--text-muted)' }}>
-                                                ⏱ Next payment in {daysUntil}d ({new Date(lease.nextPaymentDate).toLocaleDateString()})
+                                                ⏱ Next payment in {daysUntil}d ({formatDate(lease.nextPaymentDate)})
                                             </span>
                                         )
                                     )}
@@ -363,9 +364,9 @@ export const LeasesPage = () => {
 
                                 <div className="fd-progress-wrap">
                                     <div className="fd-progress-labels">
-                                        <span>{new Date(lease.startDate).toLocaleDateString()}</span>
+                                        <span>{formatDate(lease.startDate)}</span>
                                         <span>{Math.round(progress)}% paid off</span>
-                                        <span>{new Date(lease.endDate).toLocaleDateString()}</span>
+                                        <span>{formatDate(lease.endDate)}</span>
                                     </div>
                                     <div className="fd-progress-bar">
                                         <div className="fd-progress-fill" style={{ width: `${progress}%`, background: lease.status === 'completed' ? 'linear-gradient(90deg, #10b981, #34d399)' : 'linear-gradient(90deg, #6366f1, #8b5cf6)' }} />

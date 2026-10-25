@@ -1172,8 +1172,21 @@
     border-top: 1px solid #e1e5e9;
 }
 
+/* Save and Cancel share one size and style; Save keeps the gradient */
 .settings-actions button {
     flex: 1;
+    height: 48px;
+    padding: 0 1.25rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    box-shadow: none;
+}
+
+.settings-actions .btn-primary {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: #ffffff;
+    border: none;
 }
 
 /* Advanced Options */

@@ -1,13 +1,68 @@
+import { formatDate as formatAppDate, formatMoney } from '../utils/appFormat';
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client.ts';
+import { getAppPrefs } from '../utils/appFormat';
 import { notify } from '../utils/systemMessages';
 import axios from 'axios';
 import { AIAssistant } from './AIAssistant';
 import { SpendingTrends } from './SpendingTrends';
 import { IconActivity, IconRefreshCw, IconRepeat, IconBrain } from './Icons';
 
+// Minimal layout: balance across all recorded transactions, and this month's income and expenses
+const BalanceSummary = () => {
+    const [totals, setTotals] = useState<{ balance: number; income: number; expenses: number } | null>(null);
+
+    useEffect(() => {
+        apiClient.get('/transactions')
+            .then(response => {
+                const list: any[] = response.data?.data ?? [];
+                const now = new Date();
+                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                let balance = 0;
+                let income = 0;
+                let expenses = 0;
+                list.forEach(t => {
+                    const amount = Number(t.amount) || 0;
+                    const isIncome = t.type === 'income';
+                    balance += isIncome ? amount : -amount;
+                    if (new Date(t.date) >= monthStart) {
+                        if (isIncome) income += amount;
+                        else expenses += amount;
+                    }
+                });
+                setTotals({ balance, income, expenses });
+            })
+            .catch(() => setTotals(null));
+    }, []);
+
+    const money = (value: number) => formatMoney(value);
+
+    return (
+        <div className="card" style={{ padding: '1.75rem', gridColumn: '1 / -1' }}>
+            <div className="ds-card-title">Balance Summary</div>
+            <div className="ds-card-subtitle">All recorded transactions, and this month&apos;s totals</div>
+            <div className="score-stats-grid" style={{ marginTop: '1rem' }}>
+                <div className="score-stat-item">
+                    <span className="score-stat-value">{totals ? money(totals.balance) : '—'}</span>
+                    <span className="score-stat-label">Balance</span>
+                </div>
+                <div className="score-stat-item">
+                    <span className="score-stat-value" style={{ color: '#10b981' }}>{totals ? money(totals.income) : '—'}</span>
+                    <span className="score-stat-label">Income this month</span>
+                </div>
+                <div className="score-stat-item">
+                    <span className="score-stat-value" style={{ color: '#f43f5e' }}>{totals ? money(totals.expenses) : '—'}</span>
+                    <span className="score-stat-label">Expenses this month</span>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 export const Dashboard = () => {
+    // Dashboard layout chosen in Settings: detailed, compact or minimal
+    const layout = getAppPrefs().dashboardLayout;
     const navigate = useNavigate();
     const [aiOpen, setAiOpen] = useState(false);
     const [score, setScore] = useState<number>(0);
@@ -102,14 +157,11 @@ export const Dashboard = () => {
     };
 
     const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        return formatAppDate(dateString);
     };
 
     const formatAmount = (amount: number, type: string) => {
-        const formatted = `Rs. ${new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 2, maximumFractionDigits: 2
-        }).format(Math.abs(amount))}`;
+        const formatted = formatMoney(Math.abs(amount), 2);
         return type === 'expense' ? `-${formatted}` : `+${formatted}`;
     };
 
@@ -124,8 +176,10 @@ export const Dashboard = () => {
 
             <div className="notifications-content">
                 <div className="dashboard-grid">
+                {layout === 'minimal' && <BalanceSummary />}
 
                 {/* ── Financial Health Score Card ── */}
+                {layout !== 'minimal' && (
                 <div className="card health-score-card" style={{ padding: '1.75rem', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center' }}>
                     <div className="score-card-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%', margin: 0 }}>
                         <div>
@@ -220,10 +274,12 @@ export const Dashboard = () => {
                     </div>
                 </div>
 
+                )}
                 {/* ── Spending Trends Card ── */}
-                <SpendingTrends />
+                {layout !== 'minimal' && <SpendingTrends />}
 
                 {/* ── Recent Transactions Card ── */}
+                {layout === 'detailed' && (
                 <div className="card transactions-card" style={{ padding: '1.75rem' }}>
                     <div className="transactions-header">
                         <div>
@@ -300,7 +356,9 @@ export const Dashboard = () => {
                     </div>
                 </div>
 
+                )}
                 {/* ── Recurring Subscriptions Card ── */}
+                {layout === 'detailed' && (
                 <div 
                     className="card subscriptions-card" 
                     style={{ 
@@ -346,6 +404,7 @@ export const Dashboard = () => {
                         </div>
                     </div>
                 </div>
+                )}
 
             </div>
             </div>

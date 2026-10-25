@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import { apiClient } from './api/client';
+import { saveAppPrefs, setRates, type AppPrefs } from './utils/appFormat';
 import { 
   IconDashboard, IconLightbulb, IconActivity, IconReceipt, IconRepeat, 
   IconAlertTriangle, IconBrain, IconTarget, IconLandmark, IconBuilding, 
@@ -8,11 +10,25 @@ import {
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useLocation, useNavigate } from 'react-router-dom';
 
 // ── NavGroup — defined OUTSIDE AppShell so it never re-mounts on route changes ─
-const NavGroup = ({ title, children }: { title: string; children: React.ReactNode }) => {
-  const [isOpen, setIsOpen] = useState(false);
+// Only one group is open at a time; the open group is shared by the sidebar (openId / setOpenId)
+const NavGroup = ({ id, title, paths, openId, setOpenId, children }: {
+  id: string;
+  title: string;
+  paths: string[];
+  openId: string | null;
+  setOpenId: (id: string | null) => void;
+  children: React.ReactNode;
+}) => {
+  const { pathname } = useLocation();
+  const containsCurrentPage = paths.some(p => pathname === p || pathname.startsWith(`${p}/`));
+  const isOpen = openId === id;
+  // Opening the group that holds the current page; the others close
+  useEffect(() => {
+    if (containsCurrentPage) setOpenId(id);
+  }, [pathname]);
   return (
     <div className={`nav-group ${isOpen ? 'open' : ''}`}>
-      <button type="button" className="nav-group-header" onClick={() => setIsOpen(o => !o)}>
+      <button type="button" className="nav-group-header" onClick={() => setOpenId(isOpen ? null : id)}>
         <span className="nav-group-title">{title}</span>
         <span className="nav-group-chevron">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -53,6 +69,7 @@ import { AdminDashboard } from './pages/AdminDashboard';
 import { AdminUsersPage } from './pages/AdminUsersPage';
 import { AdminConfigPage } from './pages/AdminConfigPage';
 import { AdminAuditPage } from './pages/AdminAuditPage';
+import { AdminSupportPage } from './pages/AdminSupportPage';
 import { RecommendationsPage } from './pages/RecommendationsPage';
 import { RecurringTransactionsPage } from './pages/RecurringTransactionsPage';
 import { FixedDepositsPage } from './pages/FixedDepositsPage';
@@ -163,6 +180,10 @@ function AppShell() {
     () => (localStorage.getItem('lang') as Language) || 'en'
   );
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [openGroup, setOpenGroup] = useState<string | null>(null);
+  // Changes when the display settings change, so the pages re-render with the new values
+  const [settingsVersion, setSettingsVersion] = useState(0);
 
   const getPageTitleInfo = () => {
     switch (location.pathname) {
@@ -184,6 +205,7 @@ function AppShell() {
       case '/notifications': return { title: 'Notifications', subtitle: 'Recent alerts and updates' };
       case '/profile': return { title: USER_T[lang].hdrProfile, subtitle: USER_T[lang].hdrProfileSub };
       case '/settings': return { title: USER_T[lang].hdrSettings, subtitle: USER_T[lang].hdrSettingsSub };
+      case '/account-settings': return { title: USER_T[lang].hdrSettings, subtitle: USER_T[lang].hdrSettingsSub };
       case '/help': return { title: USER_T[lang].hdrHelp, subtitle: USER_T[lang].hdrHelpSub };
       case '/admin': return { title: ADMIN_T[lang].hdrDashboard, subtitle: ADMIN_T[lang].hdrDashboardSub };
       case '/admin/users': return { title: ADMIN_T[lang].hdrUsers, subtitle: ADMIN_T[lang].hdrUsersSub };
@@ -224,6 +246,70 @@ function AppShell() {
     localStorage.setItem('pfm_language', l);
     window.dispatchEvent(new CustomEvent('lang-changed', { detail: l }));
   };
+
+  // Applies the saved Settings values: theme, language and default transaction type
+  const applyAppSettings = (settings: Partial<AppPrefs> & { theme?: string; language?: string; defaultTransactionType?: string }) => {
+    if (settings.theme) {
+      // Auto uses the light theme
+      const resolved = settings.theme === 'auto' ? 'light' : settings.theme;
+      setTheme(resolved === 'light' ? 'light' : 'dark');
+    }
+    if (settings.language) switchLang(settings.language as Language);
+    if (settings.defaultTransactionType) localStorage.setItem('pfm_default_tx_type', settings.defaultTransactionType);
+    // Date format, timezone, dashboard layout and chart type are read by the pages
+    saveAppPrefs({
+      currency: settings.currency,
+      dateFormat: settings.dateFormat,
+      timezone: settings.timezone,
+      dashboardLayout: settings.dashboardLayout,
+      chartType: settings.chartType
+    });
+    setSettingsVersion(v => v + 1);
+  };
+
+  useEffect(() => {
+    const onSettingsChanged = (event: Event) => applyAppSettings((event as CustomEvent).detail);
+    const onOpenAssistant = () => setIsAiAssistantOpen(true);
+    window.addEventListener('app-settings-changed', onSettingsChanged);
+    window.addEventListener('open-ai-assistant', onOpenAssistant);
+    return () => {
+      window.removeEventListener('app-settings-changed', onSettingsChanged);
+      window.removeEventListener('open-ai-assistant', onOpenAssistant);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!token || !isCustomerRole(role)) return;
+    apiClient.get('/settings/app').then(res => applyAppSettings(res.data)).catch(() => {});
+  }, [token, role]);
+
+  // Live LKR exchange rates from the backend, so amounts show in the chosen currency
+  useEffect(() => {
+    if (!token || !isCustomerRole(role)) return;
+    apiClient.get('/currency/rates')
+      .then(res => {
+        setRates(res.data.rates);
+        setSettingsVersion(v => v + 1);
+      })
+      .catch(() => {});
+  }, [token, role]);
+
+  // Unread count for the bell badge
+  const refreshUnreadCount = () => {
+    apiClient.get('/notifications')
+      .then(res => setUnreadCount(res.data.filter((n: { read: boolean }) => !n.read).length))
+      .catch(() => setUnreadCount(0));
+  };
+
+  useEffect(() => {
+    if (!token || !isCustomerRole(role)) {
+      setUnreadCount(0);
+      return;
+    }
+    refreshUnreadCount();
+    window.addEventListener('notifications-changed', refreshUnreadCount);
+    return () => window.removeEventListener('notifications-changed', refreshUnreadCount);
+  }, [token, role]);
 
   const navItem = (to: string, icon: React.ReactNode, label: string) => (
     <NavLink
@@ -288,26 +374,26 @@ function AppShell() {
             <div className="nav-section">
               {isCustomer && (
                 <>
-                  <NavGroup title={T[lang].grpOverview}>
+                  <NavGroup id="overview" title={T[lang].grpOverview} paths={['/dashboard', '/financial-health', '/recommendations']} openId={openGroup} setOpenId={setOpenGroup}>
                     {navItem('/dashboard', <IconDashboard size={20} />, T[lang].dashboard)}
                     {navItem('/financial-health', <IconActivity size={20} />, T[lang].health)}
                     {navItem('/recommendations', <IconLightbulb size={20} />, T[lang].recommendations)}
                   </NavGroup>
 
-                  <NavGroup title={T[lang].grpMoney}>
+                  <NavGroup id="money" title={T[lang].grpMoney} paths={['/transactions', '/credit-cards', '/anomalies']} openId={openGroup} setOpenId={setOpenGroup}>
                     {navItem('/transactions', <IconReceipt size={20} />, T[lang].transactions)}
                     {navItem('/credit-cards', <IconCreditCard size={20} />, T[lang].cards)}
                     {navItem('/anomalies', <IconAlertTriangle size={20} />, T[lang].anomalies)}
                   </NavGroup>
 
-                  <NavGroup title={T[lang].grpPlanning}>
+                  <NavGroup id="planning" title={T[lang].grpPlanning} paths={['/smart-budgets', '/goals', '/recurring']} openId={openGroup} setOpenId={setOpenGroup}>
                     {navItem('/smart-budgets', <IconBrain size={20} />, T[lang].budgets)}
                     {navItem('/goals', <IconTarget size={20} />, T[lang].goals)}
                     {navItem('/recurring', <IconRepeat size={20} />, T[lang].cashFlow)}
                     {navItem('/subscriptions', <IconRefreshCw size={20} />, T[lang].subscriptions)}
                   </NavGroup>
 
-                  <NavGroup title={T[lang].grpBanking}>
+                  <NavGroup id="banking" title={T[lang].grpBanking} paths={['/connect-bank', '/fixed-deposits', '/loans', '/leases', '/pawning']} openId={openGroup} setOpenId={setOpenGroup}>
                     {navItem('/connect-bank', <IconLink size={20} />, T[lang].connectBank)}
                     {navItem('/fixed-deposits', <IconLandmark size={20} />, T[lang].fd)}
                     {navItem('/loans', <IconBuilding size={20} />, T[lang].loans)}
@@ -329,6 +415,7 @@ function AppShell() {
                   {navItem('/admin/users', <IconUsers size={20} />, T[lang].userMgmt)}
                   {navItem('/admin/config', <IconSettings size={20} />, T[lang].config)}
                   {navItem('/admin/audit', <IconClipboardList size={20} />, T[lang].audit)}
+                  {navItem('/admin/support', <IconClipboardList size={20} />, 'Support Tickets')}
                   {navItem('/admin/reports', <IconBarChart size={20} />, T[lang].reports)}
                 </>
               )}
@@ -445,13 +532,25 @@ function AppShell() {
                 <button
                   className="header-action-btn"
                   onClick={() => navigate('/notifications')}
-                  aria-label="Notifications"
+                  aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
                   title="Notifications"
+                  style={{ position: 'relative' }}
                 >
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
                     <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
                   </svg>
+                  {unreadCount > 0 && (
+                    <span
+                      style={{
+                        position: 'absolute', top: 2, right: 2, minWidth: 16, height: 16, padding: '0 4px',
+                        borderRadius: 8, background: '#dc2626', color: '#fff', fontSize: 10, fontWeight: 700,
+                        lineHeight: '16px', textAlign: 'center'
+                      }}
+                    >
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
                 </button>
               )}
             </div>
@@ -459,7 +558,7 @@ function AppShell() {
         </>
       )}
 
-      <div className={`main-content ${showLayout ? 'with-sidebar' : ''}`}>
+      <div className={`main-content ${showLayout ? 'with-sidebar' : ''}`} data-settings-version={settingsVersion}>
         <Routes>
           {/* Auth pages — redirect away if already logged in */}
           <Route path="/login" element={
@@ -508,6 +607,7 @@ function AppShell() {
           <Route path="/admin/users" element={<AdminRoute><main className="page-content"><AdminUsersPage /></main></AdminRoute>} />
           <Route path="/admin/config" element={<AdminRoute><main className="page-content"><AdminConfigPage /></main></AdminRoute>} />
           <Route path="/admin/audit" element={<AdminRoute><main className="page-content"><AdminAuditPage /></main></AdminRoute>} />
+          <Route path="/admin/support" element={<AdminRoute><main className="page-content"><AdminSupportPage /></main></AdminRoute>} />
           <Route path="/admin/reports" element={<AdminRoute><main className="page-content"><AdminAnalyticsPage /></main></AdminRoute>} />
 
           {/* Catch-all */}

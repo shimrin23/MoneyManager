@@ -1016,6 +1016,17 @@
     font-weight: 700;
 }
 
+/* Light theme: darker text so the active filter stays readable on white */
+[data-theme='light'] .rec-filter-btn.active {
+    background: rgba(99,102,241,0.12);
+    border-color: #6366f1;
+    color: #4338ca;
+}
+[data-theme='light'] .rec-filter-btn.active .rec-filter-count {
+    background: rgba(99,102,241,0.18);
+    color: #4338ca;
+}
+
 .rec-empty {
     text-align: center;
     padding: 3rem;

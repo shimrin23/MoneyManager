@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
 import { notify, confirmDialog } from '../utils/systemMessages';
@@ -249,8 +250,8 @@ export const UserManagement = () => {
                                         {user.status}
                                     </span>
                                 </td>
-                                <td className="user-date">{new Date(user.createdAt).toLocaleDateString()}</td>
-                                <td className="user-date">{user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}</td>
+                                <td className="user-date">{formatDate(user.createdAt)}</td>
+                                <td className="user-date">{user.lastLogin ? formatDate(user.lastLogin) : 'Never'}</td>
                                 <td className="user-actions">
                                     <button
                                         className="action-btn view-btn"
@@ -309,7 +310,7 @@ export const UserManagement = () => {
                                 </div>
                                 <div className="detail-row">
                                     <label>Joined</label>
-                                    <span>{new Date(selectedUser.createdAt).toLocaleDateString()}</span>
+                                    <span>{formatDate(selectedUser.createdAt)}</span>
                                 </div>
                             </div>
 
@@ -349,7 +350,7 @@ export const UserManagement = () => {
                                     <h4>Activity</h4>
                                     <div className="detail-row">
                                         <label>Last Login</label>
-                                        <span>{new Date(selectedUser.lastLogin).toLocaleDateString()}</span>
+                                        <span>{formatDate(selectedUser.lastLogin)}</span>
                                     </div>
                                     <div className="detail-row">
                                         <label>Transactions</label>

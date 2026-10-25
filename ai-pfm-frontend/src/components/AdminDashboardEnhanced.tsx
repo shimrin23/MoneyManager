@@ -1,3 +1,4 @@
+import { formatDateTime } from '../utils/appFormat';
 import { useState } from 'react';
 import UserManagement from './UserManagement';
 import RoleManager from './RoleManager';
@@ -80,7 +81,7 @@ export const AdminDashboardEnhanced = () => {
             {/* Quick Stats Footer */}
             <div className="admin-footer">
                 <div className="footer-info">
-                    <p>Last updated: {new Date().toLocaleString()}</p>
+                    <p>Last updated: {formatDateTime(new Date())}</p>
                 </div>
                 <div className="footer-actions">
                     <button className="btn-export">Export Data</button>

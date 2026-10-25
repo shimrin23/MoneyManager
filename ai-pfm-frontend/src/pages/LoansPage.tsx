@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime, formatMoney } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
 import { notify } from '../utils/systemMessages';
@@ -85,9 +86,7 @@ export const LoansPage = () => {
     };
 
     const formatCurrency = (amount: number) => {
-        return `Rs. ${new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 0, maximumFractionDigits: 0
-        }).format(amount)}`;
+        return formatMoney(amount);
     };
 
     const getTotalDebt = () => {
@@ -334,7 +333,7 @@ export const LoansPage = () => {
                                     </div>
                                     <div className="detail-item">
                                         <span className="label">Next Due</span>
-                                        <span className="value">{new Date(loan.nextDueDate).toLocaleDateString()}</span>
+                                        <span className="value">{formatDate(loan.nextDueDate)}</span>
                                     </div>
                                 </div>
                                 

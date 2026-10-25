@@ -1,3 +1,4 @@
+import { formatDate, formatDateTime, formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { apiClient, getApiErrorMessage } from '../api/client';
 import { notify, confirmDialog, promptDialog } from '../utils/systemMessages';
@@ -98,9 +99,9 @@ export const CreditCardsPage = () => {
             cardName: card.cardName,
             provider: card.provider,
             lastFour: card.lastFour || '',
-            creditLimit: String(card.creditLimit),
-            currentBalance: String(card.currentBalance),
-            minPaymentDue: String(card.minPaymentDue),
+            creditLimit: String(fromLkr(card.creditLimit)),
+            currentBalance: String(fromLkr(card.currentBalance)),
+            minPaymentDue: String(fromLkr(card.minPaymentDue)),
             dueDate: toDateInput(card.dueDate),
             statementDate: toDateInput(card.statementDate)
         });
@@ -127,9 +128,9 @@ export const CreditCardsPage = () => {
             cardName: form.cardName.trim(),
             provider: form.provider,
             lastFour: form.lastFour,
-            creditLimit: Number(form.creditLimit),
-            currentBalance: form.currentBalance === '' ? 0 : Number(form.currentBalance),
-            minPaymentDue: form.minPaymentDue === '' ? 0 : Number(form.minPaymentDue),
+            creditLimit: toLkr(Number(form.creditLimit)),
+            currentBalance: form.currentBalance === '' ? 0 : toLkr(Number(form.currentBalance)),
+            minPaymentDue: form.minPaymentDue === '' ? 0 : toLkr(Number(form.minPaymentDue)),
             dueDate: form.dueDate,
             statementDate: form.statementDate || undefined
         };
@@ -187,23 +188,23 @@ export const CreditCardsPage = () => {
         const input = await promptDialog({
             title: 'Make payment',
             message: `${card.cardName}: balance ${formatCurrency(card.currentBalance)}, minimum due ${formatCurrency(card.minPaymentDue)}.`,
-            label: 'Payment amount (LKR)',
+            label: `Payment amount (${currencyCode()})`,
             inputType: 'number',
-            defaultValue: String(card.minPaymentDue || card.currentBalance),
+            defaultValue: String(fromLkr(card.minPaymentDue || card.currentBalance)),
             confirmText: 'Pay',
             validate: (value) => {
                 const amount = Number(value);
                 if (!value.trim() || !Number.isFinite(amount) || amount <= 0) return 'Please enter an amount greater than 0.';
-                if (amount > card.currentBalance) return `Payment cannot be more than the balance (${formatCurrency(card.currentBalance)}).`;
+                if (toLkr(amount) > card.currentBalance) return `Payment cannot be more than the balance (${formatCurrency(card.currentBalance)}).`;
                 return null;
             },
         });
         if (input === null) return; // Cancelled
 
         try {
-            const response = await apiClient.post(`/credit-cards/${card._id}/payment`, { amount: Number(input) });
+            const response = await apiClient.post(`/credit-cards/${card._id}/payment`, { amount: toLkr(Number(input)) });
             replaceCard(response.data.card);
-            notify.success(`Payment of ${formatCurrency(Number(input))} recorded for ${card.cardName}.`);
+            notify.success(`Payment of ${formatCurrency(toLkr(Number(input)))} recorded for ${card.cardName}.`);
         } catch (error) {
             console.error('Error making payment:', error);
             notify.error(getApiErrorMessage(error, 'Failed to record payment. Please try again.'));
@@ -217,22 +218,22 @@ export const CreditCardsPage = () => {
         const input = await promptDialog({
             title: 'Add charge',
             message: `${card.cardName}: available limit ${formatCurrency(available)}.`,
-            label: 'Charge amount (LKR)',
+            label: `Charge amount (${currencyCode()})`,
             inputType: 'number',
             confirmText: 'Add charge',
             validate: (value) => {
                 const amount = Number(value);
                 if (!value.trim() || !Number.isFinite(amount) || amount <= 0) return 'Please enter an amount greater than 0.';
-                if (amount > available) return `Charge cannot be more than the available limit (${formatCurrency(available)}).`;
+                if (toLkr(amount) > available) return `Charge cannot be more than the available limit (${formatCurrency(available)}).`;
                 return null;
             },
         });
         if (input === null) return; // Cancelled
 
         try {
-            const response = await apiClient.post(`/credit-cards/${card._id}/charge`, { amount: Number(input) });
+            const response = await apiClient.post(`/credit-cards/${card._id}/charge`, { amount: toLkr(Number(input)) });
             replaceCard(response.data.card);
-            notify.success(`Charge of ${formatCurrency(Number(input))} added to ${card.cardName}.`);
+            notify.success(`Charge of ${formatCurrency(toLkr(Number(input)))} added to ${card.cardName}.`);
         } catch (error) {
             console.error('Error adding charge:', error);
             notify.error(getApiErrorMessage(error, 'Failed to add charge. Please try again.'));
@@ -253,9 +254,7 @@ export const CreditCardsPage = () => {
     };
 
     const formatCurrency = (amount: number) => {
-        return `Rs. ${new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 0, maximumFractionDigits: 2
-        }).format(amount)}`;
+        return formatMoney(amount, 2);
     };
 
     const getUtilizationPercentage = (current: number, limit: number) => {
@@ -343,7 +342,7 @@ export const CreditCardsPage = () => {
                         </div>
                         <div className="form-row">
                             <div className="form-group">
-                                <label>Credit Limit (LKR)</label>
+                                <label>Credit Limit ({currencyCode()})</label>
                                 <input
                                     type="number"
                                     min="1"
@@ -354,7 +353,7 @@ export const CreditCardsPage = () => {
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Current Balance (LKR)</label>
+                                <label>Current Balance ({currencyCode()})</label>
                                 <input
                                     type="number"
                                     min="0"
@@ -366,7 +365,7 @@ export const CreditCardsPage = () => {
                         </div>
                         <div className="form-row">
                             <div className="form-group">
-                                <label>Minimum Payment Due (LKR)</label>
+                                <label>Minimum Payment Due ({currencyCode()})</label>
                                 <input
                                     type="number"
                                     min="0"
@@ -497,7 +496,7 @@ export const CreditCardsPage = () => {
                                     <div className="payment-row">
                                         <span className="label">Due Date:</span>
                                         <span className={`value ${daysUntilDue <= 5 ? 'text-red-600' : ''}`}>
-                                            {new Date(card.dueDate).toLocaleDateString()}
+                                            {formatDate(card.dueDate)}
                                             {daysUntilDue < 0 ? (
                                                 <span className="urgent"> (overdue)</span>
                                             ) : daysUntilDue <= 5 && (
@@ -569,7 +568,7 @@ export const CreditCardsPage = () => {
                                         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
                                         .map((item, idx) => (
                                             <tr key={item._id || idx}>
-                                                <td data-label="Date">{new Date(item.date).toLocaleDateString()}</td>
+                                                <td data-label="Date">{formatDate(item.date)}</td>
                                                 <td data-label="Type">{item.type === 'payment' ? 'Payment' : 'Charge'}{item.note ? ` – ${item.note}` : ''}</td>
                                                 <td data-label="Amount" style={{ textAlign: 'right', color: item.type === 'payment' ? '#10b981' : '#ef4444' }}>
                                                     {item.type === 'payment' ? '−' : '+'}{formatCurrency(item.amount)}

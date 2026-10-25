@@ -1,3 +1,4 @@
+import { formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useEffect, useState, type FC, type FormEvent } from 'react';
 import { confirmDialog, notify, promptDialog } from '../utils/systemMessages';
 import { useLoans } from '../hooks/useLoans';
@@ -68,25 +69,25 @@ const LoansPage: FC = () => {
         const suggested = Math.min(Number(loan.monthlyInstallment), remaining);
         const input = await promptDialog({
             title: 'Pay EMI',
-            message: `${loan.type} loan (${loan.provider}): Rs ${remaining.toFixed(2)} remaining. Monthly EMI: Rs ${Number(loan.monthlyInstallment).toFixed(2)}.`,
-            label: 'Payment amount (Rs)',
+            message: `${loan.type} loan (${loan.provider}): ${formatMoney(remaining, 2)} remaining. Monthly EMI: ${formatMoney(Number(loan.monthlyInstallment), 2)}.`,
+            label: `Payment amount (${currencyCode()})`,
             inputType: 'number',
-            defaultValue: suggested.toFixed(2),
+            defaultValue: fromLkr(suggested).toFixed(2),
             confirmText: 'Pay',
             validate: (value) => {
                 const amount = Number(value);
                 if (!value.trim() || !Number.isFinite(amount) || amount <= 0) return 'Please enter an amount greater than 0.';
-                if (amount > remaining + 0.01) return `Payment cannot be more than the remaining Rs ${remaining.toFixed(2)}.`;
+                if (toLkr(amount) > remaining + 0.01) return `Payment cannot be more than the remaining ${formatMoney(remaining, 2)}.`;
                 return null;
             },
         });
         if (input === null) return; // Cancelled
 
         try {
-            const updated = await recordPayment(loanId, Number(input));
+            const updated = await recordPayment(loanId, toLkr(Number(input)));
             await fetchLoans();
             if (updated?.status === 'Closed') notify.success(`Loan fully paid and closed. Well done!`);
-            else notify.success(`Payment of Rs ${Number(input).toFixed(2)} recorded.`);
+            else notify.success(`Payment of ${formatMoney(toLkr(Number(input)), 2)} recorded.`);
         } catch (err) {
             notify.error(err instanceof Error ? err.message : 'Failed to record payment.');
         }
@@ -175,7 +176,7 @@ const LoansPage: FC = () => {
                 <option value="">Select a loan…</option>
                 {loans.map(l => (
                     <option key={l._id} value={l._id}>
-                        {l.type} – {l.provider} (Rs {Number(l.principal).toLocaleString()}){l.status !== 'Active' ? ` · ${l.status}` : ''}
+                        {l.type} – {l.provider} ({formatMoney(Number(l.principal))}){l.status !== 'Active' ? ` · ${l.status}` : ''}
                     </option>
                 ))}
             </select>
@@ -387,8 +388,8 @@ const LoansPage: FC = () => {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label>Monthly EMI (Rs)</label>
-                                    <input type="text" value={Number(editForm.monthlyInstallment).toFixed(2)} readOnly disabled />
+                                    <label>Monthly EMI ({currencyCode()})</label>
+                                    <input type="text" value={formatMoney(Number(editForm.monthlyInstallment), 2)} readOnly disabled />
                                     <small style={{ color: 'var(--color-text-muted)' }}>
                                         Recalculated automatically when you change the rate or tenure.
                                     </small>

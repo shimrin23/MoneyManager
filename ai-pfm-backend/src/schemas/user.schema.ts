@@ -40,6 +40,9 @@ export interface IUser extends Document {
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
 
+  // Saved settings per user: app, notifications and privacy
+  settings?: Record<string, any>;
+
   // Account lock (7 failed sign-ins locks for 15 minutes)
   failedLoginCount?: number;
   lockedUntil?: Date;
@@ -91,6 +94,9 @@ const UserSchema: Schema = new Schema(
     isGoogleAccount: { type: Boolean, default: false },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
+
+    // Saved settings per user
+    settings: { type: Schema.Types.Mixed, default: {} },
 
     // Account lock
     failedLoginCount: { type: Number, default: 0 },

@@ -1,3 +1,4 @@
+import { formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient, getApiErrorMessage } from '../api/client';
@@ -128,7 +129,7 @@ export const SmartBudgetsPage = () => {
 
     const handleEditClick = (budget: Budget) => {
         setEditingBudget(budget);
-        setEditAmount(budget.allocatedAmount.toString());
+        setEditAmount(String(fromLkr(budget.allocatedAmount)));
     };
 
     const handleSaveBudget = async () => {
@@ -141,8 +142,8 @@ export const SmartBudgetsPage = () => {
 
         setIsSaving(true);
         try {
-            await apiClient.put(`/budgets/${editingBudget._id}`, { allocatedAmount: amount });
-            notify.success(`${editingBudget.category} limit updated to LKR ${amount.toLocaleString()}.`);
+            await apiClient.put(`/budgets/${editingBudget._id}`, { allocatedAmount: toLkr(amount) });
+            notify.success(`${editingBudget.category} limit updated to ${formatMoney(toLkr(amount))}.`);
             setEditingBudget(null);
             fetchBudgets(); // Refresh data to update progress bars
         } catch (error) {
@@ -167,7 +168,7 @@ export const SmartBudgetsPage = () => {
 
         setIsAdding(true);
         try {
-            await apiClient.post('/budgets', { category: newCategoryName.trim(), allocatedAmount: amount });
+            await apiClient.post('/budgets', { category: newCategoryName.trim(), allocatedAmount: toLkr(amount) });
             notify.success(`${newCategoryName.trim()} budget added.`);
             setNewCategoryName('');
             setNewCategoryAmount('');
@@ -213,14 +214,14 @@ export const SmartBudgetsPage = () => {
                 <div className="summary-card">
                     <div className="summary-icon"><IconDollarSign size={24} /></div>
                     <div className="summary-content">
-                        <h3 className="metric-value">LKR {totalIncome.toLocaleString()}</h3>
+                        <h3 className="metric-value">{formatMoney(totalIncome)}</h3>
                         <p className="metric-label">{totalIncome > 0 ? 'Monthly Income' : 'No income recorded this month'}</p>
                     </div>
                 </div>
                 <div className="summary-card">
                     <div className="summary-icon"><IconBarChart size={24} /></div>
                     <div className="summary-content">
-                        <h3 className="metric-value">LKR {totalAllocated.toLocaleString()}</h3>
+                        <h3 className="metric-value">{formatMoney(totalAllocated)}</h3>
                         <p className="metric-label">Total Budgeted</p>
                     </div>
                 </div>
@@ -325,8 +326,8 @@ export const SmartBudgetsPage = () => {
                                 )}
                             </div>
                             <div className="progress-text">
-                                <span className="spent">LKR {budget.spentAmount.toLocaleString()}</span>
-                                <span className="total">/ LKR {budget.allocatedAmount.toLocaleString()}</span>
+                                <span className="spent">{formatMoney(budget.spentAmount)}</span>
+                                <span className="total">/ {formatMoney(budget.allocatedAmount)}</span>
                                 <span className={`percentage ${budget.isOverBudget ? 'over' : ''}`}>
                                     {budget.percentageUsed}%
                                 </span>
@@ -337,7 +338,7 @@ export const SmartBudgetsPage = () => {
                             <div className="remaining">
                                 <span className={budget.remainingAmount >= 0 ? 'positive' : 'negative'}>
                                     {budget.remainingAmount >= 0 ? 'Remaining' : 'Over by'}:
-                                    LKR {Math.abs(budget.remainingAmount).toLocaleString()}
+                                    {formatMoney(Math.abs(budget.remainingAmount))}
                                 </span>
                             </div>
                             <div className="trends">
@@ -386,14 +387,14 @@ export const SmartBudgetsPage = () => {
                         <div className="summary-card">
                             <div className="summary-icon"><IconDollarSign size={24} /></div>
                             <div className="summary-content">
-                                <h3 className="metric-value">LKR {totalIncome.toLocaleString()}</h3>
+                                <h3 className="metric-value">{formatMoney(totalIncome)}</h3>
                                 <p className="metric-label">Total Income</p>
                             </div>
                         </div>
                         <div className="summary-card">
                             <div className="summary-icon"><IconBarChart size={24} /></div>
                             <div className="summary-content">
-                                <h3 className="metric-value">LKR {totalAllocated.toLocaleString()}</h3>
+                                <h3 className="metric-value">{formatMoney(totalAllocated)}</h3>
                                 <p className="metric-label">Total Allocated</p>
                             </div>
                         </div>
@@ -403,7 +404,7 @@ export const SmartBudgetsPage = () => {
                             </div>
                             <div className="summary-content">
                                 <h3 className="metric-value" style={{ color: (totalIncome - totalAllocated) < 0 ? 'var(--danger)' : 'var(--success)' }}>
-                                    LKR {(totalIncome - totalAllocated).toLocaleString()}
+                                    {formatMoney((totalIncome - totalAllocated))}
                                 </h3>
                                 <p className="metric-label">Unallocated Cash</p>
                             </div>
@@ -424,7 +425,7 @@ export const SmartBudgetsPage = () => {
                                 />
                             </div>
                             <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
-                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Budget Limit (LKR)</label>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Budget Limit ({currencyCode()})</label>
                                 <input 
                                     type="number" 
                                     className="form-input" 
@@ -447,7 +448,7 @@ export const SmartBudgetsPage = () => {
                                     <span className="insight-icon" style={{ display: 'flex', alignItems: 'center' }}><IconTarget size={20} /></span>
                                     <div className="insight-content">
                                         <h4>{budget.category}</h4>
-                                        <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)' }}>Limit: LKR {budget.allocatedAmount.toLocaleString()}</p>
+                                        <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)' }}>Limit: {formatMoney(budget.allocatedAmount)}</p>
                                     </div>
                                     <div style={{ display: 'flex', gap: '8px' }}>
                                         <button className="action-btn secondary" onClick={() => handleEditClick(budget)}>
@@ -486,7 +487,7 @@ export const SmartBudgetsPage = () => {
                                     style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', fontSize: '16px' }}
                                 />
                                 <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '8px' }}>
-                                    Currently used: {alertBudget.percentageUsed}% (LKR {alertBudget.spentAmount.toLocaleString()} of LKR {alertBudget.allocatedAmount.toLocaleString()})
+                                    Currently used: {alertBudget.percentageUsed}% ({formatMoney(alertBudget.spentAmount)} of {formatMoney(alertBudget.allocatedAmount)})
                                 </p>
                             </div>
                         </div>
@@ -532,7 +533,7 @@ export const SmartBudgetsPage = () => {
                         
                         <div className="modal-body" style={{ marginTop: '16px' }}>
                             <div className="form-group" style={{ marginBottom: '20px' }}>
-                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Budget Limit (LKR)</label>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Budget Limit ({currencyCode()})</label>
                                 <input 
                                     type="number" 
                                     className="form-input"
@@ -541,7 +542,7 @@ export const SmartBudgetsPage = () => {
                                     style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', fontSize: '16px' }}
                                 />
                                 <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '8px' }}>
-                                    Currently spent: LKR {editingBudget.spentAmount.toLocaleString()}
+                                    Currently spent: {formatMoney(editingBudget.spentAmount)}
                                 </p>
                             </div>
                         </div>

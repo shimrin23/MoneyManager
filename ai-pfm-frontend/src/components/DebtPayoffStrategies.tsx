@@ -1,3 +1,4 @@
+import { formatMoney } from '../utils/appFormat';
 import { type FC } from 'react';
 
 interface Strategy {
@@ -46,7 +47,7 @@ const DebtPayoffStrategies: FC<DebtPayoffStrategiesProps> = ({ strategies, onSel
                             </div>
                             <div className="detail-item highlight">
                                 <span className="label">Interest Saved</span>
-                                <span className="value">Rs {strategy.totalInterestSaved?.toFixed(2)}</span>
+                                <span className="value">{formatMoney(strategy.totalInterestSaved, 2)}</span>
                             </div>
                         </div>
 
@@ -55,7 +56,7 @@ const DebtPayoffStrategies: FC<DebtPayoffStrategiesProps> = ({ strategies, onSel
                             <ol>
                                 {strategy.schedule.map((item, idx) => (
                                     <li key={idx}>
-                                        {item.loanType} - Rs {item.paymentAmount?.toFixed(2)}/month
+                                        {item.loanType} - {formatMoney(item.paymentAmount, 2)}/month
                                     </li>
                                 ))}
                             </ol>

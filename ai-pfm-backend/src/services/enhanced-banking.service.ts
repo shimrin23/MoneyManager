@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import Transaction from '../schemas/transaction.schema';
 import Alert, { IAlert } from '../schemas/alert.schema';
+import { createNotification } from './notification.service';
 import { FinancialAgent } from '../ai/agent';
 
 export class EnhancedBankingIntegration {
@@ -350,6 +351,13 @@ export class EnhancedBankingIntegration {
                 message,
                 amount: transaction.amount,
                 transactionId: transaction.id || transaction.transactionId || transaction.externalTransactionId,
+            });
+            await createNotification(String(transaction.userId), {
+                type: type === 'overdue' ? 'warning' : 'alert',
+                title: type === 'overdue' ? 'Overdue payment' : 'Unusual transaction',
+                message,
+                link: '/anomalies',
+                actionRequired: true
             });
         } catch (e) {
             console.error('[EnhancedBankingIntegration] Failed to persist real-time alert:', (e as any)?.message || e);
