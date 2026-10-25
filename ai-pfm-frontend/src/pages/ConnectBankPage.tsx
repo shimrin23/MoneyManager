@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
-import { apiClient } from '../api/client';
+import axios from 'axios';
+import { apiClient, getApiErrorMessage } from '../api/client';
 import '../styles/FinancialPages.css';
 
 interface SriLankanBank {
@@ -62,38 +63,104 @@ const SRI_LANKAN_BANKS: SriLankanBank[] = [
     },
 ];
 
+// The server accepts statements up to 5 MB
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+
+interface SkippedRow {
+    row: number;
+    reason: string;
+}
+
 export const ConnectBankPage = () => {
     // Statement Import State
     const [selectedBank, setSelectedBank] = useState<SriLankanBank>(SRI_LANKAN_BANKS[0]);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [fileContent, setFileContent] = useState<string>('');
     const [uploading, setUploading] = useState(false);
+    const [dragActive, setDragActive] = useState(false);
     const [importSuccess, setImportSuccess] = useState<{
         totalParsed: number;
         inserted: number;
         skippedDuplicates: number;
+        invalidRows?: number;
     } | null>(null);
+    const [skippedRows, setSkippedRows] = useState<SkippedRow[]>([]);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const resetFile = () => {
+        setSelectedFile(null);
+        setFileContent('');
+        if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    // Shared by the file picker and drag & drop
+    const loadFile = (file: File) => {
         setErrorMsg(null);
         setImportSuccess(null);
-        const file = e.target.files?.[0];
-        if (!file) return;
+        setSkippedRows([]);
 
-        if (!file.name.endsWith('.csv') && !file.name.endsWith('.txt')) {
+        const name = file.name.toLowerCase();
+        if (!name.endsWith('.csv') && !name.endsWith('.txt')) {
+            resetFile();
             setErrorMsg('Please upload a valid .csv bank statement file.');
+            return;
+        }
+        if (file.size === 0) {
+            resetFile();
+            setErrorMsg('This file is empty. Export the statement again from your bank and try once more.');
+            return;
+        }
+        if (file.size > MAX_FILE_BYTES) {
+            resetFile();
+            setErrorMsg('This file is larger than 5 MB. Export a shorter date range (for example one month) and import it in parts.');
             return;
         }
 
         setSelectedFile(file);
         const reader = new FileReader();
         reader.onload = (event) => {
-            const text = event.target?.result as string;
+            const text = (event.target?.result as string) || '';
+            const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
+            if (lines.length === 0) {
+                resetFile();
+                setErrorMsg('This file is empty. Export the statement again from your bank and try once more.');
+                return;
+            }
+            if (lines.length < 2) {
+                resetFile();
+                setErrorMsg('This file only has a header row and no transactions.');
+                return;
+            }
             setFileContent(text);
         };
+        reader.onerror = () => {
+            resetFile();
+            setErrorMsg('Could not read this file. Please try again.');
+        };
         reader.readAsText(file);
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) loadFile(file);
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        if (!dragActive) setDragActive(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setDragActive(false);
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+        e.preventDefault();
+        setDragActive(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file) loadFile(file);
     };
 
     const handleImportStatement = async () => {
@@ -104,6 +171,7 @@ export const ConnectBankPage = () => {
 
         setUploading(true);
         setErrorMsg(null);
+        setSkippedRows([]);
         try {
             const resp = await apiClient.post('/transactions/import-statement', {
                 csvContent: fileContent,
@@ -112,16 +180,17 @@ export const ConnectBankPage = () => {
 
             if (resp.data?.success) {
                 setImportSuccess(resp.data.summary);
-                setSelectedFile(null);
-                setFileContent('');
-                if (fileInputRef.current) fileInputRef.current.value = '';
+                setSkippedRows(resp.data.skippedRows || []);
+                resetFile();
             }
-        } catch (err: any) {
+        } catch (err) {
             console.error('Import error', err);
-            setErrorMsg(
-                err.response?.data?.error ||
-                'Could not process bank statement. Please verify the CSV format.'
-            );
+            if (axios.isAxiosError(err) && err.response?.status === 413) {
+                setErrorMsg('This statement is too large to import at once. Export a shorter date range and import it in parts.');
+            } else {
+                if (axios.isAxiosError(err)) setSkippedRows(err.response?.data?.skippedRows || []);
+                setErrorMsg(getApiErrorMessage(err, 'Could not process bank statement. Please verify the CSV format.'));
+            }
         } finally {
             setUploading(false);
         }
@@ -142,6 +211,7 @@ export const ConnectBankPage = () => {
         setSelectedFile(new File([sampleCSV], 'sample_combank_statement.csv', { type: 'text/csv' }));
         setErrorMsg(null);
         setImportSuccess(null);
+        setSkippedRows([]);
     };
 
     return (
@@ -153,7 +223,7 @@ export const ConnectBankPage = () => {
             <div className="connect-bank-grid" style={{ display: 'grid', gap: '1.5rem' }}>
                 {/* Bank Selection List */}
                 <div className="card" style={{ padding: '1.25rem' }}>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem', color: '#1e293b' }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--text)' }}>
                         1. Select Your Bank
                     </h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
@@ -166,8 +236,8 @@ export const ConnectBankPage = () => {
                                     style={{
                                         padding: '0.85rem 1rem',
                                         borderRadius: '8px',
-                                        border: isSelected ? '2px solid #2563eb' : '1px solid #e2e8f0',
-                                        backgroundColor: isSelected ? '#eff6ff' : '#ffffff',
+                                        border: isSelected ? '2px solid #3b82f6' : '1px solid var(--border)',
+                                        backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.1)' : 'var(--card)',
                                         cursor: 'pointer',
                                         display: 'flex',
                                         justifyContent: 'space-between',
@@ -176,15 +246,15 @@ export const ConnectBankPage = () => {
                                     }}
                                 >
                                     <div>
-                                        <div style={{ fontWeight: 600, color: '#1e293b', fontSize: '0.95rem' }}>
+                                        <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: '0.95rem' }}>
                                             {b.name}
                                         </div>
-                                        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                                             {b.tag}
                                         </div>
                                     </div>
                                     {isSelected && (
-                                        <span style={{ color: '#2563eb', fontWeight: 700, fontSize: '1.1rem' }}>✓</span>
+                                        <span style={{ color: '#3b82f6', fontWeight: 700, fontSize: '1.1rem' }}>✓</span>
                                     )}
                                 </div>
                             );
@@ -194,25 +264,30 @@ export const ConnectBankPage = () => {
 
                 {/* Statement Upload & Preview */}
                 <div className="card" style={{ padding: '1.25rem' }}>
-                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.5rem', color: '#1e293b' }}>
+                    <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text)' }}>
                         2. Upload Statement for {selectedBank.name}
                     </h3>
-                    <p style={{ fontSize: '0.85rem', color: '#64748b', marginBottom: '1rem' }}>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
                         {selectedBank.guide}
                     </p>
 
                     {/* Drop Zone */}
                     <div
                         style={{
-                            border: '2px dashed #cbd5e1',
+                            border: `2px dashed ${dragActive ? '#3b82f6' : 'var(--border)'}`,
                             borderRadius: '12px',
                             padding: '2rem 1.5rem',
                             textAlign: 'center',
-                            backgroundColor: '#f8fafc',
+                            backgroundColor: dragActive ? 'rgba(59, 130, 246, 0.08)' : 'var(--card-hover)',
                             marginBottom: '1.2rem',
                             cursor: 'pointer',
+                            transition: 'all 0.15s ease',
                         }}
                         onClick={() => fileInputRef.current?.click()}
+                        onDragEnter={handleDragOver}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
                     >
                         <input
                             ref={fileInputRef}
@@ -222,11 +297,11 @@ export const ConnectBankPage = () => {
                             onChange={handleFileChange}
                         />
                         <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📄</div>
-                        <div style={{ fontWeight: 600, color: '#334155', marginBottom: '0.25rem' }}>
-                            {selectedFile ? selectedFile.name : 'Click to upload or drag & drop CSV'}
+                        <div style={{ fontWeight: 600, color: 'var(--text)', marginBottom: '0.25rem' }}>
+                            {dragActive ? 'Drop the CSV file here' : selectedFile ? selectedFile.name : 'Click to upload or drag & drop CSV'}
                         </div>
-                        <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
-                            Supports Commercial Bank, HNB, Sampath, BOC, FriMi & generic CSV statements
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                            Supports Commercial Bank, HNB, Sampath, BOC, FriMi & generic CSV statements (up to 5 MB)
                         </div>
                     </div>
 
@@ -258,9 +333,9 @@ export const ConnectBankPage = () => {
                                 borderRadius: '8px',
                                 fontWeight: 500,
                                 fontSize: '0.85rem',
-                                background: '#f1f5f9',
-                                color: '#334155',
-                                border: '1px solid #cbd5e1',
+                                background: 'var(--card-hover)',
+                                color: 'var(--text)',
+                                border: '1px solid var(--border)',
                                 cursor: 'pointer',
                             }}
                         >
@@ -270,25 +345,40 @@ export const ConnectBankPage = () => {
 
                     {/* Error Alert */}
                     {errorMsg && (
-                        <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', borderRadius: '8px', backgroundColor: '#fee2e2', color: '#991b1b', fontSize: '0.875rem' }}>
+                        <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', borderRadius: '8px', backgroundColor: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.35)', color: '#ef4444', fontSize: '0.875rem' }}>
                             {errorMsg}
                         </div>
                     )}
 
                     {/* Success Result */}
                     {importSuccess && (
-                        <div style={{ marginTop: '1rem', padding: '1rem', borderRadius: '8px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0' }}>
-                            <h4 style={{ color: '#166534', fontWeight: 600, margin: '0 0 0.5rem 0' }}>
+                        <div style={{ marginTop: '1rem', padding: '1rem', borderRadius: '8px', backgroundColor: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.35)' }}>
+                            <h4 style={{ color: '#22c55e', fontWeight: 600, margin: '0 0 0.5rem 0' }}>
                                 ✓ Statement Imported Successfully!
                             </h4>
-                            <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#15803d', fontSize: '0.875rem' }}>
+                            <ul style={{ margin: 0, paddingLeft: '1.25rem', color: 'var(--text)', fontSize: '0.875rem' }}>
                                 <li>Parsed transactions: <strong>{importSuccess.totalParsed}</strong></li>
                                 <li>Added to your account: <strong>{importSuccess.inserted}</strong></li>
                                 <li>Skipped duplicate records: <strong>{importSuccess.skippedDuplicates}</strong></li>
+                                {!!importSuccess.invalidRows && (
+                                    <li>Rows that couldn't be read: <strong>{importSuccess.invalidRows}</strong></li>
+                                )}
                             </ul>
-                            <p style={{ margin: '0.75rem 0 0 0', fontSize: '0.85rem', color: '#166534' }}>
+                            <p style={{ margin: '0.75rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                                 Your Dashboard, Transactions, and Spending Trends have now been refreshed with this data.
                             </p>
+                        </div>
+                    )}
+
+                    {/* Rows the server could not read */}
+                    {skippedRows.length > 0 && (
+                        <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', borderRadius: '8px', backgroundColor: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.35)', fontSize: '0.85rem', color: 'var(--text)' }}>
+                            <strong style={{ color: '#f59e0b' }}>These rows were not imported:</strong>
+                            <ul style={{ margin: '0.5rem 0 0 0', paddingLeft: '1.25rem' }}>
+                                {skippedRows.map((r) => (
+                                    <li key={r.row}>Row {r.row}: {r.reason}</li>
+                                ))}
+                            </ul>
                         </div>
                     )}
                 </div>

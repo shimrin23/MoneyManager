@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { apiClient } from '../api/client';
-import { notify } from '../utils/systemMessages';
+import { Link } from 'react-router-dom';
+import { apiClient, getApiErrorMessage } from '../api/client';
+import { notify, confirmDialog } from '../utils/systemMessages';
 
 interface Subscription {
     _id?: string;
@@ -13,7 +14,18 @@ interface Subscription {
     isActive: boolean;
     lastUsed?: string;
     isZombie: boolean;
+    cancelReason?: string;
+    cancelledAt?: string;
 }
+
+const CANCEL_REASON_LABELS: Record<string, string> = {
+    'too-expensive': 'Too expensive',
+    'not-used': 'Not using it',
+    'found-alternative': 'Found a cheaper alternative',
+    'temporary-pause': 'Temporary pause',
+    'other': 'Other',
+    'zombie-bulk-cancel': 'Cancelled as unused',
+};
 
 interface CheaperAlternative {
     name: string;
@@ -37,7 +49,9 @@ export const SubscriptionsPage = () => {
     const [showCancelModal, setShowCancelModal] = useState(false);
     const [cancelReason, setCancelReason] = useState('');
     const [trends, setTrends] = useState<SubscriptionTrend[]>([]);
-    const [monthlyIncome, setMonthlyIncome] = useState(100000); // Default estimate
+    // Monthly income from the user's Profile; null until it is known (0 or unset means not entered)
+    const [monthlyIncome, setMonthlyIncome] = useState<number | null>(null);
+    const [insightsStatus, setInsightsStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
     const [newSubscription, setNewSubscription] = useState<Subscription>({
         name: '',
         provider: '',
@@ -53,14 +67,15 @@ export const SubscriptionsPage = () => {
     useEffect(() => {
         fetchSubscriptions();
         fetchAIInsights();
-        generateTrends();
-        // Fetch monthly income from user stats
-        fetchUserStats();
+        fetchTrends();
+        // Fetch monthly income from the user's profile
+        fetchMonthlyIncome();
     }, []);
 
     const fetchSubscriptions = async () => {
         try {
-            const response = await apiClient.get('/subscriptions');
+            // Includes cancelled ones so they can be listed and restored
+            const response = await apiClient.get('/subscriptions', { params: { includeInactive: true } });
             const data = response.data;
             
             setSubscriptions(data.subscriptions || []);
@@ -74,41 +89,45 @@ export const SubscriptionsPage = () => {
         }
     };
 
-    const fetchUserStats = async () => {
+    const fetchMonthlyIncome = async () => {
         try {
-            const response = await apiClient.get('/user/stats');
-            setMonthlyIncome(response.data.monthlyIncome || 100000);
+            const response = await apiClient.get('/auth/profile');
+            const income = Number(response.data?.user?.monthlyIncome);
+            setMonthlyIncome(income > 0 ? income : null);
         } catch (error) {
-            console.error('Failed to fetch user stats:', error);
+            console.error('Failed to fetch monthly income:', error);
+            setMonthlyIncome(null);
         }
     };
 
     const fetchAIInsights = async () => {
+        setInsightsStatus('loading');
         try {
             const response = await apiClient.get('/subscriptions/ai-insights');
             if (response.data && response.data.insights) {
                 setInsightsMap(response.data.insights);
             }
+            setInsightsStatus('ready');
         } catch (error) {
             console.error('Failed to fetch AI insights:', error);
+            setInsightsStatus('failed');
         }
     };
 
-    const generateTrends = () => {
-        const months = [];
-        for (let i = 5; i >= 0; i--) {
-            const date = new Date();
-            date.setMonth(date.getMonth() - i);
-            months.push({
-                month: date.toLocaleString('en-LK', { month: 'short', year: '2-digit' }),
-                amount: Math.floor(Math.random() * 3000) + 2000
-            });
+    // Real subscription spending per month, from logged payments and matching expenses
+    const fetchTrends = async () => {
+        try {
+            const response = await apiClient.get('/subscriptions/trends');
+            setTrends(response.data?.trends || []);
+        } catch (error) {
+            console.error('Failed to fetch subscription trends:', error);
+            setTrends([]);
         }
-        setTrends(months);
     };
 
-    // Feature 1: Health Score Calculation
+    // Feature 1: Health Score Calculation (only when the user has entered their income)
     const getHealthScore = () => {
+        if (!monthlyIncome) return null;
         const percentOfIncome = (totalMonthlyCost / monthlyIncome) * 100;
         if (percentOfIncome < 5) return { score: 'Healthy', icon: '', percentage: percentOfIncome };
         if (percentOfIncome < 10) return { score: 'Needs Review', icon: '', percentage: percentOfIncome };
@@ -157,24 +176,51 @@ export const SubscriptionsPage = () => {
         if (!selectedSubscription?._id) return;
 
         try {
-            await apiClient.delete(`/subscriptions/${selectedSubscription._id}`);
-            
-            // Log cancellation reason (Feature 8)
-            await apiClient.post('/subscriptions/cancel-reason', {
-                subscriptionId: selectedSubscription._id,
-                reason: cancelReason,
-                timestamp: new Date().toISOString()
-            }).catch(() => {
-                // Non-critical, continue even if this fails
+            // The cancellation reason (Feature 8) is saved with the cancellation
+            await apiClient.delete(`/subscriptions/${selectedSubscription._id}`, {
+                data: { reason: cancelReason || undefined }
             });
 
+            notify.success(`${selectedSubscription.name} cancelled. You can restore it from Cancelled Subscriptions.`);
             setShowCancelModal(false);
             setCancelReason('');
             setSelectedSubscription(null);
             await fetchSubscriptions();
+            fetchTrends();
         } catch (error) {
             console.error('Failed to cancel subscription:', error);
-            notify.error('Failed to cancel subscription. Please try again.');
+            notify.error(getApiErrorMessage(error, 'Failed to cancel subscription. Please try again.'));
+        }
+    };
+
+    const handleRestoreSubscription = async (subscription: Subscription) => {
+        try {
+            await apiClient.put(`/subscriptions/${subscription._id}`, { isActive: true, isZombie: false });
+            notify.success(`${subscription.name} restored.`);
+            await fetchSubscriptions();
+        } catch (error) {
+            console.error('Failed to restore subscription:', error);
+            notify.error(getApiErrorMessage(error, 'Failed to restore subscription. Please try again.'));
+        }
+    };
+
+    const handleCancelAllZombies = async () => {
+        const confirmed = await confirmDialog({
+            title: `Cancel ${zombieSubs.length} zombie subscription${zombieSubs.length > 1 ? 's' : ''}?`,
+            message: `This cancels ${zombieSubs.map(s => s.name).join(', ')} and saves LKR ${savings.toLocaleString()}/month. You can restore them later from Cancelled Subscriptions.`,
+            confirmText: 'Cancel All',
+            cancelText: 'Keep Them',
+            danger: true,
+        });
+        if (!confirmed) return;
+        try {
+            const zombieIds = zombieSubs.map(sub => sub._id!);
+            const response = await apiClient.post('/subscriptions/bulk-cancel', { subscriptionIds: zombieIds });
+            notify.success(`Cancelled ${response.data?.cancelledCount ?? zombieIds.length} subscription(s).`);
+            await fetchSubscriptions();
+        } catch (error) {
+            console.error('Failed to cancel zombie subscriptions:', error);
+            notify.error(getApiErrorMessage(error, 'Failed to cancel subscriptions. Please try again.'));
         }
     };
 
@@ -187,8 +233,12 @@ export const SubscriptionsPage = () => {
         e.preventDefault();
         try {
             // Validation
-            if (!newSubscription.name || !newSubscription.provider || !newSubscription.amount || !newSubscription.nextPayment) {
+            if (!newSubscription.name.trim() || !newSubscription.provider.trim() || !newSubscription.category || !newSubscription.nextPayment) {
                 notify.warning('Please fill in all required fields.');
+                return;
+            }
+            if (!(newSubscription.amount > 0)) {
+                notify.warning('Amount must be greater than 0.');
                 return;
             }
 
@@ -206,16 +256,19 @@ export const SubscriptionsPage = () => {
                 isZombie: false
             });
             setShowAddForm(false);
-            
+            notify.success('Subscription added.');
+
             // Refresh subscription list
             await fetchSubscriptions();
+            fetchAIInsights();
         } catch (error) {
             console.error('Failed to create subscription:', error);
-            notify.error('Failed to create subscription. Please try again.');
+            notify.error(getApiErrorMessage(error, 'Failed to create subscription. Please try again.'));
         }
     };
 
     const activeSubs = subscriptions.filter(sub => sub.isActive);
+    const cancelledSubs = subscriptions.filter(sub => !sub.isActive);
     const zombieSubs = subscriptions.filter(sub => sub.isZombie && sub.isActive);
     const savings = zombieSubs.reduce((sum, sub) => sum + (sub.frequency === 'yearly' ? sub.amount / 12 : sub.amount), 0);
     const healthScore = getHealthScore();
@@ -229,7 +282,7 @@ export const SubscriptionsPage = () => {
         }, {});
 
         return Object.entries(categoryGroups)
-            .filter(([_, subs]) => subs.length > 1)
+            .filter(([, subs]) => subs.length > 1)
             .map(([category, subs]) => ({
                 category,
                 count: subs.length,
@@ -263,23 +316,33 @@ export const SubscriptionsPage = () => {
                 marginBottom: '20px',
                 boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
             }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                {healthScore ? (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                            <h3 style={{ margin: '0 0 8px 0', fontSize: '18px' }}>Subscription Health Score</h3>
+                            <p style={{ margin: '0', opacity: 0.9 }}>
+                                {healthScore.icon} <strong>{healthScore.score}</strong> — Your subscriptions are {(healthScore.percentage).toFixed(1)}% of monthly income
+                            </p>
+                        </div>
+                        <div style={{
+                            background: 'rgba(255,255,255,0.2)',
+                            padding: '16px 24px',
+                            borderRadius: '8px',
+                            textAlign: 'center'
+                        }}>
+                            <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{(healthScore.percentage).toFixed(1)}%</div>
+                            <div style={{ fontSize: '12px', opacity: 0.9 }}>of Income</div>
+                        </div>
+                    </div>
+                ) : (
                     <div>
                         <h3 style={{ margin: '0 0 8px 0', fontSize: '18px' }}>Subscription Health Score</h3>
                         <p style={{ margin: '0', opacity: 0.9 }}>
-                            {healthScore.icon} <strong>{healthScore.score}</strong> — Your subscriptions are {(healthScore.percentage).toFixed(1)}% of monthly income
+                            You spend LKR {totalMonthlyCost.toLocaleString()}/month on subscriptions. To see what share of your income that is,{' '}
+                            <Link to="/profile" style={{ color: 'white', fontWeight: 600, textDecoration: 'underline' }}>add your monthly income in Profile</Link>.
                         </p>
                     </div>
-                    <div style={{
-                        background: 'rgba(255,255,255,0.2)',
-                        padding: '16px 24px',
-                        borderRadius: '8px',
-                        textAlign: 'center'
-                    }}>
-                        <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{(healthScore.percentage).toFixed(1)}%</div>
-                        <div style={{ fontSize: '12px', opacity: 0.9 }}>of Income</div>
-                    </div>
-                </div>
+                )}
             </div>
 
             {/* Add Subscription Form */}
@@ -318,7 +381,7 @@ export const SubscriptionsPage = () => {
                                     value={newSubscription.amount || ''}
                                     onChange={(e) => setNewSubscription({...newSubscription, amount: Number(e.target.value)})}
                                     placeholder="1500"
-                                    min="0"
+                                    min="0.01"
                                     step="0.01"
                                     required
                                 />
@@ -380,34 +443,34 @@ export const SubscriptionsPage = () => {
                 </div>
             )}
 
-            {/* Summary Cards */}
-            <div className="subscriptions-summary">
-                <div className="summary-card">
-                    <div className="summary-icon">💰</div>
-                    <div className="summary-content">
-                        <h3>LKR {totalMonthlyCost.toLocaleString()}</h3>
-                        <p>Monthly Total</p>
+            {/* Summary Cards: same 4-across layout as the other finance pages (2-across on small screens) */}
+            <div className="rec-summary-grid">
+                <div className="rec-stat-card">
+                    <div className="rec-stat-icon">💰</div>
+                    <div>
+                        <div className="rec-stat-value">LKR {totalMonthlyCost.toLocaleString()}</div>
+                        <div className="rec-stat-label">Monthly Total</div>
                     </div>
                 </div>
-                <div className="summary-card">
-                    <div className="summary-icon">📱</div>
-                    <div className="summary-content">
-                        <h3>{activeSubs.length}</h3>
-                        <p>Active Subscriptions</p>
+                <div className="rec-stat-card accepted">
+                    <div className="rec-stat-icon">📱</div>
+                    <div>
+                        <div className="rec-stat-value">{activeSubs.length}</div>
+                        <div className="rec-stat-label">Active Subscriptions</div>
                     </div>
                 </div>
-                <div className="summary-card zombie">
-                    <div className="summary-icon">🧟</div>
-                    <div className="summary-content">
-                        <h3>{zombieSubs.length}</h3>
-                        <p>Zombie Subscriptions</p>
+                <div className="rec-stat-card pending">
+                    <div className="rec-stat-icon">🧟</div>
+                    <div>
+                        <div className="rec-stat-value">{zombieSubs.length}</div>
+                        <div className="rec-stat-label">Zombie Subscriptions</div>
                     </div>
                 </div>
-                <div className="summary-card savings">
-                    <div className="summary-icon">💸</div>
-                    <div className="summary-content">
-                        <h3>LKR {savings.toLocaleString()}</h3>
-                        <p>Potential Monthly Savings</p>
+                <div className="rec-stat-card savings">
+                    <div className="rec-stat-icon">💸</div>
+                    <div>
+                        <div className="rec-stat-value">LKR {savings.toLocaleString()}</div>
+                        <div className="rec-stat-label">Potential Monthly Savings</div>
                     </div>
                 </div>
             </div>
@@ -421,20 +484,33 @@ export const SubscriptionsPage = () => {
                 marginBottom: '20px'
             }}>
                 <h3 style={{ marginTop: '0', marginBottom: '16px', color: 'var(--text)' }}>6-Month Spending Trend</h3>
-                <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', height: '120px' }}>
-                    {trends.map((trend, idx) => (
-                        <div key={idx} style={{ textAlign: 'center' }}>
-                            <div style={{
-                                height: `${(trend.amount / 5000) * 100}px`,
-                                background: 'linear-gradient(to top, #667eea, #764ba2)',
-                                borderRadius: '4px',
-                                marginBottom: '8px',
-                                minWidth: '30px'
-                            }}></div>
-                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '500' }}>{trend.month}</div>
-                        </div>
-                    ))}
-                </div>
+                {trends.some(t => t.amount > 0) ? (
+                    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', height: '140px' }}>
+                        {trends.map((trend, idx) => {
+                            const maxAmount = Math.max(...trends.map(t => t.amount));
+                            return (
+                                <div key={idx} style={{ textAlign: 'center' }} title={`LKR ${trend.amount.toLocaleString()}`}>
+                                    <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                                        {trend.amount > 0 ? `${(trend.amount / 1000).toFixed(1)}K` : '0'}
+                                    </div>
+                                    <div style={{
+                                        height: `${Math.max(2, (trend.amount / maxAmount) * 100)}px`,
+                                        background: 'linear-gradient(to top, #667eea, #764ba2)',
+                                        borderRadius: '4px',
+                                        marginBottom: '8px',
+                                        minWidth: '30px'
+                                    }}></div>
+                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '500' }}>{trend.month}</div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                ) : (
+                    <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px' }}>
+                        No subscription payments recorded in the last 6 months yet. Payments you log with Pay on the Recurring page,
+                        and expenses from these providers, will show here.
+                    </p>
+                )}
             </div>
 
             {/* Feature 7: Consolidation Suggestions */}
@@ -466,16 +542,7 @@ export const SubscriptionsPage = () => {
                             <p>You have {zombieSubs.length} subscriptions you haven't used in 3+ months. Cancel them to save LKR {savings.toLocaleString()}/month.</p>
                         </div>
                     </div>
-                    <button className="alert-action" onClick={async () => {
-                        try {
-                            const zombieIds = zombieSubs.map(sub => sub._id!);
-                            await apiClient.post('/subscriptions/bulk-cancel', { subscriptionIds: zombieIds });
-                            await fetchSubscriptions();
-                        } catch (error) {
-                            console.error('Failed to cancel zombie subscriptions:', error);
-                            notify.error('Failed to cancel subscriptions. Please try again.');
-                        }
-                    }}>
+                    <button className="alert-action" onClick={handleCancelAllZombies}>
                         Cancel All Zombies
                     </button>
                 </div>
@@ -488,7 +555,8 @@ export const SubscriptionsPage = () => {
                 {activeSubs.map((subscription) => {
                     const usageStatus = getUsageStatus(subscription);
                     const insightData = subscription._id ? insightsMap[subscription._id] : null;
-                    const insight = insightData ? insightData.insight : 'Loading AI insight...';
+                    const insight = insightData?.insight
+                        || (insightsStatus === 'loading' ? 'Loading AI insight...' : 'AI insight is not available right now. Please try again later.');
                     const renewalRisk = getRenewalRisk(subscription);
                     const monthlyAmount = subscription.frequency === 'yearly' ? subscription.amount / 12 : subscription.amount;
                     
@@ -589,7 +657,7 @@ export const SubscriptionsPage = () => {
                             }}>
                                 <strong>If you cancel:</strong><br />
                                 • Save LKR {monthlyAmount.toLocaleString()}/month<br />
-                                • Financial Health Score: +{Math.round((monthlyAmount / monthlyIncome) * 10)}<br />
+                                {monthlyIncome && <>• Frees up {((monthlyAmount / monthlyIncome) * 100).toFixed(1)}% of your monthly income<br /></>}
                                 • Annual savings: LKR {(monthlyAmount * 12).toLocaleString()}
                             </div>
 
@@ -661,6 +729,47 @@ export const SubscriptionsPage = () => {
                     <div className="empty-icon" style={{ display: 'none' }}></div>
                     <h3>No Subscriptions Found</h3>
                     <p>We'll automatically detect recurring payments from your transactions</p>
+                </div>
+            )}
+
+            {/* Cancelled / dismissed subscriptions can be brought back */}
+            {cancelledSubs.length > 0 && (
+                <div style={{
+                    background: 'var(--card)',
+                    border: '1px solid var(--border)',
+                    borderRadius: '12px',
+                    padding: '16px 20px',
+                    marginTop: '20px'
+                }}>
+                    <h3 style={{ margin: '0 0 12px 0', color: 'var(--text)', fontSize: '16px' }}>
+                        Cancelled Subscriptions ({cancelledSubs.length})
+                    </h3>
+                    {cancelledSubs.map(sub => (
+                        <div key={sub._id} style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: '12px',
+                            padding: '10px 0',
+                            borderTop: '1px solid var(--border)'
+                        }}>
+                            <div>
+                                <div style={{ fontWeight: 600, color: 'var(--text)' }}>{sub.name}</div>
+                                <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                                    {sub.provider} · LKR {sub.amount.toLocaleString()}/{sub.frequency === 'yearly' ? 'year' : 'month'}
+                                    {sub.cancelledAt && ` · Cancelled ${new Date(sub.cancelledAt).toLocaleDateString()}`}
+                                    {sub.cancelReason && ` · ${CANCEL_REASON_LABELS[sub.cancelReason] || sub.cancelReason}`}
+                                </div>
+                            </div>
+                            <button
+                                className="btn-secondary"
+                                style={{ padding: '6px 14px', fontSize: '13px', whiteSpace: 'nowrap' }}
+                                onClick={() => handleRestoreSubscription(sub)}
+                            >
+                                Restore
+                            </button>
+                        </div>
+                    ))}
                 </div>
             )}
 
@@ -803,7 +912,7 @@ export const SubscriptionsPage = () => {
                         }}>
                             <strong>Cancelling this will:</strong><br />
                             • Save LKR {(selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount).toLocaleString()}/month<br />
-                            • Improve Financial Health Score by +{Math.round(((selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount) / monthlyIncome) * 10)}<br />
+                            {monthlyIncome && <>• Free up {(((selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount) / monthlyIncome) * 100).toFixed(1)}% of your monthly income<br /></>}
                             • Annual savings: LKR {((selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount) * 12).toLocaleString()}
                         </div>
 

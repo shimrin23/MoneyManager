@@ -22,18 +22,27 @@ export type SupportedSriLankanBank =
 
 /**
  * Intelligent categorization based on typical Sri Lankan merchant descriptions & keywords.
+ * Returns the same category names the app uses when adding a transaction by hand,
+ * so imported rows land in the existing budgets (e.g. "Transport", not "Transportation").
  */
-export function inferCategory(description: string): string {
+export function inferCategory(description: string, type: "income" | "expense" = "expense"): string {
   const desc = description.toUpperCase();
 
+  if (type === "income") {
+    if (/SALARY|PAYROLL/.test(desc)) return "Salary";
+    if (/DIVIDEND|INTEREST|FD MATURITY/.test(desc)) return "Investment";
+    if (/FREELANCE|UPWORK|FIVERR/.test(desc)) return "Freelance";
+    return "Other";
+  }
+
   if (/KEELLS|CARGILLS|ARPICO|SPAR|GLOMARK|SUPERMARKET|GROCERY/.test(desc)) {
-    return "Groceries";
+    return "Food & Dining";
   }
   if (/CEB|LECO|WATER BOARD|NWSDB|SLT|DIALOG|MOBITEL|AIRTEL|HUTCH|ELECTRICITY|TELECOM|UTILITY/.test(desc)) {
-    return "Utilities";
+    return "Bills & Utilities";
   }
   if (/UBER|PICKME|TAXI|FUEL|IOC|PETROL|SHED|RAILWAY|HIGHWAY|TOLL/.test(desc)) {
-    return "Transportation";
+    return "Transport";
   }
   if (/KFC|MCDONALD|PIZZA|BURGER|CAFE|RESTAURANT|BAKERY|FOOD|BAR/.test(desc)) {
     return "Food & Dining";
@@ -44,19 +53,16 @@ export function inferCategory(description: string): string {
   if (/HOSPITAL|PHARMACY|ASIRI|NAWALOKA|DURDANS|MEDICINE|HEALTH|CLINIC/.test(desc)) {
     return "Healthcare";
   }
-  if (/SALARY|PAYROLL|DIVIDEND|REMITTANCE|INTEREST CREDITED/.test(desc)) {
-    return "Income";
-  }
   if (/NETFLIX|SPOTIFY|PRIME|CINEMA|MOVIE|ENTERTAINMENT/.test(desc)) {
     return "Entertainment";
   }
-  if (/ATM WDL|CASH WDL|WITHDRAWAL/.test(desc)) {
-    return "Cash & ATM";
-  }
   if (/INSURANCE|CEYLINCO|AIA|SLIC|UNION ASSURANCE/.test(desc)) {
-    return "Insurance";
+    return "Bills & Utilities";
   }
-  return "General";
+  if (/SCHOOL|TUITION|UNIVERSITY|COURSE|EXAM FEE/.test(desc)) {
+    return "Education";
+  }
+  return "Other";
 }
 
 /**
@@ -74,42 +80,52 @@ function parseMoney(val: string | undefined): number {
   return parseFloat(cleaned) || 0;
 }
 
+const MONTHS: Record<string, number> = {
+  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+  jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
+};
+
+// Builds a UTC date only when the day and month really exist (no 32/13 rolling into the next year)
+function buildDate(year: number, month: number, day: number): Date | null {
+  if (year < 100) year += 2000;
+  if (month < 0 || month > 11 || day < 1 || day > 31) return null;
+  const d = new Date(Date.UTC(year, month, day));
+  return d.getUTCFullYear() === year && d.getUTCMonth() === month && d.getUTCDate() === day ? d : null;
+}
+
 /**
- * Robust date parser supporting DD/MM/YYYY, YYYY-MM-DD, DD-MMM-YYYY (e.g. 05-Oct-2024), MM/DD/YYYY
+ * Date parser supporting DD/MM/YYYY, DD-MM-YYYY, DD-MMM-YYYY (e.g. 05-Oct-2024) and YYYY-MM-DD.
+ * Returns null for anything that isn't a real date, so the row can be skipped and reported.
  */
-function parseDateFlexible(val: string | undefined): Date {
-  if (!val) return new Date();
+export function parseDateFlexible(val: string | undefined): Date | null {
+  if (!val) return null;
   const cleaned = val.trim();
 
   // Match DD-MMM-YYYY or DD/MMM/YYYY (e.g., 05-Oct-2024)
-  const dMmmY = cleaned.match(/^(\d{1,2})[-/]([A-Za-z]{3})[-/](\d{2,4})$/);
+  const dMmmY = cleaned.match(/^(\d{1,2})[-/ ]([A-Za-z]{3})[-/ ](\d{2,4})$/);
   if (dMmmY) {
-    const day = parseInt(dMmmY[1], 10);
-    const monthStr = dMmmY[2].toLowerCase();
-    let year = parseInt(dMmmY[3], 10);
-    if (year < 100) year += 2000;
-    const months: Record<string, number> = {
-      jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
-      jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
-    };
-    if (monthStr in months) {
-      return new Date(Date.UTC(year, months[monthStr], day));
-    }
+    const month = MONTHS[dMmmY[2].toLowerCase()];
+    return month === undefined ? null : buildDate(parseInt(dMmmY[3], 10), month, parseInt(dMmmY[1], 10));
   }
 
   // Match DD/MM/YYYY or DD-MM-YYYY
   const dmy = cleaned.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/);
   if (dmy) {
-    const day = parseInt(dmy[1], 10);
-    const month = parseInt(dmy[2], 10) - 1;
-    let year = parseInt(dmy[3], 10);
-    if (year < 100) year += 2000;
-    return new Date(Date.UTC(year, month, day));
+    return buildDate(parseInt(dmy[3], 10), parseInt(dmy[2], 10) - 1, parseInt(dmy[1], 10));
   }
 
-  const d = new Date(cleaned);
-  return isNaN(d.getTime()) ? new Date() : d;
+  // Match YYYY-MM-DD (optionally followed by a time)
+  const ymd = cleaned.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[T ].*)?$/);
+  if (ymd) {
+    return buildDate(parseInt(ymd[1], 10), parseInt(ymd[2], 10) - 1, parseInt(ymd[3], 10));
+  }
+
+  return null;
 }
+
+// Splits a header into lowercase words, so "Description" is not read as containing "cr"
+const headerWords = (header: string) => header.toLowerCase().split(/[^a-z]+/).filter(Boolean);
+const hasWord = (header: string, words: string[]) => headerWords(header).some((w) => words.includes(w));
 
 /**
  * Parse CSV raw text split by rows and commas (handling quotes).
@@ -141,16 +157,28 @@ function parseCSVRows(csvText: string): string[][] {
   return rows;
 }
 
+export interface SkippedStatementRow {
+  row: number; // 1 = first row after the header
+  reason: string;
+}
+
+export interface ParsedBankStatement {
+  transactions: ParsedBankTransaction[];
+  skippedRows: SkippedStatementRow[];
+}
+
 /**
  * Parses statement files from ComBank, HNB, Sampath, BOC, FriMi or generic bank CSV exports.
+ * Rows that can't be read (for example an invalid date) are skipped and listed in skippedRows.
  */
-export function parseBankStatementCSV(
+export function parseBankStatement(
   csvText: string,
   bankType: SupportedSriLankanBank = "generic"
-): ParsedBankTransaction[] {
+): ParsedBankStatement {
+  const result: ParsedBankStatement = { transactions: [], skippedRows: [] };
   const rows = parseCSVRows(csvText);
   if (rows.length < 2) {
-    return [];
+    return result;
   }
 
   // Find header row
@@ -174,8 +202,9 @@ export function parseBankStatementCSV(
   const headers = rows[headerIndex].map((h) => h.toLowerCase());
   const dataRows = rows.slice(headerIndex + 1);
 
-  // Column identification indices
-  const dateCol = headers.findIndex((h) => h.includes("date"));
+  // Column identification indices. Short codes like "dr" / "cr" are matched as whole words,
+  // so "Description" is not taken as the credit column.
+  const dateCol = headers.findIndex((h) => hasWord(h, ["date"]));
   const descCol = headers.findIndex((h) =>
     h.includes("description") ||
     h.includes("particulars") ||
@@ -183,26 +212,43 @@ export function parseBankStatementCSV(
     h.includes("details") ||
     h.includes("remarks")
   );
-  const debitCol = headers.findIndex((h) => h.includes("debit") || h.includes("withdrawal") || h.includes("dr"));
-  const creditCol = headers.findIndex((h) => h.includes("credit") || h.includes("deposit") || h.includes("cr"));
-  const amountCol = headers.findIndex((h) => h.includes("amount"));
-  const typeCol = headers.findIndex((h) => h.includes("type") || h.includes("dr/cr") || h.includes("cr/dr"));
+  // A "Dr/Cr" or "Type" column says which way the money went; it is not an amount column
+  const typeCol = headers.findIndex((h) =>
+    hasWord(h, ["type"]) || (hasWord(h, ["dr", "debit"]) && hasWord(h, ["cr", "credit"]))
+  );
+  const debitCol = headers.findIndex((h, i) =>
+    i !== typeCol && hasWord(h, ["debit", "debits", "withdrawal", "withdrawals", "dr"])
+  );
+  const creditCol = headers.findIndex((h, i) =>
+    i !== typeCol && hasWord(h, ["credit", "credits", "deposit", "deposits", "cr"])
+  );
+  const amountCol = headers.findIndex((h, i) =>
+    i !== debitCol && i !== creditCol && hasWord(h, ["amount", "amt"])
+  );
   const balanceCol = headers.findIndex((h) => h.includes("balance"));
-  const refCol = headers.findIndex((h) => h.includes("ref") || h.includes("chq") || h.includes("cheque") || h.includes("reference"));
+  const refCol = headers.findIndex((h) => hasWord(h, ["ref", "reference", "chq", "cheque"]));
 
-  const parsedTransactions: ParsedBankTransaction[] = [];
-
-  for (const row of dataRows) {
-    if (!row || row.length <= Math.max(dateCol, descCol)) continue;
+  dataRows.forEach((row, index) => {
+    const rowNumber = index + 1;
+    if (!row || row.length <= Math.max(dateCol, descCol)) return;
 
     const rawDate = dateCol !== -1 ? row[dateCol] : undefined;
     const rawDesc = descCol !== -1 ? row[descCol] : "";
-    if (!rawDate || !rawDesc) continue;
+    if (!rawDate && !rawDesc) return;
+
+    const description = (rawDesc || "").replace(/\s+/g, " ").trim();
+    if (description.toLowerCase().includes("opening balance") || description.toLowerCase().includes("closing balance")) {
+      return;
+    }
+    if (!description) {
+      result.skippedRows.push({ row: rowNumber, reason: "Missing description" });
+      return;
+    }
 
     const date = parseDateFlexible(rawDate);
-    const description = rawDesc.replace(/\s+/g, " ").trim();
-    if (!description || description.toLowerCase().includes("opening balance") || description.toLowerCase().includes("closing balance")) {
-      continue;
+    if (!date) {
+      result.skippedRows.push({ row: rowNumber, reason: `Invalid date "${rawDate || ""}"` });
+      return;
     }
 
     let amount = 0;
@@ -228,12 +274,12 @@ export function parseBankStatementCSV(
     } else if (amountCol !== -1) {
       // Scenario 2: Single amount column with a Dr/Cr column or sign
       const rawAmt = parseMoney(row[amountCol]);
-      const signOrType = typeCol !== -1 ? (row[typeCol] || "").toUpperCase() : "";
+      const signOrType = typeCol !== -1 ? (row[typeCol] || "").trim().toUpperCase() : "";
 
-      if (signOrType.includes("CR") || signOrType.includes("CREDIT") || signOrType.includes("INCOME")) {
+      if (["CR", "C"].includes(signOrType) || signOrType.includes("CREDIT") || signOrType.includes("INCOME")) {
         amount = Math.abs(rawAmt);
         type = "income";
-      } else if (signOrType.includes("DR") || signOrType.includes("DEBIT")) {
+      } else if (["DR", "D"].includes(signOrType) || signOrType.includes("DEBIT") || signOrType.includes("EXPENSE")) {
         amount = Math.abs(rawAmt);
         type = "expense";
       } else {
@@ -243,24 +289,47 @@ export function parseBankStatementCSV(
     }
 
     if (amount <= 0) {
-      continue;
+      result.skippedRows.push({ row: rowNumber, reason: "Missing or zero amount" });
+      return;
     }
 
     const balance = balanceCol !== -1 ? parseMoney(row[balanceCol]) : undefined;
-    const reference = refCol !== -1 ? row[refCol]?.trim() : undefined;
-    const category = inferCategory(description);
+    const reference = refCol !== -1 ? row[refCol]?.trim() || undefined : undefined;
 
-    parsedTransactions.push({
+    result.transactions.push({
       date,
       description,
       amount,
       type,
       balance,
-      category,
+      category: inferCategory(description, type),
       reference,
       sourceAccount: `${bankType.toUpperCase()}_STATEMENT`,
     });
-  }
+  });
 
-  return parsedTransactions;
+  return result;
+}
+
+export function parseBankStatementCSV(
+  csvText: string,
+  bankType: SupportedSriLankanBank = "generic"
+): ParsedBankTransaction[] {
+  return parseBankStatement(csvText, bankType).transactions;
+}
+
+/**
+ * For each transaction, how many identical rows (same date, amount, type and description)
+ * came before it in the file, starting at 1. Two real coffees for the same price on the same day
+ * get 1 and 2, so the second isn't mistaken for a duplicate, while importing the same file
+ * again produces the same numbers and is still skipped.
+ */
+export function statementOccurrences(transactions: ParsedBankTransaction[]): number[] {
+  const seen = new Map<string, number>();
+  return transactions.map((t) => {
+    const key = [t.date.toISOString(), t.amount.toFixed(2), t.type, t.description.toLowerCase()].join("|");
+    const count = (seen.get(key) || 0) + 1;
+    seen.set(key, count);
+    return count;
+  });
 }
