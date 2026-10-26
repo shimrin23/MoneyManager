@@ -746,6 +746,19 @@ export const SubscriptionsPage = () => {
                     <div className="gl-modal gl-form" role="dialog" aria-modal="true" aria-labelledby="cancel-sub-title">
                         <div className="gl-modal-head">
                             <h2 id="cancel-sub-title">Cancel {selectedSubscription.name}?</h2>
+                            <button
+                                type="button"
+                                className="gl-modal-close"
+                                aria-label="Close"
+                                title="Close"
+                                onClick={() => {
+                                    setShowCancelModal(false);
+                                    setSelectedSubscription(null);
+                                    setCancelReason('');
+                                }}
+                            >
+                                ×
+                            </button>
                         </div>
 
                         {/* Feature 9: Impact Summary */}

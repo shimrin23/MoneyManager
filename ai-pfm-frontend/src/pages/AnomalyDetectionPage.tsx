@@ -88,12 +88,8 @@ export const AnomalyDetectionPage = () => {
 
     return (
         <div className="page-container anomaly-page">
-            <div className="page-header">
-                <div>
-                    <h1 className="page-title">Anomaly Detection</h1>
-                    <p className="page-subtitle">AI-flagged unusual spending patterns and suspicious transactions</p>
-                </div>
-                {openCount > 0 && (
+            {openCount > 0 && (
+                <div className="an-banner-row">
                     <div className="rec-alert-banner danger an-banner" role="status">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
@@ -101,8 +97,8 @@ export const AnomalyDetectionPage = () => {
                         </svg>
                         {openCount} open alert{openCount > 1 ? 's' : ''} need{openCount === 1 ? 's' : ''} your review
                     </div>
-                )}
-            </div>
+                </div>
+            )}
 
             {error && (
                 <div className="alert-error" style={{ marginBottom: '1.5rem' }}>
