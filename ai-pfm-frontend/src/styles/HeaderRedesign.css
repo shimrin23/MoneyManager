@@ -284,3 +284,22 @@
   width: 28px;
   height: 28px;
 }
+
+/* Header taller on desktop; the page content gets the same top padding so it doesn't sit under the header */
+@media (min-width: 768px) {
+  .top-header {
+    height: 80px;
+    min-height: 80px;
+  }
+
+  .main-content {
+    padding-top: 80px;
+  }
+}
+
+/* Sidebar logo area the same height as the taller header on desktop */
+@media (min-width: 768px) {
+  .sidebar-header {
+    height: 80px;
+  }
+}
