@@ -1,0 +1,33 @@
+/* Very light blue tint over the whole app background. It sits on top of the theme colour, so light and dark mode both keep their own base colour. */
+.main-content {
+  background-image: linear-gradient(rgba(96, 165, 250, 0.05), rgba(96, 165, 250, 0.05));
+}
+
+/* Same tint on the sidebar and the header */
+.side-navigation,
+.top-header {
+  background-image: linear-gradient(rgba(96, 165, 250, 0.05), rgba(96, 165, 250, 0.05));
+}
+
+/* Sidebar button on hover or touch: light blue, a little darker than the sidebar */
+.side-navigation .nav-item:hover {
+  background: rgba(102, 126, 234, 0.08);
+}
+
+
+
+/* Light mode: header is white, sidebar is a light blue (dark mode keeps its own colours) */
+[data-theme='light'] .top-header {
+  background-color: #ffffff;
+}
+
+[data-theme='light'] .side-navigation {
+  background-color: #eaf2ff;
+}
+
+/* Light mode: sidebar and header plain white, no tint */
+[data-theme='light'] .side-navigation,
+[data-theme='light'] .top-header {
+  background-color: #ffffff;
+  background-image: none;
+}

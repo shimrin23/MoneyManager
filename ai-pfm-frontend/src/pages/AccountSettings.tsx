@@ -7,7 +7,7 @@ import { PasswordRules, isPasswordValid } from '../components/PasswordRules';
 import { confirmDialog, promptDialog } from '../utils/systemMessages';
 import { useAdminLang } from '../i18n/adminText';
 import { ACCOUNT_T } from '../i18n/accountSettingsText';
-import '../styles/NotificationPreferences.css';
+import '../styles/SettingsRedesign.css';
 import { USER_T } from '../i18n/userPagesText';
 
 interface NotificationToggles {
@@ -30,7 +30,7 @@ const eyeButton = (visible: boolean, onToggle: () => void) => (
             display: 'flex', alignItems: 'center'
         }}
     >
-        {visible ? (
+        {!visible ? (
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
                 <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
@@ -174,110 +174,66 @@ export const AccountSettings = () => {
     };
 
     return (
-        <div className="settings-page">
-            <div className="settings-header">
-                <h1>{tabs.setTitle}</h1>
-                <p>{tabs.setSub}</p>
-            </div>
+        <div className="settings-page st-page">
+            <nav className="st-breadcrumb" aria-label="Breadcrumb">
+                <button type="button" className="st-crumb-link" onClick={() => navigate('/settings', { state: { tab: 'advanced' } })}>{tabs.tabAdvanced}</button>
+                <span className="st-crumb-sep" aria-hidden="true">›</span>
+                <span>{t.title}</span>
+            </nav>
 
-            <div className="settings-navigation">
-                <button className="nav-btn" onClick={() => navigate('/settings', { state: { tab: 'general' } })}>
-                    {tabs.tabGeneral}
-                </button>
-                <button className="nav-btn" onClick={() => navigate('/settings', { state: { tab: 'notifications' } })}>
-                    {tabs.tabNotifications}
-                </button>
-                <button className="nav-btn" onClick={() => navigate('/settings', { state: { tab: 'privacy' } })}>
-                    {tabs.tabPrivacy}
-                </button>
-                <button className="nav-btn" onClick={() => navigate('/settings', { state: { tab: 'advanced' } })}>
-                    {tabs.tabAdvanced}
-                </button>
-                <button className="nav-btn active">
-                    {t.title}
-                </button>
-            </div>
-
-            <div className="settings-content">
+            <div className="st-body">
                 {message && <div className="alert-success">{message}</div>}
                 {error && <div className="alert-error">{error}</div>}
 
-                {/* Security Settings */}
-                <div className="settings-section">
-                    <h2>🔐 {t.securitySection}</h2>
-
-                    <div className="np-card">
-                        <div className="np-row">
-                            <div className="np-row-text">
-                                <span className="np-label">
-                                    {t.twoFactorTitle}
-                                    <span className="np-badge">{t.twoFactorUnavailable}</span>
-                                </span>
-                                <span className="np-description">{t.twoFactorDesc}</span>
-                            </div>
-                            <button
-                                type="button"
-                                role="switch"
-                                aria-checked={false}
-                                aria-label={t.twoFactorTitle}
-                                className="np-switch"
-                                disabled
-                            >
-                                <span className="np-knob" />
-                            </button>
+                <section className="st-card">
+                    <header className="st-card-h"><h3>{t.securitySection}</h3></header>
+                    <div className="st-toggle">
+                        <div>
+                            <div className="st-toggle-t">{t.twoFactorTitle}</div>
+                            <div className="st-toggle-s">{t.twoFactorDesc} · {t.twoFactorUnavailable}</div>
                         </div>
-
-                        <div className="np-row">
-                            <div className="np-row-text">
-                                <span className="np-label">{t.emailTitle}</span>
-                                <span className="np-description">{t.emailDesc}</span>
-                            </div>
-                            <button
-                                type="button"
-                                role="switch"
-                                aria-checked={settings.emailNotifications}
-                                aria-label={t.emailTitle}
-                                className={`np-switch ${settings.emailNotifications ? 'on' : ''}`}
-                                onClick={() => handleSettingChange('emailNotifications')}
-                            >
-                                <span className="np-knob" />
-                            </button>
-                        </div>
-
-                        <div className="np-row">
-                            <div className="np-row-text">
-                                <span className="np-label">{t.pushTitle}</span>
-                                <span className="np-description">{t.pushDesc}</span>
-                            </div>
-                            <button
-                                type="button"
-                                role="switch"
-                                aria-checked={settings.pushNotifications}
-                                aria-label={t.pushTitle}
-                                className={`np-switch ${settings.pushNotifications ? 'on' : ''}`}
-                                onClick={() => handleSettingChange('pushNotifications')}
-                            >
-                                <span className="np-knob" />
-                            </button>
-                        </div>
+                        <input type="checkbox" className="st-switch" aria-label={t.twoFactorTitle} checked={false} disabled onChange={() => {}} />
                     </div>
-                </div>
+                    <div className="st-toggle">
+                        <div>
+                            <div className="st-toggle-t">{t.emailTitle}</div>
+                            <div className="st-toggle-s">{t.emailDesc}</div>
+                        </div>
+                        <input
+                            type="checkbox"
+                            className="st-switch"
+                            aria-label={t.emailTitle}
+                            checked={settings.emailNotifications}
+                            onChange={() => handleSettingChange('emailNotifications')}
+                        />
+                    </div>
+                    <div className="st-toggle">
+                        <div>
+                            <div className="st-toggle-t">{t.pushTitle}</div>
+                            <div className="st-toggle-s">{t.pushDesc}</div>
+                        </div>
+                        <input
+                            type="checkbox"
+                            className="st-switch"
+                            aria-label={t.pushTitle}
+                            checked={settings.pushNotifications}
+                            onChange={() => handleSettingChange('pushNotifications')}
+                        />
+                    </div>
+                </section>
 
-                {/* Change Password */}
-                <div className="settings-section" style={{ maxWidth: '360px' }}>
-                    <h2>🔑 {t.passwordSection}</h2>
-                    <form onSubmit={handlePasswordChange} className="password-form">
-                        <div className="form-group">
+                <section className="st-card">
+                    <header className="st-card-h"><h3>{t.passwordSection}</h3><p className="st-hint">Use at least 6 characters</p></header>
+                    <form onSubmit={handlePasswordChange} className="st-form">
+                        <div className="st-field">
                             <label>{t.currentPassword}</label>
                             <div style={eyeWrapStyle}>
                                 <input
+                                    className="st-input"
                                     type={visiblePasswords.current ? 'text' : 'password'}
                                     style={{ paddingRight: '2.5rem' }}
                                     value={passwordForm.currentPassword}
-                                    onChange={(e) => setPasswordForm(prev => ({
-                                        ...prev,
-                                        currentPassword: e.target.value
-                                    }))}
+                                    onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
                                     required
                                     placeholder={t.enterCurrent}
                                 />
@@ -285,17 +241,15 @@ export const AccountSettings = () => {
                             </div>
                         </div>
 
-                        <div className="form-group">
+                        <div className="st-field">
                             <label>{t.newPassword}</label>
                             <div style={eyeWrapStyle}>
                                 <input
+                                    className="st-input"
                                     type={visiblePasswords.new ? 'text' : 'password'}
                                     style={{ paddingRight: '2.5rem' }}
                                     value={passwordForm.newPassword}
-                                    onChange={(e) => setPasswordForm(prev => ({
-                                        ...prev,
-                                        newPassword: e.target.value
-                                    }))}
+                                    onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
                                     required
                                     placeholder={t.enterNew}
                                     minLength={8}
@@ -305,17 +259,15 @@ export const AccountSettings = () => {
                             <PasswordRules password={passwordForm.newPassword} />
                         </div>
 
-                        <div className="form-group">
+                        <div className="st-field">
                             <label>{t.confirmPassword}</label>
                             <div style={eyeWrapStyle}>
                                 <input
+                                    className="st-input"
                                     type={visiblePasswords.confirm ? 'text' : 'password'}
                                     style={{ paddingRight: '2.5rem' }}
                                     value={passwordForm.confirmPassword}
-                                    onChange={(e) => setPasswordForm(prev => ({
-                                        ...prev,
-                                        confirmPassword: e.target.value
-                                    }))}
+                                    onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
                                     required
                                     placeholder={t.enterConfirm}
                                     minLength={8}
@@ -324,55 +276,25 @@ export const AccountSettings = () => {
                             </div>
                         </div>
 
-                        <button
-                            type="submit"
-                            className="btn-primary"
-                            disabled={loading || !isPasswordValid(passwordForm.newPassword)}
-                        >
+                        <button type="submit" className="btn-primary" disabled={loading || !isPasswordValid(passwordForm.newPassword)}>
                             {loading ? t.updating : t.updatePassword}
                         </button>
                     </form>
-                </div>
+                </section>
 
-                {/* Data & Privacy */}
-                <div className="settings-section">
-                    <h2>📊 {t.dataSection}</h2>
 
-                    <div className="np-card">
-                        <div className="np-row">
-                            <div className="np-row-text">
-                                <span className="np-label">{t.exportTitle}</span>
-                                <span className="np-description">{t.exportDesc}</span>
-                            </div>
-                            <button
-                                type="button"
-                                className="np-action"
-                                onClick={exportData}
-                                disabled={loading}
-                            >
-                                📥 {t.exportButton}
-                            </button>
+                <section className="st-card st-danger">
+                    <header className="st-card-h"><h3>{t.dangerSection}</h3></header>
+                    <div className="st-row">
+                        <div>
+                            <div className="st-toggle-t">{t.deleteTitle}</div>
+                            <div className="st-toggle-s">{t.deleteDesc}</div>
                         </div>
-                    </div>
-                </div>
-
-                {/* Danger Zone */}
-                <div className="settings-section danger-zone">
-                    <h2>⚠️ {t.dangerSection}</h2>
-
-                    <div className="action-item">
-                        <div className="action-info">
-                            <h3>{t.deleteTitle}</h3>
-                            <p>{t.deleteDesc}</p>
-                        </div>
-                        <button
-                            className="btn-danger"
-                            onClick={handleDeleteAccount}
-                        >
-                            🗑️ {t.deleteButton}
+                        <button type="button" className="btn-danger" onClick={handleDeleteAccount}>
+                            {t.deleteButton}
                         </button>
                     </div>
-                </div>
+                </section>
             </div>
         </div>
     );

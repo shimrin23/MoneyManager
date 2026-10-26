@@ -62,7 +62,7 @@ export interface UserPagesText {
 const en: UserPagesText = {
   hdrProfile: 'Edit Profile', hdrProfileSub: 'Update your personal info',
   hdrHelp: 'Help & Support', hdrHelpSub: 'Find answers or contact our support team',
-  hdrSettings: 'Settings', hdrSettingsSub: 'App configuration',
+  hdrSettings: 'Settings', hdrSettingsSub: 'Customize your MoneyManager experience',
 
   profTitle: 'Edit Profile', profSubtitle: 'Manage your personal information and preferences',
   profPersonal: 'Personal Information', profFullName: 'Full Name *', profEmail: 'Email Address *',
