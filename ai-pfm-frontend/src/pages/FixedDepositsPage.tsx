@@ -2,6 +2,7 @@ import { formatDate, formatDateTime, formatMoney, toLkr, fromLkr, currencyCode }
 import { useState, useEffect } from 'react';
 import { apiClient, getApiErrorMessage } from '../api/client';
 import { notify, confirmDialog } from '../utils/systemMessages';
+import { getLocalDateString } from '../utils/date';
 
 interface FixedDeposit {
     _id: string;
@@ -55,7 +56,9 @@ export const FixedDepositsPage = () => {
         tenureUnit: 'months' as 'months' | 'years',
         type: 'Standard' as FixedDeposit['type'],
         bank: '',
-        autoRenewal: false
+        autoRenewal: false,
+        // Today by default; an earlier date records an FD that was opened before
+        startDate: getLocalDateString()
     });
 
     const fetchFDs = async () => {
@@ -93,9 +96,10 @@ export const FixedDepositsPage = () => {
                 tenureUnit: newFD.tenureUnit,
                 type: newFD.type,
                 bank: newFD.bank || 'Your Bank',
-                autoRenewal: newFD.autoRenewal
+                autoRenewal: newFD.autoRenewal,
+                startDate: newFD.startDate
             });
-            setNewFD({ principalAmount: '', interestRate: '', tenure: '', tenureUnit: 'months', type: 'Standard', bank: '', autoRenewal: false });
+            setNewFD({ principalAmount: '', interestRate: '', tenure: '', tenureUnit: 'months', type: 'Standard', bank: '', autoRenewal: false, startDate: getLocalDateString() });
             setShowNewFDForm(false);
             notify.success('Fixed deposit opened.');
             await fetchFDs();
@@ -268,6 +272,16 @@ export const FixedDepositsPage = () => {
                                         <option value="years">Years</option>
                                     </select>
                                 </div>
+                            </div>
+                            <div className="form-group">
+                                <label>Start Date</label>
+                                <input
+                                    type="date"
+                                    value={newFD.startDate}
+                                    max={getLocalDateString()}
+                                    onChange={e => setNewFD({ ...newFD, startDate: e.target.value })}
+                                    required
+                                />
                             </div>
                             <div className="form-group">
                                 <label>FD Type</label>

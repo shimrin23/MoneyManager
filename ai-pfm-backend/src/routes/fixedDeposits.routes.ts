@@ -52,7 +52,8 @@ router.post('/', async (req: AuthRequest, res: Response) => {
         const interestRate = toNumber(req.body.interestRate);
         const tenure = toNumber(req.body.tenure);
         const tenureUnit = req.body.tenureUnit || 'months';
-        const startDate = new Date();
+        // Today unless the user is recording an FD they opened earlier
+        const startDate = req.body.startDate ? new Date(req.body.startDate) : new Date();
 
         const { interestEarned, maturityAmount, maturityDate } = calculateFD(
             principalAmount, interestRate, fdTenureMonths(tenure, tenureUnit), startDate
@@ -75,6 +76,13 @@ router.post('/', async (req: AuthRequest, res: Response) => {
             autoRenewal: autoRenewal === true,
             status: 'active'
         });
+
+        // An FD that started long enough ago is already matured (or rolled over with auto-renewal)
+        const changes = applyMaturity(fd, new Date());
+        if (changes) {
+            fd.set(changes);
+            await fd.save();
+        }
 
         res.status(201).json({ message: 'Fixed deposit created successfully', fixedDeposit: fd });
     } catch (error) {

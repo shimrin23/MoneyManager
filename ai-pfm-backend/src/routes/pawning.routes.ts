@@ -55,6 +55,19 @@ router.post('/', async (req: AuthRequest, res: Response) => {
         const { monthlyInterest, totalInterestAccrued, totalDue } = pawnInterest(loanAmount, interestRate, start, now);
 
         const userId = req.user?.id || req.user?.userId;
+
+        // A pawn ticket number identifies one pledge, so the same user can't add it twice (any letter case)
+        const ticket = ticketNumber.trim();
+        const existing = await Pawning.findOne({
+            userId,
+            ticketNumber: { $regex: `^${ticket.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, $options: 'i' }
+        });
+        if (existing) {
+            return res.status(409).json({
+                error: `You already have a pawn item with ticket ${existing.ticketNumber} (${existing.itemDescription}).`
+            });
+        }
+
         const newPawning = new Pawning({
             userId,
             itemDescription: itemDescription.trim(),

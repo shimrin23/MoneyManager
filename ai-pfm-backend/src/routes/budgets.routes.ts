@@ -2,6 +2,7 @@ import { Router, Response } from 'express';
 import { authenticateToken, AuthRequest } from '../middlewares/authMiddleware';
 import Budget from '../schemas/budget.schema';
 import Transaction from '../schemas/transaction.schema';
+import { buildCategoryTips } from '../services/budget-tips';
 
 const router = Router();
 
@@ -30,6 +31,56 @@ router.get('/', authenticateToken, async (req: AuthRequest, res: Response) => {
     } catch (error) {
         console.error('Error listing budgets:', error);
         res.status(500).json({ error: 'Failed to fetch budgets' });
+    }
+});
+
+// GET /api/budgets/tips?category=Food%20%26%20Dining - numbers and tips for one category (the "Optimize" button)
+router.get('/tips', authenticateToken, async (req: AuthRequest, res: Response) => {
+    try {
+        const userId = req.user?.id;
+        if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
+        const category = typeof req.query.category === 'string' ? req.query.category.trim() : '';
+        if (!category) return res.status(400).json({ error: 'category is required' });
+
+        const now = new Date();
+        const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const categoryMatch = { $regex: `^${escapeRegex(category)}$`, $options: 'i' };
+
+        const [budget, thisMonth, lastMonthAgg] = await Promise.all([
+            findBudgetByCategory(userId, category),
+            Transaction.find({ userId, type: 'expense', category: categoryMatch, date: { $gte: startOfCurrentMonth } })
+                .select('amount description merchantName')
+                .lean(),
+            Transaction.aggregate([
+                { $match: { userId, type: 'expense', category: categoryMatch, date: { $gte: startOfLastMonth, $lt: startOfCurrentMonth } } },
+                { $group: { _id: null, total: { $sum: '$amount' } } }
+            ]),
+        ]);
+
+        // Where the money went this month, grouped by merchant or description
+        const places = new Map<string, { name: string; amount: number; count: number }>();
+        for (const t of thisMonth) {
+            const name = (t.merchantName || t.description || 'Other').trim();
+            const place = places.get(name.toLowerCase()) || { name, amount: 0, count: 0 };
+            place.amount += t.amount;
+            place.count += 1;
+            places.set(name.toLowerCase(), place);
+        }
+
+        const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+        res.json(buildCategoryTips({
+            category: budget?.category || category,
+            allocated: budget ? budget.allocatedAmount : null,
+            spent: thisMonth.reduce((s, t) => s + t.amount, 0),
+            lastMonth: lastMonthAgg[0]?.total || 0,
+            topPlaces: [...places.values()].sort((a, b) => b.amount - a.amount).slice(0, 3),
+            daysLeft: lastDay - now.getDate() + 1,
+        }));
+    } catch (error) {
+        console.error('Error building category tips:', error);
+        res.status(500).json({ error: 'Failed to load tips for this category' });
     }
 });
 
