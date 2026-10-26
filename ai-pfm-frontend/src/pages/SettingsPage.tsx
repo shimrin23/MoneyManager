@@ -1,12 +1,13 @@
 import { formatDate, formatDateTime } from '../utils/appFormat';
 // Settings Page
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ChangeEvent, type ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { apiClient } from '../api/client.ts';
 import { useAdminLang } from '../i18n/adminText';
 import { USER_T } from '../i18n/userPagesText';
 import { confirmDialog } from '../utils/systemMessages';
 import { downloadFinancialDataPdf } from '../utils/exportFinancialDataPdf';
+import '../styles/SettingsRedesign.css';
 
 interface AppSettings {
     currency: string;
@@ -87,17 +88,72 @@ const toastStyle = {
     padding: '0.75rem 1rem',
     borderRadius: '12px',
     border: '1px solid',
-    background: '#ffffff',
+    background: 'var(--card)',
     fontWeight: 600,
     fontSize: '0.95rem',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.18)'
+    boxShadow: 'var(--shadow-md)'
 } as const;
 
 const toastColors = {
-    ok: { color: '#065f46', borderColor: '#6ee7b7' },
-    fail: { color: '#991b1b', borderColor: '#fca5a5' },
-    cancelled: { color: '#1f2937', borderColor: '#d1d5db' }
+    ok: { color: 'var(--text)', borderColor: 'var(--border)' },
+    fail: { color: '#f87171', borderColor: '#f87171' },
+    cancelled: { color: 'var(--text-muted)', borderColor: 'var(--border)' }
 } as const;
+
+const ICON_DOWNLOAD = (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M7 10l5 5 5-5" /><path d="M12 15V3" />
+    </svg>
+);
+
+const ICON_SHIELD = (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+    </svg>
+);
+
+// Building blocks for the settings page: cards, labelled selects and row toggles
+const SetCard = ({ title, children }: { title: string; children: ReactNode }) => (
+    <section className="st-card">
+        <header className="st-card-h"><h3>{title}</h3></header>
+        {children}
+    </section>
+);
+
+const SetSelect = ({ label, value, onChange, children }: {
+    label: string;
+    value: string;
+    onChange: (e: ChangeEvent<HTMLSelectElement>) => void;
+    children: ReactNode;
+}) => (
+    <div className="st-field">
+        <label>{label}</label>
+        <select className="st-input" value={value} onChange={onChange}>{children}</select>
+    </div>
+);
+
+const SetToggle = ({ label, desc, checked, onChange, disabled }: {
+    label: string;
+    desc: string;
+    checked: boolean;
+    onChange?: (e: ChangeEvent<HTMLInputElement>) => void;
+    disabled?: boolean;
+}) => (
+    <div className="st-toggle">
+        <div>
+            <div className="st-toggle-t">{label}</div>
+            <div className="st-toggle-s">{desc}</div>
+        </div>
+        <input
+            type="checkbox"
+            className="st-switch"
+            aria-label={label}
+            checked={checked}
+            disabled={disabled}
+            onChange={onChange ?? (() => {})}
+        />
+    </div>
+);
 
 export const SettingsPage = () => {
     const t = USER_T[useAdminLang()];
@@ -209,6 +265,8 @@ export const SettingsPage = () => {
         } catch {
             setSaveStatus('fail');
             setTimeout(() => setSaveStatus(''), 3000);
+            // Reload so the page shows what is actually stored, in case one of the three saves went through
+            await loadSettings();
         } finally {
             setLoading(false);
         }
@@ -269,12 +327,7 @@ export const SettingsPage = () => {
     };
 
     return (
-        <div className="settings-page">
-            <div className="settings-header">
-                <h1>{t.setTitle}</h1>
-                <p>{t.setSub}</p>
-            </div>
-
+        <div className="settings-page st-page">
             {loadFailed && (
                 <div className="alert alert-error" role="alert">
                     Could not load your saved settings, so the values below are defaults and may not be yours.{' '}
@@ -292,421 +345,183 @@ export const SettingsPage = () => {
                 </div>
             )}
 
-            <div className="settings-navigation">
-                <button
-                    className={`nav-btn ${activeTab === 'general' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('general')}
-                >
-                    {t.tabGeneral}
-                </button>
-                <button
-                    className={`nav-btn ${activeTab === 'notifications' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('notifications')}
-                >
-                    {t.tabNotifications}
-                </button>
-                <button
-                    className={`nav-btn ${activeTab === 'privacy' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('privacy')}
-                >
-                    {t.tabPrivacy}
-                </button>
-                <button
-                    className={`nav-btn ${activeTab === 'advanced' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('advanced')}
-                >
-                    {t.tabAdvanced}
-                </button>
-                <button
-                    className="nav-btn"
-                    onClick={() => navigate('/account-settings')}
-                >
-                    Account Settings
-                </button>
+            <div className="st-tabs" role="tablist">
+                {([
+                    ['general', t.tabGeneral],
+                    ['notifications', t.tabNotifications],
+                    ['privacy', t.tabPrivacy],
+                    ['advanced', t.tabAdvanced]
+                ] as const).map(([key, label]) => (
+                    <button
+                        key={key}
+                        type="button"
+                        role="tab"
+                        aria-selected={activeTab === key}
+                        className={`st-tab ${activeTab === key ? 'on' : ''}`}
+                        onClick={() => setActiveTab(key)}
+                    >
+                        {label}
+                    </button>
+                ))}
             </div>
 
-            <div className="settings-content">
+            <div className="st-body">
                 {activeTab === 'general' && (
-                    <div className="general-settings">
-                        <div className="settings-section">
-                            <h3>{t.regional}</h3>
-
-                            <div className="setting-group">
-                                <label>{t.currency}</label>
-                                <select
-                                    value={appSettings.currency}
-                                    onChange={(e) => setAppSettings(prev => ({ ...prev, currency: e.target.value }))}
-                                >
+                    <>
+                        <SetCard title={t.regional}>
+                            <div className="st-grid">
+                                <SetSelect label={t.currency} value={appSettings.currency} onChange={(e) => setAppSettings(prev => ({ ...prev, currency: e.target.value }))}>
                                     {currencyOptions.map(currency => (
-                                        <option key={currency.code} value={currency.code}>
-                                            {currency.name}
-                                        </option>
+                                        <option key={currency.code} value={currency.code}>{currency.name}</option>
                                     ))}
-                                </select>
-                            </div>
-
-                            <div className="setting-group">
-                                <label>{t.dateFormat}</label>
-                                <select
-                                    value={appSettings.dateFormat}
-                                    onChange={(e) => setAppSettings(prev => ({ ...prev, dateFormat: e.target.value }))}
-                                >
+                                </SetSelect>
+                                <SetSelect label={t.dateFormat} value={appSettings.dateFormat} onChange={(e) => setAppSettings(prev => ({ ...prev, dateFormat: e.target.value }))}>
                                     <option value="DD/MM/YYYY">DD/MM/YYYY</option>
                                     <option value="MM/DD/YYYY">MM/DD/YYYY</option>
                                     <option value="YYYY-MM-DD">YYYY-MM-DD</option>
                                     <option value="DD-MM-YYYY">DD-MM-YYYY</option>
-                                </select>
-                            </div>
-
-                            <div className="setting-group">
-                                <label>{t.language}</label>
-                                <select
-                                    value={appSettings.language}
-                                    onChange={(e) => setAppSettings(prev => ({ ...prev, language: e.target.value }))}
-                                >
-                                    {languageOptions.map(lang => (
-                                        <option key={lang.code} value={lang.code}>
-                                            {lang.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="setting-group">
-                                <label>{t.timezone}</label>
-                                <select
-                                    value={appSettings.timezone}
-                                    onChange={(e) => setAppSettings(prev => ({ ...prev, timezone: e.target.value }))}
-                                >
+                                </SetSelect>
+                                <SetSelect label={t.timezone} value={appSettings.timezone} onChange={(e) => setAppSettings(prev => ({ ...prev, timezone: e.target.value }))}>
                                     <option value="Asia/Colombo">Asia/Colombo</option>
                                     <option value="America/New_York">America/New_York</option>
                                     <option value="Europe/London">Europe/London</option>
                                     <option value="Asia/Tokyo">Asia/Tokyo</option>
                                     <option value="Australia/Sydney">Australia/Sydney</option>
-                                </select>
+                                </SetSelect>
                             </div>
-                        </div>
+                        </SetCard>
 
-                        <div className="settings-section">
-                            <h3>{t.appearance}</h3>
-
-                            <div className="setting-group">
-                                <label>{t.theme}</label>
-                                <select
-                                    value={appSettings.theme}
-                                    onChange={(e) => setAppSettings(prev => ({ ...prev, theme: e.target.value as 'light' | 'dark' | 'auto' }))}
-                                >
-                                    <option value="light">{t.themeLight}</option>
-                                    <option value="dark">{t.themeDark}</option>
-                                    <option value="auto">{t.themeAuto}</option>
-                                </select>
-                            </div>
-
-                            <div className="setting-group">
-                                <label>{t.dashLayout}</label>
-                                <select
-                                    value={appSettings.dashboardLayout}
-                                    onChange={(e) => setAppSettings(prev => ({ ...prev, dashboardLayout: e.target.value as 'compact' | 'detailed' | 'minimal' }))}
-                                >
+                        <SetCard title={t.appearance}>
+                            <div className="st-grid">
+                                <SetSelect label={t.dashLayout} value={appSettings.dashboardLayout} onChange={(e) => setAppSettings(prev => ({ ...prev, dashboardLayout: e.target.value as 'compact' | 'detailed' | 'minimal' }))}>
                                     <option value="compact">{t.layoutCompact}</option>
                                     <option value="detailed">{t.layoutDetailed}</option>
                                     <option value="minimal">{t.layoutMinimal}</option>
-                                </select>
-                            </div>
-
-                            <div className="setting-group">
-                                <label>{t.chartType}</label>
-                                <select
-                                    value={appSettings.chartType}
-                                    onChange={(e) => setAppSettings(prev => ({ ...prev, chartType: e.target.value as 'line' | 'bar' | 'pie' }))}
-                                >
+                                </SetSelect>
+                                <SetSelect label={t.chartType} value={appSettings.chartType} onChange={(e) => setAppSettings(prev => ({ ...prev, chartType: e.target.value as 'line' | 'bar' | 'pie' }))}>
                                     <option value="line">{t.chartLine}</option>
                                     <option value="bar">{t.chartBar}</option>
                                     <option value="pie">{t.chartPie}</option>
-                                </select>
+                                </SetSelect>
                             </div>
-                        </div>
+                        </SetCard>
 
-                        <div className="settings-section">
-                            <h3>{t.defaultBehavior}</h3>
-
-                            <div className="setting-group">
-                                <label>{t.defTxType}</label>
-                                <select
-                                    value={appSettings.defaultTransactionType}
-                                    onChange={(e) => setAppSettings(prev => ({ ...prev, defaultTransactionType: e.target.value as 'expense' | 'income' }))}
-                                >
+                        <SetCard title={t.defaultBehavior}>
+                            <div className="st-grid">
+                                <SetSelect label={t.defTxType} value={appSettings.defaultTransactionType} onChange={(e) => setAppSettings(prev => ({ ...prev, defaultTransactionType: e.target.value as 'expense' | 'income' }))}>
                                     <option value="expense">{t.txExpense}</option>
                                     <option value="income">{t.txIncome}</option>
-                                </select>
-                            </div>
-
-                            <div className="setting-group">
-                                <label>{t.catSort}</label>
-                                <select
-                                    value={appSettings.categoryOrder}
-                                    onChange={(e) => setAppSettings(prev => ({ ...prev, categoryOrder: e.target.value as 'alphabetical' | 'frequency' | 'custom' }))}
-                                >
+                                </SetSelect>
+                                <SetSelect label={t.catSort} value={appSettings.categoryOrder} onChange={(e) => setAppSettings(prev => ({ ...prev, categoryOrder: e.target.value as 'alphabetical' | 'frequency' | 'custom' }))}>
                                     <option value="alphabetical">{t.sortAlpha}</option>
                                     <option value="frequency">{t.sortFreq}</option>
                                     <option value="custom">{t.sortCustom}</option>
-                                </select>
+                                </SetSelect>
                             </div>
-                        </div>
-                    </div>
+                        </SetCard>
+                    </>
                 )}
 
                 {activeTab === 'notifications' && (
-                    <div className="notification-settings">
-                        <div className="settings-section">
-                            <h3>{t.finAlerts}</h3>
+                    <>
+                        <SetCard title={t.finAlerts}>
+                            <SetToggle label={t.budgetAlerts} desc={t.budgetAlertsSub} checked={notificationSettings.budgetAlerts} onChange={(e) => setNotificationSettings(prev => ({ ...prev, budgetAlerts: e.target.checked }))} />
+                            <SetToggle label="Transaction Alerts" desc="Alerts for large transactions and unusual activity" checked={notificationSettings.transactionAlerts} onChange={(e) => setNotificationSettings(prev => ({ ...prev, transactionAlerts: e.target.checked }))} />
+                            <SetToggle label={t.goalReminders} desc={t.goalRemindersSub} checked={notificationSettings.goalReminders} onChange={(e) => setNotificationSettings(prev => ({ ...prev, goalReminders: e.target.checked }))} />
+                        </SetCard>
 
-                            <div className="setting-toggle">
-                                <label>{t.budgetAlerts}</label>
-                                <span className="toggle-description">{t.budgetAlertsSub}</span>
-                                <input
-                                    type="checkbox"
-                                    checked={notificationSettings.budgetAlerts}
-                                    onChange={(e) => setNotificationSettings(prev => ({ ...prev, budgetAlerts: e.target.checked }))}
-                                />
-                            </div>
+                        <SetCard title={t.reports}>
+                            <SetToggle label={t.weekly} desc={t.weeklySub} checked={notificationSettings.weeklyReports} onChange={(e) => setNotificationSettings(prev => ({ ...prev, weeklyReports: e.target.checked }))} />
+                            <SetToggle label={t.monthly} desc={t.monthlySub} checked={notificationSettings.monthlyReports} onChange={(e) => setNotificationSettings(prev => ({ ...prev, monthlyReports: e.target.checked }))} />
+                        </SetCard>
 
-                            <div className="setting-toggle">
-                                <label>Transaction Alerts</label>
-                                <span className="toggle-description">Alerts for large transactions and unusual activity</span>
-                                <input
-                                    type="checkbox"
-                                    checked={notificationSettings.transactionAlerts}
-                                    onChange={(e) => setNotificationSettings(prev => ({ ...prev, transactionAlerts: e.target.checked }))}
-                                />
-                            </div>
+                        <SetCard title={t.secSystem}>
+                            <SetToggle label={t.secAlerts} desc={`${t.secAlertsSub} (Required, always on)`} checked disabled />
+                            <SetToggle label={t.marketing} desc={t.marketingSub} checked={notificationSettings.marketingEmails} onChange={(e) => setNotificationSettings(prev => ({ ...prev, marketingEmails: e.target.checked }))} />
+                        </SetCard>
 
-                            <div className="setting-toggle">
-                                <label>{t.goalReminders}</label>
-                                <span className="toggle-description">{t.goalRemindersSub}</span>
-                                <input
-                                    type="checkbox"
-                                    checked={notificationSettings.goalReminders}
-                                    onChange={(e) => setNotificationSettings(prev => ({ ...prev, goalReminders: e.target.checked }))}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="settings-section">
-                            <h3>{t.reports}</h3>
-
-                            <div className="setting-toggle">
-                                <label>{t.weekly}</label>
-                                <span className="toggle-description">{t.weeklySub}</span>
-                                <input
-                                    type="checkbox"
-                                    checked={notificationSettings.weeklyReports}
-                                    onChange={(e) => setNotificationSettings(prev => ({ ...prev, weeklyReports: e.target.checked }))}
-                                />
-                            </div>
-
-                            <div className="setting-toggle">
-                                <label>{t.monthly}</label>
-                                <span className="toggle-description">{t.monthlySub}</span>
-                                <input
-                                    type="checkbox"
-                                    checked={notificationSettings.monthlyReports}
-                                    onChange={(e) => setNotificationSettings(prev => ({ ...prev, monthlyReports: e.target.checked }))}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="settings-section">
-                            <h3>{t.secSystem}</h3>
-
-                            <div className="setting-toggle">
-                                <label>{t.secAlerts}</label>
-                                <span className="toggle-description">{t.secAlertsSub} (Required, always on)</span>
-                                <input
-                                    type="checkbox"
-                                    checked
-                                    disabled
-                                />
-                            </div>
-
-                            <div className="setting-toggle">
-                                <label>{t.marketing}</label>
-                                <span className="toggle-description">{t.marketingSub}</span>
-                                <input
-                                    type="checkbox"
-                                    checked={notificationSettings.marketingEmails}
-                                    onChange={(e) => setNotificationSettings(prev => ({ ...prev, marketingEmails: e.target.checked }))}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="settings-section">
-                            <h3>{t.delivery}</h3>
-
-                            <div className="setting-toggle">
-                                <label>{t.push}</label>
-                                <span className="toggle-description">{t.pushSub}</span>
-                                <input
-                                    type="checkbox"
-                                    checked={notificationSettings.pushNotifications}
-                                    onChange={(e) => setNotificationSettings(prev => ({ ...prev, pushNotifications: e.target.checked }))}
-                                />
-                            </div>
-
-                            <div className="setting-toggle">
-                                <label>{t.email}</label>
-                                <span className="toggle-description">{t.emailSub}</span>
-                                <input
-                                    type="checkbox"
-                                    checked={notificationSettings.emailNotifications}
-                                    onChange={(e) => setNotificationSettings(prev => ({ ...prev, emailNotifications: e.target.checked }))}
-                                />
-                            </div>
-
-                            <div className="setting-toggle">
-                                <label>{t.sms}</label>
-                                <span className="toggle-description">{t.smsSub}</span>
-                                <input
-                                    type="checkbox"
-                                    checked={notificationSettings.smsNotifications}
-                                    onChange={(e) => setNotificationSettings(prev => ({ ...prev, smsNotifications: e.target.checked }))}
-                                />
-                            </div>
-                        </div>
-                    </div>
+                        <SetCard title={t.delivery}>
+                            <SetToggle label={t.push} desc={t.pushSub} checked={notificationSettings.pushNotifications} onChange={(e) => setNotificationSettings(prev => ({ ...prev, pushNotifications: e.target.checked }))} />
+                            <SetToggle label={t.email} desc={t.emailSub} checked={notificationSettings.emailNotifications} onChange={(e) => setNotificationSettings(prev => ({ ...prev, emailNotifications: e.target.checked }))} />
+                            <SetToggle label={t.sms} desc={t.smsSub} checked={notificationSettings.smsNotifications} onChange={(e) => setNotificationSettings(prev => ({ ...prev, smsNotifications: e.target.checked }))} />
+                        </SetCard>
+                    </>
                 )}
 
                 {activeTab === 'privacy' && (
-                    <div className="privacy-settings">
-                        <div className="settings-section">
-                            <h3>{t.dataCollection}</h3>
+                    <>
+                        <SetCard title={t.dataCollection}>
+                            <SetToggle label={t.analyticsData} desc={t.analyticsSub} checked={privacySettings.analytics} onChange={(e) => setPrivacySettings(prev => ({ ...prev, analytics: e.target.checked }))} />
+                            <SetToggle label={t.marketingTracking} desc={t.marketingTrackingSub} checked={privacySettings.marketingTracking} onChange={(e) => setPrivacySettings(prev => ({ ...prev, marketingTracking: e.target.checked }))} />
+                            <SetToggle label={t.shareAnon} desc={t.shareAnonSub} checked={privacySettings.shareAnonData} onChange={(e) => setPrivacySettings(prev => ({ ...prev, shareAnonData: e.target.checked }))} />
+                            <SetToggle label={t.activityTracking} desc={t.activityTrackingSub} checked={privacySettings.activityTracking} onChange={(e) => setPrivacySettings(prev => ({ ...prev, activityTracking: e.target.checked }))} />
+                        </SetCard>
 
-                            <div className="setting-toggle">
-                                <label>{t.analyticsData}</label>
-                                <span className="toggle-description">{t.analyticsSub}</span>
-                                <input
-                                    type="checkbox"
-                                    checked={privacySettings.analytics}
-                                    onChange={(e) => setPrivacySettings(prev => ({ ...prev, analytics: e.target.checked }))}
-                                />
-                            </div>
-
-                            <div className="setting-toggle">
-                                <label>{t.marketingTracking}</label>
-                                <span className="toggle-description">{t.marketingTrackingSub}</span>
-                                <input
-                                    type="checkbox"
-                                    checked={privacySettings.marketingTracking}
-                                    onChange={(e) => setPrivacySettings(prev => ({ ...prev, marketingTracking: e.target.checked }))}
-                                />
-                            </div>
-
-                            <div className="setting-toggle">
-                                <label>{t.shareAnon}</label>
-                                <span className="toggle-description">{t.shareAnonSub}</span>
-                                <input
-                                    type="checkbox"
-                                    checked={privacySettings.shareAnonData}
-                                    onChange={(e) => setPrivacySettings(prev => ({ ...prev, shareAnonData: e.target.checked }))}
-                                />
-                            </div>
-
-                            <div className="setting-toggle">
-                                <label>{t.activityTracking}</label>
-                                <span className="toggle-description">{t.activityTrackingSub}</span>
-                                <input
-                                    type="checkbox"
-                                    checked={privacySettings.activityTracking}
-                                    onChange={(e) => setPrivacySettings(prev => ({ ...prev, activityTracking: e.target.checked }))}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="settings-section">
-                            <h3>{t.profilePrivacy}</h3>
-
-                            <div className="setting-group">
-                                <label>{t.profVisibility}</label>
-                                <select
-                                    value={privacySettings.profileVisibility}
-                                    onChange={(e) => setPrivacySettings(prev => ({ ...prev, profileVisibility: e.target.value as 'private' | 'public' | 'friends' }))}
-                                >
+                        <SetCard title={t.profilePrivacy}>
+                            <div className="st-grid">
+                                <SetSelect label={t.profVisibility} value={privacySettings.profileVisibility} onChange={(e) => setPrivacySettings(prev => ({ ...prev, profileVisibility: e.target.value as 'private' | 'public' | 'friends' }))}>
                                     <option value="private">{t.visPrivate}</option>
                                     <option value="friends">{t.visFriends}</option>
                                     <option value="public">{t.visPublic}</option>
-                                </select>
-                                <span className="setting-description">{t.visSub}</span>
+                                </SetSelect>
                             </div>
-                        </div>
+                            <p className="st-hint">{t.visSub}</p>
+                        </SetCard>
 
-                        <div className="privacy-info">
-                            <h4>🔒 {t.privacyMatters}</h4>
+                        <div className="st-note">
+                            <h4>{t.privacyMatters}</h4>
                             <p>{t.privacyText}</p>
-                            <button className="btn-secondary" onClick={() => navigate('/account-settings')}>
+                            <button type="button" className="btn-secondary" onClick={() => navigate('/account-settings')}>
                                 {t.viewData}
                             </button>
                         </div>
-                    </div>
+                    </>
                 )}
 
                 {activeTab === 'advanced' && (
-                    <div className="advanced-settings">
-                        <div className="settings-section">
-                            <h3>{t.dataMgmt}</h3>
-                            <div className="advanced-options">
-                                <button className="btn-secondary" onClick={exportAllData}>
-                                    {t.exportAll}
+                    <>
+                        <SetCard title={t.dataMgmt}>
+                            <div className="st-row">
+                                <button type="button" className="btn-secondary st-btn-icon" onClick={exportAllData}>
+                                    {ICON_DOWNLOAD}{t.exportAll}
                                 </button>
-                                {exportError && <div className="alert alert-error">{exportError}</div>}
+                                <button type="button" className="btn-secondary st-btn-icon" onClick={() => navigate('/account-settings')}>
+                                    {ICON_SHIELD}Account &amp; Security
+                                </button>
                             </div>
-                        </div>
+                            {exportError && <div className="alert alert-error">{exportError}</div>}
+                        </SetCard>
 
-                        <div className="settings-section">
-                            <h3>{t.resetOpts}</h3>
-                            <div className="reset-options">
-                                <button className="btn-warning" onClick={resetToDefaults}>
+                        <SetCard title={t.resetOpts}>
+                            <div className="st-row">
+                                <span className="st-hint">{t.resetSub}</span>
+                                <button type="button" className="btn-warning" onClick={resetToDefaults}>
                                     {t.resetAll}
                                 </button>
-                                <span className="reset-description">{t.resetSub}</span>
                             </div>
-                        </div>
+                        </SetCard>
 
-                        <div className="settings-section">
-                            <h3>{t.appInfo}</h3>
-                            <div className="app-info">
-                                <div className="info-item">
-                                    <span>{t.version}</span>
-                                    <span>{__APP_VERSION__}</span>
-                                </div>
-                                <div className="info-item">
-                                    <span>{t.lastUpdated}</span>
-                                    <span>{formatDate(__BUILD_DATE__)}</span>
-                                </div>
-                                <div className="info-item">
-                                    <span>{t.build}</span>
-                                    <span>{__BUILD_DATE__.replace(/-/g, '')}</span>
-                                </div>
+                        <SetCard title={t.appInfo}>
+                            <div className="st-kv">
+                                <div><span>{t.version}</span><span>{__APP_VERSION__}</span></div>
+                                <div><span>{t.lastUpdated}</span><span>{formatDate(__BUILD_DATE__)}</span></div>
+                                <div><span>{t.build}</span><span>{__BUILD_DATE__.replace(/-/g, '')}</span></div>
                             </div>
-                        </div>
-                    </div>
+                        </SetCard>
+                    </>
                 )}
+            </div>
 
-                <div className="settings-actions">
-                    <button
-                        className="btn-secondary"
-                        onClick={handleCancel}
-                    >
+            {activeTab !== 'advanced' && (
+                <div className="st-actions">
+                    <button type="button" className="btn-secondary" onClick={handleCancel}>
                         {t.cancel}
                     </button>
-                    <button
-                        className="btn-primary"
-                        onClick={saveSettings}
-                        disabled={loading}
-                    >
+                    <button type="button" className="btn-primary" onClick={saveSettings} disabled={loading}>
                         {loading ? t.saving : t.saveSettings}
                     </button>
                 </div>
-            </div>
+            )}
         </div>
     );
 };

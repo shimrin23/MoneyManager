@@ -107,3 +107,129 @@
 @media (prefers-reduced-motion: reduce) {
   .sm-toast { animation: none; }
 }
+
+/* Confirmation dialog: Cancel and the action button are the same size */
+.sm-dialog-actions > button {
+  height: 40px;
+  min-width: 120px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* Confirmation dialog: neutral Cancel, solid red action button */
+.sm-dialog-actions .btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+
+.btn-primary.sm-btn-danger {
+  background: #dc2626;
+  box-shadow: none;
+}
+
+/* Danger confirm button keeps red when focused or hovered (the global focus style is blue) */
+.btn-primary.sm-btn-danger:focus,
+.btn-primary.sm-btn-danger:hover:not(:disabled) {
+  background: #dc2626;
+  box-shadow: none;
+  transform: none;
+}
+
+.sm-dialog-actions > button.sm-btn-danger,
+.sm-dialog-actions > .btn-secondary {
+  transform: none;
+}
+
+/* Dialog buttons the same height (the global primary button sets a 44px minimum) */
+.sm-dialog-actions > button {
+  height: 40px !important;
+  min-height: 40px !important;
+  min-width: 120px;
+  box-sizing: border-box;
+}
+
+/* Confirmation dialog text a little smaller */
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.sm-dialog-message {
+  font-size: 14px;
+}
+
+/* Confirmation dialog: smaller gaps between title, message and buttons */
+.modal-title {
+  margin: 0;
+}
+
+.sm-dialog-message {
+  margin: 8px 0 16px;
+}
+
+/* Tighter again */
+.sm-dialog-message {
+  margin: 4px 0 12px;
+}
+
+/* Confirmation dialog: message sits directly under the title */
+.modal-header:has(+ form) {
+  margin-bottom: 0;
+}
+
+.sm-dialog-message {
+  margin-top: 0;
+}
+
+/* Confirmation dialog: close button in the top-right corner */
+.modal-header:has(+ form) {
+  position: relative;
+}
+
+.modal-header:has(+ form) > .modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+/* Close button sits higher, in the corner */
+.modal-header:has(+ form) > .modal-close {
+  top: 4px;
+  right: 4px;
+}
+
+/* Close button right in the corner */
+.modal-header:has(+ form) > .modal-close {
+  top: 0;
+  right: 0;
+}
+
+/* Close button a little higher than the header edge */
+.modal-header:has(+ form) > .modal-close {
+  top: -4px;
+  right: 0;
+}
+
+/* Close button higher and closer to the right corner */
+.modal-header:has(+ form) > .modal-close {
+  top: -10px;
+  right: -4px;
+}
+
+/* Close button higher and closer to the right corner */
+.modal-header:has(+ form) > .modal-close {
+  top: -16px;
+  right: -8px;
+}
+
+/* Close button higher still */
+.modal-header:has(+ form) > .modal-close {
+  top: -24px;
+  right: -8px;
+}
