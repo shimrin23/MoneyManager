@@ -1,5 +1,5 @@
 import { formatDate, formatDateTime, formatMoney } from '../utils/appFormat';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { apiClient } from '../api/client.ts';
 import { notify } from '../utils/systemMessages';
 import axios from 'axios';
@@ -24,6 +24,40 @@ export const TransactionList = () => {
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [transactionToDelete, setTransactionToDelete] = useState<string | null>(null);
+    const [isAdding, setIsAdding] = useState(false);
+    const [search, setSearch] = useState('');
+    const [typeFilter, setTypeFilter] = useState<'all' | 'income' | 'expense'>('all');
+    const [categoryFilter, setCategoryFilter] = useState('all');
+
+    const categories = useMemo(
+        () => Array.from(new Set(transactions.map((t) => t.category).filter(Boolean))).sort(),
+        [transactions]
+    );
+
+    const filteredTransactions = useMemo(() => {
+        const query = search.trim().toLowerCase();
+        return transactions.filter((t) => {
+            if (typeFilter !== 'all' && t.type !== typeFilter) return false;
+            if (categoryFilter !== 'all' && t.category !== categoryFilter) return false;
+            if (!query) return true;
+            return (
+                (t.description || '').toLowerCase().includes(query) ||
+                (t.category || '').toLowerCase().includes(query)
+            );
+        });
+    }, [transactions, search, typeFilter, categoryFilter]);
+
+    const totals = useMemo(
+        () => filteredTransactions.reduce(
+            (acc, t) => {
+                if (t.type === 'income') acc.income += Number(t.amount) || 0;
+                else acc.expense += Number(t.amount) || 0;
+                return acc;
+            },
+            { income: 0, expense: 0 }
+        ),
+        [filteredTransactions]
+    );
 
     const fetchTransactions = async () => {
         try {
@@ -67,7 +101,12 @@ export const TransactionList = () => {
         await fetchTransactions();
     };
 
-    const confirmDeleteTransaction = (transactionId: string) => {
+    const handleTransactionAdded = async () => {
+        setIsAdding(false);
+        await fetchTransactions();
+    };
+
+    const confirmDeleteTransaction =(transactionId: string) => {
         setTransactionToDelete(transactionId);
     };
 
@@ -98,15 +137,69 @@ export const TransactionList = () => {
 
     return (
         <div className="card transaction-list">
-            <div className="header-row">
-                <h2>Recent Transactions</h2>
-                <div className="transaction-toolbar">
-                    <button className="secondary-btn" onClick={refreshData}>🔄 Refresh Data</button>
+            <div className="txn-header">
+                <div>
+                    <h2 className="txn-title">All transactions</h2>
+                    <p className="txn-subtitle">Search, filter and edit your history</p>
+                </div>
+                <div className="txn-header-actions">
+                    <button type="button" className="txn-btn txn-btn-outline txn-btn-icon" onClick={refreshData} title="Refresh data" aria-label="Refresh data">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M3 12a9 9 0 0 1 15.5-6.2L21 8" />
+                            <path d="M21 3v5h-5" />
+                            <path d="M21 12a9 9 0 0 1-15.5 6.2L3 16" />
+                            <path d="M3 21v-5h5" />
+                        </svg>
+                    </button>
+                    <button type="button" className="txn-btn txn-btn-primary" onClick={() => setIsAdding(true)}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                            <path d="M12 5v14M5 12h14" />
+                        </svg>
+                        Add
+                    </button>
                 </div>
             </div>
-            
+
+            <div className="txn-filters">
+                <div className="txn-search">
+                    <svg className="txn-search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m20 20-3.5-3.5" />
+                    </svg>
+                    <input
+                        type="text"
+                        className="txn-input"
+                        placeholder="Search description or category"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        aria-label="Search transactions"
+                    />
+                </div>
+                <select
+                    className="txn-select"
+                    value={typeFilter}
+                    onChange={(e) => setTypeFilter(e.target.value as 'all' | 'income' | 'expense')}
+                    aria-label="Filter by type"
+                >
+                    <option value="all">All types</option>
+                    <option value="income">Income</option>
+                    <option value="expense">Expense</option>
+                </select>
+                <select
+                    className="txn-select"
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    aria-label="Filter by category"
+                >
+                    <option value="all">All categories</option>
+                    {categories.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                    ))}
+                </select>
+            </div>
+
             <div className="table-container">
-                <table className="responsive-table">
+                <table className="responsive-table txn-table">
                     <thead>
                         <tr>
                             <th>Date</th>
@@ -117,7 +210,14 @@ export const TransactionList = () => {
                         </tr>
                     </thead>
                     <tbody>
-                        {transactions.map((t) => {
+                        {filteredTransactions.length === 0 && (
+                            <tr>
+                                <td colSpan={5} className="txn-empty">
+                                    {transactions.length === 0 ? 'No transactions yet.' : 'No transactions match your filters.'}
+                                </td>
+                            </tr>
+                        )}
+                        {filteredTransactions.map((t) => {
                             const isDeleting = deletingId === t._id;
 
                             return (
@@ -171,6 +271,32 @@ export const TransactionList = () => {
                 </table>
             </div>
 
+            <div className="txn-footer">
+                <span className="txn-footer-count">
+                    {filteredTransactions.length} {filteredTransactions.length === 1 ? 'transaction' : 'transactions'}
+                </span>
+                <span className="txn-footer-totals">
+                    <span className="txn-footer-income">+{formatMoney(totals.income)}</span>
+                    <span className="txn-footer-sep" aria-hidden="true">·</span>
+                    <span className="txn-footer-expense">-{formatMoney(totals.expense)}</span>
+                </span>
+            </div>
+
+            {isAdding && (
+                <div className="modal-overlay" onClick={() => setIsAdding(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">Add Transaction</h2>
+                            <button className="modal-close" onClick={() => setIsAdding(false)}>×</button>
+                        </div>
+                        <AddTransactionForm
+                            onTransactionAdded={handleTransactionAdded}
+                            onCancel={() => setIsAdding(false)}
+                        />
+                    </div>
+                </div>
+            )}
+
             {editingTransaction && (
                 <div className="modal-overlay" onClick={cancelEditing}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -190,21 +316,21 @@ export const TransactionList = () => {
 
             {transactionToDelete && (
                 <div className="modal-overlay" onClick={cancelDelete}>
-                    <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
+                    <div className="modal-content txn-confirm" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
                             <h2 className="modal-title">Confirm Deletion</h2>
-                            <button className="modal-close" onClick={cancelDelete}>×</button>
+                            <button className="modal-close" onClick={cancelDelete} aria-label="Close">×</button>
                         </div>
-                        <div style={{ padding: '1rem 0 2rem 0', color: 'var(--color-text)' }}>
+                        <p className="txn-confirm-text">
                             Are you sure you want to delete this transaction? This action cannot be undone.
-                        </div>
-                        <div style={{ display: 'flex', gap: '1rem' }}>
-                            <button className="btn-secondary" style={{ flex: 1 }} onClick={cancelDelete}>
+                        </p>
+                        <div className="txn-confirm-actions">
+                            <button className="btn-secondary" onClick={cancelDelete}>
                                 Cancel
                             </button>
-                            <button 
-                                className="btn-primary" 
-                                style={{ flex: 1, background: 'linear-gradient(135deg, #ef4444, #dc2626)' }} 
+                            <button
+                                className="btn-primary"
+                                style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }}
                                 onClick={executeDeleteTransaction}
                             >
                                 Delete

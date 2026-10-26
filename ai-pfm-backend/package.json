@@ -9,6 +9,7 @@
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "seed:admin-config": "ts-node src/scripts/seed-admin-config.ts",
     "seed:users": "ts-node src/scripts/seed-users.ts",
+    "seed:demo": "ts-node src/scripts/seed-demo-data.ts",
     "test": "jest --runInBand --forceExit"
   },
   "dependencies": {

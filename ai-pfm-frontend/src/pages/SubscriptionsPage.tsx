@@ -329,11 +329,10 @@ export const SubscriptionsPage = () => {
     }
 
     return (
-        <div className="page-container">
-            <div className="page-header">
-                <div style={{ flex: 1 }}></div>
-                <button 
-                    className="btn-primary"
+        <div className="page-container su-page">
+            <div className="su-top">
+                <button
+                    className="btn-primary su-add-btn"
                     onClick={() => setShowAddForm(!showAddForm)}
                 >
                     + Add Subscription
@@ -341,47 +340,35 @@ export const SubscriptionsPage = () => {
             </div>
 
             {/* Feature 1: Subscription Health Score */}
-            <div style={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                padding: '24px',
-                borderRadius: '12px',
-                marginBottom: '20px',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-            }}>
+            <section className="su-health">
                 {healthScore ? (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div className="su-health-row">
                         <div>
-                            <h3 style={{ margin: '0 0 8px 0', fontSize: '18px' }}>Subscription Health Score</h3>
-                            <p style={{ margin: '0', opacity: 0.9 }}>
+                            <h3>Subscription Health Score</h3>
+                            <p>
                                 {healthScore.icon} <strong>{healthScore.score}</strong> — Your subscriptions are {(healthScore.percentage).toFixed(1)}% of monthly income
                             </p>
                         </div>
-                        <div style={{
-                            background: 'rgba(255,255,255,0.2)',
-                            padding: '16px 24px',
-                            borderRadius: '8px',
-                            textAlign: 'center'
-                        }}>
-                            <div style={{ fontSize: '24px', fontWeight: 'bold' }}>{(healthScore.percentage).toFixed(1)}%</div>
-                            <div style={{ fontSize: '12px', opacity: 0.9 }}>of Income</div>
+                        <div className="su-health-badge">
+                            <div className="su-health-value">{(healthScore.percentage).toFixed(1)}%</div>
+                            <div className="su-health-label">of Income</div>
                         </div>
                     </div>
                 ) : (
                     <div>
-                        <h3 style={{ margin: '0 0 8px 0', fontSize: '18px' }}>Subscription Health Score</h3>
-                        <p style={{ margin: '0', opacity: 0.9 }}>
+                        <h3>Subscription Health Score</h3>
+                        <p>
                             You spend {formatMoney(totalMonthlyCost)}/month on subscriptions. To see what share of your income that is,{' '}
-                            <Link to="/profile" style={{ color: 'white', fontWeight: 600, textDecoration: 'underline' }}>add your monthly income in Profile</Link>.
+                            <Link to="/profile" className="su-health-link">add your monthly income in Profile</Link>.
                         </p>
                     </div>
                 )}
-            </div>
+            </section>
 
             {/* Add Subscription Form */}
             {showAddForm && (
-                <div className="card form-card">
-                    <h3>Add New Subscription</h3>
+                <div className="card form-card gl-form">
+                    <h3 className="gl-form-title">Add New Subscription</h3>
                     <form onSubmit={handleCreateSubscription} className="subscription-form">
                         <div className="form-row">
                             <div className="form-group">
@@ -405,7 +392,7 @@ export const SubscriptionsPage = () => {
                                 />
                             </div>
                         </div>
-                        
+
                         <div className="form-row">
                             <div className="form-group">
                                 <label>Amount ({currencyCode()})</label>
@@ -431,7 +418,7 @@ export const SubscriptionsPage = () => {
                                 </select>
                             </div>
                         </div>
-                        
+
                         <div className="form-row">
                             <div className="form-group">
                                 <label>Category</label>
@@ -462,7 +449,7 @@ export const SubscriptionsPage = () => {
                                 />
                             </div>
                         </div>
-                        
+
                         <div className="form-actions">
                             <button type="button" className="btn-secondary" onClick={() => setShowAddForm(false)}>
                                 Cancel
@@ -475,115 +462,80 @@ export const SubscriptionsPage = () => {
                 </div>
             )}
 
-            {/* Summary Cards: same 4-across layout as the other finance pages (2-across on small screens) */}
-            <div className="rec-summary-grid">
-                <div className="rec-stat-card">
-                    <div className="rec-stat-icon">💰</div>
-                    <div>
-                        <div className="rec-stat-value">{formatMoney(totalMonthlyCost)}</div>
-                        <div className="rec-stat-label">Monthly Total</div>
-                    </div>
+            {/* Summary Cards */}
+            <div className="rc-stats">
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Monthly Total</span>
+                    <span className="rc-stat-value">{formatMoney(totalMonthlyCost)}</span>
                 </div>
-                <div className="rec-stat-card accepted">
-                    <div className="rec-stat-icon">📱</div>
-                    <div>
-                        <div className="rec-stat-value">{activeSubs.length}</div>
-                        <div className="rec-stat-label">Active Subscriptions</div>
-                    </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Active Subscriptions</span>
+                    <span className="rc-stat-value">{activeSubs.length}</span>
                 </div>
-                <div className="rec-stat-card pending">
-                    <div className="rec-stat-icon">🧟</div>
-                    <div>
-                        <div className="rec-stat-value">{zombieSubs.length}</div>
-                        <div className="rec-stat-label">Zombie Subscriptions</div>
-                    </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Zombie Subscriptions</span>
+                    <span className="rc-stat-value">{zombieSubs.length}</span>
                 </div>
-                <div className="rec-stat-card savings">
-                    <div className="rec-stat-icon">💸</div>
-                    <div>
-                        <div className="rec-stat-value">{formatMoney(savings)}</div>
-                        <div className="rec-stat-label">Potential Monthly Savings</div>
-                    </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Potential Monthly Savings</span>
+                    <span className="rc-stat-value">{formatMoney(savings)}</span>
                 </div>
             </div>
 
             {/* Feature 6: Subscription Trend Analytics */}
-            <div style={{
-                background: 'var(--card-hover)',
-                border: '2px solid var(--border)',
-                padding: '20px',
-                borderRadius: '8px',
-                marginBottom: '20px'
-            }}>
-                <h3 style={{ marginTop: '0', marginBottom: '16px', color: 'var(--text)' }}>6-Month Spending Trend</h3>
+            <section className="su-panel">
+                <h3 className="su-panel-title">6-Month Spending Trend</h3>
                 {trends.some(t => t.amount > 0) ? (
-                    <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', height: '140px' }}>
+                    <div className="su-trend">
                         {trends.map((trend, idx) => {
                             const maxAmount = Math.max(...trends.map(t => t.amount));
                             return (
-                                <div key={idx} style={{ textAlign: 'center' }} title={`${formatMoney(trend.amount)}`}>
-                                    <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                                <div key={idx} className="su-trend-col" title={`${formatMoney(trend.amount)}`}>
+                                    <div className="su-trend-value">
                                         {trend.amount > 0 ? `${(trend.amount / 1000).toFixed(1)}K` : '0'}
                                     </div>
-                                    <div style={{
-                                        height: `${Math.max(2, (trend.amount / maxAmount) * 100)}px`,
-                                        background: 'linear-gradient(to top, #667eea, #764ba2)',
-                                        borderRadius: '4px',
-                                        marginBottom: '8px',
-                                        minWidth: '30px'
-                                    }}></div>
-                                    <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '500' }}>{trend.month}</div>
+                                    <div className="su-trend-bar" style={{ height: `${Math.max(2, (trend.amount / maxAmount) * 100)}px` }}></div>
+                                    <div className="su-trend-month">{trend.month}</div>
                                 </div>
                             );
                         })}
                     </div>
                 ) : (
-                    <p style={{ margin: 0, color: 'var(--text-muted)', fontSize: '14px' }}>
+                    <p className="su-muted">
                         No subscription payments recorded in the last 6 months yet. Payments you log with Pay on the Recurring page,
                         and expenses from these providers, will show here.
                     </p>
                 )}
-            </div>
+            </section>
 
             {/* Feature 7: Consolidation Suggestions */}
             {consolidationSuggestions().length > 0 && (
-                <div style={{
-                    background: '#fef3c7',
-                    border: '2px solid #fcd34d',
-                    padding: '16px',
-                    borderRadius: '8px',
-                    marginBottom: '20px'
-                }}>
-                    <h4 style={{ margin: '0 0 12px 0', color: '#92400e' }}>AI Consolidation Opportunity</h4>
+                <div className="su-note warn">
+                    <h4>AI Consolidation Opportunity</h4>
                     {consolidationSuggestions().map((suggestion, idx) => (
-                        <div key={idx} style={{ marginBottom: '8px', color: '#92400e' }}>
+                        <p key={idx}>
                             <strong>{suggestion.category}:</strong> You have {suggestion.count} subscriptions costing {formatMoney(suggestion.totalCost)}/month.
                             Consolidating could save <strong>{formatMoney(suggestion.potentialSavings)}/month</strong>.
-                        </div>
+                        </p>
                     ))}
                 </div>
             )}
 
             {/* Zombie Subscriptions Alert */}
             {zombieSubs.length > 0 && (
-                <div className="zombie-alert">
-                    <div className="alert-content">
-                        <span className="alert-icon" style={{ display: 'none' }}></span>
-                        <div>
-                            <h4>Zombie Subscriptions Detected!</h4>
-                            <p>You have {zombieSubs.length} subscriptions you haven't used in 3+ months. Cancel them to save {formatMoney(savings)}/month.</p>
-                        </div>
+                <div className="su-note bad su-zombie">
+                    <div>
+                        <h4>Zombie Subscriptions Detected!</h4>
+                        <p>You have {zombieSubs.length} subscriptions you haven't used in 3+ months. Cancel them to save {formatMoney(savings)}/month.</p>
                     </div>
-                    <button className="alert-action" onClick={handleCancelAllZombies}>
+                    <button className="su-btn danger" onClick={handleCancelAllZombies}>
                         Cancel All Zombies
                     </button>
                 </div>
             )}
 
-
-
             {/* Subscriptions List - Feature 10: Enhanced Card Layout */}
-            <div className="subscriptions-list">
+            <div className="su-grid">
                 {activeSubs.map((subscription) => {
                     const usageStatus = getUsageStatus(subscription);
                     const insightData = subscription._id ? insightsMap[subscription._id] : null;
@@ -592,185 +544,83 @@ export const SubscriptionsPage = () => {
                     const renewalRisk = getRenewalRisk(subscription);
                     const dueStatus = getDueStatus(subscription);
                     const monthlyAmount = subscription.frequency === 'yearly' ? subscription.amount / 12 : subscription.amount;
+                    const usageTone = usageStatus.status === 'Actively Used' ? 'good' : usageStatus.status === 'Rarely Used' ? 'warn' : 'bad';
 
                     return (
-                        <div key={subscription._id} style={{
-                            background: 'var(--card)',
-                            border: renewalRisk.risk || dueStatus.overdue ? '2px solid #ef4444' : '1px solid var(--border)',
-                            borderRadius: '12px',
-                            padding: '20px',
-                            marginBottom: '16px',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                        }}>
+                        <article key={subscription._id} className={`su-card ${renewalRisk.risk || dueStatus.overdue ? 'alert' : ''}`}>
                             {/* Renewal Risk Warning - Feature 5 */}
                             {renewalRisk.risk && (
-                                <div style={{
-                                    background: '#fee2e2',
-                                    border: '1px solid #fecaca',
-                                    padding: '12px',
-                                    borderRadius: '8px',
-                                    marginBottom: '12px',
-                                    color: '#991b1b',
-                                    fontSize: '14px'
-                                }}>
-                                    {renewalRisk.message}
-                                </div>
+                                <div className="su-banner">{renewalRisk.message}</div>
                             )}
 
                             {/* Payment date has passed */}
                             {dueStatus.overdue && (
-                                <div style={{
-                                    background: 'rgba(239, 68, 68, 0.12)',
-                                    border: '1px solid rgba(239, 68, 68, 0.35)',
-                                    padding: '10px 12px',
-                                    borderRadius: '8px',
-                                    marginBottom: '12px',
-                                    color: '#ef4444',
-                                    fontSize: '14px',
-                                    fontWeight: 600
-                                }}>
+                                <div className="su-banner">
                                     Payment overdue: was due {new Date(subscription.nextPayment).toLocaleDateString('en-LK')} ({dueStatus.label.toLowerCase()}).
                                     Log the payment on the Recurring page, or cancel if you no longer use it.
                                 </div>
                             )}
 
                             {/* Header - Subscription Name & Status */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '12px' }}>
-                                <div>
-                                    <h4 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: '600' }}>{subscription.name}</h4>
-                                    <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: 'var(--text-muted)' }}>{subscription.provider}</p>
+                            <div className="su-card-head">
+                                <div className="su-card-title">
+                                    <h4>{subscription.name}</h4>
+                                    <span>{subscription.provider}</span>
                                 </div>
-                                <div style={{
-                                    background: usageStatus.status === 'Actively Used' ? '#dcfce7' : usageStatus.status === 'Rarely Used' ? '#fef3c7' : '#fee2e2',
-                                    color: usageStatus.status === 'Actively Used' ? '#166534' : usageStatus.status === 'Rarely Used' ? '#92400e' : '#991b1b',
-                                    padding: '6px 12px',
-                                    borderRadius: '20px',
-                                    fontSize: '13px',
-                                    fontWeight: '500'
-                                }}>
+                                <span className={`su-pill ${usageTone}`}>
                                     {usageStatus.icon} {usageStatus.status}
-                                </div>
+                                </span>
                             </div>
 
                             {/* Usage Info - Feature 2 */}
-                            <p style={{ margin: '0 0 12px 0', fontSize: '13px', color: 'var(--text-muted)' }}>
-                                {usageStatus.label}
-                            </p>
+                            <p className="su-usage">{usageStatus.label}</p>
 
                             {/* Cost & Category Row */}
-                            <div style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                padding: '16px',
-                                background: 'var(--card-hover)',
-                                borderRadius: '8px',
-                                marginBottom: '12px',
-                                border: '1px solid var(--border)'
-                            }}>
+                            <div className="su-facts">
                                 <div>
-                                    <div style={{ fontSize: '14px', color: 'var(--text)', marginBottom: '4px', fontWeight: '600' }}>Cost</div>
-                                    <div style={{ fontSize: '18px', fontWeight: '700', color: 'var(--text)' }}>{formatMoney(monthlyAmount)}</div>
-                                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '600' }}>/month</div>
+                                    <div className="su-fact-label">Cost</div>
+                                    <div className="su-fact-value big">{formatMoney(monthlyAmount)}</div>
+                                    <div className="su-fact-sub">/month</div>
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '14px', color: 'var(--text)', marginBottom: '4px', fontWeight: '600' }}>Category</div>
-                                    <div style={{ fontSize: '15px', fontWeight: '700', color: 'var(--text)' }}>{subscription.category}</div>
+                                    <div className="su-fact-label">Category</div>
+                                    <div className="su-fact-value">{subscription.category}</div>
                                 </div>
                                 <div>
-                                    <div style={{ fontSize: '14px', color: 'var(--text)', marginBottom: '4px', fontWeight: '600' }}>Next Renewal</div>
-                                    <div style={{ fontSize: '15px', fontWeight: '700', color: dueStatus.overdue ? '#ef4444' : 'var(--text)' }}>{formatDate(subscription.nextPayment)}</div>
-                                    <div style={{ fontSize: '12px', fontWeight: 600, color: dueStatus.color, marginTop: '2px' }}>{dueStatus.label}</div>
+                                    <div className="su-fact-label">Next Renewal</div>
+                                    <div className="su-fact-value" style={{ color: dueStatus.overdue ? '#ef4444' : undefined }}>{formatDate(subscription.nextPayment)}</div>
+                                    <div className="su-fact-sub" style={{ color: dueStatus.color }}>{dueStatus.label}</div>
                                 </div>
                             </div>
 
                             {/* AI Insight Card - Feature 3 */}
-                            <div style={{
-                                background: '#eff6ff',
-                                border: '1px solid #bfdbfe',
-                                padding: '12px',
-                                borderRadius: '8px',
-                                marginBottom: '12px',
-                                color: '#1e40af',
-                                fontSize: '13px'
-                            }}>
+                            <div className="su-insight">
                                 <strong>AI Insight:</strong> {insight}
                             </div>
 
                             {/* Impact Summary - Feature 9 */}
-                            <div style={{
-                                background: '#f0fdf4',
-                                border: '1px solid #bbf7d0',
-                                padding: '12px',
-                                borderRadius: '8px',
-                                marginBottom: '12px',
-                                fontSize: '13px',
-                                color: '#166534'
-                            }}>
-                                <strong>If you cancel:</strong><br />
-                                • Save {formatMoney(monthlyAmount)}/month<br />
-                                {monthlyIncome && <>• Frees up {((monthlyAmount / monthlyIncome) * 100).toFixed(1)}% of your monthly income<br /></>}
-                                • Annual savings: {formatMoney((monthlyAmount * 12))}
+                            <div className="su-impact">
+                                <strong>If you cancel:</strong>
+                                <ul>
+                                    <li>Save {formatMoney(monthlyAmount)}/month</li>
+                                    {monthlyIncome && <li>Frees up {((monthlyAmount / monthlyIncome) * 100).toFixed(1)}% of your monthly income</li>}
+                                    <li>Annual savings: {formatMoney((monthlyAmount * 12))}</li>
+                                </ul>
                             </div>
 
                             {/* Action Buttons */}
-                            <div style={{
-                                display: 'flex',
-                                gap: '8px',
-                                flexWrap: 'wrap'
-                            }}>
-                                <button 
-                                    style={{
-                                        flex: '1',
-                                        minWidth: '120px',
-                                        padding: '10px 12px',
-                                        background: '#3b82f6',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '6px',
-                                        cursor: 'pointer',
-                                        fontSize: '13px',
-                                        fontWeight: '500'
-                                    }}
-                                    onClick={() => handleFindAlternative(subscription)}
-                                >
+                            <div className="su-actions">
+                                <button className="btn-primary btn-sm" onClick={() => handleFindAlternative(subscription)}>
                                     View Alternatives
                                 </button>
-                                <button 
-                                    style={{
-                                        flex: '1',
-                                        minWidth: '120px',
-                                        padding: '10px 12px',
-                                        background: '#f97316',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '6px',
-                                        cursor: 'pointer',
-                                        fontSize: '13px',
-                                        fontWeight: '500'
-                                    }}
-                                    onClick={() => notify.info('Downgrade is coming soon.')}
-                                >
+                                <button className="btn-secondary btn-sm" onClick={() => notify.info('Downgrade is coming soon.')}>
                                     Downgrade
                                 </button>
-                                <button 
-                                    style={{
-                                        flex: '1',
-                                        minWidth: '120px',
-                                        padding: '10px 12px',
-                                        background: '#ef4444',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '6px',
-                                        cursor: 'pointer',
-                                        fontSize: '13px',
-                                        fontWeight: '500'
-                                    }}
-                                    onClick={() => handleCancelSubscription(subscription._id!)}
-                                >
+                                <button className="btn-secondary btn-sm" onClick={() => handleCancelSubscription(subscription._id!)}>
                                     Cancel
                                 </button>
                             </div>
-                        </div>
+                        </article>
                     );
                 })}
             </div>
@@ -785,126 +635,73 @@ export const SubscriptionsPage = () => {
 
             {/* Cancelled / dismissed subscriptions can be brought back */}
             {cancelledSubs.length > 0 && (
-                <div style={{
-                    background: 'var(--card)',
-                    border: '1px solid var(--border)',
-                    borderRadius: '12px',
-                    padding: '16px 20px',
-                    marginTop: '20px'
-                }}>
-                    <h3 style={{ margin: '0 0 12px 0', color: 'var(--text)', fontSize: '16px' }}>
+                <section className="su-panel su-cancelled">
+                    <h3 className="su-panel-title">
                         Cancelled Subscriptions ({cancelledSubs.length})
                     </h3>
                     {cancelledSubs.map(sub => (
-                        <div key={sub._id} style={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            gap: '12px',
-                            padding: '10px 0',
-                            borderTop: '1px solid var(--border)'
-                        }}>
+                        <div key={sub._id} className="su-cancelled-row">
                             <div>
-                                <div style={{ fontWeight: 600, color: 'var(--text)' }}>{sub.name}</div>
-                                <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                                <div className="su-cancelled-name">{sub.name}</div>
+                                <div className="su-cancelled-meta">
                                     {sub.provider} · {formatMoney(sub.amount)}/{sub.frequency === 'yearly' ? 'year' : 'month'}
                                     {sub.cancelledAt && ` · Cancelled ${formatDate(sub.cancelledAt)}`}
                                     {sub.cancelReason && ` · ${CANCEL_REASON_LABELS[sub.cancelReason] || sub.cancelReason}`}
                                 </div>
                             </div>
-                            <button
-                                className="btn-secondary"
-                                style={{ padding: '6px 14px', fontSize: '13px', whiteSpace: 'nowrap' }}
-                                onClick={() => handleRestoreSubscription(sub)}
-                            >
+                            <button className="btn-secondary su-restore-btn" onClick={() => handleRestoreSubscription(sub)}>
                                 Restore
                             </button>
                         </div>
                     ))}
-                </div>
+                </section>
             )}
 
             {/* Modal: Cheaper Alternatives - Feature 4 */}
             {showAlternativesModal && selectedSubscription && (
-                <div
-                    onClick={closeAlternativesModal}
-                    style={{
-                        position: 'fixed',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background: 'rgba(0,0,0,0.5)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 1000
-                    }}
-                >
+                <div className="su-overlay" onClick={closeAlternativesModal}>
                     <div
+                        className="gl-modal"
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="alternatives-title"
                         onClick={(e) => e.stopPropagation()}
-                        style={{
-                            background: 'var(--card)',
-                            borderRadius: '12px',
-                            padding: '24px',
-                            maxWidth: '500px',
-                            width: '90%',
-                            maxHeight: '80vh',
-                            overflow: 'auto'
-                        }}
                     >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '12px' }}>
-                            <h3 id="alternatives-title" style={{ margin: 0 }}>Cheaper Alternatives for {selectedSubscription.name}</h3>
-                            <button
-                                type="button"
-                                onClick={closeAlternativesModal}
-                                aria-label="Close"
-                                title="Close"
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    fontSize: '24px',
-                                    lineHeight: 1,
-                                    color: 'var(--text-muted)',
-                                    cursor: 'pointer',
-                                    padding: '0 4px'
-                                }}
-                            >
+                        <div className="gl-modal-head">
+                            <h2 id="alternatives-title">Cheaper Alternatives for {selectedSubscription.name}</h2>
+                            <button type="button" className="gl-modal-close" onClick={closeAlternativesModal} aria-label="Close" title="Close">
                                 ×
                             </button>
                         </div>
-                        
+
                         {(() => {
                             const insightData = selectedSubscription._id ? insightsMap[selectedSubscription._id] : null;
                             const alternatives = insightData ? (insightData.alternatives || []) : [];
-                            
+
                             return (
                                 <div>
                                     {alternatives.length > 0 ? (
                                         <div>
-                                            <div className="table-container" style={{ overflowX: 'auto', width: '100%', marginBottom: '16px' }}>
-                                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                            <div className="su-table-wrap">
+                                                <table className="su-table">
                                                     <thead>
-                                                        <tr style={{ borderBottom: '2px solid var(--border)' }}>
-                                                            <th style={{ textAlign: 'left', padding: '8px', fontWeight: '600' }}>Alternative</th>
-                                                            <th style={{ textAlign: 'center', padding: '8px', fontWeight: '600' }}>Price</th>
-                                                            <th style={{ textAlign: 'right', padding: '8px', fontWeight: '600' }}>Savings</th>
+                                                        <tr>
+                                                            <th>Alternative</th>
+                                                            <th className="center">Price</th>
+                                                            <th className="right">Savings</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         {alternatives.map((alt, idx) => (
-                                                            <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
-                                                                <td style={{ padding: '12px 8px' }}>
-                                                                    <div style={{ fontWeight: '500' }}>{alt.name}</div>
-                                                                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{alt.provider}</div>
+                                                            <tr key={idx}>
+                                                                <td>
+                                                                    <div className="su-alt-name">{alt.name}</div>
+                                                                    <div className="su-alt-provider">{alt.provider}</div>
                                                                 </td>
-                                                                <td style={{ textAlign: 'center', padding: '12px 8px', fontWeight: '600' }}>
+                                                                <td className="center strong">
                                                                     {formatMoney(alt.price)}
                                                                 </td>
-                                                                <td style={{ textAlign: 'right', padding: '12px 8px', fontWeight: '600', color: '#059669' }}>
+                                                                <td className="right strong su-saving">
                                                                     {alt.savings > 0 ? `+${formatMoney(alt.savings)}` : 'N/A'}
                                                                 </td>
                                                             </tr>
@@ -912,63 +709,28 @@ export const SubscriptionsPage = () => {
                                                     </tbody>
                                                 </table>
                                             </div>
-                            
-                                            <div style={{ display: 'flex', gap: '8px' }}>
-                                                <button
-                                                    style={{
-                                                        flex: 1,
-                                                        padding: '10px',
-                                                        background: '#3b82f6',
-                                                        color: 'white',
-                                                        border: 'none',
-                                                        borderRadius: '6px',
-                                                        cursor: 'pointer',
-                                                        fontWeight: '500'
-                                                    }}
-                                                    onClick={() => notify.info('Switch plan is coming soon.')}
-                                                >
-                                                    Switch Plan
-                                                </button>
-                                                <button
-                                                    style={{
-                                                        flex: 1,
-                                                        padding: '10px',
-                                                        background: 'var(--card-hover)',
-                                                        color: 'var(--text)',
-                                                        border: 'none',
-                                                        borderRadius: '6px',
-                                                        cursor: 'pointer',
-                                                        fontWeight: '500'
-                                                    }}
-                                                    onClick={closeAlternativesModal}
-                                                >
+
+                                            <div className="gl-modal-actions su-modal-actions">
+                                                <button className="btn-secondary" onClick={closeAlternativesModal}>
                                                     Close
+                                                </button>
+                                                <button className="btn-primary" onClick={() => notify.info('Switch plan is coming soon.')}>
+                                                    Switch Plan
                                                 </button>
                                             </div>
                                         </div>
                                     ) : (
                                         <div>
-                                            <p style={{ marginTop: 0 }}>
+                                            <p className="su-modal-text">
                                                 {insightsStatus === 'failed'
                                                     ? 'Cheaper alternatives could not be loaded right now. Please try again later.'
                                                     : 'No cheaper alternatives available at this time.'}
                                             </p>
-                                            <button
-                                                type="button"
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '10px',
-                                                    background: 'var(--card-hover)',
-                                                    color: 'var(--text)',
-                                                    border: '1px solid var(--border)',
-                                                    borderRadius: '6px',
-                                                    cursor: 'pointer',
-                                                    fontWeight: '500'
-                                                }}
-                                                onClick={closeAlternativesModal}
-                                            >
-                                                Close
-                                            </button>
+                                            <div className="gl-modal-actions su-modal-actions">
+                                                <button type="button" className="btn-secondary" onClick={closeAlternativesModal}>
+                                                    Close
+                                                </button>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
@@ -980,56 +742,29 @@ export const SubscriptionsPage = () => {
 
             {/* Modal: Cancel Subscription - Features 8 & 9 */}
             {showCancelModal && selectedSubscription && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background: 'rgba(0,0,0,0.5)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 1000
-                }}>
-                    <div style={{
-                        background: 'var(--card)',
-                        borderRadius: '12px',
-                        padding: '24px',
-                        maxWidth: '500px',
-                        width: '90%'
-                    }}>
-                        <h3 style={{ marginTop: '0' }}>Cancel {selectedSubscription.name}?</h3>
-                        
+                <div className="su-overlay">
+                    <div className="gl-modal gl-form" role="dialog" aria-modal="true" aria-labelledby="cancel-sub-title">
+                        <div className="gl-modal-head">
+                            <h2 id="cancel-sub-title">Cancel {selectedSubscription.name}?</h2>
+                        </div>
+
                         {/* Feature 9: Impact Summary */}
-                        <div style={{
-                            background: '#f0fdf4',
-                            border: '1px solid #bbf7d0',
-                            padding: '12px',
-                            borderRadius: '8px',
-                            marginBottom: '16px',
-                            fontSize: '13px',
-                            color: '#166534'
-                        }}>
-                            <strong>Cancelling this will:</strong><br />
-                            • Save {formatMoney((selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount))}/month<br />
-                            {monthlyIncome && <>• Free up {(((selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount) / monthlyIncome) * 100).toFixed(1)}% of your monthly income<br /></>}
-                            • Annual savings: {formatMoney(((selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount) * 12))}
+                        <div className="su-impact su-impact-modal">
+                            <strong>Cancelling this will:</strong>
+                            <ul>
+                                <li>Save {formatMoney((selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount))}/month</li>
+                                {monthlyIncome && <li>Free up {(((selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount) / monthlyIncome) * 100).toFixed(1)}% of your monthly income</li>}
+                                <li>Annual savings: {formatMoney(((selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount) * 12))}</li>
+                            </ul>
                         </div>
 
                         {/* Feature 8: Cancel Reason Tracking */}
-                        <div style={{ marginBottom: '16px' }}>
-                            <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Why are you cancelling? (optional)</label>
+                        <div className="form-group">
+                            <label htmlFor="cancel-reason">Why are you cancelling? (optional)</label>
                             <select
+                                id="cancel-reason"
                                 value={cancelReason}
                                 onChange={(e) => setCancelReason(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '8px',
-                                    border: '1px solid var(--border)',
-                                    borderRadius: '6px',
-                                    fontSize: '14px'
-                                }}
                             >
                                 <option value="">Select a reason...</option>
                                 <option value="too-expensive">Too expensive</option>
@@ -1040,33 +775,9 @@ export const SubscriptionsPage = () => {
                             </select>
                         </div>
 
-                        <div style={{ display: 'flex', gap: '8px' }}>
+                        <div className="gl-modal-actions su-modal-actions">
                             <button
-                                style={{
-                                    flex: 1,
-                                    padding: '10px',
-                                    background: '#ef4444',
-                                    color: 'white',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    cursor: 'pointer',
-                                    fontWeight: '500'
-                                }}
-                                onClick={confirmCancelSubscription}
-                            >
-                                Confirm Cancel
-                            </button>
-                            <button
-                                style={{
-                                    flex: 1,
-                                    padding: '10px',
-                                    background: 'var(--card-hover)',
-                                    color: 'var(--text)',
-                                    border: 'none',
-                                    borderRadius: '6px',
-                                    cursor: 'pointer',
-                                    fontWeight: '500'
-                                }}
+                                className="btn-secondary"
                                 onClick={() => {
                                     setShowCancelModal(false);
                                     setSelectedSubscription(null);
@@ -1074,6 +785,9 @@ export const SubscriptionsPage = () => {
                                 }}
                             >
                                 Keep Subscription
+                            </button>
+                            <button className="gl-delete-btn" onClick={confirmCancelSubscription}>
+                                Confirm Cancel
                             </button>
                         </div>
                     </div>

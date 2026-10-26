@@ -211,85 +211,81 @@ export const RecurringTransactionsPage = () => {
         <>
         <div className="page-container recurring-page">
             {/* Add Subscription Form */}
-            <div className="card" style={{ marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <h3 className="section-title" style={{ marginBottom: 0 }}>Add Subscription</h3>
-                    <button onClick={handleRunScan} className="action-btn secondary" disabled={isScanning} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'var(--primary-light)', color: 'var(--primary-color)', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold' }}>
-                        <span>🧠</span> {isScanning ? 'Scanning...' : 'Run AI Scan'}
+            <section className="rc-panel">
+                <div className="rc-panel-head">
+                    <h3 className="rc-panel-title">Add Subscription</h3>
+                    <button onClick={handleRunScan} className="rc-scan-btn" disabled={isScanning}>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" />
+                        </svg>
+                        {isScanning ? 'Scanning...' : 'Run AI Scan'}
                     </button>
                 </div>
-                <form onSubmit={handleAddSubscription} style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-                    <div className="form-group" style={{ flex: 1, minWidth: '150px', marginBottom: 0 }}>
-                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Provider</label>
-                        <input type="text" className="form-input" placeholder="e.g. Netflix" value={newProvider} onChange={(e) => setNewProvider(e.target.value)} />
+                <form onSubmit={handleAddSubscription} className="rc-form">
+                    <div className="rc-field">
+                        <label htmlFor="rcProvider">Provider</label>
+                        <input id="rcProvider" type="text" className="rc-input" placeholder="e.g. Netflix" value={newProvider} onChange={(e) => setNewProvider(e.target.value)} />
                     </div>
-                    <div className="form-group" style={{ flex: 1, minWidth: '150px', marginBottom: 0 }}>
-                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Name (Desc)</label>
-                        <input type="text" className="form-input" placeholder="e.g. Premium Plan" value={newName} onChange={(e) => setNewName(e.target.value)} />
+                    <div className="rc-field">
+                        <label htmlFor="rcName">Name (Desc)</label>
+                        <input id="rcName" type="text" className="rc-input" placeholder="e.g. Premium Plan" value={newName} onChange={(e) => setNewName(e.target.value)} />
                     </div>
-                    <div className="form-group" style={{ flex: 1, minWidth: '120px', marginBottom: 0 }}>
-                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Amount ({currencyCode()})</label>
-                        <input type="number" className="form-input" placeholder="0" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} />
+                    <div className="rc-field">
+                        <label htmlFor="rcAmount">Amount ({currencyCode()})</label>
+                        <input id="rcAmount" type="number" className="rc-input" placeholder="0" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} />
                     </div>
-                    <div className="form-group" style={{ flex: 1, minWidth: '120px', marginBottom: 0 }}>
-                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Category</label>
-                        <input type="text" className="form-input" placeholder="Entertainment" value={newCategory} onChange={(e) => setNewCategory(e.target.value)} />
+                    <div className="rc-field">
+                        <label htmlFor="rcCategory">Category</label>
+                        <input id="rcCategory" type="text" className="rc-input" placeholder="Entertainment" value={newCategory} onChange={(e) => setNewCategory(e.target.value)} />
                     </div>
-                    <div className="form-group" style={{ flex: 1, minWidth: '120px', marginBottom: 0 }}>
-                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Frequency</label>
-                        <select className="form-input" value={newFrequency} onChange={(e) => setNewFrequency(e.target.value as 'monthly' | 'yearly')}>
+                    <div className="rc-field">
+                        <label htmlFor="rcFrequency">Frequency</label>
+                        <select id="rcFrequency" className="rc-input rc-select" value={newFrequency} onChange={(e) => setNewFrequency(e.target.value as 'monthly' | 'yearly')}>
                             <option value="monthly">Monthly</option>
                             <option value="yearly">Yearly</option>
                         </select>
                     </div>
-                    <div className="form-group" style={{ flex: 1, minWidth: '120px', marginBottom: 0 }}>
-                        <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Next Due</label>
-                        <input type="date" className="form-input" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
+                    <div className="rc-field">
+                        <label htmlFor="rcDate">Next Due</label>
+                        <input id="rcDate" type="date" className="rc-input" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
                     </div>
-                    <button type="submit" className="action-btn primary" disabled={isAdding} style={{ height: '42px', padding: '0 24px' }}>
-                        {isAdding ? 'Adding...' : 'Add'}
-                    </button>
+                    <div className="rc-form-actions">
+                        <button type="submit" className="action-btn primary rc-add-btn" disabled={isAdding}>
+                            {isAdding ? 'Adding...' : 'Add'}
+                        </button>
+                    </div>
                 </form>
-            </div>
+            </section>
+
             {unconfirmedCount > 0 && (
-                <div className="rec-alert-banner" style={{ marginBottom: '1.5rem' }}>
-                    🔔 {unconfirmedCount} new pattern{unconfirmedCount > 1 ? 's' : ''} detected — review below
+                <div className="rc-banner" role="status">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+                    </svg>
+                    {unconfirmedCount} new pattern{unconfirmedCount > 1 ? 's' : ''} detected — review below
                 </div>
             )}
 
             {/* Summary */}
-            <div className="rec-summary-grid">
-                <div className="rec-stat-card">
-                    <div className="rec-stat-icon">🔄</div>
-                    <div>
-                        <div className="rec-stat-value">{items.filter(i => i.status !== 'dismissed').length}</div>
-                        <div className="rec-stat-label">Active Recurring</div>
-                    </div>
+            <div className="rc-stats">
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Active Recurring</span>
+                    <span className="rc-stat-value">{items.filter(i => i.status !== 'dismissed').length}</span>
                 </div>
-                <div className="rec-stat-card pending">
-                    <div className="rec-stat-icon">❓</div>
-                    <div>
-                        <div className="rec-stat-value">{unconfirmedCount}</div>
-                        <div className="rec-stat-label">Awaiting Review</div>
-                    </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Awaiting Review</span>
+                    <span className="rc-stat-value">{unconfirmedCount}</span>
                 </div>
-                <div className="rec-stat-card savings">
-                    <div className="rec-stat-icon">📅</div>
-                    <div>
-                        <div className="rec-stat-value">{dueSoon}</div>
-                        <div className="rec-stat-label">Due Within 7 Days</div>
-                    </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Due Within 7 Days</span>
+                    <span className="rc-stat-value">{dueSoon}</span>
                 </div>
-                <div className="rec-stat-card accepted">
-                    <div className="rec-stat-icon">💸</div>
-                    <div>
-                        <div className="rec-stat-value">{formatMoney(totalMonthly)}</div>
-                        <div className="rec-stat-label">Monthly Total</div>
-                    </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Monthly Total</span>
+                    <span className="rc-stat-value">{formatMoney(totalMonthly)}</span>
                 </div>
             </div>
-
-
 
             {/* Filter */}
             <div className="rec-filter-row">
@@ -306,39 +302,36 @@ export const RecurringTransactionsPage = () => {
             </div>
 
             {/* Recurring Items */}
-            <div className="recurring-list">
+            <div className="rc-list">
                 {filtered.map(item => {
                     const daysUntil = getDaysUntil(item.nextDueDate);
                     const isUrgent = daysUntil <= 7 && daysUntil >= 0;
                     return (
-                        <div key={item._id} className={`recurring-card ${item.status}`}>
-                            <div className="recurring-card-left">
-                                <div className="recurring-icon">{item.icon}</div>
-                                <div className="recurring-info">
-                                    <div className="recurring-name">{item.merchantName}</div>
+                        <article key={item._id} className={`rc-item ${item.status}`}>
+                            <div className="rc-item-main">
+                                <div className="rc-item-title">
+                                    <span className="rc-item-name">{item.merchantName}</span>
                                     {item.normalizedName && item.normalizedName !== item.merchantName && (
-                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                                            {item.normalizedName}
-                                        </div>
+                                        <span className="rc-item-provider">{item.normalizedName}</span>
                                     )}
-                                    <div className="recurring-meta">
-                                        <span className="recurring-category">{item.category}</span>
-                                        <span className="recurring-freq">{freqLabel[item.frequency]}</span>
-                                        <span className="recurring-account">{item.sourceAccount}</span>
-                                    </div>
-                                    <div className="recurring-dates">
-                                        <span>Last charged: {item.lastCharged}</span>
-                                        <span className={`next-due ${isUrgent || daysUntil < 0 ? 'urgent' : ''}`}>
-                                            Next: {item.nextDueDate} ({daysUntil > 0 ? `${daysUntil}d` : daysUntil === 0 ? 'Today' : `Overdue ${Math.abs(daysUntil)}d`})
-                                        </span>
-                                    </div>
+                                </div>
+                                <div className="rc-tags">
+                                    <span className="rc-tag">{item.category}</span>
+                                    <span className="rc-tag">{freqLabel[item.frequency]}</span>
+                                    <span className="rc-tag">{item.sourceAccount}</span>
+                                </div>
+                                <div className="rc-dates">
+                                    <span>Last charged: {item.lastCharged}</span>
+                                    <span className={`rc-next ${isUrgent || daysUntil < 0 ? 'urgent' : ''}`}>
+                                        Next: {item.nextDueDate} ({daysUntil > 0 ? `${daysUntil}d` : daysUntil === 0 ? 'Today' : `Overdue ${Math.abs(daysUntil)}d`})
+                                    </span>
                                 </div>
                             </div>
-                            <div className="recurring-card-right">
-                                <div className="recurring-amount">{formatMoney(item.amount)}</div>
-                                <div className="recurring-yearly">{formatMoney(item.totalPaidThisYear)} this year</div>
+                            <div className="rc-item-side">
+                                <div className="rc-amount">{formatMoney(item.amount)}</div>
+                                <div className="rc-yearly">{formatMoney(item.totalPaidThisYear)} this year</div>
                                 {item.status === 'unconfirmed' && (
-                                    <div className="recurring-actions">
+                                    <div className="rc-actions">
                                         <button className="rec-action-btn accept small" onClick={() => updateStatus(item._id, 'confirmed')}>
                                             Confirm
                                         </button>
@@ -351,9 +344,9 @@ export const RecurringTransactionsPage = () => {
                                     const days = getDaysUntil(item.nextDueDate);
                                     const alreadyPaid = days > 0;
                                     return (
-                                        <div className="recurring-actions">
+                                        <div className="rc-actions">
                                             {alreadyPaid ? (
-                                                <span style={{ fontSize: '0.78rem', fontWeight: 600, color: '#4ade80', background: 'rgba(74,222,128,0.12)', borderRadius: '8px', padding: '5px 10px', letterSpacing: '0.02em' }}>
+                                                <span className="rc-paid">
                                                     Paid — due in {days}d
                                                 </span>
                                             ) : (
@@ -368,7 +361,7 @@ export const RecurringTransactionsPage = () => {
                                     );
                                 })()}
                                 {item.status === 'dismissed' && (
-                                    <div className="recurring-actions">
+                                    <div className="rc-actions">
                                         <button className="rec-action-btn restore small" onClick={() => updateStatus(item._id, 'unconfirmed')}>
                                             Restore
                                         </button>
@@ -378,7 +371,7 @@ export const RecurringTransactionsPage = () => {
                                     </div>
                                 )}
                             </div>
-                        </div>
+                        </article>
                     );
                 })}
             </div>
@@ -386,37 +379,39 @@ export const RecurringTransactionsPage = () => {
 
         {confirmAction && (
             <div className="modal-overlay" onClick={() => setConfirmAction(null)}>
-                <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '420px' }}>
+                <div className="modal-content txn-confirm" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
                     <div className="modal-header">
                         <h2 className="modal-title">
                             {confirmAction.type === 'pay' ? 'Confirm Payment' : 'Delete Subscription'}
                         </h2>
-                        <button className="modal-close" onClick={() => setConfirmAction(null)}>×</button>
+                        <button className="modal-close" onClick={() => setConfirmAction(null)} aria-label="Close">×</button>
                     </div>
 
                     {confirmAction.type === 'pay' ? (
                         <>
-                            <div style={{ padding: '1.25rem 0', color: 'var(--color-text)' }}>
-                                <p style={{ marginBottom: '8px' }}>You are about to log a payment for:</p>
-                                <p style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '4px' }}>{confirmAction.name}</p>
-                                <p style={{ fontSize: '1.5rem', fontWeight: 800, margin: '8px 0' }}>{formatMoney((confirmAction.amount || 0))}</p>
-                                <p style={{ color: 'var(--color-text-muted, #aaa)', fontSize: '0.875rem' }}>
+                            <div className="rc-pay-summary">
+                                <p className="txn-confirm-text rc-pay-intro">You are about to log a payment for:</p>
+                                <div className="rc-pay-box">
+                                    <span className="rc-pay-name">{confirmAction.name}</span>
+                                    <span className="rc-pay-amount">{formatMoney((confirmAction.amount || 0))}</span>
+                                </div>
+                                <p className="rc-pay-date">
                                     Payment date: <strong>{confirmAction.date}</strong>
                                 </p>
                             </div>
-                            <div style={{ display: 'flex', gap: '1rem' }}>
-                                <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setConfirmAction(null)}>Cancel</button>
-                                <button className="btn-primary" style={{ flex: 1 }} onClick={() => handlePay(confirmAction!.id)}>Confirm Pay</button>
+                            <div className="txn-confirm-actions">
+                                <button className="btn-secondary" onClick={() => setConfirmAction(null)}>Cancel</button>
+                                <button className="btn-primary" onClick={() => handlePay(confirmAction!.id)}>Confirm Pay</button>
                             </div>
                         </>
                     ) : (
                         <>
-                            <div style={{ padding: '1rem 0 2rem 0', color: 'var(--color-text)' }}>
+                            <p className="txn-confirm-text">
                                 Are you sure you want to delete <strong>{confirmAction.name}</strong>? This action cannot be undone.
-                            </div>
-                            <div style={{ display: 'flex', gap: '1rem' }}>
-                                <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setConfirmAction(null)}>Cancel</button>
-                                <button className="btn-primary" style={{ flex: 1, background: 'linear-gradient(135deg, #ef4444, #dc2626)' }} onClick={() => handleDelete(confirmAction!.id)}>
+                            </p>
+                            <div className="txn-confirm-actions">
+                                <button className="btn-secondary" onClick={() => setConfirmAction(null)}>Cancel</button>
+                                <button className="btn-primary" style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }} onClick={() => handleDelete(confirmAction!.id)}>
                                     Delete
                                 </button>
                             </div>

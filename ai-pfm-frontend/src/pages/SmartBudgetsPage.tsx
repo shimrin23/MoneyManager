@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient, getApiErrorMessage } from '../api/client';
 import { notify, confirmDialog } from '../utils/systemMessages';
-import { IconDollarSign, IconBarChart, IconActivity, IconAlertTriangle, IconCheckCircle, IconTarget, IconBell, IconTrendingUp, IconTrendingDown, IconLightbulb } from '../components/Icons';
+import { IconAlertTriangle, IconCheckCircle, IconTarget, IconBell, IconTrendingUp, IconTrendingDown, IconLightbulb } from '../components/Icons';
 
 interface Budget {
     _id?: string;
@@ -211,45 +211,33 @@ export const SmartBudgetsPage = () => {
             <SpendingTrends />
 
             {/* Budget Summary */}
-            <div className="budget-summary">
-                <div className="summary-card">
-                    <div className="summary-icon"><IconDollarSign size={24} /></div>
-                    <div className="summary-content">
-                        <h3 className="metric-value">{formatMoney(totalIncome)}</h3>
-                        <p className="metric-label">{totalIncome > 0 ? 'Monthly Income' : 'No income recorded this month'}</p>
-                    </div>
+            <div className="sb-stats">
+                <div className="sb-stat">
+                    <span className="sb-stat-label">{totalIncome > 0 ? 'Monthly Income' : 'No income recorded this month'}</span>
+                    <span className="sb-stat-value">{formatMoney(totalIncome)}</span>
                 </div>
-                <div className="summary-card">
-                    <div className="summary-icon"><IconBarChart size={24} /></div>
-                    <div className="summary-content">
-                        <h3 className="metric-value">{formatMoney(totalAllocated)}</h3>
-                        <p className="metric-label">Total Budgeted</p>
-                    </div>
+                <div className="sb-stat">
+                    <span className="sb-stat-label">Total Budgeted</span>
+                    <span className="sb-stat-value">{formatMoney(totalAllocated)}</span>
                 </div>
-                <div className="summary-card">
-                    <div className="summary-icon"><IconActivity size={24} /></div>
-                    <div className="summary-content">
-                        <h3 className="metric-value">{totalIncome > 0 ? `${Math.round((totalAllocated / totalIncome) * 100)}%` : '—'}</h3>
-                        <p className="metric-label">Income Allocated</p>
-                    </div>
+                <div className="sb-stat">
+                    <span className="sb-stat-label">Income Allocated</span>
+                    <span className="sb-stat-value">{totalIncome > 0 ? `${Math.round((totalAllocated / totalIncome) * 100)}%` : '—'}</span>
                 </div>
-                <div className="summary-card warning">
-                    <div className="summary-icon"><IconAlertTriangle size={24} /></div>
-                    <div className="summary-content">
-                        <h3 className="metric-value">{overBudgetCount}</h3>
-                        <p className="metric-label">Over Budget Categories</p>
-                    </div>
+                <div className="sb-stat">
+                    <span className="sb-stat-label">Over Budget Categories</span>
+                    <span className="sb-stat-value">{overBudgetCount}</span>
                 </div>
             </div>
 
             {/* AI Budget Insights */}
-            <div className="card ai-insights">
-                <h3 className="section-title">AI Budget Insights</h3>
-                <div className="insights-grid">
+            <section className="sb-panel">
+                <h3 className="sb-panel-title">AI Budget Insights</h3>
+                <div className="sb-insights">
                     {budgets.filter(b => b.alertTriggered).map((budget) => (
-                        <div key={`alert-${budget._id}`} className="insight-item critical">
-                            <span className="insight-icon" style={{ display: 'flex', alignItems: 'center' }}><IconBell size={20} /></span>
-                            <div className="insight-content">
+                        <div key={`alert-${budget._id}`} className="sb-note bad">
+                            <span className="sb-note-icon"><IconBell size={18} /></span>
+                            <div className="sb-note-body">
                                 <h4>Budget Alert: {budget.category}</h4>
                                 <p>You have used {budget.percentageUsed}% of your {budget.category} budget (alert set at {budget.alertThreshold}%).</p>
                             </div>
@@ -258,200 +246,172 @@ export const SmartBudgetsPage = () => {
 
                     {budgets.filter(b => b.isOverBudget).length > 0 ? (
                         budgets.filter(b => b.isOverBudget).slice(0, 1).map((budget, idx) => (
-                            <div key={`critical-${idx}`} className="insight-item critical">
-                                <span className="insight-icon" style={{ display: 'flex', alignItems: 'center' }}><IconAlertTriangle size={20} /></span>
-                                <div className="insight-content">
+                            <div key={`critical-${idx}`} className="sb-note bad">
+                                <span className="sb-note-icon"><IconAlertTriangle size={18} /></span>
+                                <div className="sb-note-body">
                                     <h4>Critical: {budget.category} Overspend</h4>
                                     <p>{budget.aiRecommendation}</p>
+                                    <button className="sb-note-btn" onClick={() => navigate('/recommendations')}>
+                                        <IconTarget size={14} /> Fix Now
+                                    </button>
                                 </div>
-                                <button className="action-btn danger" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => navigate('/recommendations')}>
-                                    <IconTarget size={16} /> Fix Now
-                                </button>
                             </div>
                         ))
                     ) : (
-                        <div className="insight-item critical" style={{ opacity: 0.5 }}>
-                            <span className="insight-icon" style={{ display: 'flex', alignItems: 'center' }}><IconCheckCircle size={20} /></span>
-                            <div className="insight-content">
+                        <div className="sb-note good">
+                            <span className="sb-note-icon"><IconCheckCircle size={18} /></span>
+                            <div className="sb-note-body">
                                 <h4>No Critical Overspending</h4>
                                 <p>You have no categories currently over budget. Great job!</p>
                             </div>
                         </div>
                     )}
-                    
+
                     {budgets.filter(b => !b.isOverBudget && b.percentageUsed < 80).length > 0 ? (
                         budgets.filter(b => !b.isOverBudget && b.percentageUsed < 80).slice(0, 1).map((budget, idx) => (
-                            <div key={`success-${idx}`} className="insight-item success">
-                                <span className="insight-icon" style={{ display: 'flex', alignItems: 'center' }}><IconCheckCircle size={20} /></span>
-                                <div className="insight-content">
+                            <div key={`success-${idx}`} className="sb-note good">
+                                <span className="sb-note-icon"><IconCheckCircle size={18} /></span>
+                                <div className="sb-note-body">
                                     <h4>Good: {budget.category} Control</h4>
                                     <p>{budget.aiRecommendation}</p>
+                                    <button className="sb-note-btn" onClick={() => navigate('/')}>
+                                        <IconTrendingUp size={14} /> View Details
+                                    </button>
                                 </div>
-                                <button className="action-btn secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={() => navigate('/')}>
-                                    <IconTrendingUp size={16} /> View Details
-                                </button>
                             </div>
                         ))
                     ) : null}
                 </div>
-            </div>
+            </section>
 
             {/* Budget Categories */}
-            <div className="budgets-list">
-                {budgets.map((budget) => (
-                    <div key={budget._id} className={`budget-card ${budget.isOverBudget ? 'over-budget' : ''}`}>
-                        <div className="budget-header">
-                            <h4 className="section-title">{budget.category}</h4>
-                            <div className="budget-status">
-                                {budget.isOverBudget ? (
-                                    <span className="status-badge danger">Over Budget</span>
-                                ) : budget.percentageUsed > 80 ? (
-                                    <span className="status-badge warning">Almost Full</span>
-                                ) : (
-                                    <span className="status-badge success">On Track</span>
-                                )}
+            <div className="sb-grid">
+                {budgets.map((budget) => {
+                    const tone = budget.isOverBudget ? 'bad' : budget.percentageUsed > 80 ? 'warn' : 'good';
+                    return (
+                    <article key={budget._id} className={`sb-card ${budget.isOverBudget ? 'over-budget' : ''}`}>
+                        <div className="sb-card-head">
+                            <div className="sb-card-name">
+                                <h4>{budget.category}</h4>
                             </div>
+                            {budget.isOverBudget ? (
+                                <span className="sb-pill bad">Over Budget</span>
+                            ) : budget.percentageUsed > 80 ? (
+                                <span className="sb-pill warn">Almost Full</span>
+                            ) : (
+                                <span className="sb-pill good">On Track</span>
+                            )}
                         </div>
 
-                        <div className="budget-progress">
-                            <div className="progress-bar">
-                                <div
-                                    className={`progress-fill ${budget.isOverBudget ? 'over' : ''}`}
-                                    style={{ width: `${Math.min(budget.percentageUsed, 100)}%` }}
-                                ></div>
-                                {budget.percentageUsed > 100 && (
-                                    <div
-                                        className="progress-overflow"
-                                        style={{ width: `${budget.percentageUsed - 100}%` }}
-                                    ></div>
-                                )}
-                            </div>
-                            <div className="progress-text">
-                                <span className="spent">{formatMoney(budget.spentAmount)}</span>
-                                <span className="total">/ {formatMoney(budget.allocatedAmount)}</span>
-                                <span className={`percentage ${budget.isOverBudget ? 'over' : ''}`}>
-                                    {budget.percentageUsed}%
-                                </span>
-                            </div>
+                        <div className="sb-amounts">
+                            <span className="sb-spent">{formatMoney(budget.spentAmount)}</span>
+                            <span className="sb-total">/ {formatMoney(budget.allocatedAmount)}</span>
                         </div>
 
-                        <div className="budget-details">
-                            <div className="remaining">
-                                <span className={budget.remainingAmount >= 0 ? 'positive' : 'negative'}>
-                                    {budget.remainingAmount >= 0 ? 'Remaining' : 'Over by'}:
-                                    {formatMoney(Math.abs(budget.remainingAmount))}
-                                </span>
-                            </div>
-                            <div className="trends">
-                                <span className={`trend ${budget.trends.change > 0 ? 'up' : 'down'}`} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                    {budget.trends.change > 0 ? <IconTrendingUp size={14} /> : <IconTrendingDown size={14} />}
-                                    {Math.abs(budget.trends.change).toFixed(1)}% vs last month
-                                </span>
-                            </div>
+                        <div className="sb-bar">
+                            <span className={tone} style={{ width: `${Math.min(budget.percentageUsed, 100)}%` }} />
+                        </div>
+
+                        <div className="sb-row">
+                            <span>{budget.percentageUsed}%</span>
+                            <span>
+                                {budget.remainingAmount >= 0 ? 'Remaining' : 'Over by'}: {formatMoney(Math.abs(budget.remainingAmount))}
+                            </span>
+                        </div>
+
+                        <div className="sb-meta">
+                            <span className={`sb-trend ${budget.trends.change > 0 ? 'up' : 'down'}`}>
+                                {budget.trends.change > 0 ? <IconTrendingUp size={14} /> : <IconTrendingDown size={14} />}
+                                {Math.abs(budget.trends.change).toFixed(1)}% vs last month
+                            </span>
                             {budget.alertThreshold != null && (
-                                <span className={`status-badge ${budget.alertTriggered ? 'danger' : 'warning'}`} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <span className={`sb-pill ${budget.alertTriggered ? 'bad' : 'warn'}`}>
                                     <IconBell size={12} /> Alert at {budget.alertThreshold}%
                                 </span>
                             )}
                         </div>
 
-                        <div className="ai-recommendation">
-                            <p style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><IconLightbulb size={16} /> <strong>AI Recommendation:</strong> {budget.aiRecommendation}</p>
+                        <div className="sb-ai">
+                            <span className="sb-ai-icon"><IconLightbulb size={16} /></span>
+                            <p><strong>AI Recommendation:</strong> {budget.aiRecommendation}</p>
                         </div>
 
-                        <div className="budget-actions">
-                            <button
-                                className="action-btn primary"
-                                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-                                onClick={() => handleOptimizeBudget(budget.category)}
-                            >
+                        <div className="sb-actions">
+                            <button className="action-btn primary" onClick={() => handleOptimizeBudget(budget.category)}>
                                 <IconTarget size={16} /> Optimize
                             </button>
-                            <button
-                                className="action-btn secondary"
-                                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-                                onClick={() => handleSetAlert(budget)}
-                            >
+                            <button className="action-btn secondary" onClick={() => handleSetAlert(budget)}>
                                 <IconBell size={16} /> {budget.alertThreshold != null ? 'Edit Alert' : 'Set Alert'}
                             </button>
                         </div>
-                    </div>
-                ))}
+                    </article>
+                    );
+                })}
             </div>
             </>
             )}
 
             {activeTab === 'planner' && (
                 <div className="planner-tab-content">
-                    <h3 className="section-title">The Big Picture</h3>
-                    <div className="budget-summary" style={{ marginBottom: '32px' }}>
-                        <div className="summary-card">
-                            <div className="summary-icon"><IconDollarSign size={24} /></div>
-                            <div className="summary-content">
-                                <h3 className="metric-value">{formatMoney(totalIncome)}</h3>
-                                <p className="metric-label">Total Income</p>
+                    <section className="sb-panel">
+                        <h3 className="sb-panel-title">The Big Picture</h3>
+                        <div className="sb-stats sb-stats-3">
+                            <div className="sb-stat">
+                                <span className="sb-stat-label">Total Income</span>
+                                <span className="sb-stat-value">{formatMoney(totalIncome)}</span>
+                            </div>
+                            <div className="sb-stat">
+                                <span className="sb-stat-label">Total Allocated</span>
+                                <span className="sb-stat-value">{formatMoney(totalAllocated)}</span>
+                            </div>
+                            <div className="sb-stat">
+                                <span className="sb-stat-label">Unallocated Cash</span>
+                                <span className="sb-stat-value">{formatMoney((totalIncome - totalAllocated))}</span>
                             </div>
                         </div>
-                        <div className="summary-card">
-                            <div className="summary-icon"><IconBarChart size={24} /></div>
-                            <div className="summary-content">
-                                <h3 className="metric-value">{formatMoney(totalAllocated)}</h3>
-                                <p className="metric-label">Total Allocated</p>
-                            </div>
-                        </div>
-                        <div className={`summary-card ${(totalIncome - totalAllocated) < 0 ? 'warning' : ''}`}>
-                            <div className="summary-icon">
-                                {(totalIncome - totalAllocated) < 0 ? <IconAlertTriangle size={24} /> : <IconCheckCircle size={24} />}
-                            </div>
-                            <div className="summary-content">
-                                <h3 className="metric-value" style={{ color: (totalIncome - totalAllocated) < 0 ? 'var(--danger)' : 'var(--success)' }}>
-                                    {formatMoney((totalIncome - totalAllocated))}
-                                </h3>
-                                <p className="metric-label">Unallocated Cash</p>
-                            </div>
-                        </div>
-                    </div>
+                    </section>
 
-                    <div className="card" style={{ marginBottom: '32px' }}>
-                        <h3 className="section-title">Add New Category</h3>
-                        <form onSubmit={handleAddCategory} style={{ display: 'flex', gap: '16px', alignItems: 'flex-end' }}>
-                            <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
-                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Category Name</label>
-                                <input 
-                                    type="text" 
-                                    className="form-input" 
-                                    placeholder="e.g. Vacation, Gifts" 
-                                    value={newCategoryName} 
-                                    onChange={(e) => setNewCategoryName(e.target.value)} 
+                    <section className="sb-panel">
+                        <h3 className="sb-panel-title">Add New Category</h3>
+                        <form onSubmit={handleAddCategory} className="sb-form">
+                            <div className="sb-field">
+                                <label htmlFor="sbCatName">Category Name</label>
+                                <input
+                                    id="sbCatName"
+                                    type="text"
+                                    className="sb-input"
+                                    placeholder="e.g. Vacation, Gifts"
+                                    value={newCategoryName}
+                                    onChange={(e) => setNewCategoryName(e.target.value)}
                                 />
                             </div>
-                            <div className="form-group" style={{ flex: 1, marginBottom: 0 }}>
-                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Budget Limit ({currencyCode()})</label>
-                                <input 
-                                    type="number" 
-                                    className="form-input" 
-                                    placeholder="0" 
-                                    value={newCategoryAmount} 
-                                    onChange={(e) => setNewCategoryAmount(e.target.value)} 
+                            <div className="sb-field">
+                                <label htmlFor="sbCatLimit">Budget Limit ({currencyCode()})</label>
+                                <input
+                                    id="sbCatLimit"
+                                    type="number"
+                                    className="sb-input"
+                                    placeholder="0"
+                                    value={newCategoryAmount}
+                                    onChange={(e) => setNewCategoryAmount(e.target.value)}
                                 />
                             </div>
-                            <button type="submit" className="action-btn primary" disabled={isAdding} style={{ height: '42px', padding: '0 24px' }}>
+                            <button type="submit" className="action-btn primary sb-form-btn" disabled={isAdding}>
                                 {isAdding ? 'Adding...' : 'Add Budget'}
                             </button>
                         </form>
-                    </div>
+                    </section>
 
-                    <div className="card">
-                        <h3 className="section-title">Manage Allocations</h3>
-                        <div className="insights-grid">
+                    <section className="sb-panel">
+                        <h3 className="sb-panel-title">Manage Allocations</h3>
+                        <div className="sb-alloc-list">
                             {budgets.map(budget => (
-                                <div key={`manage-${budget._id}`} className="insight-item">
-                                    <span className="insight-icon" style={{ display: 'flex', alignItems: 'center' }}><IconTarget size={20} /></span>
-                                    <div className="insight-content">
+                                <div key={`manage-${budget._id}`} className="sb-alloc-row">
+                                    <div className="sb-alloc-info">
                                         <h4>{budget.category}</h4>
-                                        <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)' }}>Limit: {formatMoney(budget.allocatedAmount)}</p>
+                                        <p>Limit: {formatMoney(budget.allocatedAmount)}</p>
                                     </div>
-                                    <div style={{ display: 'flex', gap: '8px' }}>
+                                    <div className="sb-alloc-actions">
                                         <button className="action-btn secondary" onClick={() => handleEditClick(budget)}>
                                             Edit Limit
                                         </button>
@@ -462,7 +422,7 @@ export const SmartBudgetsPage = () => {
                                 </div>
                             ))}
                         </div>
-                    </div>
+                    </section>
                 </div>
             )}
 

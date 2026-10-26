@@ -225,8 +225,8 @@ export const GoalsPage = () => {
             </div>
 
             {showForm && (
-                <div className="card form-card">
-                    <h3>Create New Financial Goal</h3>
+                <div className="card form-card gl-form">
+                    <h3 className="gl-form-title">Create New Financial Goal</h3>
                     <form onSubmit={handleCreateGoal} className="goal-form">
                         <div className="form-row">
                             <div className="form-group">
@@ -283,80 +283,70 @@ export const GoalsPage = () => {
                 </div>
             )}
 
-            <div className="goals-grid">
+            <div className="goals-grid gl-grid">
                 {goals.map((goal) => {
                     const progress = getProgressPercentage(goal.currentAmount, goal.targetAmount);
                     const riskStatus = getGoalRiskStatus(goal);
                     const monthlyRequired = getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline);
 
                     return (
-                        <div key={goal._id} className="card goal-card">
-                            <div className="goal-header">
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span style={{ display: 'flex', alignItems: 'center' }}>{getCategoryIcon(goal.category)}</span>
-                                    <div>
-                                        <h3 style={{ margin: 0 }}>{goal.title}</h3>
-                                        {goal.priority && <small style={{ color: 'var(--text-muted)' }}>Priority: {goal.priority}</small>}
+                        <article key={goal._id} className="gl-card">
+                            <div className="gl-head">
+                                <div className="gl-head-main">
+                                    <span className="gl-icon">{getCategoryIcon(goal.category)}</span>
+                                    <div className="gl-head-text">
+                                        <h3>{goal.title}</h3>
+                                        {goal.priority && <span className="gl-sub">Priority: {goal.priority}</span>}
                                     </div>
                                 </div>
-                                <span className={`status-badge ${goal.status.toLowerCase().replace(' ', '-')}`}>
+                                <span className={`gl-pill ${goal.status.toLowerCase().replace(' ', '-')}`}>
                                     {goal.status}
                                 </span>
                             </div>
-                            
-                            <div className="goal-progress">
-                                <div className="progress-info">
-                                    <span>{formatCurrency(goal.currentAmount)}</span>
-                                    <span>{formatCurrency(goal.targetAmount)}</span>
+
+                            <div className="gl-progress">
+                                <div className="gl-amounts">
+                                    <span className="gl-current">{formatCurrency(goal.currentAmount)}</span>
+                                    <span className="gl-target">{formatCurrency(goal.targetAmount)}</span>
                                 </div>
-                                <div className="progress-bar">
-                                    <div 
-                                        className="progress-fill"
-                                        style={{ 
-                                            width: `${progress}%`,
-                                            backgroundColor: riskStatus.color,
-                                            transition: 'width 0.3s ease'
-                                        }}
-                                    ></div>
+                                <div className="gl-bar">
+                                    <span style={{ width: `${progress}%`, backgroundColor: riskStatus.color }} />
                                 </div>
-                                <div className="progress-details">
+                                <div className="gl-row">
                                     <span>{progress.toFixed(1)}% Complete</span>
-                                    <span className="deadline">{getDaysRemaining(goal.deadline)}</span>
+                                    <span>{getDaysRemaining(goal.deadline)}</span>
                                 </div>
                             </div>
 
                             {/* Smart Goal Metrics */}
-                            <div style={{
-                                backgroundColor: 'var(--card-hover)',
-                                padding: '12px',
-                                borderRadius: '6px',
-                                marginBottom: '12px',
-                                fontSize: '14px'
-                            }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                    <span style={{ color: 'var(--text)', fontWeight: '600' }}><strong>Monthly Required:</strong> {formatCurrency(monthlyRequired)}</span>
-                                    <span style={{ color: riskStatus.color, fontWeight: '600' }}><strong>{riskStatus.icon} Status:</strong> {riskStatus.status}</span>
+                            <div className="gl-kv">
+                                <div>
+                                    <span>Monthly Required:</span>
+                                    <span>{formatCurrency(monthlyRequired)}</span>
                                 </div>
-                                <div style={{ color: 'var(--text-muted)', fontSize: '13px', fontWeight: '500' }}>
-                                    📅 {formatDate(goal.deadline)}
+                                <div>
+                                    <span>Status:</span>
+                                    <span style={{ color: riskStatus.color }}>{riskStatus.status}</span>
+                                </div>
+                                <div>
+                                    <span className="gl-date-icon" aria-hidden="true">
+                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                            <rect x="3" y="4" width="18" height="18" rx="2" />
+                                            <path d="M16 2v4M8 2v4M3 10h18" />
+                                        </svg>
+                                    </span>
+                                    <span>{formatDate(goal.deadline)}</span>
                                 </div>
                             </div>
 
                             {/* AI Suggestion Box */}
-                            <div style={{
-                                backgroundColor: '#eff6ff',
-                                border: '1px solid #bfdbfe',
-                                padding: '10px',
-                                borderRadius: '6px',
-                                marginBottom: '12px',
-                                fontSize: '13px',
-                                color: '#1e40af'
-                            }}>
-                                🤖 {getAISuggestion(goal)}
+                            <div className="gl-ai">
+                                <span className="gl-ai-icon"><IconLightbulb size={16} /></span>
+                                <p>{getAISuggestion(goal)}</p>
                             </div>
-                            
-                            <div className="goal-actions">
-                                <button 
+
+                            <div className="gl-actions">
+                                <button
                                     className="btn-secondary btn-sm"
                                     onClick={() => {
                                         setEditingGoal({ ...goal, targetAmount: fromLkr(goal.targetAmount), currentAmount: fromLkr(goal.currentAmount) });
@@ -365,14 +355,14 @@ export const GoalsPage = () => {
                                 >
                                     Edit
                                 </button>
-                                <button 
+                                <button
                                     className="btn-primary btn-sm"
                                     onClick={() => handleContributionClick(goal, monthlyRequired)}
                                 >
                                     Add Contribution
                                 </button>
                             </div>
-                        </div>
+                        </article>
                     );
                 })}
             </div>
@@ -402,26 +392,14 @@ export const GoalsPage = () => {
                     justifyContent: 'center',
                     zIndex: 1000
                 }}>
-                    <div style={{
-                        backgroundColor: 'var(--card)',
-                        borderRadius: '12px',
-                        padding: '24px',
-                        maxWidth: '600px',
-                        width: '90%',
-                        maxHeight: '90vh',
-                        overflowY: 'auto',
-                        boxShadow: '0 20px 60px rgba(0,0,0,0.3)'
-                    }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                            <h2 style={{ margin: 0 }}>Edit Goal Details</h2>
-                            <button 
+                    <div className="gl-form gl-modal" role="dialog" aria-modal="true" aria-labelledby="gl-edit-title">
+                        <div className="gl-modal-head">
+                            <h2 id="gl-edit-title">Edit Goal Details</h2>
+                            <button
+                                type="button"
+                                className="gl-modal-close"
                                 onClick={() => setShowDetailsModal(false)}
-                                style={{
-                                    background: 'none',
-                                    border: 'none',
-                                    fontSize: '24px',
-                                    cursor: 'pointer'
-                                }}
+                                aria-label="Close"
                             >
                                 ✕
                             </button>
@@ -472,7 +450,6 @@ export const GoalsPage = () => {
                                     value={editingGoal.description || ''}
                                     onChange={(e) => setEditingGoal({...editingGoal, description: e.target.value})}
                                     placeholder="Why is this goal important to you?"
-                                    style={{ minHeight: '80px', padding: '8px', borderRadius: '6px', border: '1px solid var(--border)' }}
                                 />
                             </div>
 
@@ -496,46 +473,43 @@ export const GoalsPage = () => {
                                 </div>
                             </div>
 
-                            <div className="form-group" style={{ marginBottom: '16px' }}>
-                                <DatePicker
-                                    label="Target Deadline"
-                                    value={editingGoal.deadline}
-                                    onChange={(date) => setEditingGoal({...editingGoal, deadline: date})}
-                                    required
-                                    minDate={getLocalDateString()}
-                                />
-                            </div>
+                            <div className="form-row">
+                                <div className="form-group">
+                                    <DatePicker
+                                        label="Target Deadline"
+                                        value={editingGoal.deadline}
+                                        onChange={(date) => setEditingGoal({...editingGoal, deadline: date})}
+                                        required
+                                        minDate={getLocalDateString()}
+                                    />
+                                </div>
 
-                            <div className="form-group" style={{ marginBottom: '20px' }}>
-                                <label>Status</label>
-                                <select
-                                    value={editingGoal.status}
-                                    onChange={(e) => setEditingGoal({...editingGoal, status: e.target.value as 'In Progress' | 'Completed' | 'Paused'})}
-                                >
-                                    <option>In Progress</option>
-                                    <option>Paused</option>
-                                    <option>Completed</option>
-                                </select>
+                                <div className="form-group">
+                                    <label>Status</label>
+                                    <select
+                                        value={editingGoal.status}
+                                        onChange={(e) => setEditingGoal({...editingGoal, status: e.target.value as 'In Progress' | 'Completed' | 'Paused'})}
+                                    >
+                                        <option>In Progress</option>
+                                        <option>Paused</option>
+                                        <option>Completed</option>
+                                    </select>
+                                </div>
                             </div>
 
                             {/* AI Insights Section */}
-                            <div style={{
-                                backgroundColor: '#eff6ff',
-                                border: '1px solid #bfdbfe',
-                                padding: '16px',
-                                borderRadius: '8px',
-                                marginBottom: '20px'
-                            }}>
-                                <h4 style={{ margin: '0 0 12px 0', color: '#1e40af' }}>🤖 AI Insights</h4>
-                                <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#1e40af' }}>
-                                    {getAISuggestion(editingGoal)}
-                                </p>
-                                <p style={{ margin: '8px 0 0 0', fontSize: '13px', color: '#1e40af' }}>
-                                    Monthly Savings Required: <strong>{formatCurrency(getMonthlyRequired(editingGoal.targetAmount, editingGoal.currentAmount, editingGoal.deadline))}</strong>
-                                </p>
+                            <div className="gl-insight">
+                                <span className="gl-ai-icon"><IconLightbulb size={16} /></span>
+                                <div>
+                                    <h4>AI Insights</h4>
+                                    <p>{getAISuggestion(editingGoal)}</p>
+                                    <p>
+                                        Monthly Savings Required: <strong>{formatCurrency(getMonthlyRequired(editingGoal.targetAmount, editingGoal.currentAmount, editingGoal.deadline))}</strong>
+                                    </p>
+                                </div>
                             </div>
 
-                            <div style={{ display: 'flex', gap: '12px' }}>
+                            <div className="gl-modal-actions">
                                 <button 
                                     type="button" 
                                     className="btn-secondary"
@@ -548,15 +522,7 @@ export const GoalsPage = () => {
                                 </button>
                                 <button 
                                     type="button"
-                                    className="btn-danger"
-                                    style={{ 
-                                        backgroundColor: '#ef4444',
-                                        color: 'white',
-                                        padding: '8px 16px',
-                                        border: 'none',
-                                        borderRadius: '6px',
-                                        cursor: 'pointer'
-                                    }}
+                                    className="btn-danger gl-delete-btn"
                                     onClick={() => {
                                         if (editingGoal._id) {
                                             handleDeleteGoal(editingGoal._id);
@@ -565,7 +531,7 @@ export const GoalsPage = () => {
                                 >
                                     Delete
                                 </button>
-                                <button type="submit" className="btn-primary" style={{ marginLeft: 'auto' }}>
+                                <button type="submit" className="btn-primary gl-save-btn">
                                     Save Changes
                                 </button>
                             </div>

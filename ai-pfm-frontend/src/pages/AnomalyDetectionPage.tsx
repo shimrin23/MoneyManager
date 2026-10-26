@@ -22,14 +22,6 @@ interface AnomalyAlert {
     detectedReason: string;
 }
 
-const typeIcons: Record<AnomalyType, string> = {
-    duplicate: '🔁',
-    spike: '📈',
-    'unusual-merchant': '🏪',
-    'unusual-time': '🌙',
-    'geo-mismatch': '📍'
-};
-
 const apiErrorMessage = (err: unknown, fallback: string) =>
     (axios.isAxiosError(err) && err.response?.data?.error) || fallback;
 
@@ -56,8 +48,8 @@ const typeLabels: Record<AnomalyType, string> = {
 export const AnomalyDetectionPage = () => {
     const [anomalies, setAnomalies] = useState<AnomalyAlert[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filter, setFilter] = useState<'all' | 'open' | 'reviewed-safe' | 'reviewed-fraud' | 'dismissed'>('all');
     const [expanded, setExpanded] = useState<string | null>(null);
+    const [filter, setFilter] = useState<'all' | 'open' | 'reviewed-safe' | 'reviewed-fraud' | 'dismissed'>('all');
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -102,47 +94,39 @@ export const AnomalyDetectionPage = () => {
                     <p className="page-subtitle">AI-flagged unusual spending patterns and suspicious transactions</p>
                 </div>
                 {openCount > 0 && (
-                    <div className="rec-alert-banner danger">
-                         {openCount} open alert{openCount > 1 ? 's' : ''} need{openCount === 1 ? 's' : ''} your review
+                    <div className="rec-alert-banner danger an-banner" role="status">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
+                            <path d="M12 9v4M12 17h.01" />
+                        </svg>
+                        {openCount} open alert{openCount > 1 ? 's' : ''} need{openCount === 1 ? 's' : ''} your review
                     </div>
                 )}
             </div>
 
             {error && (
                 <div className="alert-error" style={{ marginBottom: '1.5rem' }}>
-                    ⚠️ {error}
+                    {error}
                 </div>
             )}
 
             {/* Summary */}
-            <div className="rec-summary-grid">
-                <div className="rec-stat-card">
-                    <div className="rec-stat-icon">🚩</div>
-                    <div>
-                        <div className="rec-stat-value">{anomalies.length}</div>
-                        <div className="rec-stat-label">Total Flagged</div>
-                    </div>
+            <div className="an-stats">
+                <div className="an-stat">
+                    <div className="an-stat-label">Total Flagged</div>
+                    <div className="an-stat-value">{anomalies.length}</div>
                 </div>
-                <div className="rec-stat-card pending" style={{ '--accent-color': '#ef4444' } as React.CSSProperties}>
-                    <div className="rec-stat-icon">⚠️</div>
-                    <div>
-                        <div className="rec-stat-value">{highRisk}</div>
-                        <div className="rec-stat-label">High Risk Open</div>
-                    </div>
+                <div className="an-stat">
+                    <div className="an-stat-label">High Risk Open</div>
+                    <div className="an-stat-value">{highRisk}</div>
                 </div>
-                <div className="rec-stat-card pending">
-                    <div className="rec-stat-icon">⏳</div>
-                    <div>
-                        <div className="rec-stat-value">{openCount}</div>
-                        <div className="rec-stat-label">Awaiting Review</div>
-                    </div>
+                <div className="an-stat">
+                    <div className="an-stat-label">Awaiting Review</div>
+                    <div className="an-stat-value">{openCount}</div>
                 </div>
-                <div className="rec-stat-card accepted">
-                    <div className="rec-stat-icon">✅</div>
-                    <div>
-                        <div className="rec-stat-value">{anomalies.filter(a => a.status === 'reviewed-safe').length}</div>
-                        <div className="rec-stat-label">Marked Safe</div>
-                    </div>
+                <div className="an-stat">
+                    <div className="an-stat-label">Marked Safe</div>
+                    <div className="an-stat-value">{anomalies.filter(a => a.status === 'reviewed-safe').length}</div>
                 </div>
             </div>
 
@@ -171,7 +155,6 @@ export const AnomalyDetectionPage = () => {
                         <div key={anomaly._id} className={`anomaly-card ${anomaly.status}`}>
                             <div className="anomaly-card-header" onClick={() => setExpanded(isOpen ? null : anomaly._id)}>
                                 <div className="anomaly-left">
-                                    <span className="anomaly-icon">{typeIcons[anomaly.type]}</span>
                                     <div>
                                         <div className="anomaly-title">{anomaly.title}</div>
                                         <div className="anomaly-meta">
