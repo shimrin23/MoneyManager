@@ -89,10 +89,9 @@ export const ProfilePage = () => {
 
     return (
         <div className="profile-page">
-            {/* Header: avatar → name / email / role → title */}
-            <div className="profile-header profile-header-flex">
-                <h1>{t.profTitle}</h1>
-                <p>{t.profSubtitle}</p>
+          <div className="pf-card">
+            {/* Header: avatar → name / email / role */}
+            <div className="profile-header profile-header-flex pf-header">
                 <div className="profile-avatar-stack">
                     <div className="profile-header-avatar">
                         {getInitials(profile.name)}
@@ -112,7 +111,7 @@ export const ProfilePage = () => {
             </div>
 
             <div className="profile-content">
-                    <form onSubmit={handleSubmit} className="profile-form">
+                    <form onSubmit={handleSubmit} className="profile-form pf-form">
                         {message && <div className="alert-success">{message}</div>}
                         {error && <div className="alert-error">{error}</div>}
 
@@ -223,6 +222,7 @@ export const ProfilePage = () => {
                         </div>
                     </form>
             </div>
+          </div>
         </div>
     );
 };

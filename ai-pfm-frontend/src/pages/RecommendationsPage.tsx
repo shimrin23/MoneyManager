@@ -287,13 +287,6 @@ export const RecommendationsPage = () => {
 
     return (
         <div className="page-container recommendations-page">
-            <div className="page-header">
-                <div>
-                    <h1 className="page-title">AI Recommendations</h1>
-                    <p className="page-subtitle">Personalised actions to improve your financial health</p>
-                </div>
-            </div>
-
             {optimizeCategory && (
                 <CategoryTipsPanel
                     category={optimizeCategory}

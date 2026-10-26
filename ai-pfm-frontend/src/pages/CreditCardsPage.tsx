@@ -297,115 +297,154 @@ export const CreditCardsPage = () => {
     if (loading) return <div className="loading">Loading your credit cards...</div>;
 
     return (
-        <div className="page-container">
-            <div className="page-header">
-                <div style={{ flex: 1 }}></div>
+        <div className="page-container cc-page">
+            <div className="cc-page-header">
+                <div>
+                    <h2 className="cc-title">Your cards</h2>
+                    <p className="cc-subtitle">
+                        {cards.length} credit {cards.length === 1 ? 'card' : 'cards'} linked
+                    </p>
+                </div>
                 <button
-                    className="btn-primary"
+                    className="btn-primary cc-add-btn"
                     onClick={() => (showAddForm ? closeForm() : openAddForm())}
                 >
                     + Add Card
                 </button>
             </div>
 
+            {/* Credit Overview */}
+            <div className="cc-stats-grid">
+                <div className="card cc-stat">
+                    <span className="cc-stat-label">Total Credit Limit</span>
+                    <span className="cc-stat-value">{formatCurrency(getTotalCreditLimit())}</span>
+                    <span className="cc-stat-sub">Across all cards</span>
+                </div>
+                <div className="card cc-stat">
+                    <span className="cc-stat-label">Total Balance</span>
+                    <span className="cc-stat-value">{formatCurrency(getTotalBalance())}</span>
+                    <span className="cc-stat-sub">
+                        {getTotalCreditLimit() > 0
+                            ? `${((getTotalBalance() / getTotalCreditLimit()) * 100).toFixed(1)}% utilization`
+                            : 'No credit limit yet'}
+                    </span>
+                </div>
+                <div className="card cc-stat">
+                    <span className="cc-stat-label">Min Payment Due</span>
+                    <span className="cc-stat-value">{formatCurrency(getTotalMinPayment())}</span>
+                    <span className="cc-stat-sub">This month</span>
+                </div>
+            </div>
+
             {showAddForm && (
-                <div className="card form-card">
-                    <h3>{editingCardId ? 'Edit Credit Card' : 'Add New Credit Card'}</h3>
-                    <form onSubmit={handleSaveCard} className="credit-card-form" noValidate>
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label>Card Name</label>
-                                <input
-                                    type="text"
-                                    value={form.cardName}
-                                    onChange={(e) => setForm({ ...form, cardName: e.target.value })}
-                                    placeholder="e.g., Visa Platinum"
-                                    required
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>Provider</label>
-                                <select
-                                    value={form.provider}
-                                    onChange={(e) => setForm({ ...form, provider: e.target.value })}
-                                    required
-                                >
-                                    <option value="">Select Provider</option>
-                                    <option value="Commercial Bank">Commercial Bank</option>
-                                    <option value="Sampath Bank">Sampath Bank</option>
-                                    <option value="HNB">Hatton National Bank</option>
-                                    <option value="BOC">Bank of Ceylon</option>
-                                    <option value="DFCC">DFCC Bank</option>
-                                    <option value="Nations Trust">Nations Trust Bank</option>
-                                </select>
-                            </div>
+                <section className="card cc-form-card">
+                    <header className="cc-form-head">
+                        <h3>{editingCardId ? 'Edit Credit Card' : 'Add New Credit Card'}</h3>
+                        <p>Track spending and payment dates</p>
+                    </header>
+                    <form onSubmit={handleSaveCard} className="cc-form" noValidate>
+                        <div className="cc-field">
+                            <label htmlFor="ccName">Card Name</label>
+                            <input
+                                id="ccName"
+                                className="cc-input"
+                                type="text"
+                                value={form.cardName}
+                                onChange={(e) => setForm({ ...form, cardName: e.target.value })}
+                                placeholder="e.g., Visa Platinum"
+                                required
+                            />
                         </div>
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label>Credit Limit ({currencyCode()})</label>
-                                <input
-                                    type="number"
-                                    min="1"
-                                    value={form.creditLimit}
-                                    onChange={(e) => setForm({ ...form, creditLimit: e.target.value })}
-                                    placeholder="500000"
-                                    required
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>Current Balance ({currencyCode()})</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={form.currentBalance}
-                                    onChange={(e) => setForm({ ...form, currentBalance: e.target.value })}
-                                    placeholder="75000"
-                                />
-                            </div>
+                        <div className="cc-field">
+                            <label htmlFor="ccProvider">Provider</label>
+                            <select
+                                id="ccProvider"
+                                className="cc-input cc-select"
+                                value={form.provider}
+                                onChange={(e) => setForm({ ...form, provider: e.target.value })}
+                                required
+                            >
+                                <option value="">Select Provider</option>
+                                <option value="Commercial Bank">Commercial Bank</option>
+                                <option value="Sampath Bank">Sampath Bank</option>
+                                <option value="HNB">Hatton National Bank</option>
+                                <option value="BOC">Bank of Ceylon</option>
+                                <option value="DFCC">DFCC Bank</option>
+                                <option value="Nations Trust">Nations Trust Bank</option>
+                            </select>
                         </div>
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label>Minimum Payment Due ({currencyCode()})</label>
-                                <input
-                                    type="number"
-                                    min="0"
-                                    value={form.minPaymentDue}
-                                    onChange={(e) => setForm({ ...form, minPaymentDue: e.target.value })}
-                                    placeholder="7500"
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>Payment Due Date</label>
-                                <input
-                                    type="date"
-                                    value={form.dueDate}
-                                    onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
-                                    required
-                                />
-                            </div>
+                        <div className="cc-field">
+                            <label htmlFor="ccLimit">Credit Limit ({currencyCode()})</label>
+                            <input
+                                id="ccLimit"
+                                className="cc-input"
+                                type="number"
+                                min="1"
+                                value={form.creditLimit}
+                                onChange={(e) => setForm({ ...form, creditLimit: e.target.value })}
+                                placeholder="500000"
+                                required
+                            />
                         </div>
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label>Statement Date</label>
-                                <input
-                                    type="date"
-                                    value={form.statementDate}
-                                    onChange={(e) => setForm({ ...form, statementDate: e.target.value })}
-                                />
-                            </div>
-                            <div className="form-group">
-                                <label>Last 4 Digits (optional)</label>
-                                <input
-                                    type="text"
-                                    inputMode="numeric"
-                                    maxLength={4}
-                                    value={form.lastFour}
-                                    onChange={(e) => setForm({ ...form, lastFour: e.target.value.replace(/\D/g, '') })}
-                                    placeholder="1234"
-                                />
-                            </div>
+                        <div className="cc-field">
+                            <label htmlFor="ccBalance">Current Balance ({currencyCode()})</label>
+                            <input
+                                id="ccBalance"
+                                className="cc-input"
+                                type="number"
+                                min="0"
+                                value={form.currentBalance}
+                                onChange={(e) => setForm({ ...form, currentBalance: e.target.value })}
+                                placeholder="75000"
+                            />
                         </div>
-                        <div className="form-actions">
+                        <div className="cc-field">
+                            <label htmlFor="ccMin">Minimum Payment Due ({currencyCode()})</label>
+                            <input
+                                id="ccMin"
+                                className="cc-input"
+                                type="number"
+                                min="0"
+                                value={form.minPaymentDue}
+                                onChange={(e) => setForm({ ...form, minPaymentDue: e.target.value })}
+                                placeholder="7500"
+                            />
+                        </div>
+                        <div className="cc-field">
+                            <label htmlFor="ccDue">Payment Due Date</label>
+                            <input
+                                id="ccDue"
+                                className="cc-input"
+                                type="date"
+                                value={form.dueDate}
+                                onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
+                                required
+                            />
+                        </div>
+                        <div className="cc-field">
+                            <label htmlFor="ccStmt">Statement Date</label>
+                            <input
+                                id="ccStmt"
+                                className="cc-input"
+                                type="date"
+                                value={form.statementDate}
+                                onChange={(e) => setForm({ ...form, statementDate: e.target.value })}
+                            />
+                        </div>
+                        <div className="cc-field">
+                            <label htmlFor="ccLast4">Last 4 Digits (optional)</label>
+                            <input
+                                id="ccLast4"
+                                className="cc-input"
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={4}
+                                value={form.lastFour}
+                                onChange={(e) => setForm({ ...form, lastFour: e.target.value.replace(/\D/g, '') })}
+                                placeholder="1234"
+                            />
+                        </div>
+                        <div className="cc-form-actions">
                             <button type="button" className="btn-secondary" onClick={closeForm}>
                                 Cancel
                             </button>
@@ -414,106 +453,77 @@ export const CreditCardsPage = () => {
                             </button>
                         </div>
                     </form>
-                </div>
+                </section>
             )}
 
-            {/* Credit Overview */}
-            <div className="credit-overview-grid">
-                <div className="card overview-card">
-                    <h3>Total Credit Limit</h3>
-                    <div className="amount-large">{formatCurrency(getTotalCreditLimit())}</div>
-                    <p className="text-muted">{cards.length} active cards</p>
-                </div>
-                <div className="card overview-card">
-                    <h3>Total Balance</h3>
-                    <div className="amount-large">{formatCurrency(getTotalBalance())}</div>
-                    <div className="utilization-info">
-                        {getTotalCreditLimit() > 0 && (
-                            <span className="utilization-text">
-                                {((getTotalBalance() / getTotalCreditLimit()) * 100).toFixed(1)}% utilization
-                            </span>
-                        )}
-                    </div>
-                </div>
-                <div className="card overview-card">
-                    <h3>Min Payment Due</h3>
-                    <div className="amount-large">{formatCurrency(getTotalMinPayment())}</div>
-                    <p className="text-muted">This month</p>
-                </div>
-            </div>
-
             {/* Credit Cards Grid */}
-            <div className="cards-grid">
+            <div className="cc-cards-grid">
                 {cards.map((card) => {
                     const utilization = getUtilizationPercentage(card.currentBalance, card.creditLimit);
                     const daysUntilDue = getDaysUntilDue(card.dueDate);
 
                     return (
-                        <div key={card._id} className="card credit-card-item">
+                        <div key={card._id} className="card cc-card">
                             <div
-                                className="credit-card-visual"
+                                className="cc-visual"
                                 style={{
                                     background: getCardColor(card.provider)
                                 }}
                             >
-                                <div className="card-header">
-                                    <span className="card-provider">{card.provider}</span>
-                                    <span className="card-type">💳</span>
+                                <div className="cc-visual-top">
+                                    <span className="cc-visual-provider">{card.provider}</span>
+                                    <span className="cc-visual-name">{card.cardName}</span>
                                 </div>
-                                <div className="card-name">{card.cardName}</div>
-                                <div className="card-number">•••• •••• •••• {card.lastFour || '••••'}</div>
-                                <div className="card-limits">
-                                    <span>Available: {formatCurrency(card.availableLimit)}</span>
+                                <div className="cc-visual-number">•••• •••• •••• {card.lastFour || '••••'}</div>
+                                <div className="cc-visual-label">Current balance</div>
+                                <div className="cc-visual-balance">{formatCurrency(card.currentBalance)}</div>
+                            </div>
+
+                            <div className="cc-util">
+                                <div className="cc-row">
+                                    <span className="cc-row-label">Credit Utilization</span>
+                                    <span className="cc-row-value">{utilization.toFixed(1)}%</span>
+                                </div>
+                                <div className="utilization-bar cc-util-bar">
+                                    <div
+                                        className="utilization-fill"
+                                        style={{
+                                            width: `${Math.min(utilization, 100)}%`,
+                                            backgroundColor: getUtilizationColor(utilization)
+                                        }}
+                                    ></div>
+                                </div>
+                                <div className="cc-util-amounts">
+                                    <span>Available {formatCurrency(card.availableLimit)}</span>
+                                    <span>Limit {formatCurrency(card.creditLimit)}</span>
                                 </div>
                             </div>
 
-                            <div className="card-details">
-                                <div className="utilization-section">
-                                    <div className="utilization-header">
-                                        <span>Credit Utilization</span>
-                                        <span className="utilization-percent">{utilization.toFixed(1)}%</span>
-                                    </div>
-                                    <div className="utilization-bar">
-                                        <div
-                                            className="utilization-fill"
-                                            style={{
-                                                width: `${Math.min(utilization, 100)}%`,
-                                                backgroundColor: getUtilizationColor(utilization)
-                                            }}
-                                        ></div>
-                                    </div>
-                                    <div className="utilization-amounts">
-                                        <span>{formatCurrency(card.currentBalance)}</span>
-                                        <span>{formatCurrency(card.creditLimit)}</span>
-                                    </div>
+                            <div className="cc-info">
+                                <div className="cc-row">
+                                    <span className="cc-row-label">Minimum Payment</span>
+                                    <span className="cc-row-value">{formatCurrency(card.minPaymentDue)}</span>
                                 </div>
-
-                                <div className="payment-info">
-                                    <div className="payment-row">
-                                        <span className="label">Minimum Payment:</span>
-                                        <span className="value">{formatCurrency(card.minPaymentDue)}</span>
-                                    </div>
-                                    <div className="payment-row">
-                                        <span className="label">Due Date:</span>
-                                        <span className={`value ${daysUntilDue <= 5 ? 'text-red-600' : ''}`}>
-                                            {formatDate(card.dueDate)}
-                                            {daysUntilDue < 0 ? (
-                                                <span className="urgent"> (overdue)</span>
-                                            ) : daysUntilDue <= 5 && (
-                                                <span className="urgent"> ({daysUntilDue} days)</span>
-                                            )}
+                                <div className="cc-row">
+                                    <span className="cc-row-label">Due Date</span>
+                                    <span className="cc-row-value cc-due">
+                                        <span className={daysUntilDue <= 5 ? 'text-red-600' : ''}>{formatDate(card.dueDate)}</span>
+                                        <span className={`cc-due-pill ${daysUntilDue <= 5 ? 'urgent' : ''}`}>
+                                            {daysUntilDue < 0 ? 'overdue' : `${daysUntilDue} ${daysUntilDue === 1 ? 'day' : 'days'}`}
                                         </span>
-                                    </div>
+                                    </span>
                                 </div>
+                                <div className="cc-row">
+                                    <span className="cc-row-label">Statement Date</span>
+                                    <span className="cc-row-value">{card.statementDate ? formatDate(card.statementDate) : '—'}</span>
+                                </div>
+                            </div>
 
-                                <div className="card-actions">
-                                    <button className="btn-secondary btn-sm" onClick={() => setHistoryCard(card)}>View Transactions</button>
-                                    <button className="btn-primary btn-sm" onClick={() => handleMakePayment(card)}>Make Payment</button>
-                                </div>
-                                <div className="card-actions" style={{ marginTop: '8px' }}>
-                                    <button className="btn-secondary btn-sm" onClick={() => openEditForm(card)}>Edit</button>
-                                    <button className="btn-secondary btn-sm" onClick={() => handleDeleteCard(card)}>Delete</button>
-                                </div>
+                            <div className="cc-actions">
+                                <button className="btn-secondary btn-sm" onClick={() => setHistoryCard(card)}>View Transactions</button>
+                                <button className="btn-primary btn-sm" onClick={() => handleMakePayment(card)}>Make Payment</button>
+                                <button className="btn-secondary btn-sm" onClick={() => openEditForm(card)}>Edit</button>
+                                <button className="btn-secondary btn-sm" onClick={() => handleDeleteCard(card)}>Delete</button>
                             </div>
                         </div>
                     );
@@ -535,7 +545,7 @@ export const CreditCardsPage = () => {
             {historyCard && (
                 <div className="modal-overlay" onClick={() => setHistoryCard(null)}>
                     <div
-                        className="modal-content"
+                        className="modal-content cc-history"
                         role="dialog"
                         aria-modal="true"
                         aria-labelledby="card-history-title"
@@ -546,12 +556,12 @@ export const CreditCardsPage = () => {
                             <button className="modal-close" onClick={() => setHistoryCard(null)} aria-label="Close">×</button>
                         </div>
 
-                        <p style={{ marginTop: 0, color: 'var(--color-text-muted)' }}>
+                        <p className="cc-history-summary">
                             Balance {formatCurrency(historyCard.currentBalance)} · Available {formatCurrency(historyCard.creditLimit - historyCard.currentBalance)}
                         </p>
 
                         {(historyCard.activity || []).length === 0 ? (
-                            <p className="empty-state" style={{ padding: '1.5rem 0' }}>
+                            <p className="cc-history-empty">
                                 No payments or charges recorded yet.
                             </p>
                         ) : (
@@ -579,7 +589,7 @@ export const CreditCardsPage = () => {
                             </table>
                         )}
 
-                        <div className="form-actions" style={{ marginTop: '1.5rem' }}>
+                        <div className="cc-history-actions">
                             <button className="btn-secondary" onClick={() => handleAddCharge(historyCard)}>Add Charge</button>
                             <button className="btn-primary" onClick={() => handleMakePayment(historyCard)}>Make Payment</button>
                         </div>

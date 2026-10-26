@@ -99,6 +99,24 @@
 
 .btn-primary.sm-btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); }
 
+/* Compact sizing (matches the redesign prototype's modal) */
+.modal-content.sm-dialog { width: 100%; max-width: 440px; padding: 22px; border-radius: 16px; }
+.sm-dialog .modal-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 0 0 14px; padding: 0; border: none; }
+.sm-dialog .modal-title { font-size: 19px; font-weight: 600; line-height: 1.3; margin: 0; letter-spacing: -0.01em; }
+.sm-dialog .modal-close { width: 36px; height: 36px; min-height: 36px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 22px; line-height: 1; border-radius: 10px; flex-shrink: 0; }
+.sm-dialog .sm-dialog-message { font-size: 14px; line-height: 1.5; color: var(--color-text); margin: 0 0 18px; }
+.sm-dialog .sm-dialog-field { gap: 6px; margin: 0 0 18px; }
+.sm-dialog .sm-dialog-field label { font-size: 13px; font-weight: 600; color: var(--color-text); margin: 0; }
+.sm-dialog .sm-dialog-field input { width: 100%; height: 42px; min-height: 42px; padding: 0 12px; border: 1px solid var(--color-border-2); border-radius: 10px; font-size: 14.5px; box-sizing: border-box; margin: 0; box-shadow: none; outline: none; }
+.sm-dialog .sm-dialog-field input:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15); }
+.sm-dialog .sm-dialog-field input[aria-invalid='true'] { border-color: #ef4444; }
+.sm-dialog .sm-dialog-error { font-size: 13px; }
+.sm-dialog .sm-dialog-actions { gap: 10px; }
+.sm-dialog .sm-dialog-actions > button:focus { outline: none; }
+.sm-dialog .sm-dialog-actions > button:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3); }
+.sm-dialog .sm-dialog-actions > .sm-btn-danger:focus-visible { box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3); }
+.sm-dialog .sm-dialog-actions > button { height: 40px; min-height: 40px; padding: 0 18px; font-size: 14px; font-weight: 600; border-radius: 10px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; margin: 0; }
+
 @media (max-width: 640px) {
   .sm-toasts { left: var(--sp-4); right: var(--sp-4); width: auto; }
   .sm-dialog-actions > button { flex: 1; }

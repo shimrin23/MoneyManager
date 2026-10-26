@@ -119,35 +119,39 @@ export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, i
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="transaction-form">
+            <form onSubmit={handleSubmit} className="atx-form">
                 {/* Type toggle — full width */}
-                <div className="form-group full-width">
-                    <div className="type-toggle-group">
-                        <button
-                            type="button"
-                            className={`type-toggle-btn ${formData.type === 'expense' ? 'active expense' : ''}`}
-                            onClick={() => setFormData({ ...formData, type: 'expense', category: '' })}
-                        >
-                            <span className="icon">⬇️</span>
-                            Expense
-                        </button>
-                        <button
-                            type="button"
-                            className={`type-toggle-btn ${formData.type === 'income' ? 'active income' : ''}`}
-                            onClick={() => setFormData({ ...formData, type: 'income', category: '' })}
-                        >
-                            <span className="icon">⬆️</span>
-                            Income
-                        </button>
-                    </div>
+                <div className="atx-toggle" role="group" aria-label="Transaction type">
+                    <button
+                        type="button"
+                        className={`atx-toggle-btn ${formData.type === 'expense' ? 'on expense' : ''}`}
+                        onClick={() => setFormData({ ...formData, type: 'expense', category: '' })}
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M12 5v14M19 12l-7 7-7-7" />
+                        </svg>
+                        Expense
+                    </button>
+                    <button
+                        type="button"
+                        className={`atx-toggle-btn ${formData.type === 'income' ? 'on income' : ''}`}
+                        onClick={() => setFormData({ ...formData, type: 'income', category: '' })}
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                            <path d="M12 19V5M5 12l7-7 7 7" />
+                        </svg>
+                        Income
+                    </button>
                 </div>
 
                 {/* Amount */}
-                <div className="form-group">
-                    <label>Amount ({currencyCode()}) <span className="required">*</span></label>
-                    <div className="input-with-icon">
-                        <span className="input-prefix">{currencyCode()}</span>
+                <div className="atx-field">
+                    <label htmlFor="atxAmount">Amount ({currencyCode()}) <span className="atx-req">*</span></label>
+                    <div className="atx-prefix-wrap">
+                        <span className="atx-prefix">{currencyCode()}</span>
                         <input
+                            id="atxAmount"
+                            className="atx-input atx-has-prefix"
                             type="number"
                             step="0.01"
                             min="0"
@@ -160,9 +164,11 @@ export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, i
                 </div>
 
                 {/* Category */}
-                <div className="form-group">
-                    <label>Category <span className="required">*</span></label>
+                <div className="atx-field">
+                    <label htmlFor="atxCategory">Category <span className="atx-req">*</span></label>
                     <select
+                        id="atxCategory"
+                        className="atx-input atx-select"
                         value={formData.category}
                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                         required
@@ -175,9 +181,11 @@ export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, i
                 </div>
 
                 {/* Date */}
-                <div className="form-group">
-                    <label>Date <span className="required">*</span></label>
+                <div className="atx-field">
+                    <label htmlFor="atxDate">Date <span className="atx-req">*</span></label>
                     <input
+                        id="atxDate"
+                        className="atx-input"
                         type="date"
                         value={formData.date}
                         max={getLocalDateString()}
@@ -187,9 +195,11 @@ export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, i
                 </div>
 
                 {/* Description */}
-                <div className="form-group full-width">
-                    <label>Description</label>
+                <div className="atx-field">
+                    <label htmlFor="atxDesc">Description</label>
                     <input
+                        id="atxDesc"
+                        className="atx-input"
                         type="text"
                         placeholder="What was this for?"
                         value={formData.description}
@@ -197,7 +207,7 @@ export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, i
                     />
                 </div>
 
-                <div className="form-actions full-width" style={{ marginTop: 'var(--sp-4)' }}>
+                <div className="atx-actions">
                     {onCancel && (
                         <button type="button" className="btn-secondary" onClick={onCancel}>
                             Cancel
@@ -208,7 +218,6 @@ export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, i
                         className="btn-primary"
                         disabled={loading}
                         style={{
-                            flex: 1,
                             background: isExpense
                                 ? 'linear-gradient(135deg, #ef4444, #dc2626)'
                                 : 'linear-gradient(135deg, #10b981, #059669)'

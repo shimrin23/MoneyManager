@@ -132,217 +132,235 @@ export const HelpPage = () => {
         }
     };
 
-    return (
-        <div className="help-page">
-            <div className="help-header">
-                <h1>{t.hdrHelp}</h1>
-                <p>{t.hdrHelpSub}</p>
-            </div>
+    const icon = (d: string, size = 18) => (
+        <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d={d} />
+        </svg>
+    );
 
-            <div className="help-navigation">
+    return (
+        <div className="page-container hp-page">
+            <div className="hp-tabs" role="tablist">
                 <button
-                    className={`nav-btn ${activeSection === 'faq' ? 'active' : ''}`}
+                    role="tab"
+                    aria-selected={activeSection === 'faq'}
+                    className={`hp-tab ${activeSection === 'faq' ? 'on' : ''}`}
                     onClick={() => setActiveSection('faq')}
                 >
-                    ❓ {t.helpNavFaq}
+                    {t.helpNavFaq}
                 </button>
                 <button
-                    className={`nav-btn ${activeSection === 'guides' ? 'active' : ''}`}
+                    role="tab"
+                    aria-selected={activeSection === 'guides'}
+                    className={`hp-tab ${activeSection === 'guides' ? 'on' : ''}`}
                     onClick={() => setActiveSection('guides')}
                 >
-                    📚 {t.helpNavGuides}
+                    {t.helpNavGuides}
                 </button>
                 <button
-                    className={`nav-btn ${activeSection === 'contact' ? 'active' : ''}`}
+                    role="tab"
+                    aria-selected={activeSection === 'contact'}
+                    className={`hp-tab ${activeSection === 'contact' ? 'on' : ''}`}
                     onClick={() => setActiveSection('contact')}
                 >
-                    📞 {t.helpNavContact}
+                    {t.helpNavContact}
                 </button>
             </div>
 
-            <div className="help-content">
-                {activeSection === 'faq' && (
-                    <div className="faq-section">
-                        <div className="faq-search">
-                            <input
-                                type="text"
-                                placeholder={t.helpSearchPlaceholder}
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="search-input"
-                            />
-                        </div>
+            {activeSection === 'faq' && (
+                <div className="hp-section">
+                    <div className="hp-search">
+                        <span className="hp-search-icon">{icon('M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM21 21l-4.3-4.3')}</span>
+                        <input
+                            type="text"
+                            placeholder={t.helpSearchPlaceholder}
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="hp-input hp-search-input"
+                            aria-label={t.helpSearchPlaceholder}
+                        />
+                    </div>
 
-                        <div className="faq-list">
-                            {filteredFAQs.map((faq) => (
-                                <div key={faq.id} className="faq-item">
+                    <section className="hp-card hp-faq">
+                        {filteredFAQs.map((faq) => {
+                            const open = expandedFAQ === faq.id;
+                            return (
+                                <div key={faq.id} className={`hp-faq-item ${open ? 'open' : ''}`}>
                                     <button
-                                        className={`faq-question ${expandedFAQ === faq.id ? 'expanded' : ''}`}
-                                        onClick={() => setExpandedFAQ(expandedFAQ === faq.id ? null : faq.id)}
+                                        className="hp-faq-q"
+                                        aria-expanded={open}
+                                        onClick={() => setExpandedFAQ(open ? null : faq.id)}
                                     >
                                         <span>{faq.question}</span>
-                                        <span className="faq-arrow">
-                                            {expandedFAQ === faq.id ? '−' : '+'}
-                                        </span>
+                                        <span className="hp-faq-toggle" aria-hidden="true">{open ? '−' : '+'}</span>
                                     </button>
-                                    {expandedFAQ === faq.id && (
-                                        <div className="faq-answer">
+                                    {open && (
+                                        <div className="hp-faq-a">
                                             {faq.answer}
                                         </div>
                                     )}
                                 </div>
-                            ))}
-                        </div>
+                            );
+                        })}
 
                         {filteredFAQs.length === 0 && (
-                            <div className="no-results">
+                            <div className="hp-empty">
                                 <h3>{t.helpNoResults}</h3>
                                 <p>{t.helpNoResultsSub}</p>
                             </div>
                         )}
-                    </div>
-                )}
+                    </section>
+                </div>
+            )}
 
-                {activeSection === 'guides' && (
-                    <div className="guides-section">
-                        <h2>{t.helpGuidesTitle}</h2>
-                        <div className="guides-grid">
-                            {guides.map((guide, index) => (
-                                <div key={index} className="guide-card">
-                                    <div className="guide-icon">
-                                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                                            <path d={guide.iconPath} />
-                                        </svg>
-                                    </div>
-                                    <h3>{guide.title}</h3>
-                                    <p>{guide.description}</p>
-                                    <button
-                                        className="guide-btn"
-                                        aria-expanded={openGuide === index}
-                                        onClick={() => setOpenGuide(openGuide === index ? null : index)}
-                                    >
-                                        {t.helpReadGuide}
-                                    </button>
-                                    {openGuide === index && (
-                                        <div style={{ marginTop: '0.75rem', textAlign: 'left' }}>
-                                            <ul style={{ paddingLeft: '1.25rem', margin: '0 0 0.75rem' }}>
-                                                {GUIDE_STEPS[index].map(step => (
-                                                    <li key={step} style={{ marginBottom: '0.4rem' }}>{step}</li>
-                                                ))}
-                                            </ul>
-                                            <button type="button" className="btn-secondary" onClick={() => navigate(guide.link)}>
-                                                Open this page
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {activeSection === 'contact' && (
-                    <div className="contact-section">
-                        <div className="contact-options">
-                            <div className="contact-method">
-                                <h3>📧 {t.helpEmailSupport}</h3>
-                                <p>support@moneymanager.com</p>
-                                <span className="response-time">{t.helpResponse}</span>
-                            </div>
-
-                            <div className="contact-method">
-                                <h3>💬 {t.helpLiveChat}</h3>
-                                <p>{t.helpLiveChatSub}</p>
-                                <button className="btn-primary" onClick={() => window.dispatchEvent(new Event('open-ai-assistant'))}>
-                                    {t.helpStartChat}
+            {activeSection === 'guides' && (
+                <div className="hp-section">
+                    <h2 className="hp-section-title">{t.helpGuidesTitle}</h2>
+                    <div className="hp-guides">
+                        {guides.map((guide, index) => (
+                            <article key={index} className="hp-card hp-guide">
+                                <span className="hp-icon">{icon(guide.iconPath)}</span>
+                                <h3>{guide.title}</h3>
+                                <p>{guide.description}</p>
+                                <button
+                                    className="btn-secondary hp-btn-sm"
+                                    aria-expanded={openGuide === index}
+                                    onClick={() => setOpenGuide(openGuide === index ? null : index)}
+                                >
+                                    {t.helpReadGuide}
                                 </button>
-                            </div>
+                                {openGuide === index && (
+                                    <div className="hp-guide-steps">
+                                        <ul>
+                                            {GUIDE_STEPS[index].map(step => (
+                                                <li key={step}>{step}</li>
+                                            ))}
+                                        </ul>
+                                        <button type="button" className="btn-primary hp-btn-sm" onClick={() => navigate(guide.link)}>
+                                            Open this page
+                                        </button>
+                                    </div>
+                                )}
+                            </article>
+                        ))}
+                    </div>
+                </div>
+            )}
 
-                            <div className="contact-method">
-                                <h3>📞 {t.helpPhoneSupport}</h3>
-                                <p>+94 11 123 4567</p>
-                                <span className="response-time">{t.helpPhoneHours}</span>
-                            </div>
+            {activeSection === 'contact' && (
+                <div className="hp-section">
+                    <div className="hp-contacts">
+                        <div className="hp-card hp-contact">
+                            <span className="hp-icon">{icon('M4 4h16v16H4zM22 6l-10 7L2 6')}</span>
+                            <h3>{t.helpEmailSupport}</h3>
+                            <p className="hp-contact-value">support@moneymanager.com</p>
+                            <span className="hp-hint">{t.helpResponse}</span>
                         </div>
 
-                        <div className="support-ticket-form">
-                            <h3>{t.helpSubmitTitle}</h3>
-                            {ticketStatus && (
-                                <div className={`alert ${ticketStatus === 'fail' ? 'alert-error' : 'alert-success'}`}>
-                                    {ticketStatus === 'fail'
-                                        ? (ticketError || t.helpTicketFail)
-                                        : `${t.helpTicketOk}${ticketNumber ? ` ${t.helpTicketNumber}: ${ticketNumber}` : ''}`}
-                                </div>
-                            )}
+                        <div className="hp-card hp-contact">
+                            <span className="hp-icon">{icon('M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z')}</span>
+                            <h3>{t.helpLiveChat}</h3>
+                            <p>{t.helpLiveChatSub}</p>
+                            <button className="btn-primary hp-btn-sm" onClick={() => window.dispatchEvent(new Event('open-ai-assistant'))}>
+                                {t.helpStartChat}
+                            </button>
+                        </div>
 
-                            <form onSubmit={handleTicketSubmit}>
-                                <div className="form-group">
-                                    <label>{t.helpCategory}</label>
-                                    <select
-                                        value={supportTicket.category}
-                                        onChange={(e) => setSupportTicket(prev => ({
-                                            ...prev,
-                                            category: e.target.value
-                                        }))}
-                                    >
-                                        <option value="general">{t.helpCatGeneral}</option>
-                                        <option value="technical">{t.helpCatTechnical}</option>
-                                        <option value="billing">{t.helpCatBilling}</option>
-                                        <option value="feature">{t.helpCatFeature}</option>
-                                        <option value="security">{t.helpCatSecurity}</option>
-                                    </select>
-                                </div>
+                        <div className="hp-card hp-contact">
+                            <span className="hp-icon">{icon('M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z')}</span>
+                            <h3>{t.helpPhoneSupport}</h3>
+                            <p className="hp-contact-value">+94 11 123 4567</p>
+                            <span className="hp-hint">{t.helpPhoneHours}</span>
+                        </div>
+                    </div>
 
-                                <div className="form-group">
-                                    <label>{t.helpPriority}</label>
-                                    <select
-                                        value={supportTicket.priority}
-                                        onChange={(e) => setSupportTicket(prev => ({
-                                            ...prev,
-                                            priority: e.target.value as 'low' | 'medium' | 'high'
-                                        }))}
-                                    >
-                                        <option value="low">{t.helpPriLow}</option>
-                                        <option value="medium">{t.helpPriMedium}</option>
-                                        <option value="high">{t.helpPriHigh}</option>
-                                    </select>
-                                </div>
+                    <section className="hp-card hp-ticket">
+                        <h3 className="hp-section-title">{t.helpSubmitTitle}</h3>
+                        {ticketStatus && (
+                            <div className={`alert ${ticketStatus === 'fail' ? 'alert-error' : 'alert-success'}`}>
+                                {ticketStatus === 'fail'
+                                    ? (ticketError || t.helpTicketFail)
+                                    : `${t.helpTicketOk}${ticketNumber ? ` ${t.helpTicketNumber}: ${ticketNumber}` : ''}`}
+                            </div>
+                        )}
 
-                                <div className="form-group">
-                                    <label>{t.helpSubject}</label>
-                                    <input
-                                        type="text"
-                                        value={supportTicket.subject}
-                                        onChange={(e) => setSupportTicket(prev => ({
-                                            ...prev,
-                                            subject: e.target.value
-                                        }))}
-                                        maxLength={200}
-                                        placeholder={t.helpPlaceSubject}
-                                    />
-                                    {fieldErrors.subject && (
-                                        <span role="alert" style={{ color: '#dc2626', fontSize: '0.85rem' }}>{fieldErrors.subject}</span>
-                                    )}
-                                </div>
+                        <form onSubmit={handleTicketSubmit} className="hp-form">
+                            <div className="hp-field">
+                                <label htmlFor="hpCategory">{t.helpCategory}</label>
+                                <select
+                                    id="hpCategory"
+                                    className="hp-input hp-select"
+                                    value={supportTicket.category}
+                                    onChange={(e) => setSupportTicket(prev => ({
+                                        ...prev,
+                                        category: e.target.value
+                                    }))}
+                                >
+                                    <option value="general">{t.helpCatGeneral}</option>
+                                    <option value="technical">{t.helpCatTechnical}</option>
+                                    <option value="billing">{t.helpCatBilling}</option>
+                                    <option value="feature">{t.helpCatFeature}</option>
+                                    <option value="security">{t.helpCatSecurity}</option>
+                                </select>
+                            </div>
 
-                                <div className="form-group">
-                                    <label>{t.helpMessage}</label>
-                                    <textarea
-                                        value={supportTicket.message}
-                                        onChange={(e) => setSupportTicket(prev => ({
-                                            ...prev,
-                                            message: e.target.value
-                                        }))}
-                                        rows={6}
-                                        maxLength={5000}
-                                        placeholder={t.helpPlaceMessage}
-                                    />
-                                    {fieldErrors.message && (
-                                        <span role="alert" style={{ color: '#dc2626', fontSize: '0.85rem' }}>{fieldErrors.message}</span>
-                                    )}
-                                    <span className="response-time">{supportTicket.message.length}/5000</span>
-                                </div>
+                            <div className="hp-field">
+                                <label htmlFor="hpPriority">{t.helpPriority}</label>
+                                <select
+                                    id="hpPriority"
+                                    className="hp-input hp-select"
+                                    value={supportTicket.priority}
+                                    onChange={(e) => setSupportTicket(prev => ({
+                                        ...prev,
+                                        priority: e.target.value as 'low' | 'medium' | 'high'
+                                    }))}
+                                >
+                                    <option value="low">{t.helpPriLow}</option>
+                                    <option value="medium">{t.helpPriMedium}</option>
+                                    <option value="high">{t.helpPriHigh}</option>
+                                </select>
+                            </div>
 
+                            <div className="hp-field hp-full">
+                                <label htmlFor="hpSubject">{t.helpSubject}</label>
+                                <input
+                                    id="hpSubject"
+                                    className="hp-input"
+                                    type="text"
+                                    value={supportTicket.subject}
+                                    onChange={(e) => setSupportTicket(prev => ({
+                                        ...prev,
+                                        subject: e.target.value
+                                    }))}
+                                    maxLength={200}
+                                    placeholder={t.helpPlaceSubject}
+                                />
+                                {fieldErrors.subject && (
+                                    <span role="alert" className="hp-error">{fieldErrors.subject}</span>
+                                )}
+                            </div>
+
+                            <div className="hp-field hp-full">
+                                <label htmlFor="hpMessage">{t.helpMessage}</label>
+                                <textarea
+                                    id="hpMessage"
+                                    className="hp-textarea"
+                                    value={supportTicket.message}
+                                    onChange={(e) => setSupportTicket(prev => ({
+                                        ...prev,
+                                        message: e.target.value
+                                    }))}
+                                    rows={6}
+                                    maxLength={5000}
+                                    placeholder={t.helpPlaceMessage}
+                                />
+                                {fieldErrors.message && (
+                                    <span role="alert" className="hp-error">{fieldErrors.message}</span>
+                                )}
+                                <span className="hp-hint hp-count">{supportTicket.message.length}/5000</span>
+                            </div>
+
+                            <div className="hp-form-actions">
                                 <button
                                     type="submit"
                                     className="btn-primary"
@@ -350,11 +368,11 @@ export const HelpPage = () => {
                                 >
                                     {ticketSubmitting ? t.helpSubmitting : t.helpSubmit}
                                 </button>
-                            </form>
-                        </div>
-                    </div>
-                )}
-            </div>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+            )}
         </div>
     );
 };
