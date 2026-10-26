@@ -50,6 +50,25 @@ describe('Fixed deposits', () => {
     expect(validateFDInput({ principalAmount: 5000, interestRate: 10, tenure: 12 })).toBeNull();
   });
 
+  it('accepts a past start date but not a future or invalid one', () => {
+    const fd = { principalAmount: 5000, interestRate: 10, tenure: 1 };
+    const past = new Date();
+    past.setMonth(past.getMonth() - 2);
+    const future = new Date();
+    future.setDate(future.getDate() + 3);
+    expect(validateFDInput({ ...fd, startDate: past.toISOString().split('T')[0] })).toBeNull();
+    expect(validateFDInput({ ...fd, startDate: future.toISOString().split('T')[0] })).toBe('Start date cannot be in the future');
+    expect(validateFDInput({ ...fd, startDate: 'abc' })).toBe('Start date is not a valid date');
+    expect(validateFDInput({ ...fd, startDate: '2000-01-01' })).toBe('Start date cannot be more than 10 years ago');
+  });
+
+  it('an FD that started 2 months ago with a 1-month tenure is matured', () => {
+    const start = new Date(2026, 7, 25);
+    const terms = calculateFD(50000, 12, 1, start);
+    expect(terms.maturityDate).toEqual(new Date(2026, 8, 25));
+    expect(applyMaturity(fd({ ...terms, startDate: start, tenure: 1 }), new Date(2026, 9, 26))).toEqual({ status: 'matured' });
+  });
+
   it('marks an FD matured once its maturity date has passed', () => {
     expect(applyMaturity(fd(), new Date(2026, 8, 30))).toBeNull();
     expect(applyMaturity(fd(), new Date(2026, 9, 2))).toEqual({ status: 'matured' });

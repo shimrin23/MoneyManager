@@ -74,8 +74,9 @@ export const SmartBudgetsPage = () => {
         setOverBudgetCount(overBudget);
     };
 
-    const handleOptimizeBudget = (_category?: string) => {
-        navigate('/recommendations');
+    // Opens Recommendations with tips for this budget's category
+    const handleOptimizeBudget = (category: string) => {
+        navigate('/recommendations', { state: { optimizeCategory: category } });
     };
 
     const handleSetAlert = (budget: Budget) => {

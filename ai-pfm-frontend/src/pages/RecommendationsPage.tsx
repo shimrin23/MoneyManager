@@ -1,6 +1,6 @@
 import { formatMoney } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { apiClient, getApiErrorMessage } from '../api/client';
 import { notify } from '../utils/systemMessages';
 
@@ -149,7 +149,83 @@ const ExecutionModal = ({
     );
 };
 
+// Numbers and tips for one budget category, from GET /budgets/tips
+interface CategoryTips {
+    category: string;
+    allocated: number | null;
+    spent: number;
+    percentageUsed: number | null;
+    topPlaces: { name: string; amount: number; count: number }[];
+    insights: string[];
+    tips: string[];
+}
+
+/* Shown when "Optimize" is clicked on a Smart Budget: tips for that one category */
+const CategoryTipsPanel = ({ category, onClose }: { category: string; onClose: () => void }) => {
+    const navigate = useNavigate();
+    const [tips, setTips] = useState<CategoryTips | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        apiClient.get('/budgets/tips', { params: { category } })
+            .then(response => setTips(response.data))
+            .catch(err => setError(getApiErrorMessage(err, `Could not load tips for ${category}.`)));
+    }, [category]);
+
+    return (
+        <div className="card" style={{ padding: '1.25rem 1.5rem', marginBottom: '1.5rem', border: '1px solid rgba(99, 102, 241, 0.35)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '0.75rem' }}>
+                <div>
+                    <h3 style={{ margin: 0, color: 'var(--text)' }}>Optimize {category}</h3>
+                    {tips && tips.allocated !== null && (
+                        <p style={{ margin: '0.25rem 0 0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                            {formatMoney(tips.spent)} of {formatMoney(tips.allocated)} spent this month ({tips.percentageUsed}%)
+                        </p>
+                    )}
+                </div>
+                <button className="modal-close" onClick={onClose} aria-label="Close tips" title="Close">×</button>
+            </div>
+
+            {!tips && !error && <p style={{ margin: 0, color: 'var(--text-muted)' }}>Loading tips...</p>}
+            {error && <p style={{ margin: 0, color: '#ef4444' }}>{error}</p>}
+
+            {tips && (
+                <>
+                    <ul style={{ margin: '0 0 1rem', paddingLeft: '1.25rem', color: 'var(--text)', lineHeight: 1.6 }}>
+                        {tips.insights.map((line, i) => <li key={i}>{line}</li>)}
+                    </ul>
+
+                    {tips.topPlaces.length > 0 && (
+                        <div style={{ marginBottom: '1rem' }}>
+                            <div className="rec-detail-label" style={{ marginBottom: '0.35rem' }}>Where it went this month</div>
+                            {tips.topPlaces.map(place => (
+                                <div key={place.name} style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', padding: '0.3rem 0', borderBottom: '1px solid var(--border)', color: 'var(--text)', fontSize: '0.9rem' }}>
+                                    <span>{place.name} <span style={{ color: 'var(--text-muted)' }}>({place.count}×)</span></span>
+                                    <strong>{formatMoney(place.amount)}</strong>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="rec-detail-label" style={{ marginBottom: '0.35rem' }}>How to spend less</div>
+                    <ul style={{ margin: '0 0 1rem', paddingLeft: '1.25rem', color: 'var(--text)', lineHeight: 1.6 }}>
+                        {tips.tips.map((line, i) => <li key={i}>{line}</li>)}
+                    </ul>
+
+                    <button className="action-btn secondary small" onClick={() => navigate('/smart-budgets')}>
+                        Back to Smart Budgets
+                    </button>
+                </>
+            )}
+        </div>
+    );
+};
+
 export const RecommendationsPage = () => {
+    const location = useLocation();
+    const navigate = useNavigate();
+    // Set when the user arrives from a budget's "Optimize" button
+    const optimizeCategory = (location.state as { optimizeCategory?: string } | null)?.optimizeCategory;
     const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeFilter, setActiveFilter] = useState<RecommendationCategory>('all');
@@ -217,6 +293,13 @@ export const RecommendationsPage = () => {
                     <p className="page-subtitle">Personalised actions to improve your financial health</p>
                 </div>
             </div>
+
+            {optimizeCategory && (
+                <CategoryTipsPanel
+                    category={optimizeCategory}
+                    onClose={() => navigate('/recommendations', { replace: true, state: null })}
+                />
+            )}
 
             <div className="rec-summary-grid">
                 <div className="rec-stat-card">

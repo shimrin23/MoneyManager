@@ -68,6 +68,16 @@ export const validateFDInput = (body: Record<string, unknown>): string | null =>
     if (!Number.isInteger(tenure) || tenure <= 0) return 'Tenure must be a whole number greater than 0';
     if (fdTenureMonths(tenure, unit) > 120) return 'Tenure cannot be more than 10 years';
     if (body.type !== undefined && !FD_TYPES.includes(body.type as string)) return 'Invalid FD type';
+
+    // Start date is optional (defaults to today), so an FD opened earlier can be recorded
+    if (body.startDate !== undefined && body.startDate !== '') {
+        const start = toDate(body.startDate);
+        if (!start) return 'Start date is not a valid date';
+        const endOfToday = new Date();
+        endOfToday.setHours(23, 59, 59, 999);
+        if (start.getTime() > endOfToday.getTime()) return 'Start date cannot be in the future';
+        if (start.getTime() < addMonths(new Date(), -120).getTime()) return 'Start date cannot be more than 10 years ago';
+    }
     return null;
 };
 
