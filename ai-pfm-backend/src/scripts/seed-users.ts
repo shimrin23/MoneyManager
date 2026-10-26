@@ -53,7 +53,6 @@ async function seedUsers() {
         existing.role = u.role;
         existing.passwordHash = passwordHash;
         existing.customerSegment = u.customerSegment;
-        existing.isVerified = true;
         existing.pfmOptIn = true;
         existing.preferences = { language: 'en', notifications: true };
         await existing.save();
@@ -67,7 +66,6 @@ async function seedUsers() {
         passwordHash,
         role: u.role,
         customerSegment: u.customerSegment,
-        isVerified: true,
         pfmOptIn: true,
         preferences: { language: 'en', notifications: true },
       });
