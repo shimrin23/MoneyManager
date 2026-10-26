@@ -142,7 +142,8 @@ export const AccountSettings = () => {
             const finalConfirm = await promptDialog({
                 title: t.deleteFinalTitle,
                 message: t.deleteFinalMessage,
-                placeholder: 'DELETE',
+                placeholder: '',
+                label: 'Type DELETE to confirm',
                 confirmText: t.deleteFinalButton,
                 danger: true,
                 validate: (value) => (value === 'DELETE' ? null : t.deleteMismatch),
