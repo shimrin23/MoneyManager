@@ -1,0 +1,305 @@
+/* Top header: prototype layout, fonts and sizes. Colours come from the app's own theme tokens (App.css).
+   Position and height stay as they are so page content keeps its offset. */
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=Figtree:wght@400;500;600;700&display=swap');
+
+.top-header {
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 0 28px;
+  gap: 12px;
+  font-family: 'Figtree', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* Title sits on the left, actions on the right */
+.top-header .header-center {
+  justify-content: flex-start;
+  padding: 0;
+}
+
+.top-header .header-title-box {
+  align-items: flex-start;
+  text-align: left;
+}
+
+.top-header .header-page-heading {
+  font-family: 'Bricolage Grotesque', 'Figtree', system-ui, sans-serif;
+  font-size: 21px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  color: var(--color-text);
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  -webkit-text-fill-color: currentColor;
+}
+
+.top-header .header-page-subheading {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-muted);
+  opacity: 1;
+}
+
+.top-header .header-actions {
+  gap: 4px;
+}
+
+.top-header .header-action-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border-2);
+  background: var(--color-surface-2);
+  color: var(--color-text-2);
+}
+
+.top-header .header-action-btn.header-add-btn {
+  height: 40px;
+  width: auto;
+  min-width: 0;
+  padding: 0 16px;
+  gap: 8px;
+  border-radius: 10px;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-bg);
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.top-header .header-action-btn.header-add-btn:hover {
+  background: var(--color-accent);
+  opacity: 0.9;
+  transform: none;
+}
+
+.top-header .header-add-label {
+  white-space: nowrap;
+}
+
+@media (max-width: 560px) {
+  .top-header .header-add-label {
+    display: none;
+  }
+
+  .top-header .header-action-btn.header-add-btn {
+    width: 40px;
+    padding: 0;
+  }
+}
+
+/* Project accent: the same gradient as the app's primary buttons (UserPages.css) */
+.top-header .header-action-btn.header-add-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: transparent;
+  border-radius: 12px;
+  color: #ffffff;
+  box-shadow: 0 2px 10px rgba(102, 126, 234, 0.25);
+}
+
+.top-header .header-action-btn.header-add-btn:hover {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+/* Header language switch: En / සිං / த, as in the prototype */
+.top-header .header-lang-seg {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  margin-right: 6px;
+  border-radius: 10px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border-2);
+}
+
+.top-header .header-lang-seg button {
+  height: 32px;
+  min-width: 36px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.top-header .header-lang-seg button:hover {
+  color: var(--color-text);
+}
+
+.top-header .header-lang-seg button.active {
+  background: var(--color-surface-3);
+  color: var(--color-text);
+}
+
+@media (max-width: 560px) {
+  .top-header .header-lang-seg {
+    display: none;
+  }
+}
+
+/* Header text sizes from the prototype */
+.top-header .header-page-heading {
+  font-size: 24px;
+}
+
+.top-header .header-page-subheading {
+  font-size: 14px;
+}
+
+.top-header .header-lang-seg button.active {
+  background: color-mix(in srgb, var(--color-text) 9%, transparent);
+  color: var(--color-text);
+}
+
+/* Page title uses the sidebar logo's blue-to-violet gradient (App.css .logo-text) */
+.top-header .header-page-heading {
+  background: linear-gradient(135deg, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Title stays flush left, next to the sidebar edge */
+.top-header .header-center {
+  flex: 1 1 auto;
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.top-header .header-title-box,
+.top-header .header-page-heading,
+.top-header .header-page-subheading {
+  text-align: left;
+  align-items: flex-start;
+}
+
+
+
+
+/* Desktop: the header's left block only holds mobile-only controls, so it takes no space and the title starts at the left */
+@media (min-width: 768px) {
+  .top-header .header-left {
+    display: none;
+  }
+
+  .top-header .header-center {
+    flex: 1 1 auto;
+    justify-content: flex-start;
+    margin-left: 0;
+    padding-left: 0;
+    border-left: 0;
+  }
+}
+
+/* Header icon buttons a little smaller */
+.top-header .header-action-btn:not(.header-add-btn) {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+}
+
+/* Language switch a little smaller */
+.top-header .header-lang-seg {
+  padding: 2px;
+}
+
+.top-header .header-lang-seg button {
+  height: 28px;
+  min-width: 32px;
+  padding: 0 8px;
+}
+
+/* Header controls: a little more space between the language switch and the icons */
+.top-header .header-actions {
+  gap: 10px;
+}
+
+/* Language switch and icon buttons smaller again */
+.top-header .header-action-btn:not(.header-add-btn) {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+}
+
+.top-header .header-lang-seg button {
+  height: 24px;
+  min-width: 28px;
+  padding: 0 6px;
+}
+
+/* Language switch text a little smaller */
+.top-header .header-lang-seg button {
+  font-size: 12px;
+}
+
+/* Header icons smaller (the container size stays the same) */
+.top-header .header-action-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Icon button containers a little larger */
+.top-header .header-action-btn:not(.header-add-btn) {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+}
+
+/* Header sizes from the screenshot: 20px icons, 36px icon buttons, compact language switch */
+.top-header .header-action-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.top-header .header-action-btn:not(.header-add-btn) {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+}
+
+.top-header .header-lang-seg {
+  padding: 3px;
+}
+
+.top-header .header-lang-seg button {
+  height: 28px;
+  min-width: 36px;
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+/* AI Coach send button: larger arrow icon */
+.ai-ask-button svg {
+  width: 28px;
+  height: 28px;
+}
+
+/* Header taller on desktop; the page content gets the same top padding so it doesn't sit under the header */
+@media (min-width: 768px) {
+  .top-header {
+    height: 80px;
+    min-height: 80px;
+  }
+
+  .main-content {
+    padding-top: 80px;
+  }
+}
+
+/* Sidebar logo area the same height as the taller header on desktop */
+@media (min-width: 768px) {
+  .sidebar-header {
+    height: 80px;
+  }
+}

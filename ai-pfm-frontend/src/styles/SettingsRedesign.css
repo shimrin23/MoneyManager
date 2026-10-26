@@ -1,0 +1,784 @@
+/* Settings page: prototype layout, fonts and sizes. Colours come from the app's own theme tokens (App.css). */
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600;700&family=Figtree:wght@400;500;600;700&family=Noto+Sans+Sinhala:wght@400;600&family=Noto+Sans+Tamil:wght@400;600&display=swap');
+
+.settings-page {
+  display: block;
+  font-family: 'Figtree', 'Noto Sans Sinhala', 'Noto Sans Tamil', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.settings-page h1,
+.settings-page h2,
+.settings-page h3 {
+  font-family: 'Bricolage Grotesque', 'Figtree', system-ui, sans-serif;
+}
+
+/* Tabs */
+.settings-page .st-tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.settings-page .st-tab {
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 10px 14px;
+  margin-bottom: -1px;
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.settings-page .st-tab:hover {
+  color: var(--text);
+}
+
+.settings-page .st-tab.on {
+  color: var(--text);
+  border-bottom-color: var(--text);
+}
+
+/* Body and cards */
+.settings-page .st-body {
+  display: grid;
+  gap: 22px;
+  margin-top: 24px;
+}
+
+.settings-page .st-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  min-width: 0;
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.settings-page .st-card-h h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.settings-page .st-hint {
+  font-size: 12.5px;
+  color: var(--text-muted);
+}
+
+/* Form grids and fields */
+.settings-page .st-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 14px 16px;
+  align-items: start;
+}
+
+.settings-page .st-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.settings-page .st-field > label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.settings-page .st-input {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border-2);
+  background: var(--color-surface-3);
+  color: var(--text);
+  font-size: 14.5px;
+  min-width: 0;
+}
+
+.settings-page .st-input:focus {
+  outline: none;
+  border-color: var(--text-muted);
+}
+
+/* Toggle rows */
+.settings-page .st-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-page .st-toggle:last-child {
+  border-bottom: 0;
+}
+
+.settings-page .st-toggle-t {
+  font-weight: 600;
+  font-size: 14.5px;
+  color: var(--text);
+}
+
+.settings-page .st-toggle-s {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.settings-page .st-switch {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  width: 42px;
+  height: 24px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.settings-page .st-switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bg);
+  transition: transform 0.2s;
+}
+
+.settings-page .st-switch:checked {
+  background: var(--text);
+}
+
+.settings-page .st-switch:checked::after {
+  transform: translateX(18px);
+}
+
+.settings-page .st-switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Rows of buttons and text */
+.settings-page .st-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.settings-page .st-btn-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Key / value rows */
+.settings-page .st-kv > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-page .st-kv > div:last-child {
+  border-bottom: 0;
+}
+
+.settings-page .st-kv > div > span:first-child {
+  color: var(--text-muted);
+}
+
+.settings-page .st-kv > div > span:last-child {
+  font-weight: 600;
+  text-align: right;
+}
+
+/* Note box */
+.settings-page .st-note {
+  background: var(--color-surface-3);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.settings-page .st-note h4,
+.settings-page .st-note p {
+  margin: 0;
+}
+
+.settings-page .st-note p {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+/* Action bar */
+.settings-page .st-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* Prototype button size and type */
+.settings-page .st-actions button,
+.settings-page .st-row button,
+.settings-page .st-note button {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.settings-page .alert {
+  margin: 0;
+}
+
+@media (max-width: 560px) {
+  .settings-page .st-card {
+    padding: 16px;
+  }
+
+  .settings-page .st-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .settings-page .st-actions {
+    flex-wrap: wrap;
+  }
+}
+
+/* Project accent: the same purple-blue gradient as the app's primary buttons (UserPages.css) */
+.settings-page .st-tab.on {
+  color: #667eea;
+  border-bottom-color: #667eea;
+}
+
+.settings-page .st-switch:checked {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.settings-page .st-input:focus {
+  border-color: #667eea;
+}
+
+/* Text sizes from the prototype screenshot */
+.settings-page .st-tab {
+  font-size: 15px;
+}
+
+.settings-page .st-body {
+  gap: 28px;
+  margin-top: 28px;
+}
+
+.settings-page .st-card {
+  padding: 24px;
+  gap: 18px;
+}
+
+.settings-page .st-card-h h3 {
+  font-size: 20px;
+}
+
+.settings-page .st-field > label {
+  font-size: 14px;
+}
+
+.settings-page .st-input {
+  height: 44px;
+  font-size: 15px;
+}
+
+.settings-page .st-toggle-t {
+  font-size: 15px;
+}
+
+.settings-page .st-toggle-s {
+  font-size: 13.5px;
+}
+
+.settings-page .st-kv > div {
+  font-size: 15px;
+}
+
+/* Outer Settings container: light blue-grey panel behind the white cards, as in the screenshot */
+.settings-page {
+  background-image: linear-gradient(rgba(96, 165, 250, 0.12), rgba(96, 165, 250, 0.12));
+  border-radius: 16px;
+  padding: 20px;
+}
+
+
+/* Flat dash underline under the active tab (no rounded corners) */
+.settings-page .st-tab {
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* Secondary buttons: plain by default, coloured only on hover */
+.settings-page .btn-secondary {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  box-shadow: none;
+}
+
+.settings-page .btn-secondary:hover:not(:disabled) {
+  background: rgba(102, 126, 234, 0.08);
+  border-color: #667eea;
+  color: #667eea;
+}
+
+/* Advanced tab, as in the screenshots: narrow app-info rows and an outlined red reset button */
+.settings-page .st-kv {
+  max-width: 420px;
+}
+
+.settings-page .st-row .btn-warning {
+  background: transparent;
+  border: 1px solid #e05d5d;
+  color: #e05d5d;
+  box-shadow: none;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.settings-page .st-row .btn-warning:hover:not(:disabled) {
+  background: rgba(220, 38, 38, 0.08);
+  color: #e05d5d;
+}
+
+
+
+/* Big Settings container: solid light blue in light mode (dark mode keeps its own colour) */
+[data-theme='light'] .settings-page {
+  background-color: #fcfdff;
+}
+
+/* Light mode: lighter dropdown background (dark mode keeps its own) */
+[data-theme='light'] .settings-page .st-input {
+  background-color: #fcfdff;
+}
+
+/* Smaller dropdown boxes */
+.settings-page .st-input {
+  height: 38px;
+}
+
+/* Narrower dropdown boxes */
+.settings-page .st-input {
+  width: 60%;
+}
+
+/* Dropdown list: colours follow the theme (the browser still draws the popup itself) */
+.settings-page .st-input {
+  color-scheme: light;
+}
+
+.settings-page .st-input option {
+  background: #ffffff;
+  color: #13201c;
+  padding: 8px 12px;
+}
+
+[data-theme='dark'] .settings-page .st-input {
+  color-scheme: dark;
+}
+
+[data-theme='dark'] .settings-page .st-input option {
+  background: #131d1a;
+  color: #e4edea;
+}
+
+/* Dropdown arrow moved a little to the left (custom chevron replaces the native one) */
+.settings-page .st-input {
+  -webkit-appearance: none;
+  appearance: none;
+  padding-right: 36px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23959ca8' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 22px center;
+}
+
+[data-theme='dark'] .settings-page .st-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%239ca3af' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+/* Dropdown box border: softer and rounder (the popup list's own border is drawn by the browser) */
+.settings-page .st-input {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.settings-page .st-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 1px rgba(102, 126, 234, 0.6), 0 0 10px rgba(102, 126, 234, 0.3);
+}
+
+
+/* Light mode: slightly stronger dropdown border */
+[data-theme='light'] .settings-page .st-input {
+  border-color: #cdd6e4;
+}
+
+/* Light mode: slightly stronger divider lines inside the Settings page */
+[data-theme='light'] .settings-page {
+  --border: #d8dfeb;
+}
+
+/* Secondary buttons as in the screenshot: visible outline, rounder corners, roomier */
+.settings-page .btn-secondary {
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+[data-theme='light'] .settings-page .btn-secondary {
+  border-color: #c9d0dc;
+}
+
+/* App Information rows span the full card width */
+.settings-page .st-kv {
+  max-width: none;
+}
+
+/* Data Management buttons sit together, next to each other */
+.settings-page .st-row:has(.st-btn-icon) {
+  justify-content: flex-start;
+}
+
+/* A little more space between the Data Management buttons */
+.settings-page .st-row:has(.st-btn-icon) {
+  gap: 16px;
+}
+
+
+/* Light mode: lighter grey only for the off (unchecked) toggle */
+[data-theme='light'] .settings-page .st-switch:not(:checked) {
+  background: #9aa1ad;
+}
+
+/* Reset Options: description sits above the reset button */
+.settings-page .st-row:has(.btn-warning) {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* Reset button on the right, under the description */
+.settings-page .st-row:has(.btn-warning) .btn-warning {
+  align-self: flex-end;
+}
+
+/* Reset Options: button above the description, on the right */
+.settings-page .st-row:has(.btn-warning) {
+  flex-direction: column-reverse;
+  align-items: flex-end;
+}
+
+/* Reset Options: description directly under the title, reset button below it on the right */
+.settings-page .st-row:has(.btn-warning) {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+/* Reset Options card: less space between the description and the button */
+.settings-page .st-row:has(.btn-warning) {
+  gap: 2px;
+}
+
+/* Reset Options: description sits a little closer to the title */
+.settings-page .st-row:has(.btn-warning) {
+  margin-top: -8px;
+}
+
+/* Breadcrumb: Advanced › Account Settings */
+.settings-page .st-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.settings-page .st-crumb-link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.settings-page .st-crumb-link:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.settings-page .st-crumb-sep {
+  opacity: 0.7;
+}
+
+/* Account Settings layout from the screenshots, with the project's own colours */
+.settings-page .st-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.settings-page .st-form > .st-field:first-child {
+  grid-column: 1 / -1;
+}
+
+.settings-page .st-form > .btn-primary {
+  grid-column: 1 / -1;
+  justify-self: end;
+}
+
+.settings-page .st-card-h p {
+  margin: 4px 0 0;
+}
+
+/* Danger Zone: red border and title */
+.settings-page .st-danger {
+  border: 1px solid #dc2626;
+}
+
+.settings-page .st-danger .st-card-h h3 {
+  color: #dc2626;
+}
+
+/* Breadcrumb link turns the project's blue on hover */
+.settings-page .st-crumb-link:hover {
+  color: #667eea;
+}
+
+/* Text inputs (passwords): full width, no dropdown arrow, eye icon stays inside the box */
+.settings-page input.st-input {
+  width: 100%;
+  background-image: none;
+  padding-right: 2.5rem;
+}
+
+[data-theme='dark'] .settings-page input.st-input {
+  background-image: none;
+}
+
+/* Update Password button: white text, still readable when disabled */
+.settings-page .st-form > .btn-primary {
+  color: #ffffff;
+}
+
+.settings-page .st-form > .btn-primary:disabled {
+  opacity: 0.6;
+}
+
+/* Cancel and Save Settings: same size */
+.settings-page .st-actions button {
+  height: 44px;
+  min-width: 140px;
+  padding: 0 20px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Save confirmation: light tint of the project's blue-purple */
+.settings-page .alert-success {
+  background: #eef1ff !important;
+  color: #4a4fb8 !important;
+  border-color: #c7d0fb !important;
+}
+
+/* Tighter cards: less space between toggle rows and inside each card */
+.settings-page .st-toggle {
+  padding: 10px 0;
+}
+
+.settings-page .st-card {
+  gap: 12px;
+}
+
+/* Tighter again: smaller padding for toggle rows and cards */
+.settings-page .st-toggle {
+  padding: 8px 0;
+}
+
+.settings-page .st-card {
+  gap: 8px;
+  padding: 18px 20px;
+}
+
+/* Confirm New Password sits under the password rules, in the left column */
+.settings-page .st-form > .st-field:nth-child(3) {
+  grid-column: 1;
+}
+
+/* Current Password box narrower (the eye icon stays inside it) */
+.settings-page .st-form > .st-field:first-child > div {
+  max-width: 30%;
+}
+
+/* New and Confirm password boxes match the Current Password box width */
+.settings-page .st-form > .st-field:nth-child(2) > div,
+.settings-page .st-form > .st-field:nth-child(3) > div {
+  max-width: 30%;
+}
+
+/* All three password boxes share one width, the same as the Current Password box */
+.settings-page .st-form > .st-field > div {
+  width: 320px;
+  max-width: 100%;
+}
+
+
+/* Password fields: New and Confirm side by side, Current full width */
+.settings-page .st-form {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+/* New Password box wider only */
+.settings-page .st-form > .st-field:nth-child(2) > div {
+  width: 320px;
+  max-width: none;
+}
+
+/* Confirm New Password box 320px wide */
+.settings-page .st-form > .st-field:nth-child(3) > div {
+  width: 320px;
+  max-width: none;
+}
+
+
+/* Change Password card shorter vertically */
+.settings-page .st-card:has(.st-form) {
+  gap: 6px;
+  padding-bottom: 16px;
+}
+
+.settings-page .st-form {
+  gap: 10px 16px;
+}
+
+/* Update Password button on the left of its card */
+.settings-page .st-form > .btn-primary {
+  justify-self: start;
+}
+
+/* Update Password: no spinner on the disabled button; text stays visible */
+.settings-page .st-form > .btn-primary:disabled::after {
+  display: none;
+}
+
+.settings-page .st-form > .btn-primary:disabled {
+  color: #ffffff;
+}
+
+/* Account Settings Data & Privacy: the Export Data button stays on the right of its card */
+.settings-page .st-row:has(.st-toggle-t) {
+  justify-content: space-between;
+}
+
+/* Danger Zone delete button: solid red to match the card */
+.settings-page .st-danger .btn-danger {
+  background: #dc2626;
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.settings-page .st-danger .btn-danger:hover:not(:disabled) {
+  background: #b91c1c;
+}
+
+/* Breadcrumb: arrow and "Advanced" on one horizontal line */
+.settings-page .st-crumb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.settings-page .st-crumb-link svg {
+  display: inline-block;
+  flex: none;
+}
+
+/* Breadcrumb: back arrow placed below the word "Advanced" */
+.settings-page .st-crumb-link {
+  flex-direction: column-reverse;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+/* Breadcrumb: back arrow placed above the word "Advanced" */
+.settings-page .st-crumb-link {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+/* Breadcrumb: arrow higher above the word "Advanced" */
+.settings-page .st-crumb-link {
+  gap: 8px;
+}
+
+/* Breadcrumb moved up: arrow and text together */
+.settings-page .st-breadcrumb {
+  margin-top: -4px;
+}
+
+/* Breadcrumb on one horizontal line (overrides the app's global nav layout) */
+.settings-page nav.st-breadcrumb {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Advanced link on the same line as the rest of the breadcrumb */
+.settings-page .st-crumb-link {
+  flex-direction: row;
+  align-items: center;
+}
+
+
+/* Dropdown text a little smaller */
+.settings-page .st-input {
+  font-size: 13.5px;
+}

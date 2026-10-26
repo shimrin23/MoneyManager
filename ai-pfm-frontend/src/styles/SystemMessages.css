@@ -125,3 +125,263 @@
 @media (prefers-reduced-motion: reduce) {
   .sm-toast { animation: none; }
 }
+
+/* Confirmation dialog: Cancel and the action button are the same size */
+.sm-dialog-actions > button {
+  height: 40px;
+  min-width: 120px;
+  padding: 0 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* Confirmation dialog: neutral Cancel, solid red action button */
+.sm-dialog-actions .btn-secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+
+.btn-primary.sm-btn-danger {
+  background: #dc2626;
+  box-shadow: none;
+}
+
+/* Danger confirm button keeps red when focused or hovered (the global focus style is blue) */
+.btn-primary.sm-btn-danger:focus,
+.btn-primary.sm-btn-danger:hover:not(:disabled) {
+  background: #dc2626;
+  box-shadow: none;
+  transform: none;
+}
+
+.sm-dialog-actions > button.sm-btn-danger,
+.sm-dialog-actions > .btn-secondary {
+  transform: none;
+}
+
+/* Dialog buttons the same height (the global primary button sets a 44px minimum) */
+.sm-dialog-actions > button {
+  height: 40px !important;
+  min-height: 40px !important;
+  min-width: 120px;
+  box-sizing: border-box;
+}
+
+/* Confirmation dialog text a little smaller */
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.sm-dialog-message {
+  font-size: 14px;
+}
+
+/* Confirmation dialog: smaller gaps between title, message and buttons */
+.modal-title {
+  margin: 0;
+}
+
+.sm-dialog-message {
+  margin: 8px 0 16px;
+}
+
+/* Tighter again */
+.sm-dialog-message {
+  margin: 4px 0 12px;
+}
+
+/* Confirmation dialog: message sits directly under the title */
+.modal-header:has(+ form) {
+  margin-bottom: 0;
+}
+
+.sm-dialog-message {
+  margin-top: 0;
+}
+
+/* Confirmation dialog: close button in the top-right corner */
+.modal-header:has(+ form) {
+  position: relative;
+}
+
+.modal-header:has(+ form) > .modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+/* Close button sits higher, in the corner */
+.modal-header:has(+ form) > .modal-close {
+  top: 4px;
+  right: 4px;
+}
+
+/* Close button right in the corner */
+.modal-header:has(+ form) > .modal-close {
+  top: 0;
+  right: 0;
+}
+
+/* Close button a little higher than the header edge */
+.modal-header:has(+ form) > .modal-close {
+  top: -4px;
+  right: 0;
+}
+
+/* Close button higher and closer to the right corner */
+.modal-header:has(+ form) > .modal-close {
+  top: -10px;
+  right: -4px;
+}
+
+/* Close button higher and closer to the right corner */
+.modal-header:has(+ form) > .modal-close {
+  top: -16px;
+  right: -8px;
+}
+
+/* Close button higher still */
+.modal-header:has(+ form) > .modal-close {
+  top: -24px;
+  right: -8px;
+}
+
+/* Type-to-confirm prompt: the message sits in a red alert box with a warning icon */
+form:has(.sm-dialog-field) > .sm-dialog-message {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: #fde8e8;
+  color: #991b1b;
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 4px 0 16px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+form:has(.sm-dialog-field) > .sm-dialog-message::before {
+  content: '\26A0';
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+/* Type-to-confirm prompt: outlined warning triangle, dark message text */
+form:has(.sm-dialog-field) > .sm-dialog-message {
+  color: #1f2937;
+  border-radius: 14px;
+  padding: 16px 18px;
+  gap: 12px;
+}
+
+form:has(.sm-dialog-field) > .sm-dialog-message::before {
+  content: '';
+  flex: none;
+  width: 20px;
+  height: 20px;
+  line-height: 0;
+  font-size: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23dc2626' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z'/%3E%3Cline x1='12' y1='9' x2='12' y2='13'/%3E%3Cline x1='12' y1='17' x2='12.01' y2='17'/%3E%3C/svg%3E") no-repeat center / contain;
+}
+
+/* Type-to-confirm label: smaller, darker, closer to its input */
+.sm-dialog-field label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+/* Type-to-confirm: close button on the title row, inside the dialog; warning box a little below the title */
+.modal-header:has(+ form) > .modal-close {
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+}
+
+form:has(.sm-dialog-field) > .sm-dialog-message {
+  margin: 14px 0 16px;
+}
+
+/* Type-to-confirm label: a little smaller and lighter */
+.sm-dialog-field label {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #4b5563;
+}
+
+/* Type-to-confirm dialog: all text and controls a little smaller */
+.modal-header:has(+ form) .modal-title {
+  font-size: 16px;
+}
+
+form:has(.sm-dialog-field) > .sm-dialog-message {
+  font-size: 12.5px;
+  padding: 12px 14px;
+}
+
+form:has(.sm-dialog-field) .sm-dialog-field input {
+  height: 36px;
+  font-size: 13px;
+}
+
+form:has(.sm-dialog-field) .sm-dialog-actions > button {
+  height: 36px !important;
+  min-height: 36px !important;
+  min-width: 100px;
+  font-size: 13px;
+}
+
+/* Type-to-confirm label size (more specific so the global label style does not override it) */
+form:has(.sm-dialog-field) .sm-dialog-field label {
+  font-size: 11px;
+}
+
+/* Type-to-confirm label as in the image: regular weight, dark grey */
+form:has(.sm-dialog-field) .sm-dialog-field label {
+  font-size: 12px;
+  font-weight: 400;
+  color: #374151;
+}
+
+/* Type-to-confirm label darker */
+form:has(.sm-dialog-field) .sm-dialog-field label {
+  color: #111827;
+}
+
+/* Close button on the title row, in the top-right corner of every confirm dialog */
+.modal-header:has(+ form) > .modal-close {
+  top: 4px;
+  right: 8px;
+  transform: none;
+}
+
+/* Close button sits in the header row at the top-right, not absolutely positioned */
+.modal-header:has(+ form) {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.modal-header:has(+ form) > .modal-close {
+  position: static;
+  margin: -6px -6px 0 0;
+  align-self: flex-start;
+  transform: none;
+}
+
+/* Close button nudged up to line up with the title */
+.modal-header:has(+ form) > .modal-close {
+  margin-top: -14px;
+}
+
+/* Confirm dialog a little taller: more space around the message */
+.sm-dialog-message {
+  margin: 8px 0 22px;
+}

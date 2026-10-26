@@ -82,9 +82,12 @@ import { ResetPassword } from './pages/ResetPassword';
 import { AIAssistant } from './components/AIAssistant';
 import { ADMIN_T } from './i18n/adminText';
 import { USER_T } from './i18n/userPagesText';
+import { ACCOUNT_T } from './i18n/accountSettingsText';
 import './App.css';
 import './styles/UserPages.css';
 import './styles/FinancialPages.css';
+import './styles/HeaderRedesign.css';
+import './styles/PageTint.css';
 
 type UserRole = 'customer' | 'admin' | 'ops' | 'manager';
 type Language = 'en' | 'si' | 'ta';
@@ -205,7 +208,7 @@ function AppShell() {
       case '/notifications': return { title: 'Notifications', subtitle: 'Recent alerts and updates' };
       case '/profile': return { title: USER_T[lang].hdrProfile, subtitle: USER_T[lang].hdrProfileSub };
       case '/settings': return { title: USER_T[lang].hdrSettings, subtitle: USER_T[lang].hdrSettingsSub };
-      case '/account-settings': return { title: USER_T[lang].hdrSettings, subtitle: USER_T[lang].hdrSettingsSub };
+      case '/account-settings': return { title: ACCOUNT_T[lang].title, subtitle: ACCOUNT_T[lang].subtitle };
       case '/help': return { title: USER_T[lang].hdrHelp, subtitle: USER_T[lang].hdrHelpSub };
       case '/admin': return { title: ADMIN_T[lang].hdrDashboard, subtitle: ADMIN_T[lang].hdrDashboardSub };
       case '/admin/users': return { title: ADMIN_T[lang].hdrUsers, subtitle: ADMIN_T[lang].hdrUsersSub };
@@ -421,20 +424,6 @@ function AppShell() {
               )}
             </div>
 
-            {/* Mobile-only language selector inside drawer */}
-            <div className="mobile-drawer-lang">
-              <span className="mobile-drawer-lang-title">Language</span>
-              <div className="mobile-drawer-lang-group">
-                {([['en','English'], ['si','සිංහල'], ['ta','தமிழ்']] as [Language, string][]).map(([l, label]) => (
-                  <button key={l} className={`lang-btn ${lang === l ? 'active' : ''}`}
-                    onClick={() => switchLang(l)}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <div className="sidebar-footer">
               <UserHeader theme={theme} onToggleTheme={() => setTheme(p => p === 'dark' ? 'light' : 'dark')} />
             </div>
@@ -475,6 +464,20 @@ function AppShell() {
             )}
 
             <div className="header-actions">
+              <div className="header-lang-seg" role="group" aria-label="Language">
+                {([['en', 'En', 'English'], ['si', 'සිං', 'Sinhala'], ['ta', 'த', 'Tamil']] as [Language, string, string][]).map(([l, label, name]) => (
+                  <button
+                    key={l}
+                    type="button"
+                    className={lang === l ? 'active' : ''}
+                    onClick={() => switchLang(l)}
+                    title={name}
+                    aria-pressed={lang === l}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
               {isCustomer && (
                 <button
                   className="header-action-btn"
@@ -486,19 +489,6 @@ function AppShell() {
                     <path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 3 3v2a3 3 0 0 1-3 3h-1v1a4 4 0 0 1-8 0v-1H7a3 3 0 0 1-3-3v-2a3 3 0 0 1 3-3h1V6a4 4 0 0 1 4-4z"/>
                     <line x1="9" y1="10" x2="9" y2="14"/>
                     <line x1="15" y1="10" x2="15" y2="14"/>
-                  </svg>
-                </button>
-              )}
-              {isCustomer && (
-                <button
-                  className="header-action-btn header-add-btn"
-                  onClick={() => setShowAddTransactionModal(true)}
-                  aria-label="New Transaction"
-                  title="New Transaction"
-                >
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <line x1="12" y1="5" x2="12" y2="19"/>
-                    <line x1="5" y1="12" x2="19" y2="12"/>
                   </svg>
                 </button>
               )}
@@ -551,6 +541,20 @@ function AppShell() {
                       {unreadCount > 99 ? '99+' : unreadCount}
                     </span>
                   )}
+                </button>
+              )}
+              {isCustomer && (
+                <button
+                  className="header-action-btn header-add-btn"
+                  onClick={() => setShowAddTransactionModal(true)}
+                  aria-label="New Transaction"
+                  title="New Transaction"
+                >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                  <span className="header-add-label">New Transaction</span>
                 </button>
               )}
             </div>
