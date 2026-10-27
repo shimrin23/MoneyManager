@@ -370,7 +370,7 @@ export const FinancialHealthPage = () => {
                                             <span className="gl-target">Peer Avg: {renderBenchmarkValue(benchmark.category, benchmark.peerAverage)}</span>
                                         </div>
                                         <div className="gl-bar">
-                                            <span style={{ width: `${Math.min(100, Math.max(0, benchmark.percentile))}%`, backgroundColor: '#3b82f6' }} />
+                                            <span style={{ width: `${Math.min(100, Math.max(0, benchmark.percentile))}%`, backgroundColor: '#10b981' }} />
                                         </div>
                                         <div className="gl-row">
                                             <span>Better than {benchmark.percentile}% of users</span>

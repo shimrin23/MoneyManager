@@ -83,7 +83,7 @@ const ExecutionModal = ({
                 {step === 'confirm' && (
                     <>
                         <div className="modal-header">
-                            <h2 className="modal-title">{rec.icon} Execute Recommendation</h2>
+                            <h2 className="modal-title">Execute Recommendation</h2>
                             <button className="modal-close" onClick={onClose}>×</button>
                         </div>
                         <div className="onetap-body">
@@ -112,7 +112,6 @@ const ExecutionModal = ({
 
                 {step === 'progress' && (
                     <div className="onetap-body onetap-center">
-                        <div className="onetap-spinner">⚙️</div>
                         <div className="onetap-title">Applying...</div>
                         <div className="onetap-text">Applying your recommendation.</div>
                     </div>
@@ -120,7 +119,6 @@ const ExecutionModal = ({
 
                 {step === 'done' && result && (
                     <div className="onetap-body onetap-center">
-                        <div className="onetap-success-icon">✅</div>
                         <div className="onetap-title" style={{ color: '#10b981' }}>Done</div>
                         <div className="onetap-text" style={{ marginBottom: '1.5rem' }}>
                             {result.message}
@@ -296,32 +294,20 @@ export const RecommendationsPage = () => {
 
             <div className="rec-summary-grid">
                 <div className="rec-stat-card">
-                    <div className="rec-stat-icon">📋</div>
-                    <div>
-                        <div className="rec-stat-value">{recommendations.length}</div>
-                        <div className="rec-stat-label">Total Recommendations</div>
-                    </div>
+                    <div className="rec-stat-value">{recommendations.length}</div>
+                    <div className="rec-stat-label">Total Recommendations</div>
                 </div>
                 <div className="rec-stat-card pending">
-                    <div className="rec-stat-icon">⏳</div>
-                    <div>
-                        <div className="rec-stat-value">{pending}</div>
-                        <div className="rec-stat-label">Pending Action</div>
-                    </div>
+                    <div className="rec-stat-value">{pending}</div>
+                    <div className="rec-stat-label">Pending Action</div>
                 </div>
                 <div className="rec-stat-card accepted">
-                    <div className="rec-stat-icon">✅</div>
-                    <div>
-                        <div className="rec-stat-value">{accepted}</div>
-                        <div className="rec-stat-label">Accepted</div>
-                    </div>
+                    <div className="rec-stat-value">{accepted}</div>
+                    <div className="rec-stat-label">Accepted</div>
                 </div>
                 <div className="rec-stat-card savings">
-                    <div className="rec-stat-icon">💰</div>
-                    <div>
-                        <div className="rec-stat-value">{formatMoney(plannedSavings)}</div>
-                        <div className="rec-stat-label">Planned Monthly Savings</div>
-                    </div>
+                    <div className="rec-stat-value">{formatMoney(plannedSavings)}</div>
+                    <div className="rec-stat-label">Planned Monthly Savings</div>
                 </div>
             </div>
 

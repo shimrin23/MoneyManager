@@ -932,7 +932,7 @@
 
 .percentile-fill {
     height: 100%;
-    background: #3b82f6;
+    background: #10b981;
     border-radius: 4px;
     transition: width 1s ease-in-out;
 }
@@ -1019,8 +1019,8 @@
 
 .rec-stat-card {
     display: flex;
-    align-items: center;
-    gap: 1rem;
+    flex-direction: column;
+    gap: 0.35rem;
     padding: 1.1rem 1.3rem;
     border-radius: var(--radius-lg, 12px);
     background: var(--color-surface-2, var(--card));
