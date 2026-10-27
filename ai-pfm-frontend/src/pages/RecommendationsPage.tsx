@@ -436,20 +436,20 @@ export const RecommendationsPage = () => {
 
                         {rec.status === 'pending' && (
                             <div className="rec-card-actions">
-                                <button className="rec-action-btn accept" onClick={() => handleAccept(rec)}>
+                                <button className="btn-primary btn-sm" onClick={() => handleAccept(rec)}>
                                     Accept & Execute
                                 </button>
-                                <button className="rec-action-btn snooze" onClick={() => updateStatus(rec._id, 'snoozed')}>
+                                <button className="btn-secondary btn-sm" onClick={() => updateStatus(rec._id, 'snoozed')}>
                                     Snooze
                                 </button>
-                                <button className="rec-action-btn decline" onClick={() => updateStatus(rec._id, 'declined')}>
+                                <button className="btn-secondary btn-sm" onClick={() => updateStatus(rec._id, 'declined')}>
                                     Decline
                                 </button>
                             </div>
                         )}
                         {rec.status !== 'pending' && (
                             <div className="rec-card-actions">
-                                <button className="rec-action-btn restore" onClick={() => updateStatus(rec._id, 'pending')}>
+                                <button className="btn-secondary btn-sm" onClick={() => updateStatus(rec._id, 'pending')}>
                                     Restore to Pending
                                 </button>
                             </div>
