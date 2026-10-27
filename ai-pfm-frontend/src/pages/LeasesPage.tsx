@@ -184,58 +184,42 @@ export const LeasesPage = () => {
     if (loading) return <div className="loading-spinner">Loading leases...</div>;
 
     return (
-        <div className="page-container leases-page">
+        <div className="page-container">
             <div className="page-header">
                 <div style={{ flex: 1 }}></div>
-                <button className="action-btn primary" onClick={() => setShowNewForm(!showNewForm)}>
+                <button className="btn-primary" onClick={() => setShowNewForm(!showNewForm)}>
                     + Add New Lease
                 </button>
             </div>
 
-            {error && (
-                <div className="rec-alert-banner" style={{ marginBottom: '1.5rem', background: 'rgba(239,68,68,0.15)', borderColor: '#ef4444' }}>
-                    {error}
-                </div>
-            )}
+            {error && <div className="rc-banner error">{error}</div>}
 
             {/* Summary */}
-            <div className="rec-summary-grid">
-                <div className="rec-stat-card">
-                    <div className="rec-stat-icon">📄</div>
-                    <div>
-                        <div className="rec-stat-value">{active.length}</div>
-                        <div className="rec-stat-label">Active Leases</div>
-                    </div>
+            <div className="rc-stats">
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Active Leases</span>
+                    <span className="rc-stat-value">{active.length}</span>
                 </div>
-                <div className="rec-stat-card pending">
-                    <div className="rec-stat-icon">💸</div>
-                    <div>
-                        <div className="rec-stat-value">{formatMoney(totalMonthly)}</div>
-                        <div className="rec-stat-label">Monthly Payment</div>
-                    </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Monthly Payment</span>
+                    <span className="rc-stat-value">{formatMoney(totalMonthly)}</span>
                 </div>
-                <div className="rec-stat-card savings">
-                    <div className="rec-stat-icon">⚖️</div>
-                    <div>
-                        <div className="rec-stat-value">{formatMoney(totalOutstanding)}</div>
-                        <div className="rec-stat-label">Total Outstanding</div>
-                    </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Total Outstanding</span>
+                    <span className="rc-stat-value">{formatMoney(totalOutstanding)}</span>
                 </div>
-                <div className="rec-stat-card accepted">
-                    <div className="rec-stat-icon">✅</div>
-                    <div>
-                        <div className="rec-stat-value">{leases.filter(l => l.status === 'completed').length}</div>
-                        <div className="rec-stat-label">Completed</div>
-                    </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Completed</span>
+                    <span className="rc-stat-value">{leases.filter(l => l.status === 'completed').length}</span>
                 </div>
             </div>
 
             {/* New Lease Form */}
             {showNewForm && (
-                <div className="card fd-form-card">
-                    <h3 className="section-title">Add New Lease</h3>
-                    <form onSubmit={handleNewLeaseSubmit} className="fd-form">
-                        <div className="fd-form-grid">
+                <div className="card form-card gl-form">
+                    <h3 className="gl-form-title">Add New Lease</h3>
+                    <form onSubmit={handleNewLeaseSubmit}>
+                        <div className="form-row">
                             <div className="form-group">
                                 <label>Asset Name</label>
                                 <input type="text" placeholder="e.g. Toyota Aqua 2022" value={newLease.assetName} onChange={e => setNewLease({ ...newLease, assetName: e.target.value })} required />
@@ -244,6 +228,8 @@ export const LeasesPage = () => {
                                 <label>Lessor / Finance Company</label>
                                 <input type="text" placeholder="e.g. Commercial Leasing" value={newLease.lessor} onChange={e => setNewLease({ ...newLease, lessor: e.target.value })} required />
                             </div>
+                        </div>
+                        <div className="form-row">
                             <div className="form-group">
                                 <label>Asset Type</label>
                                 <select value={newLease.assetType} onChange={e => setNewLease({ ...newLease, assetType: e.target.value as Lease['assetType'] })}>
@@ -257,6 +243,8 @@ export const LeasesPage = () => {
                                 <label>Principal Amount ({currencyCode()})</label>
                                 <input type="number" min="1" placeholder="e.g. 4500000" value={newLease.principalAmount} onChange={e => setNewLease({ ...newLease, principalAmount: e.target.value })} required />
                             </div>
+                        </div>
+                        <div className="form-row">
                             <div className="form-group">
                                 <label>Monthly Payment ({currencyCode()})</label>
                                 <input type="number" min="1" placeholder="e.g. 95000" value={newLease.monthlyPayment} onChange={e => setNewLease({ ...newLease, monthlyPayment: e.target.value })} required />
@@ -265,6 +253,8 @@ export const LeasesPage = () => {
                                 <label>Interest Rate (% p.a.)</label>
                                 <input type="number" step="0.01" min="0" max="100" placeholder="e.g. 14.5" value={newLease.interestRate} onChange={e => setNewLease({ ...newLease, interestRate: e.target.value })} required />
                             </div>
+                        </div>
+                        <div className="form-row">
                             <div className="form-group">
                                 <label>Tenure (Months)</label>
                                 <input type="number" min="1" max="600" step="1" placeholder="e.g. 60" value={newLease.tenureMonths} onChange={e => setNewLease({ ...newLease, tenureMonths: e.target.value })} required />
@@ -274,11 +264,11 @@ export const LeasesPage = () => {
                                 <input type="date" value={newLease.startDate} onChange={e => setNewLease({ ...newLease, startDate: e.target.value })} required />
                             </div>
                         </div>
-                        <div className="fd-form-actions">
-                            <button type="submit" className="action-btn primary" disabled={submitting}>
+                        <div className="form-actions">
+                            <button type="button" className="btn-secondary" onClick={() => setShowNewForm(false)}>Cancel</button>
+                            <button type="submit" className="btn-primary" disabled={submitting}>
                                 {submitting ? 'Saving...' : 'Save Lease'}
                             </button>
-                            <button type="button" className="action-btn secondary" onClick={() => setShowNewForm(false)}>Cancel</button>
                         </div>
                     </form>
                 </div>
@@ -286,19 +276,16 @@ export const LeasesPage = () => {
 
             {/* Empty State */}
             {leases.length === 0 && !showNewForm && (
-                <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-                    <div style={{ fontSize: '3rem', margin: '0 auto 1rem', width: '80px', height: '80px', background: 'rgba(99,102,241,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>📄</div>
-                    <h3 style={{ marginBottom: '0.5rem', color: 'var(--text)' }}>No Leases Added</h3>
-                    <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', maxWidth: '400px', margin: '0 auto 1.5rem' }}>
-                        Keep track of your vehicle and equipment leases, outstanding balances, and monthly payments.
-                    </p>
-                    <button className="action-btn primary" onClick={() => setShowNewForm(true)}>+ Add New Lease</button>
+                <div className="empty-state">
+                    <h3>No Leases Added</h3>
+                    <p>Keep track of your vehicle and equipment leases, outstanding balances, and monthly payments.</p>
+                    <button className="btn-primary" onClick={() => setShowNewForm(true)}>+ Add New Lease</button>
                 </div>
             )}
 
             {/* Filter */}
             {leases.length > 0 && (
-                <div className="rec-filter-row">
+                <div className="rec-filter-row fin-filters">
                     {(['all', 'active', 'completed'] as const).map(f => (
                         <button key={f} className={`rec-filter-btn ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
                             {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -309,84 +296,68 @@ export const LeasesPage = () => {
             )}
 
             {/* Lease Cards */}
-            <div className="fd-list">
+            <div className="fin-grid">
                 {filtered.map(lease => {
                     const progress = lease.tenureMonths > 0 ? ((lease.tenureMonths - lease.remainingMonths) / lease.tenureMonths) * 100 : 100;
                     const daysUntil = getDaysUntil(lease.nextPaymentDate);
+                    const statusPill = lease.status === 'active' ? 'in-progress' : lease.status === 'completed' ? 'completed' : 'paused';
+                    const nextTone = daysUntil === null ? '' : daysUntil < 0 ? 'fin-bad' : daysUntil <= 7 ? 'fin-warn' : '';
                     return (
-                        <div key={lease._id} className={`fd-card ${lease.status}`}>
-                            <div className="fd-card-header">
-                                <div className="fd-card-title-row">
-                                    <div>
-                                        <div className="fd-account">{lease.assetName}</div>
-                                        <div className="fd-bank">{lease.lessor}</div>
+                        <article key={lease._id} className="gl-card">
+                            <div className="gl-head">
+                                <div className="gl-head-main">
+                                    <div className="gl-head-text">
+                                        <h3>{lease.assetName}</h3>
+                                        <span className="gl-sub">{lease.lessor} · {assetTypeLabel[lease.assetType]}</span>
                                     </div>
-                                    <div className="fd-badges">
-                                        <span className="fd-type-badge">{assetTypeLabel[lease.assetType]}</span>
-                                        <span className="fd-status-badge" style={{ color: lease.status === 'active' ? '#10b981' : lease.status === 'completed' ? '#6366f1' : '#ef4444' }}>
-                                            {lease.status === 'active' ? 'Active' : lease.status === 'completed' ? 'Completed' : 'Defaulted'}
+                                </div>
+                                <span className={`gl-pill ${statusPill}`}>
+                                    {lease.status === 'active' ? 'Active' : lease.status === 'completed' ? 'Completed' : 'Defaulted'}
+                                </span>
+                            </div>
+
+                            <div className="gl-kv">
+                                <div><span>Monthly Payment</span><span>{formatMoney(lease.monthlyPayment)}</span></div>
+                                <div><span>Outstanding</span><span>{formatMoney(Math.round(lease.outstandingBalance))}</span></div>
+                                <div><span>Remaining</span><span>{lease.remainingMonths} months</span></div>
+                                <div><span>Rate</span><span>{lease.interestRate}% p.a.</span></div>
+                                <div><span>Tenure</span><span>{lease.tenureMonths} months</span></div>
+                                {lease.status === 'active' && daysUntil !== null && lease.nextPaymentDate && (
+                                    <div>
+                                        <span>Next Payment</span>
+                                        <span className={nextTone}>
+                                            {daysUntil < 0
+                                                ? `Overdue by ${-daysUntil}d (due ${formatDate(lease.nextPaymentDate)})`
+                                                : `In ${daysUntil}d (${formatDate(lease.nextPaymentDate)})`}
                                         </span>
                                     </div>
+                                )}
+                            </div>
+
+                            <div className="gl-progress">
+                                <div className="gl-bar">
+                                    <span className={lease.status === 'completed' ? 'good' : ''} style={{ width: `${progress}%` }} />
+                                </div>
+                                <div className="gl-row">
+                                    <span>{formatDate(lease.startDate)}</span>
+                                    <span>{Math.round(progress)}% paid off</span>
+                                    <span>{formatDate(lease.endDate)}</span>
                                 </div>
                             </div>
 
-                            <div className="fd-card-body">
-                                <div className="fd-amounts-row">
-                                    <div className="fd-amount-item">
-                                        <div className="fd-amount-label">Monthly Payment</div>
-                                        <div className="fd-amount-value">{formatMoney(lease.monthlyPayment)}</div>
-                                    </div>
-                                    <div className="fd-amount-item highlight">
-                                        <div className="fd-amount-label">Outstanding</div>
-                                        <div className="fd-amount-value">{formatMoney(Math.round(lease.outstandingBalance))}</div>
-                                    </div>
-                                    <div className="fd-amount-item">
-                                        <div className="fd-amount-label">Remaining</div>
-                                        <div className="fd-amount-value">{lease.remainingMonths} months</div>
-                                    </div>
-                                </div>
-
-                                <div className="fd-details-row">
-                                    <span>📊 {lease.interestRate}% p.a.</span>
-                                    <span>📅 {lease.tenureMonths} months tenure</span>
-                                    {lease.status === 'active' && daysUntil !== null && lease.nextPaymentDate && (
-                                        daysUntil < 0 ? (
-                                            <span style={{ color: '#ef4444', fontWeight: 600 }}>
-                                                ⏱ Payment overdue by {-daysUntil}d (due {formatDate(lease.nextPaymentDate)})
-                                            </span>
-                                        ) : (
-                                            <span style={{ color: daysUntil <= 7 ? '#f59e0b' : 'var(--text-muted)' }}>
-                                                ⏱ Next payment in {daysUntil}d ({formatDate(lease.nextPaymentDate)})
-                                            </span>
-                                        )
-                                    )}
-                                </div>
-
-                                <div className="fd-progress-wrap">
-                                    <div className="fd-progress-labels">
-                                        <span>{formatDate(lease.startDate)}</span>
-                                        <span>{Math.round(progress)}% paid off</span>
-                                        <span>{formatDate(lease.endDate)}</span>
-                                    </div>
-                                    <div className="fd-progress-bar">
-                                        <div className="fd-progress-fill" style={{ width: `${progress}%`, background: lease.status === 'completed' ? 'linear-gradient(90deg, #10b981, #34d399)' : 'linear-gradient(90deg, #6366f1, #8b5cf6)' }} />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="fd-card-actions">
+                            <div className="gl-actions">
                                 {lease.status === 'active' && (
                                     <>
-                                        <button className="action-btn primary small" onClick={() => handleRecordPayment(lease)}>Record Payment</button>
-                                        <button className="action-btn secondary small" onClick={() => handleMarkCompleted(lease)}>Mark Completed</button>
-                                        <button className="action-btn danger small" onClick={() => handleDelete(lease._id)}>Delete</button>
+                                        <button className="btn-primary btn-sm" onClick={() => handleRecordPayment(lease)}>Record Payment</button>
+                                        <button className="btn-secondary btn-sm" onClick={() => handleMarkCompleted(lease)}>Mark Completed</button>
+                                        <button className="btn-secondary btn-sm" onClick={() => handleDelete(lease._id)}>Delete</button>
                                     </>
                                 )}
                                 {lease.status !== 'active' && (
-                                    <button className="action-btn secondary small" onClick={() => handleDelete(lease._id)}>Delete</button>
+                                    <button className="btn-secondary btn-sm" onClick={() => handleDelete(lease._id)}>Delete</button>
                                 )}
                             </div>
-                        </div>
+                        </article>
                     );
                 })}
             </div>

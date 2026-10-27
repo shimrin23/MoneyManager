@@ -14,6 +14,12 @@ interface LoanAlertsProps {
     onDismiss?: (loanId: string) => void;
 }
 
+const severityClass: Record<Alert['severity'], string> = {
+    high: 'bad',
+    medium: 'warn',
+    low: 'info'
+};
+
 const LoanAlerts: FC<LoanAlertsProps> = ({ loanIds, onDismiss }) => {
     const { getLoanAlerts } = useLoans();
     const [allAlerts, setAllAlerts] = useState<Alert[]>([]);
@@ -53,47 +59,32 @@ const LoanAlerts: FC<LoanAlertsProps> = ({ loanIds, onDismiss }) => {
     const visibleAlerts = allAlerts.filter(alert => !dismissedAlerts.has(alert.loanId));
 
     if (loading) {
-        return <div className="loan-alerts loading">Loading alerts...</div>;
+        return <div className="su-muted fin-section">Loading alerts...</div>;
     }
 
     if (visibleAlerts.length === 0) {
         return (
-            <div className="loan-alerts">
-                <div className="alert-success">
-                    <span>✓</span>
-                    <p>All loans are in good standing!</p>
-                </div>
+            <div className="su-impact fin-section">
+                All loans are in good standing.
             </div>
         );
     }
 
     return (
-        <div className="loan-alerts">
-            <h2>Loan Alerts</h2>
-            <div className="alerts-container">
-                {visibleAlerts.map((alert, idx) => (
-                    <div key={idx} className={`alert alert-${alert.severity}`}>
-                        <div className="alert-icon">
-                            {alert.severity === 'high' && '⚠️'}
-                            {alert.severity === 'medium' && '⚡'}
-                            {alert.severity === 'low' && 'ℹ️'}
-                        </div>
-                        <div className="alert-content">
-                            <p className="alert-message">{alert.message}</p>
-                            <span className="alert-type">{alert.type.replace(/-/g, ' ')}</span>
-                        </div>
-                        {alert.actionRequired && (
-                            <div className="alert-badge">Action Required</div>
-                        )}
-                        <button
-                            onClick={() => handleDismiss(alert.loanId)}
-                            className="alert-dismiss"
-                        >
-                            ✕
-                        </button>
+        <div className="fin-section">
+            <h3 className="su-panel-title">Loan Alerts</h3>
+            {visibleAlerts.map((alert, idx) => (
+                <div key={idx} className={`su-note ${severityClass[alert.severity]} fin-alert`}>
+                    <div className="fin-alert-body">
+                        <p>{alert.message}</p>
+                        <span className="fin-alert-type">{alert.type.replace(/-/g, ' ')}</span>
                     </div>
-                ))}
-            </div>
+                    {alert.actionRequired && <span className="rc-tag">Action Required</span>}
+                    <button onClick={() => handleDismiss(alert.loanId)} className="btn-secondary btn-sm">
+                        Dismiss
+                    </button>
+                </div>
+            ))}
         </div>
     );
 };
