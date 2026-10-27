@@ -1004,3 +1004,14 @@ body:has(.login-split) {
   position: relative;
   top: -26px;
 }
+
+/* Continue with Google spans the full form width, like the other buttons */
+.login-split .auth-google-real-container,
+.login-split .auth-google-real-container > *,
+.login-split .auth-google-btn {
+  width: 100%;
+}
+
+.login-split .auth-google-btn {
+  justify-content: center;
+}
