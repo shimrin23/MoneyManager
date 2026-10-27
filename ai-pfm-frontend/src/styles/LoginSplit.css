@@ -722,3 +722,102 @@ body:has(.login-split) {
   height: 100vh;
   overflow-y: auto;
 }
+
+/* Password field: eye icon inside the right edge of its input */
+.login-split .auth-input-wrap {
+  position: relative;
+  display: block;
+}
+
+.login-split .auth-input-wrap .auth-eye-btn {
+  position: absolute;
+  top: 50%;
+  right: 0.4rem;
+  left: auto;
+  transform: translateY(-50%);
+  z-index: 1;
+}
+
+/* Field labels in black */
+.login-split .auth-label {
+  color: #000000;
+}
+
+/* Links turn blue and underlined on hover */
+.login-split .auth-link:hover,
+.login-split .auth-forgot-link:hover,
+.login-split .forgot-cancel-btn:hover,
+.login-split .auth-resend-btn:hover {
+  color: #667eea;
+  text-decoration: underline;
+}
+
+/* Choose New Password: dark title, header and first field spacing */
+.login-split .auth-card-title {
+  color: #111827;
+}
+
+.login-split.reset-compact .auth-card-title {
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  -webkit-text-fill-color: #111827;
+  color: #111827;
+}
+
+.login-split.reset-compact .auth-card-header {
+  top: 0;
+  margin-bottom: 23px;
+}
+
+.login-split.reset-compact .auth-card-sub {
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+.login-split.reset-compact .auth-center-card form > .auth-field:first-child {
+  margin-top: 0;
+}
+
+/* Choose New Password: form laid out like the Create account form */
+.login-split .verify-card-body {
+  align-items: stretch;
+  text-align: left;
+}
+
+/* Choose New Password: about 6 mm between the subtitle and the New Password label */
+.login-split.reset-compact .auth-center-card form > .auth-field:first-child {
+  margin-top: 23px !important;
+}
+
+/* Choose New Password: the header sizes to its text and keeps a 6 mm gap below the subtitle */
+.login-split.reset-compact .auth-card-header {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  padding-bottom: 23px !important;
+  margin-bottom: 0 !important;
+}
+
+/* Choose New Password: the header box grows to fit its title and two-line subtitle (it was 126px and the text spilled out) */
+.login-split.reset-compact .auth-card-header,
+.login-split.reset-compact .verify-card-body > div {
+  height: auto !important;
+  min-height: fit-content !important;
+  max-height: none !important;
+  flex: none !important;
+}
+
+/* "Cancel and Back to Login": plain blue text, no box */
+.login-split .forgot-cancel-btn {
+  border: 0;
+  background: transparent;
+  color: #667eea;
+  padding: 0;
+  box-shadow: none;
+}
+
+.login-split .forgot-cancel-btn:hover {
+  background: transparent;
+  color: #667eea;
+}
