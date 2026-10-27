@@ -1,0 +1,724 @@
+/* Login: split layout from the prototype (brand panel left, sign-in card right). Colours use the app's purple-blue gradient. */
+
+.login-split {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+  min-height: 100vh;
+  align-items: stretch;
+}
+
+.login-split .auth-orb {
+  display: none;
+}
+
+.login-brand {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  padding: 48px clamp(24px, 5vw, 72px);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 40px;
+}
+
+.login-brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 19px;
+}
+
+.login-brand-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.16);
+  display: grid;
+  place-items: center;
+}
+
+.login-brand-title {
+  font-family: 'Bricolage Grotesque', 'Figtree', system-ui, sans-serif;
+  font-size: clamp(30px, 3.6vw, 46px);
+  line-height: 1.08;
+  max-width: 14ch;
+  font-weight: 700;
+  margin: 0;
+}
+
+.login-brand-lead {
+  font-size: 17px;
+  opacity: 0.85;
+  max-width: 44ch;
+  margin-top: 14px;
+}
+
+.login-brand-points {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+  max-width: 460px;
+  font-size: 15px;
+}
+
+.login-brand-points li {
+  padding-left: 14px;
+  position: relative;
+}
+
+.login-brand-points li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.login-split .auth-center-card {
+  grid-column: 2;
+  align-self: center;
+  justify-self: center;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: none;
+}
+
+@media (max-width: 860px) {
+  .login-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .login-brand {
+    display: none;
+  }
+
+  .login-split .auth-center-card {
+    grid-column: 1;
+  }
+}
+
+/* Login page has no header, so the header's top padding is removed here and the layout fills the window */
+.main-content:has(.login-split) {
+  padding-top: 0;
+}
+
+/* Health score box on the brand panel */
+.login-brand-score {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  max-width: 420px;
+  padding: 18px 22px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.login-brand-score > b:first-child {
+  font-family: 'Bricolage Grotesque', 'Figtree', system-ui, sans-serif;
+  font-size: 44px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.login-brand-score small {
+  display: block;
+  opacity: 0.8;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+/* Form side on auth pages: plain, no card border or background (as in the prototype) */
+.login-split .auth-center-card {
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+/* Sizes and fonts from the prototype's auth screen (colours stay the app's own) */
+.login-split {
+  font-family: 'Figtree', 'Noto Sans Sinhala', 'Noto Sans Tamil', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 15px;
+}
+
+.login-split .auth-card-title,
+.login-brand-title {
+  font-family: 'Bricolage Grotesque', 'Figtree', system-ui, sans-serif;
+}
+
+.login-split .auth-center-card {
+  display: grid;
+  gap: 20px;
+}
+
+.login-split .auth-card-title {
+  font-size: 28px;
+}
+
+.login-split .auth-card-sub {
+  font-size: 15px;
+}
+
+.login-split .auth-label {
+  font-size: 13px;
+}
+
+.login-split .auth-input {
+  height: 42px;
+  font-size: 14.5px;
+}
+
+.login-split .auth-submit-btn,
+.login-split .auth-google-btn {
+  height: 40px;
+  font-size: 14px;
+}
+
+.login-split .auth-divider {
+  font-size: 13px;
+}
+
+.login-split .auth-switch-row {
+  font-size: 14px;
+}
+
+.login-brand-lead {
+  font-size: 17px;
+  opacity: 0.85;
+  max-width: 44ch;
+  margin-top: 14px;
+}
+
+.login-brand-points {
+  font-size: 15px;
+}
+
+/* Form side as in the wanted design: left-aligned heading, normal-case labels, no repeated logo (the brand panel has it) */
+.login-split .auth-logo {
+  display: none;
+}
+
+.login-split .auth-center-card {
+  text-align: left;
+}
+
+.login-split .auth-card-header,
+.login-split .auth-card-title,
+.login-split .auth-card-sub {
+  text-align: left;
+}
+
+.login-split .auth-label {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.login-split .auth-forgot-wrap {
+  text-align: right;
+}
+
+/* Full cover: the brand panel and the form fill the whole window, with no margin around them */
+.main-content:has(.login-split) {
+  padding: 0 !important;
+}
+
+.login-split {
+  width: 100%;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+.login-split .auth-center-card {
+  padding: 48px clamp(24px, 5vw, 72px);
+}
+
+/* Form side: the light background from before, with dark text so it reads well; the button and links use the app's purple-blue */
+.login-split {
+  background-color: #fdfdff;
+}
+
+.login-split .auth-center-card {
+  color: #111827;
+}
+
+.login-split .auth-card-sub,
+.login-split .auth-switch-row {
+  color: #475569;
+}
+
+.login-split .auth-input {
+  background: #ffffff;
+  color: #111827;
+  border-color: #cbd5e1;
+}
+
+.login-split .auth-input::placeholder {
+  color: #94a3b8;
+}
+
+.login-split .auth-google-btn {
+  background: #ffffff;
+  color: #111827;
+  border-color: #cbd5e1;
+}
+
+.login-split .auth-submit-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  border: 0;
+}
+
+.login-split .auth-forgot-link,
+.login-split .auth-link {
+  color: #667eea;
+}
+
+/* Sign In button: chevron instead of an arrow, 10px corners */
+.login-split .auth-submit-btn {
+  border-radius: 10px;
+}
+
+.login-split .auth-submit-btn .auth-btn-arrow {
+  font-size: 0;
+  margin-left: 6px;
+}
+
+.login-split .auth-submit-btn .auth-btn-arrow::after {
+  content: '›';
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* "or continue with" divider: thin grey lines with muted text */
+.login-split .auth-divider {
+  color: #64748b;
+  background: transparent;
+}
+
+.login-split .auth-divider::before,
+.login-split .auth-divider::after {
+  background: #cbd5e1;
+  height: 1px;
+}
+
+/* Divider: text centred with space on both sides, darker lines */
+.login-split .auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: center;
+}
+
+.login-split .auth-divider::before,
+.login-split .auth-divider::after {
+  flex: 1;
+  background: #cbd5e1;
+}
+
+/* Divider as in the image: uppercase label on the left, one line running to the right */
+.login-split .auth-divider {
+  justify-content: flex-start;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 12px;
+  font-weight: 600;
+  gap: 10px;
+}
+
+.login-split .auth-divider::before {
+  display: none;
+}
+
+.login-split .auth-divider::after {
+  flex: 1;
+  height: 1px;
+  background: #cbd5e1;
+}
+
+/* Divider label: no white box behind the text */
+.login-split .auth-divider,
+.login-split .auth-divider span {
+  background: transparent !important;
+}
+
+/* Divider: centred lowercase text with a line on each side */
+.login-split .auth-divider {
+  justify-content: center;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 14px;
+  font-weight: 400;
+  gap: 14px;
+  color: #94a3b8;
+}
+
+.login-split .auth-divider::before {
+  display: block;
+  flex: 1;
+  height: 1px;
+  background: #cbd5e1;
+}
+
+.login-split .auth-divider::after {
+  flex: 1;
+  height: 1px;
+  background: #cbd5e1;
+}
+
+/* Divider lines sit beside the text in normal flow (not absolutely positioned over it) */
+.login-split .auth-divider {
+  display: flex;
+  align-items: center;
+}
+
+.login-split .auth-divider::before,
+.login-split .auth-divider::after {
+  position: static;
+  transform: none;
+  top: auto;
+  left: auto;
+  right: auto;
+  flex: 1;
+  height: 1px;
+  background: #cbd5e1;
+}
+
+/* Field size and spacing as in the image: taller inputs, larger text, roomier gaps */
+.login-split .auth-label {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.login-split .auth-input {
+  height: 50px;
+  font-size: 16px;
+  padding: 0 16px;
+  border-radius: 12px;
+}
+
+.login-split .auth-field {
+  gap: 8px;
+}
+
+.login-split .auth-center-card form {
+  display: grid;
+  gap: 18px;
+}
+
+/* Form size and placement as in the wanted image: wider column, content higher up, larger title and buttons */
+.login-split .auth-center-card {
+  max-width: 500px;
+  align-self: start;
+  padding: 120px clamp(24px, 5vw, 72px) 48px;
+}
+
+.login-split .auth-card-title {
+  font-size: 34px;
+}
+
+.login-split .auth-card-sub {
+  font-size: 16px;
+}
+
+.login-split .auth-submit-btn,
+.login-split .auth-google-btn {
+  height: 50px;
+  font-size: 16px;
+  border-radius: 12px;
+}
+
+.login-split .auth-switch-row {
+  font-size: 15px;
+}
+
+.login-split .auth-forgot-link {
+  font-size: 14px;
+}
+
+/* Vertical spacing reduced: less space above the title and tighter gaps between the form elements */
+.login-split .auth-center-card {
+  padding-top: 56px;
+  padding-bottom: 32px;
+}
+
+.login-split .auth-card-header {
+  margin-bottom: 6px;
+}
+
+.login-split .auth-center-card form {
+  gap: 12px;
+}
+
+.login-split .auth-field {
+  gap: 6px;
+}
+
+.login-split .auth-divider {
+  margin: 4px 0;
+}
+
+.login-split .auth-center-card .auth-google-btn,
+.login-split .auth-switch-row {
+  margin-top: 0;
+}
+
+.login-split .auth-switch-row {
+  margin-top: 6px;
+}
+
+/* Input boxes a little shorter */
+.login-split .auth-input {
+  height: 44px;
+}
+
+/* Google button: size and shape as in the image */
+.login-split .auth-google-btn {
+  height: 44px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  gap: 10px;
+}
+
+/* Sign In button: a little shorter, smaller text */
+.login-split .auth-submit-btn {
+  height: 42px;
+  font-size: 14.5px;
+}
+
+/* Form column a little narrower, so the fields and buttons are narrower too */
+.login-split .auth-center-card {
+  max-width: 460px;
+}
+
+.login-split .auth-card-header {
+  margin-bottom: 0;
+}
+
+.login-split .auth-card-sub {
+  margin-top: 2px;
+  margin-bottom: 0;
+}
+
+.login-split .auth-center-card form {
+  gap: 8px;
+}
+
+/* Heading, subtitle, email and password only: tighter spacing; the buttons and footer stay as they are */
+.login-split .auth-card-header {
+  margin: 0;
+}
+
+.login-split .auth-card-title {
+  margin: 0;
+  line-height: 1.1;
+}
+
+.login-split .auth-card-sub {
+  margin: 0;
+}
+
+.login-split .auth-center-card form > .auth-field:first-child {
+  margin-top: -90px;
+}
+
+.login-split .auth-center-card form > .auth-field:nth-child(-n+2) {
+  gap: 4px;
+  margin: 0;
+}
+
+/* Forgot password link: smaller text */
+.login-split .auth-forgot-link {
+  font-size: 12.5px;
+}
+
+/* Input placeholder text smaller */
+.login-split .auth-input::placeholder {
+  font-size: 13px;
+}
+
+/* Heading and subtitle moved down a little; the form below stays where it is */
+.login-split .auth-card-header {
+  position: relative;
+  top: 14px;
+}
+
+/* Whole form moved down a little */
+.login-split .auth-center-card {
+  padding-top: 112px;
+}
+
+/* Higher specificity so the page's inline style block does not override the card padding */
+.auth-center-page.login-split .auth-center-card {
+  padding-top: 112px;
+}
+
+
+/* Sign-up line (both parts) moved up a little */
+.login-split .auth-switch-row {
+  position: relative;
+  top: -24px;
+}
+
+/* Whole form moved up about 1 cm */
+.auth-center-page.login-split .auth-center-card {
+  position: relative;
+  top: -23px;
+}
+
+/* Sign-up page: the taller form fits the window (less padding and smaller gaps; login is unchanged) */
+.login-split.signup-compact .auth-center-card {
+  padding-top: 48px;
+  padding-bottom: 24px;
+  gap: 12px;
+}
+
+.login-split.signup-compact .auth-center-card form {
+  gap: 10px;
+}
+
+/* Brand panel fits the window: no outer margin, tighter padding and gaps */
+.auth-center-page.login-split {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.login-brand {
+  min-height: 100vh;
+  box-sizing: border-box;
+  padding: 32px clamp(24px, 5vw, 72px);
+  gap: 24px;
+}
+
+.login-brand-title {
+  margin-top: 0;
+}
+
+/* Create account page: input boxes a little shorter */
+.login-split.signup-compact .auth-input {
+  height: 40px;
+}
+
+/* Sign In button text a little smaller */
+.login-split .auth-submit-btn {
+  font-size: 13.5px;
+}
+
+/* "Create account" link a little larger */
+.login-split .auth-link {
+  font-size: 15px;
+}
+
+/* "Create account" link moved up about 2 mm */
+.login-split .auth-switch-row .auth-link {
+  position: relative;
+  top: -8px;
+}
+
+/* Brand panel stays the window height and in view, so its text sits where it does on the login page */
+.login-split .login-brand {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  min-height: 0;
+}
+
+/* Create account page: "Sign in" link moved down about 1 mm */
+.login-split.signup-compact .auth-switch-row .auth-link {
+  top: -4px;
+}
+
+/* Create account page: the sentence and the "Sign in" link on one centred line */
+.login-split.signup-compact .auth-switch-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.login-split.signup-compact .auth-switch-row .auth-link {
+  top: 0;
+}
+
+/* Create account page: the sign-in line is centred across the full card width */
+.login-split.signup-compact .auth-switch-row {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  justify-self: stretch;
+  text-align: center;
+}
+
+/* Create account page: "Sign in" link moved up a little */
+.login-split.signup-compact .auth-switch-row .auth-link {
+  position: relative;
+  top: -4px;
+}
+
+/* Create account page: the whole sign-in line moved down a little */
+.login-split.signup-compact .auth-switch-row {
+  position: relative;
+  top: -16px;
+}
+
+/* Create account page: a little more space between the sentence and "Sign in" */
+.login-split.signup-compact .auth-switch-row {
+  gap: 10px;
+}
+
+/* Auth pages scroll when the form is taller than the window (the app shell is fixed at 100vh and hides overflow) */
+.main-content:has(.login-split) {
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+}
+
+
+
+
+/* Account Created screen: no brand panel, the card is centred across the page */
+.login-split.signup-done .auth-center-card {
+  grid-column: 1 / -1;
+  justify-self: center;
+  align-self: center;
+  max-width: 480px;
+  padding-top: 0;
+  text-align: center;
+}
+
+/* Auth pages: the page scrolls when the form is taller than the window (the global body hides overflow) */
+body:has(.login-split) {
+  overflow: auto;
+  height: auto;
+}
+
+/* Gap between the error message and the resend box reduced */
+.login-split .auth-error + .auth-unverified-banner {
+  margin-top: -27px;
+}
+
+/* Gap between the resend box and the form fields reduced by about 5 mm */
+.login-split .auth-unverified-banner + form {
+  margin-top: -19px;
+}
+
+/* The split layout scrolls itself: the form half scrolls when it is taller than the window, the brand panel stays in view */
+.main-content:has(.login-split) {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.login-split {
+  height: 100vh;
+  overflow-y: auto;
+}

@@ -3,6 +3,7 @@ import { apiClient } from '../api/client.ts';
 import { notify } from '../utils/systemMessages';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import '../styles/AuthPages.css';
+import '../styles/LoginSplit.css';
 
 export const Login = () => {
     const location = useLocation();
@@ -149,7 +150,7 @@ export const Login = () => {
     };
 
     return (
-        <div className="auth-center-page login-compact">
+        <div className="auth-center-page login-compact login-split">
             {/* Tighter spacing so the sign-in card fits on one screen */}
             <style>{`
                 .login-compact .auth-center-card { padding: 1.75rem 2rem 1.5rem; }
@@ -163,6 +164,29 @@ export const Login = () => {
             <div className="auth-orb auth-orb-1" />
             <div className="auth-orb auth-orb-2" />
             <div className="auth-orb auth-orb-3" />
+
+            <aside className="login-brand">
+                <div className="login-brand-logo">
+                    <span className="login-brand-mark">💰</span>
+                    <span>MoneyManager</span>
+                </div>
+                <div>
+                    <h2 className="login-brand-title">Know where every rupee goes.</h2>
+                    <p className="login-brand-lead">Track spending, loans, leases, pawning and fixed deposits in one place, with an AI coach that tells you what to do next.</p>
+                </div>
+                <ul className="login-brand-points">
+                    <li>A financial health score from 0 to 100, updated with every transaction</li>
+                    <li>Alerts for unusual charges, duplicate bills and forgotten subscriptions</li>
+                    <li>Made for Sri Lanka: LKR, local banks, and English, සිංහල, தமிழ்</li>
+                </ul>
+                <div className="login-brand-score">
+                    <b>64</b>
+                    <div>
+                        <b>Health score</b>
+                        <small>Savings rate 27% · Risk Medium</small>
+                    </div>
+                </div>
+            </aside>
 
             <div className="auth-center-card">
                 {/* Logo */}
@@ -231,7 +255,7 @@ export const Login = () => {
                                 tabIndex={-1}
                                 aria-label={showPassword ? 'Hide' : 'Show'}
                             >
-                                {showPassword ? (
+                                {!showPassword ? (
                                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
                                         <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
