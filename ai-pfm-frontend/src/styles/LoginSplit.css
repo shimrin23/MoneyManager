@@ -675,3 +675,50 @@
 .login-split.signup-compact .auth-switch-row {
   gap: 10px;
 }
+
+/* Auth pages scroll when the form is taller than the window (the app shell is fixed at 100vh and hides overflow) */
+.main-content:has(.login-split) {
+  height: auto;
+  min-height: 100vh;
+  overflow: visible;
+}
+
+
+
+
+/* Account Created screen: no brand panel, the card is centred across the page */
+.login-split.signup-done .auth-center-card {
+  grid-column: 1 / -1;
+  justify-self: center;
+  align-self: center;
+  max-width: 480px;
+  padding-top: 0;
+  text-align: center;
+}
+
+/* Auth pages: the page scrolls when the form is taller than the window (the global body hides overflow) */
+body:has(.login-split) {
+  overflow: auto;
+  height: auto;
+}
+
+/* Gap between the error message and the resend box reduced */
+.login-split .auth-error + .auth-unverified-banner {
+  margin-top: -27px;
+}
+
+/* Gap between the resend box and the form fields reduced by about 5 mm */
+.login-split .auth-unverified-banner + form {
+  margin-top: -19px;
+}
+
+/* The split layout scrolls itself: the form half scrolls when it is taller than the window, the brand panel stays in view */
+.main-content:has(.login-split) {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.login-split {
+  height: 100vh;
+  overflow-y: auto;
+}

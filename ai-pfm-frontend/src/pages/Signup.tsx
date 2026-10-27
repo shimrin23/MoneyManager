@@ -121,7 +121,7 @@ export const Signup = () => {
     const passwordValid = passwordRules.every(rule => rule.ok);
 
     return (
-        <div className="auth-center-page signup-compact login-split">
+        <div className={`auth-center-page signup-compact login-split${isRegistered ? ' signup-done' : ''}`}>
             {/* Tighter spacing so the whole sign-up form fits on one screen */}
             <style>{`
                 .signup-compact { padding: 1rem; }
@@ -142,7 +142,7 @@ export const Signup = () => {
             <div className="auth-orb auth-orb-2" />
             <div className="auth-orb auth-orb-3" />
 
-            <aside className="login-brand">
+            {!isRegistered && (<aside className="login-brand">
                 <div className="login-brand-logo">
                     <span className="login-brand-mark">💰</span>
                     <span>MoneyManager</span>
@@ -163,7 +163,7 @@ export const Signup = () => {
                         <small>Savings rate 27% · Risk Medium</small>
                     </div>
                 </div>
-            </aside>
+            </aside>)}
 
             <div className="auth-center-card">
                 {/* Logo */}
