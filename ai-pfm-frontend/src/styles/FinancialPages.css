@@ -3323,6 +3323,7 @@
 .gl-pill { flex-shrink: 0; font-size: 12px; font-weight: 600; line-height: 1.4; padding: 3px 9px; border-radius: 99px; white-space: nowrap; background: var(--card-hover); color: var(--text-muted); }
 .gl-pill.in-progress { background: rgba(59, 130, 246, 0.12); color: #2563eb; }
 .gl-pill.completed { background: rgba(16, 185, 129, 0.12); color: #059669; }
+.gl-pill.paused { background: rgba(239, 68, 68, 0.12); color: #dc2626; }
 
 .gl-progress { display: flex; flex-direction: column; gap: 6px; }
 .gl-amounts { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }

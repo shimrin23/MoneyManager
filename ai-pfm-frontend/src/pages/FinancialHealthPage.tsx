@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { apiClient, getApiErrorMessage } from '../api/client';
 import { AIAssistant } from '../components/AIAssistant';
 import { getHealthStatus, noScoreMessage } from '../utils/healthScore';
+import { IconActivity, IconTrendingUp, IconCreditCard, IconLandmark, IconTarget, IconBarChart, IconLightbulb } from '../components/Icons';
 
 interface HealthMetrics {
     hasData: boolean;
@@ -80,6 +81,20 @@ const keyFinding = (benchmarks: PeerBenchmark[]) => {
     if (worse.length === 0) return 'You are at or above the average of other users on every measure. Keep it up.';
     if (better.length === 0) return `You are behind the average on every measure. Start with ${worse[0]}.`;
     return `You are ahead of other users on ${better.join(', ')}. Focus next on ${worse.join(', ')}.`;
+};
+
+const getBenchmarkIcon = (category: string) => {
+    switch (category) {
+        case 'Financial Health Score': return <IconActivity size={18} />;
+        case 'Savings Rate': return <IconTrendingUp size={18} />;
+        case 'Debt-to-Income Ratio': return <IconCreditCard size={18} />;
+        case 'Liquidity Ratio': return <IconLandmark size={18} />;
+        case 'Credit Utilization': return <IconCreditCard size={18} />;
+        case 'Emergency Fund Health': return <IconTarget size={18} />;
+        case 'Net Worth': return <IconLandmark size={18} />;
+        case 'Discretionary Ratio': return <IconBarChart size={18} />;
+        default: return <IconActivity size={18} />;
+    }
 };
 
 export const FinancialHealthPage = () => {
@@ -326,50 +341,68 @@ export const FinancialHealthPage = () => {
                         </p>
                     </div>
                     {peerBenchmarks.length > 0 && (
-                    <div className="benchmarks-grid">
-                        {peerBenchmarks.map((benchmark, index) => (
-                            <div key={index} className="benchmark-item">
-                                <div className="benchmark-header">
-                                    <h4>{benchmark.category}</h4>
-                                    {(() => {
-                                        const verdict = benchmarkVerdict(benchmark);
-                                        return (
-                                            <span className={`comparison-badge ${verdict === 'better' ? 'above' : verdict === 'worse' ? 'below' : 'average'}`}>
-                                                {verdict === 'better' ? 'Better than average' : verdict === 'worse' ? 'Worse than average' : 'Average'}
-                                            </span>
-                                        );
-                                    })()}
-                                </div>
-                                <div className="benchmark-values">
-                                    <div className="user-value">
-                                        <span className="label">You</span>
-                                        <span className="value">{renderBenchmarkValue(benchmark.category, benchmark.userValue)}</span>
+                    <div className="goals-grid gl-grid">
+                        {peerBenchmarks.map((benchmark, index) => {
+                            const verdict = benchmarkVerdict(benchmark);
+                            const pillClass = verdict === 'better' ? 'completed' : verdict === 'worse' ? 'paused' : 'in-progress';
+                            const pillText = verdict === 'better' ? 'Better than avg' : verdict === 'worse' ? 'Below avg' : 'Average';
+                            const standingColor = verdict === 'better' ? '#10b981' : verdict === 'worse' ? '#ef4444' : '#3b82f6';
+                            const standingText = verdict === 'better' ? 'Above peer average' : verdict === 'worse' ? 'Below peer average' : 'On par with peers';
+
+                            return (
+                                <article key={index} className="gl-card">
+                                    <div className="gl-head">
+                                        <div className="gl-head-main">
+                                            <span className="gl-icon">{getBenchmarkIcon(benchmark.category)}</span>
+                                            <div className="gl-head-text">
+                                                <h3>{benchmark.category}</h3>
+                                                <span className="gl-sub">{benchmark.higherIsBetter ? 'Higher is better' : 'Lower is better'}</span>
+                                            </div>
+                                        </div>
+                                        <span className={`gl-pill ${pillClass}`}>
+                                            {pillText}
+                                        </span>
                                     </div>
-                                    <div className="peer-value">
-                                        <span className="label">Peer Average</span>
-                                        <span className="value">{renderBenchmarkValue(benchmark.category, benchmark.peerAverage)}</span>
+
+                                    <div className="gl-progress">
+                                        <div className="gl-amounts">
+                                            <span className="gl-current">{renderBenchmarkValue(benchmark.category, benchmark.userValue)}</span>
+                                            <span className="gl-target">Peer Avg: {renderBenchmarkValue(benchmark.category, benchmark.peerAverage)}</span>
+                                        </div>
+                                        <div className="gl-bar">
+                                            <span style={{ width: `${Math.min(100, Math.max(0, benchmark.percentile))}%`, backgroundColor: '#3b82f6' }} />
+                                        </div>
+                                        <div className="gl-row">
+                                            <span>Better than {benchmark.percentile}% of users</span>
+                                            <span>{benchmark.percentile >= 50 ? 'Top half' : 'Growth area'}</span>
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="percentile">
-                                    <span>Better than {benchmark.percentile}% of users</span>
-                                    <div className="percentile-bar">
-                                        <div
-                                            className="percentile-fill"
-                                            style={{ width: `${benchmark.percentile}%` }}
-                                        ></div>
+
+                                    <div className="gl-kv">
+                                        <div>
+                                            <span>Your Value:</span>
+                                            <span>{renderBenchmarkValue(benchmark.category, benchmark.userValue)}</span>
+                                        </div>
+                                        <div>
+                                            <span>Peer Average:</span>
+                                            <span>{renderBenchmarkValue(benchmark.category, benchmark.peerAverage)}</span>
+                                        </div>
+                                        <div>
+                                            <span>Standing:</span>
+                                            <span style={{ color: standingColor }}>{standingText}</span>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
-                        ))}
+                                </article>
+                            );
+                        })}
                     </div>
                     )}
                     {peerBenchmarks.length > 0 && (
-                    <div className="benchmark-insights" style={{ marginTop: '1.5rem' }}>
-                        <div className="insight-card" style={{ display: 'flex', gap: '1rem', padding: '1.25rem', background: 'var(--color-surface-1)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}>
-                            <div className="insight-content">
-                                <h4 style={{ margin: '0 0 0.25rem 0', color: 'var(--color-text)' }}>Key Finding</h4>
-                                <p style={{ margin: 0, color: 'var(--color-text-muted)', fontSize: '0.95rem' }}>{keyFinding(peerBenchmarks)}</p>
-                            </div>
+                    <div className="gl-ai" style={{ marginTop: '1.25rem' }}>
+                        <span className="gl-ai-icon"><IconLightbulb size={16} /></span>
+                        <div>
+                            <strong style={{ display: 'block', fontSize: '13.5px', marginBottom: '2px', color: 'var(--text)' }}>Key Finding</strong>
+                            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>{keyFinding(peerBenchmarks)}</p>
                         </div>
                     </div>
                     )}
