@@ -18,68 +18,70 @@ interface DebtPayoffStrategiesProps {
 const DebtPayoffStrategies: FC<DebtPayoffStrategiesProps> = ({ strategies, onSelectStrategy }) => {
     if (strategies.length === 0) {
         return (
-            <div className="debt-payoff-strategies">
-                <h2>Debt Payoff Strategies</h2>
-                <p className="empty-state">No active loans to compare strategies</p>
+            <div className="empty-state">
+                <h3>Debt Payoff Strategies</h3>
+                <p>No active loans to compare strategies</p>
             </div>
         );
     }
 
     return (
-        <div className="debt-payoff-strategies">
-            <h2>Debt Payoff Strategies</h2>
-            <p className="subtitle">Compare different strategies to pay off your loans faster</p>
+        <div>
+            <h3 className="su-panel-title">Debt Payoff Strategies</h3>
+            <p className="su-muted fin-lead">Compare different strategies to pay off your loans faster</p>
 
-            <div className="strategies-grid">
+            <div className="fin-grid fin-section">
                 {strategies.map((strategy, idx) => (
-                    <div key={idx} className="strategy-card">
-                        <div className="strategy-header">
-                            <h3>{strategy.name}</h3>
-                            <span className="method-badge">{strategy.method === 'snowball' ? '❄️' : '⚡'}</span>
+                    <article key={idx} className="gl-card">
+                        <div className="gl-head">
+                            <div className="gl-head-text">
+                                <h3>{strategy.name}</h3>
+                            </div>
+                            <span className="gl-pill">{strategy.method === 'snowball' ? 'Snowball' : 'Avalanche'}</span>
                         </div>
 
-                        <p className="description">{strategy.description}</p>
+                        <p className="su-muted">{strategy.description}</p>
 
-                        <div className="strategy-details">
-                            <div className="detail-item">
-                                <span className="label">Time to Clear Debt</span>
-                                <span className="value">{strategy.timeToPayoff} months</span>
-                            </div>
-                            <div className="detail-item highlight">
-                                <span className="label">Interest Saved</span>
-                                <span className="value">{formatMoney(strategy.totalInterestSaved, 2)}</span>
-                            </div>
+                        <div className="gl-kv">
+                            <div><span>Time to Clear Debt</span><span>{strategy.timeToPayoff} months</span></div>
+                            <div><span>Interest Saved</span><span>{formatMoney(strategy.totalInterestSaved, 2)}</span></div>
                         </div>
 
-                        <div className="payment-order">
-                            <h4>Payment Order:</h4>
-                            <ol>
-                                {strategy.schedule.map((item, idx) => (
-                                    <li key={idx}>
+                        <div>
+                            <h4 className="fin-sub-title">Payment Order</h4>
+                            <ol className="fin-list">
+                                {strategy.schedule.map((item, i) => (
+                                    <li key={i}>
                                         {item.loanType} - {formatMoney(item.paymentAmount, 2)}/month
                                     </li>
                                 ))}
                             </ol>
                         </div>
 
-                        <button
-                            onClick={() => onSelectStrategy?.(strategy.method)}
-                            className="btn-primary"
-                        >
-                            Choose {strategy.name}
-                        </button>
-                    </div>
+                        <div className="gl-actions">
+                            <button
+                                onClick={() => onSelectStrategy?.(strategy.method)}
+                                className="btn-primary btn-sm"
+                            >
+                                Choose {strategy.name}
+                            </button>
+                        </div>
+                    </article>
                 ))}
             </div>
 
-            <div className="strategy-info">
-                <div className="info-box">
-                    <h4>Snowball Method ❄️</h4>
-                    <p>Pay off smallest debts first. Gives quick psychological wins and maintains motivation.</p>
+            <div className="fin-stack">
+                <div className="gl-insight">
+                    <div>
+                        <h4>Snowball Method</h4>
+                        <p>Pay off smallest debts first. Gives quick psychological wins and maintains motivation.</p>
+                    </div>
                 </div>
-                <div className="info-box">
-                    <h4>Avalanche Method ⚡</h4>
-                    <p>Pay off highest interest rates first. Saves the most money in interest over time.</p>
+                <div className="gl-insight">
+                    <div>
+                        <h4>Avalanche Method</h4>
+                        <p>Pay off highest interest rates first. Saves the most money in interest over time.</p>
+                    </div>
                 </div>
             </div>
         </div>

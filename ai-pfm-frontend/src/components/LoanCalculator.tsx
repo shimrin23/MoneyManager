@@ -1,8 +1,7 @@
-import { formatDate, formatDateTime, formatMoney, toLkr, currencyCode } from '../utils/appFormat';
+import { formatDate, formatMoney, toLkr, currencyCode } from '../utils/appFormat';
 import { useState, type FC } from 'react';
 import { useLoans } from '../hooks/useLoans';
 import { notify } from '../utils/systemMessages';
-import './LoanCalculator.css';
 
 interface LoanFormValues {
     type: string;
@@ -109,23 +108,25 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
     };
 
     return (
-        <div className="loan-calculator">
-            <h2>EMI Calculator</h2>
+        <div>
             {previewOnly && (
-                <p style={{ color: 'var(--color-text-muted)', marginTop: 0 }}>
+                <p className="su-muted fin-lead">
                     Recalculating {formData.type} loan from {formData.provider}. Change the values to compare.
                     To change the loan itself, use <strong>Edit</strong> on the loan card.
                 </p>
             )}
 
             {errors.length > 0 && (
-                <div className="error-box">
-                    {errors.map((error, idx) => <p key={idx}>• {error}</p>)}
+                <div className="rc-banner error">
+                    <div>
+                        {errors.map((error, idx) => <div key={idx}>• {error}</div>)}
+                    </div>
                 </div>
             )}
 
             {step === 1 && (
-                <div className="calculator-form">
+                <div className="card form-card gl-form">
+                    <h3 className="gl-form-title">EMI Calculator</h3>
                     <div className="form-row">
                         <div className="form-group">
                             <label>Loan Type</label>
@@ -199,57 +200,61 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
                         />
                     </div>
 
-                    <button onClick={handleCalculate} disabled={loading} className="btn-primary">
-                        {loading ? 'Calculating...' : 'Calculate EMI'}
-                    </button>
+                    <div className="form-actions">
+                        <button onClick={handleCalculate} disabled={loading} className="btn-primary">
+                            {loading ? 'Calculating...' : 'Calculate EMI'}
+                        </button>
+                    </div>
                 </div>
             )}
 
             {step === 2 && result && (
-                <div className="calculator-result">
-                    <div className="result-cards">
-                        <div className="card">
-                            <p className="label">Monthly EMI</p>
-                            <p className="value">{formatMoney(result.monthlyEMI, 2)}</p>
+                <div>
+                    <div className="rc-stats rc-stats-3">
+                        <div className="rc-stat">
+                            <span className="rc-stat-label">Monthly EMI</span>
+                            <span className="rc-stat-value">{formatMoney(result.monthlyEMI, 2)}</span>
                         </div>
-                        <div className="card">
-                            <p className="label">Total Interest</p>
-                            <p className="value">{formatMoney(result.totalInterest, 2)}</p>
+                        <div className="rc-stat">
+                            <span className="rc-stat-label">Total Interest</span>
+                            <span className="rc-stat-value">{formatMoney(result.totalInterest, 2)}</span>
                         </div>
-                        <div className="card">
-                            <p className="label">Total Payable</p>
-                            <p className="value">{formatMoney(result.totalPayable, 2)}</p>
+                        <div className="rc-stat">
+                            <span className="rc-stat-label">Total Payable</span>
+                            <span className="rc-stat-value">{formatMoney(result.totalPayable, 2)}</span>
                         </div>
                     </div>
 
-                    <div className="schedule-preview">
-                        <h3>First 6 Months Preview</h3>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Month</th>
-                                    <th>Principal</th>
-                                    <th>Interest</th>
-                                    <th>Balance</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {schedule.slice(0, 6).map((item, idx) => (
-                                    <tr key={idx}>
-                                        <td>{item.month}</td>
-                                        <td>{formatMoney(item.principalPayment, 2)}</td>
-                                        <td>{formatMoney(item.interestPayment, 2)}</td>
-                                        <td>{formatMoney(item.remainingBalance, 2)}</td>
+                    <div className="su-panel">
+                        <h3 className="su-panel-title">First 6 Months Preview</h3>
+                        <div className="su-table-wrap">
+                            <table className="su-table">
+                                <thead>
+                                    <tr>
+                                        <th>Month</th>
+                                        <th>Principal</th>
+                                        <th>Interest</th>
+                                        <th>Balance</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        <button onClick={() => setStep(3)} className="btn-secondary">
+                                </thead>
+                                <tbody>
+                                    {schedule.slice(0, 6).map((item, idx) => (
+                                        <tr key={idx}>
+                                            <td>{item.month}</td>
+                                            <td>{formatMoney(item.principalPayment, 2)}</td>
+                                            <td>{formatMoney(item.interestPayment, 2)}</td>
+                                            <td>{formatMoney(item.remainingBalance, 2)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <button onClick={() => setStep(3)} className="btn-secondary btn-sm">
                             View Full Schedule
                         </button>
                     </div>
 
-                    <div className="action-buttons">
+                    <div className="fin-actions">
                         <button onClick={() => setStep(1)} className="btn-secondary">
                             Back
                         </button>
@@ -263,35 +268,37 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
             )}
 
             {step === 3 && (
-                <div className="full-schedule">
-                    <h3>Complete Repayment Schedule</h3>
-                    <div className="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Month</th>
-                                    <th>Due Date</th>
-                                    <th>Principal</th>
-                                    <th>Interest</th>
-                                    <th>EMI</th>
-                                    <th>Balance</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {schedule.map((item, idx) => (
-                                    <tr key={idx}>
-                                        <td>{item.month}</td>
-                                        <td>{formatDate(item.dueDate)}</td>
-                                        <td>{formatMoney(item.principalPayment, 2)}</td>
-                                        <td>{formatMoney(item.interestPayment, 2)}</td>
-                                        <td>{formatMoney((item.principalPayment + item.interestPayment), 2)}</td>
-                                        <td>{formatMoney(item.remainingBalance, 2)}</td>
+                <div>
+                    <div className="su-panel">
+                        <h3 className="su-panel-title">Complete Repayment Schedule</h3>
+                        <div className="su-table-wrap">
+                            <table className="su-table">
+                                <thead>
+                                    <tr>
+                                        <th>Month</th>
+                                        <th>Due Date</th>
+                                        <th>Principal</th>
+                                        <th>Interest</th>
+                                        <th>EMI</th>
+                                        <th>Balance</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {schedule.map((item, idx) => (
+                                        <tr key={idx}>
+                                            <td>{item.month}</td>
+                                            <td>{formatDate(item.dueDate)}</td>
+                                            <td>{formatMoney(item.principalPayment, 2)}</td>
+                                            <td>{formatMoney(item.interestPayment, 2)}</td>
+                                            <td>{formatMoney((item.principalPayment + item.interestPayment), 2)}</td>
+                                            <td>{formatMoney(item.remainingBalance, 2)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <div className="action-buttons">
+                    <div className="fin-actions">
                         <button onClick={() => setStep(2)} className="btn-secondary">
                             Back
                         </button>
