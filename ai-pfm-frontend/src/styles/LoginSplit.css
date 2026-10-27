@@ -1047,3 +1047,20 @@ body:has(.login-split) {
   margin-right: auto !important;
   display: flex !important;
 }
+
+/* Continue with Google: full form width with the label centred (matches the wanted design) */
+.login-split .auth-google-real-container {
+  display: block !important;
+  width: 100% !important;
+}
+
+.login-split .auth-google-btn {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  display: flex !important;
+  justify-content: center !important;
+  box-sizing: border-box;
+}
