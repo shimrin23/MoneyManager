@@ -10,6 +10,7 @@ interface User {
     id: string;
     name: string;
     email: string;
+    avatar?: string;
 }
 
 interface UserHeaderProps {
@@ -36,11 +37,16 @@ export const UserHeader = ({ theme, onToggleTheme }: UserHeaderProps) => {
             if (e.key === 'Escape') setShowDropdown(false);
         };
 
+        // Edit Profile fires this after a new photo is saved
+        const handleProfileUpdated = () => fetchUserProfile();
+
         document.addEventListener('mousedown', handleClickOutside);
         document.addEventListener('keydown', handleEsc);
+        window.addEventListener('profile-updated', handleProfileUpdated);
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
             document.removeEventListener('keydown', handleEsc);
+            window.removeEventListener('profile-updated', handleProfileUpdated);
         };
     }, []);
 
@@ -80,8 +86,10 @@ export const UserHeader = ({ theme, onToggleTheme }: UserHeaderProps) => {
                 <div className="sidebar-user-menu" role="menu" aria-label="User menu">
                     {/* Profile header */}
                     <div className="sidebar-user-menu-header">
-                        <div className="sidebar-user-avatar-lg" style={{ background: avatarGradient }}>
-                            {getInitials(user.name)}
+                        <div className="sidebar-user-avatar-lg" style={{ background: avatarGradient, overflow: 'hidden' }}>
+                            {user.avatar
+                                ? <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                : getInitials(user.name)}
                         </div>
                         <div className="sidebar-user-info-full">
                             <div className="sidebar-user-name-full">{user.name}</div>
@@ -134,8 +142,10 @@ export const UserHeader = ({ theme, onToggleTheme }: UserHeaderProps) => {
                 aria-expanded={showDropdown}
                 aria-label="Open user menu"
             >
-                <div className="sidebar-user-avatar-sm" style={{ background: avatarGradient }}>
-                    {getInitials(user.name)}
+                <div className="sidebar-user-avatar-sm" style={{ background: avatarGradient, overflow: 'hidden' }}>
+                    {user.avatar
+                        ? <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : getInitials(user.name)}
                 </div>
                 <div className="sidebar-user-text">
                     <span className="sidebar-user-name">{user.name.split(' ')[0]}</span>

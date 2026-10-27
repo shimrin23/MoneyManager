@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
-import { getAppPrefs, type ChartType, formatMoney } from '../utils/appFormat';
+import { formatMoney } from '../utils/appFormat';
 
 export const BarChart = ({ data }: { data: { category: string; value: number }[] }) => {
     const max = Math.max(...data.map(d => d.value), 1);
@@ -90,17 +90,8 @@ export const LineChart = ({ data }: { data: { category: string; value: number }[
     );
 };
 
-const CHART_OPTIONS: { value: ChartType; label: string }[] = [
-    { value: 'line', label: 'Line' },
-    { value: 'bar', label: 'Bar' },
-    { value: 'pie', label: 'Pie' }
-];
-
 export const SpendingTrends = () => {
     const navigate = useNavigate();
-    // The chart type from Settings is the starting view; the buttons switch it for this visit
-    const [chosenView, setChosenView] = useState<ChartType | null>(null);
-    const view = chosenView ?? getAppPrefs().chartType;
     const [chartData, setChartData] = useState<{ category: string; value: number }[]>(DEFAULT_TRENDS);
     const [isDemo, setIsDemo] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -154,45 +145,20 @@ export const SpendingTrends = () => {
     }
 
     return (
-        <div 
-            className="card" 
-            style={{ 
-                padding: '1.75rem', 
-                height: '100%', 
-                display: 'flex', 
-                flexDirection: 'column',
-                cursor: 'pointer',
-                transition: 'transform 0.2s',
-                ...({ '&:hover': { transform: 'scale(1.01)' } } as any)
-            }}
+        <div
+            className="card sp-card"
+            style={{ padding: '1.75rem', height: '100%' }}
             onClick={() => navigate('/smart-budgets')}
             title="View smart budgets"
         >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h3 className="section-title" style={{ margin: 0 }}>Spending Trends</h3>
-                {isDemo && (
-                    <span style={{ fontSize: '0.75rem', background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8', padding: '2px 8px', borderRadius: '4px', fontWeight: '500' }}>
-                        Sample Preview
-                    </span>
-                )}
+            <div className="sp-head">
+                <h3 className="section-title">Spending Trends</h3>
+                {isDemo && <span className="sp-badge">Sample Preview</span>}
             </div>
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }} onClick={e => e.stopPropagation()}>
-                {CHART_OPTIONS.map(option => (
-                    <button
-                        key={option.value}
-                        type="button"
-                        className={`rec-filter-btn ${view === option.value ? 'active' : ''}`}
-                        aria-pressed={view === option.value}
-                        onClick={() => setChosenView(option.value)}
-                    >
-                        {option.label}
-                    </button>
-                ))}
-            </div>
-            <div className="charts-grid">
-                {view === 'line' && <LineChart data={chartData} />}
-                {view === 'bar' && <BarChart data={chartData} />}
-                {view === 'pie' && <PieChart data={chartData} />}
+            {/* Amounts per category on the left, share of spending on the right */}
+            <div className="sp-body">
+                <BarChart data={chartData} />
+                <PieChart data={chartData} />
             </div>
         </div>
     );

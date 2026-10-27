@@ -308,36 +308,17 @@ export const ConnectBankPage = () => {
                     {/* Action buttons */}
                     <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
                         <button
-                            className="primary"
+                            className="btn-primary cb-btn"
                             onClick={handleImportStatement}
                             disabled={!fileContent || uploading}
-                            style={{
-                                padding: '0.65rem 1.5rem',
-                                borderRadius: '8px',
-                                fontWeight: 600,
-                                background: '#2563eb',
-                                color: '#ffffff',
-                                border: 'none',
-                                cursor: fileContent && !uploading ? 'pointer' : 'not-allowed',
-                                opacity: fileContent && !uploading ? 1 : 0.6,
-                            }}
                         >
                             {uploading ? 'Processing Statement…' : 'Import Statement'}
                         </button>
 
                         <button
                             type="button"
+                            className="btn-secondary cb-btn"
                             onClick={loadSampleStatement}
-                            style={{
-                                padding: '0.65rem 1rem',
-                                borderRadius: '8px',
-                                fontWeight: 500,
-                                fontSize: '0.85rem',
-                                background: 'var(--card-hover)',
-                                color: 'var(--text)',
-                                border: '1px solid var(--border)',
-                                cursor: 'pointer',
-                            }}
                         >
                             Load Sample ComBank CSV
                         </button>

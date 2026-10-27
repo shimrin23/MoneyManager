@@ -143,7 +143,7 @@ export const TransactionList = () => {
                     <p className="txn-subtitle">Search, filter and edit your history</p>
                 </div>
                 <div className="txn-header-actions">
-                    <button type="button" className="txn-btn txn-btn-outline txn-btn-icon" onClick={refreshData} title="Refresh data" aria-label="Refresh data">
+                    <button type="button" className="btn-secondary txn-btn txn-btn-icon" onClick={refreshData} title="Refresh data" aria-label="Refresh data">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M3 12a9 9 0 0 1 15.5-6.2L21 8" />
                             <path d="M21 3v5h-5" />
@@ -151,7 +151,7 @@ export const TransactionList = () => {
                             <path d="M3 21v-5h5" />
                         </svg>
                     </button>
-                    <button type="button" className="txn-btn txn-btn-primary" onClick={() => setIsAdding(true)}>
+                    <button type="button" className="btn-primary txn-btn" onClick={() => setIsAdding(true)}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
                             <path d="M12 5v14M5 12h14" />
                         </svg>

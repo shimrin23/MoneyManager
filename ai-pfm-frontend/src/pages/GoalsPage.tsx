@@ -313,7 +313,7 @@ export const GoalsPage = () => {
                                     <span style={{ width: `${progress}%`, backgroundColor: riskStatus.color }} />
                                 </div>
                                 <div className="gl-row">
-                                    <span>{progress.toFixed(1)}% Complete</span>
+                                    <span>{progress.toFixed(1)}%</span>
                                     <span>{getDaysRemaining(goal.deadline)}</span>
                                 </div>
                             </div>
@@ -323,10 +323,6 @@ export const GoalsPage = () => {
                                 <div>
                                     <span>Monthly Required:</span>
                                     <span>{formatCurrency(monthlyRequired)}</span>
-                                </div>
-                                <div>
-                                    <span>Status:</span>
-                                    <span style={{ color: riskStatus.color }}>{riskStatus.status}</span>
                                 </div>
                                 <div>
                                     <span className="gl-date-icon" aria-hidden="true">
