@@ -3554,3 +3554,13 @@
 .fin-risk-item > div:first-child { display: flex; justify-content: space-between; gap: 8px; font-size: 14px; font-weight: 600; color: var(--text); }
 .fin-risk-item > div:first-child span:last-child { font-weight: 500; color: var(--text-muted); }
 @media (max-width: 700px) { .fin-risk-scale { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* One button size on these pages. The global .btn-secondary / .btn-sm are defined in several
+   stylesheets with different padding, so size them here (same pattern as .gl-actions > button) */
+.fin-page .btn-sm,
+.fin-page .su-btn { height: 32px; min-height: 32px; width: auto; padding: 0 12px; font-size: 13px; font-weight: 600; line-height: 1; border-radius: 8px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; margin: 0; }
+.fin-page .page-header > button,
+.fin-page .fin-header-actions > button,
+.fin-page .fin-actions > button { height: 40px; min-height: 40px; width: auto; padding: 0 18px; font-size: 14px; font-weight: 600; line-height: 1; border-radius: 10px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; margin: 0; }
+.fin-page .page-header { align-items: center; }
+.fin-page .fin-alert { align-items: center; }
