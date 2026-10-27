@@ -102,7 +102,7 @@ const ExecutionModal = ({
                             </div>
                             <div className="onetap-actions">
                                 <button className="action-btn primary" onClick={handleExecute}>
-                                    ⚡ Execute Now
+                                    Execute Now
                                 </button>
                                 <button className="action-btn secondary" onClick={onClose}>Cancel</button>
                             </div>
@@ -437,20 +437,20 @@ export const RecommendationsPage = () => {
                         {rec.status === 'pending' && (
                             <div className="rec-card-actions">
                                 <button className="rec-action-btn accept" onClick={() => handleAccept(rec)}>
-                                    ⚡ Accept & Execute
+                                    Accept & Execute
                                 </button>
                                 <button className="rec-action-btn snooze" onClick={() => updateStatus(rec._id, 'snoozed')}>
-                                    ⏰ Snooze
+                                    Snooze
                                 </button>
                                 <button className="rec-action-btn decline" onClick={() => updateStatus(rec._id, 'declined')}>
-                                    ✕ Decline
+                                    Decline
                                 </button>
                             </div>
                         )}
                         {rec.status !== 'pending' && (
                             <div className="rec-card-actions">
                                 <button className="rec-action-btn restore" onClick={() => updateStatus(rec._id, 'pending')}>
-                                    ↩ Restore to Pending
+                                    Restore to Pending
                                 </button>
                             </div>
                         )}
