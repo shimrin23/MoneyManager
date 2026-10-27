@@ -26,10 +26,10 @@ const itemTypeLabel: Record<string, string> = {
     gold: 'Gold', jewelry: 'Jewelry', electronics: 'Electronics', documents: 'Documents', other: 'Other'
 };
 
-const urgencyColor = (days: number) => {
-    if (days <= 7) return '#ef4444';
-    if (days <= 21) return '#f59e0b';
-    return '#10b981';
+const urgencyTone = (days: number): 'bad' | 'warn' | 'good' => {
+    if (days <= 7) return 'bad';
+    if (days <= 21) return 'warn';
+    return 'good';
 };
 
 export const PawningPage = () => {
@@ -142,58 +142,42 @@ export const PawningPage = () => {
     if (loading) return <div className="loading-spinner">Loading pawning items...</div>;
 
     return (
-        <div className="page-container pawning-page">
+        <div className="page-container">
             <div className="page-header">
                 <div style={{ flex: 1 }}></div>
-                <button className="action-btn primary" onClick={() => setShowNewForm(!showNewForm)}>
+                <button className="btn-primary" onClick={() => setShowNewForm(!showNewForm)}>
                     + Add Pawn Item
                 </button>
             </div>
 
-            {error && (
-                <div className="rec-alert-banner" style={{ marginBottom: '1.5rem', background: 'rgba(239,68,68,0.15)', borderColor: '#ef4444' }}>
-                    {error}
-                </div>
-            )}
+            {error && <div className="rc-banner error">{error}</div>}
 
             {/* Summary */}
-            <div className="rec-summary-grid">
-                <div className="rec-stat-card">
-                    <div className="rec-stat-icon">💍</div>
-                    <div>
-                        <div className="rec-stat-value">{active.length}</div>
-                        <div className="rec-stat-label">Active Items</div>
-                    </div>
+            <div className="rc-stats">
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Active Items</span>
+                    <span className="rc-stat-value">{active.length}</span>
                 </div>
-                <div className="rec-stat-card pending">
-                    <div className="rec-stat-icon">💸</div>
-                    <div>
-                        <div className="rec-stat-value">{formatMoney(totalLoan)}</div>
-                        <div className="rec-stat-label">Total Loan Taken</div>
-                    </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Total Loan Taken</span>
+                    <span className="rc-stat-value">{formatMoney(totalLoan)}</span>
                 </div>
-                <div className="rec-stat-card savings">
-                    <div className="rec-stat-icon">💎</div>
-                    <div>
-                        <div className="rec-stat-value">{formatMoney(totalPledged)}</div>
-                        <div className="rec-stat-label">Pledged Value</div>
-                    </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Pledged Value</span>
+                    <span className="rc-stat-value">{formatMoney(totalPledged)}</span>
                 </div>
-                <div className="rec-stat-card error">
-                    <div className="rec-stat-icon">⚠️</div>
-                    <div>
-                        <div className="rec-stat-value">{urgentItems}</div>
-                        <div className="rec-stat-label">Overdue or Due in &lt; 21 Days</div>
-                    </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Overdue or Due in &lt; 21 Days</span>
+                    <span className="rc-stat-value">{urgentItems}</span>
                 </div>
             </div>
 
             {/* New Pawn Item Form */}
             {showNewForm && (
-                <div className="card fd-form-card">
-                    <h3 className="section-title">Add Pawn Item</h3>
-                    <form onSubmit={handleNewItemSubmit} className="fd-form">
-                        <div className="fd-form-grid">
+                <div className="card form-card gl-form">
+                    <h3 className="gl-form-title">Add Pawn Item</h3>
+                    <form onSubmit={handleNewItemSubmit}>
+                        <div className="form-row">
                             <div className="form-group">
                                 <label>Item Description</label>
                                 <input type="text" placeholder="e.g. 22K Gold Chain" value={newItem.itemDescription} onChange={e => setNewItem({ ...newItem, itemDescription: e.target.value })} required />
@@ -208,6 +192,8 @@ export const PawningPage = () => {
                                     <option value="other">Other</option>
                                 </select>
                             </div>
+                        </div>
+                        <div className="form-row">
                             <div className="form-group">
                                 <label>Pledged Value ({currencyCode()})</label>
                                 <input type="number" min="1" placeholder="e.g. 180000" value={newItem.pledgedValue} onChange={e => setNewItem({ ...newItem, pledgedValue: e.target.value })} required />
@@ -216,6 +202,8 @@ export const PawningPage = () => {
                                 <label>Loan Amount ({currencyCode()})</label>
                                 <input type="number" min="1" placeholder="e.g. 126000" value={newItem.loanAmount} onChange={e => setNewItem({ ...newItem, loanAmount: e.target.value })} required />
                             </div>
+                        </div>
+                        <div className="form-row">
                             <div className="form-group">
                                 <label>Interest Rate (% p.a.)</label>
                                 <input type="number" step="0.01" min="0" max="100" placeholder="e.g. 24" value={newItem.interestRate} onChange={e => setNewItem({ ...newItem, interestRate: e.target.value })} required />
@@ -224,6 +212,8 @@ export const PawningPage = () => {
                                 <label>Branch</label>
                                 <input type="text" placeholder="e.g. Colombo 03" value={newItem.branch} onChange={e => setNewItem({ ...newItem, branch: e.target.value })} required />
                             </div>
+                        </div>
+                        <div className="form-row">
                             <div className="form-group">
                                 <label>Ticket Number</label>
                                 <input type="text" placeholder="e.g. PWN-1234" value={newItem.ticketNumber} onChange={e => setNewItem({ ...newItem, ticketNumber: e.target.value })} required />
@@ -232,16 +222,18 @@ export const PawningPage = () => {
                                 <label>Pledge Date</label>
                                 <input type="date" value={newItem.pledgeDate} onChange={e => setNewItem({ ...newItem, pledgeDate: e.target.value })} required />
                             </div>
+                        </div>
+                        <div className="form-row">
                             <div className="form-group">
                                 <label>Redemption Date</label>
                                 <input type="date" min={newItem.pledgeDate || undefined} value={newItem.redemptionDate} onChange={e => setNewItem({ ...newItem, redemptionDate: e.target.value })} required />
                             </div>
                         </div>
-                        <div className="fd-form-actions">
-                            <button type="submit" className="action-btn primary" disabled={submitting}>
+                        <div className="form-actions">
+                            <button type="button" className="btn-secondary" onClick={() => setShowNewForm(false)}>Cancel</button>
+                            <button type="submit" className="btn-primary" disabled={submitting}>
                                 {submitting ? 'Saving...' : 'Save Pawn Item'}
                             </button>
-                            <button type="button" className="action-btn secondary" onClick={() => setShowNewForm(false)}>Cancel</button>
                         </div>
                     </form>
                 </div>
@@ -249,19 +241,16 @@ export const PawningPage = () => {
 
             {/* Empty State */}
             {items.length === 0 && !showNewForm && (
-                <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-                    <div style={{ fontSize: '3rem', margin: '0 auto 1rem', width: '80px', height: '80px', background: 'rgba(99,102,241,0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>💍</div>
-                    <h3 style={{ marginBottom: '0.5rem', color: 'var(--text)' }}>No Pawning Items Added</h3>
-                    <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', maxWidth: '400px', margin: '0 auto 1.5rem' }}>
-                        Track your pawned items, keep an eye on redemption dates, and never miss a payment.
-                    </p>
-                    <button className="action-btn primary" onClick={() => setShowNewForm(true)}>+ Add Pawn Item</button>
+                <div className="empty-state">
+                    <h3>No Pawning Items Added</h3>
+                    <p>Track your pawned items, keep an eye on redemption dates, and never miss a payment.</p>
+                    <button className="btn-primary" onClick={() => setShowNewForm(true)}>+ Add Pawn Item</button>
                 </div>
             )}
 
             {/* Filter */}
             {items.length > 0 && (
-                <div className="rec-filter-row">
+                <div className="rec-filter-row fin-filters">
                     {(['all', 'active', 'redeemed'] as const).map(f => (
                         <button key={f} className={`rec-filter-btn ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
                             {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -272,84 +261,66 @@ export const PawningPage = () => {
             )}
 
             {/* Pawning Cards */}
-            <div className="fd-list">
-                {filtered.map(item => (
-                    <div key={item._id} className={`fd-card ${item.status}`}>
-                        <div className="fd-card-header">
-                            <div className="fd-card-title-row">
-                                <div>
-                                    <div className="fd-account">{item.itemDescription}</div>
-                                    <div className="fd-bank">{item.branch} | #{item.ticketNumber}</div>
+            <div className="fin-grid">
+                {filtered.map(item => {
+                    const tone = urgencyTone(item.daysRemaining);
+                    const statusPill = item.status === 'active' ? 'in-progress' : item.status === 'redeemed' ? 'completed' : '';
+                    return (
+                        <article key={item._id} className="gl-card">
+                            <div className="gl-head">
+                                <div className="gl-head-main">
+                                    <div className="gl-head-text">
+                                        <h3>{item.itemDescription}</h3>
+                                        <span className="gl-sub">{item.branch} | #{item.ticketNumber} · {itemTypeLabel[item.itemType]}</span>
+                                    </div>
                                 </div>
-                                <div className="fd-badges">
-                                    <span className="fd-type-badge">{itemTypeLabel[item.itemType]}</span>
-                                    <span className="fd-status-badge" style={{ color: item.status === 'active' ? '#f59e0b' : item.status === 'redeemed' ? '#10b981' : '#64748b' }}>
-                                        {item.status.toUpperCase()}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="fd-card-body">
-                            <div className="fd-amounts-row">
-                                <div className="fd-amount-item">
-                                    <div className="fd-amount-label">Loan Amount</div>
-                                    <div className="fd-amount-value">{formatMoney(item.loanAmount)}</div>
-                                </div>
-                                <div className="fd-amount-item highlight" style={{ background: 'rgba(245,158,11,0.1)' }}>
-                                    <div className="fd-amount-label" style={{ color: '#f59e0b' }}>Total Due Now</div>
-                                    <div className="fd-amount-value" style={{ color: '#f59e0b' }}>{formatMoney(Math.round(item.totalDue))}</div>
-                                </div>
-                                <div className="fd-amount-item">
-                                    <div className="fd-amount-label">Pledged Value</div>
-                                    <div className="fd-amount-value">{formatMoney(item.pledgedValue)}</div>
-                                </div>
+                                <span className={`gl-pill ${statusPill}`}>{item.status.toUpperCase()}</span>
                             </div>
 
-                            <div className="fd-details-row">
-                                <span>📈 {item.interestRate}% p.a. ({formatMoney(Math.round(item.monthlyInterest))}/mo)</span>
-                                <span>💰 Accrued Interest: {formatMoney(Math.round(item.totalInterestAccrued))}</span>
+                            <div className="gl-kv">
+                                <div><span>Loan Amount</span><span>{formatMoney(item.loanAmount)}</span></div>
+                                <div><span>Total Due Now</span><span>{formatMoney(Math.round(item.totalDue))}</span></div>
+                                <div><span>Pledged Value</span><span>{formatMoney(item.pledgedValue)}</span></div>
+                                <div><span>Interest Rate</span><span>{item.interestRate}% p.a. ({formatMoney(Math.round(item.monthlyInterest))}/mo)</span></div>
+                                <div><span>Accrued Interest</span><span>{formatMoney(Math.round(item.totalInterestAccrued))}</span></div>
+                                {item.status === 'active' && (
+                                    <>
+                                        <div><span>Redemption Date</span><span>{formatDate(item.redemptionDate)}</span></div>
+                                        <div>
+                                            <span>Time Left</span>
+                                            <span className={`fin-${tone}`}>
+                                                {item.daysRemaining < 0 ? `Overdue by ${-item.daysRemaining} days` : `${item.daysRemaining} days`}
+                                            </span>
+                                        </div>
+                                    </>
+                                )}
                             </div>
 
                             {item.status === 'active' && (
-                                <div className="fd-progress-wrap" style={{ marginTop: '1.25rem', padding: '1rem', background: 'rgba(255,255,255,0.03)', borderRadius: '8px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                        <div style={{ fontSize: '0.85rem' }}>
-                                            <div style={{ color: 'var(--text-muted)' }}>Redemption Date</div>
-                                            <div style={{ fontWeight: 600 }}>{formatDate(item.redemptionDate)}</div>
-                                        </div>
-                                        <div style={{ textAlign: 'right' }}>
-                                            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: urgencyColor(item.daysRemaining) }}>
-                                                {item.daysRemaining < 0 ? 'Overdue' : `${item.daysRemaining} Days`}
-                                            </div>
-                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                                                {item.daysRemaining < 0 ? `${-item.daysRemaining} days past redemption date` : 'Remaining to Redeem'}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="fd-progress-bar" style={{ height: '4px', background: 'rgba(255,255,255,0.1)' }}>
-                                        <div className="fd-progress-fill" style={{ 
-                                            width: `${Math.max(5, Math.min(100, 100 - (item.daysRemaining / 90) * 100))}%`, 
-                                            background: urgencyColor(item.daysRemaining) 
-                                        }} />
+                                <div className="gl-progress">
+                                    <div className="gl-bar">
+                                        <span
+                                            className={tone}
+                                            style={{ width: `${Math.max(5, Math.min(100, 100 - (item.daysRemaining / 90) * 100))}%` }}
+                                        />
                                     </div>
                                 </div>
                             )}
-                        </div>
 
-                        <div className="fd-card-actions">
-                            {item.status === 'active' && (
-                                <>
-                                    <button className="action-btn secondary small" onClick={() => handleRedeem(item)}>Redeem Item</button>
-                                    <button className="action-btn danger small" onClick={() => handleDelete(item._id)}>Delete</button>
-                                </>
-                            )}
-                            {item.status !== 'active' && (
-                                <button className="action-btn secondary small" onClick={() => handleDelete(item._id)}>Delete</button>
-                            )}
-                        </div>
-                    </div>
-                ))}
+                            <div className="gl-actions">
+                                {item.status === 'active' && (
+                                    <>
+                                        <button className="btn-primary btn-sm" onClick={() => handleRedeem(item)}>Redeem Item</button>
+                                        <button className="btn-secondary btn-sm" onClick={() => handleDelete(item._id)}>Delete</button>
+                                    </>
+                                )}
+                                {item.status !== 'active' && (
+                                    <button className="btn-secondary btn-sm" onClick={() => handleDelete(item._id)}>Delete</button>
+                                )}
+                            </div>
+                        </article>
+                    );
+                })}
             </div>
         </div>
     );

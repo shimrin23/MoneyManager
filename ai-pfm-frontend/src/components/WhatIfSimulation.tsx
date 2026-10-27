@@ -85,38 +85,37 @@ const WhatIfSimulation: FC<WhatIfSimulationProps> = ({
     };
 
     return (
-        <div className="what-if-simulation">
-            <h2>What-If Simulation</h2>
-            <p className="subtitle">Explore different scenarios to optimize your loan repayment</p>
+        <div>
+            <p className="su-muted fin-lead">Explore different scenarios to optimize your loan repayment</p>
 
-            {error && <div className="error-box">{error}</div>}
+            {error && <div className="rc-banner error">{error}</div>}
 
-            <div className="simulation-tabs">
+            <div className="rec-filter-row">
                 <button
-                    className={`tab ${activeTab === 'emi' ? 'active' : ''}`}
+                    className={`rec-filter-btn ${activeTab === 'emi' ? 'active' : ''}`}
                     onClick={() => setActiveTab('emi')}
                 >
                     Increase EMI
                 </button>
                 <button
-                    className={`tab ${activeTab === 'lump' ? 'active' : ''}`}
+                    className={`rec-filter-btn ${activeTab === 'lump' ? 'active' : ''}`}
                     onClick={() => setActiveTab('lump')}
                 >
                     Lump Sum
                 </button>
                 <button
-                    className={`tab ${activeTab === 'refinance' ? 'active' : ''}`}
+                    className={`rec-filter-btn ${activeTab === 'refinance' ? 'active' : ''}`}
                     onClick={() => setActiveTab('refinance')}
                 >
                     Refinance
                 </button>
             </div>
 
-            <div className="simulation-content">
+            <div className="card form-card gl-form">
                 {activeTab === 'emi' && (
-                    <div className="simulation-form">
-                        <h3>Increase Monthly EMI</h3>
-                        <p className="description">See how increasing your EMI can help you pay off the loan faster and save interest.</p>
+                    <>
+                        <h3 className="gl-form-title">Increase Monthly EMI</h3>
+                        <p className="su-muted fin-lead">See how increasing your EMI can help you pay off the loan faster and save interest.</p>
 
                         <div className="form-group">
                             <label>New Monthly EMI: {formatMoney(increasedEMI, 2)}</label>
@@ -128,19 +127,21 @@ const WhatIfSimulation: FC<WhatIfSimulationProps> = ({
                                 onChange={(e) => setIncreasedEMI(Number(e.target.value))}
                                 step={100}
                             />
-                            <p className="help-text">Current EMI: {formatMoney(currentEMI, 2)}</p>
+                            <span className="fin-note">Current EMI: {formatMoney(currentEMI, 2)}</span>
                         </div>
 
-                        <button onClick={handleSimulateEMI} disabled={loading} className="btn-primary">
-                            {loading ? 'Simulating...' : 'Simulate'}
-                        </button>
-                    </div>
+                        <div className="form-actions">
+                            <button onClick={handleSimulateEMI} disabled={loading} className="btn-primary">
+                                {loading ? 'Simulating...' : 'Simulate'}
+                            </button>
+                        </div>
+                    </>
                 )}
 
                 {activeTab === 'lump' && (
-                    <div className="simulation-form">
-                        <h3>Lump Sum Payment</h3>
-                        <p className="description">Make an extra payment to reduce your loan balance and interest.</p>
+                    <>
+                        <h3 className="gl-form-title">Lump Sum Payment</h3>
+                        <p className="su-muted fin-lead">Make an extra payment to reduce your loan balance and interest.</p>
 
                         <div className="form-group">
                             <label>Lump Sum Amount ({currencyCode()})</label>
@@ -151,7 +152,7 @@ const WhatIfSimulation: FC<WhatIfSimulationProps> = ({
                                 min={0}
                                 max={remainingBalance}
                             />
-                            <p className="help-text">Max available: {formatMoney(remainingBalance, 2)}</p>
+                            <span className="fin-note">Max available: {formatMoney(remainingBalance, 2)}</span>
                         </div>
 
                         <div className="form-group">
@@ -163,19 +164,21 @@ const WhatIfSimulation: FC<WhatIfSimulationProps> = ({
                                 value={monthToApply}
                                 onChange={(e) => setMonthToApply(Number(e.target.value))}
                             />
-                            <p className="help-text">Total tenure: {tenure} months</p>
+                            <span className="fin-note">Total tenure: {tenure} months</span>
                         </div>
 
-                        <button onClick={handleSimulateLumpSum} disabled={loading} className="btn-primary">
-                            {loading ? 'Simulating...' : 'Simulate'}
-                        </button>
-                    </div>
+                        <div className="form-actions">
+                            <button onClick={handleSimulateLumpSum} disabled={loading} className="btn-primary">
+                                {loading ? 'Simulating...' : 'Simulate'}
+                            </button>
+                        </div>
+                    </>
                 )}
 
                 {activeTab === 'refinance' && (
-                    <div className="simulation-form">
-                        <h3>Refinance Loan</h3>
-                        <p className="description">See potential savings if you refinance at a lower interest rate.</p>
+                    <>
+                        <h3 className="gl-form-title">Refinance Loan</h3>
+                        <p className="su-muted fin-lead">See potential savings if you refinance at a lower interest rate.</p>
 
                         <div className="form-group">
                             <label>New Interest Rate: {newRate.toFixed(2)}% p.a.</label>
@@ -187,45 +190,49 @@ const WhatIfSimulation: FC<WhatIfSimulationProps> = ({
                                 value={newRate}
                                 onChange={(e) => setNewRate(Number(e.target.value))}
                             />
-                            <p className="help-text">Current rate: {interestRate}% p.a.</p>
+                            <span className="fin-note">Current rate: {interestRate}% p.a.</span>
                         </div>
 
-                        <button onClick={handleSimulateRefinance} disabled={loading} className="btn-primary">
-                            {loading ? 'Simulating...' : 'Simulate'}
-                        </button>
-                    </div>
+                        <div className="form-actions">
+                            <button onClick={handleSimulateRefinance} disabled={loading} className="btn-primary">
+                                {loading ? 'Simulating...' : 'Simulate'}
+                            </button>
+                        </div>
+                    </>
                 )}
             </div>
 
             {simulationResults.length > 0 && (
-                <div className="simulation-results">
-                    <h3>Simulation Results</h3>
+                <div className="su-panel">
+                    <h3 className="su-panel-title">Simulation Results</h3>
                     {simulationResults.map((result, idx) => (
-                        <div key={idx} className="result-card">
-                            <h4>{result.scenarioName}</h4>
+                        <div key={idx}>
+                            <h4 className="fin-sub-title">{result.scenarioName}</h4>
 
-                            <div className="results-grid">
-                                <div className="result-item">
-                                    <span className="label">Monthly EMI</span>
-                                    <span className="value">{formatMoney(result.monthlyEMI, 2)}</span>
+                            <div className="rc-stats rc-stats-3">
+                                <div className="rc-stat">
+                                    <span className="rc-stat-label">Monthly EMI</span>
+                                    <span className="rc-stat-value">{formatMoney(result.monthlyEMI, 2)}</span>
                                 </div>
-                                <div className="result-item">
-                                    <span className="label">Total Interest</span>
-                                    <span className="value">{formatMoney(result.totalInterest, 2)}</span>
+                                <div className="rc-stat">
+                                    <span className="rc-stat-label">Total Interest</span>
+                                    <span className="rc-stat-value">{formatMoney(result.totalInterest, 2)}</span>
                                 </div>
-                                <div className="result-item">
-                                    <span className="label">Time to Payoff</span>
-                                    <span className="value">{result.timeToPayoff} months</span>
+                                <div className="rc-stat">
+                                    <span className="rc-stat-label">Time to Payoff</span>
+                                    <span className="rc-stat-value">{result.timeToPayoff} months</span>
                                 </div>
                             </div>
 
                             {result.savings && (
-                                <div className="savings-box">
-                                    <h5>Potential Savings</h5>
-                                    <p className="saving">Interest Saved: <strong>{formatMoney(result.savings.interestSaved, 2)}</strong></p>
-                                    {result.savings.timeSaved > 0 && (
-                                        <p className="saving">Time Saved: <strong>{result.savings.timeSaved} months</strong></p>
-                                    )}
+                                <div className="su-impact">
+                                    <strong>Potential Savings</strong>
+                                    <ul>
+                                        <li>Interest Saved: <strong>{formatMoney(result.savings.interestSaved, 2)}</strong></li>
+                                        {result.savings.timeSaved > 0 && (
+                                            <li>Time Saved: <strong>{result.savings.timeSaved} months</strong></li>
+                                        )}
+                                    </ul>
                                 </div>
                             )}
                         </div>

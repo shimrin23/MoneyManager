@@ -1,4 +1,4 @@
-import { formatDate, formatDateTime, formatMoney } from '../utils/appFormat';
+import { formatDate, formatMoney } from '../utils/appFormat';
 import { type FC } from 'react';
 
 interface Loan {
@@ -34,105 +34,74 @@ const ActiveLoanCards: FC<ActiveLoanCardsProps> = ({
 
     if (activeLoan.length === 0) {
         return (
-            <div className="active-loans">
-                <h2>Active Loans</h2>
-                <p className="empty-state">No active loans. Add your first loan!</p>
+            <div className="empty-state">
+                <h3>No Active Loans</h3>
+                <p>Add your first loan to start tracking it.</p>
             </div>
         );
     }
 
     return (
-        <div className="active-loans">
-            <h2>Active Loans</h2>
-            <div className="loans-grid">
+        <div className="fin-section">
+            <h3 className="su-panel-title">Active Loans</h3>
+            <div className="fin-grid">
                 {activeLoan.map((loan) => {
                     const paidPercent = loan.totalAmount > 0
                         ? Math.min(100, Math.max(0, ((loan.totalAmount - loan.remainingAmount) / loan.totalAmount) * 100))
                         : 0;
                     return (
-                    <div key={loan._id} className="loan-card">
-                        <div className="card-header">
-                            <div className="header-left">
-                                <h3>{loan.type} Loan</h3>
-                                <span className="provider">{loan.provider}</span>
+                        <article key={loan._id} className="gl-card">
+                            <div className="gl-head">
+                                <div className="gl-head-main">
+                                    <div className="gl-head-text">
+                                        <h3>{loan.type} Loan</h3>
+                                        <span className="gl-sub">{loan.provider}</span>
+                                    </div>
+                                </div>
+                                <span className="gl-pill in-progress">Active</span>
                             </div>
-                            <div className="header-actions" style={{ display: 'flex', gap: '0.5rem' }}>
-                                <button
-                                    onClick={() => onEdit?.(loan._id)}
-                                    className="action-btn secondary small"
+
+                            <div className="gl-kv">
+                                <div><span>Monthly EMI</span><span>{formatMoney(loan.monthlyInstallment, 2)}</span></div>
+                                <div><span>Remaining Amount</span><span>{formatMoney(loan.remainingAmount, 2)}</span></div>
+                                <div><span>Interest Rate</span><span>{loan.interestRate}% p.a.</span></div>
+                                <div><span>Next Due Date</span><span>{formatDate(loan.nextDueDate)}</span></div>
+                            </div>
+
+                            <div className="gl-progress">
+                                <div
+                                    className="gl-bar"
+                                    role="progressbar"
+                                    aria-valuenow={Math.round(paidPercent)}
+                                    aria-valuemin={0}
+                                    aria-valuemax={100}
+                                    aria-label={`${paidPercent.toFixed(1)}% of the loan paid`}
                                 >
+                                    <span style={{ width: `${paidPercent}%` }} />
+                                </div>
+                                <div className="gl-row">
+                                    <span>{paidPercent.toFixed(1)}% paid</span>
+                                </div>
+                            </div>
+
+                            <div className="gl-actions">
+                                <button onClick={() => onMakePayment?.(loan._id)} className="btn-primary btn-sm">
+                                    Pay EMI
+                                </button>
+                                <button onClick={() => onViewSchedule?.(loan._id)} className="btn-secondary btn-sm">
+                                    View Schedule
+                                </button>
+                                <button onClick={() => onRecalculate?.(loan._id)} className="btn-secondary btn-sm">
+                                    Recalculate
+                                </button>
+                                <button onClick={() => onEdit?.(loan._id)} className="btn-secondary btn-sm">
                                     Edit
                                 </button>
-                                <button
-                                    onClick={() => onDelete?.(loan._id)}
-                                    className="action-btn danger small"
-                                >
+                                <button onClick={() => onDelete?.(loan._id)} className="btn-secondary btn-sm">
                                     Delete
                                 </button>
                             </div>
-                        </div>
-
-                        <div className="card-content">
-                            <div className="info-row">
-                                <span className="label">Monthly EMI:</span>
-                                <span className="value">{formatMoney(loan.monthlyInstallment, 2)}</span>
-                            </div>
-
-                            <div className="info-row">
-                                <span className="label">Remaining Amount:</span>
-                                <span className="value">{formatMoney(loan.remainingAmount, 2)}</span>
-                            </div>
-
-                            <div className="info-row">
-                                <span className="label">Interest Rate:</span>
-                                <span className="value">{loan.interestRate}% p.a.</span>
-                            </div>
-
-                            <div className="info-row">
-                                <span className="label">Next Due Date:</span>
-                                <span className="value">{formatDate(loan.nextDueDate)}</span>
-                            </div>
-
-                            <div className="info-row">
-                                <span className="label">Paid:</span>
-                                <span className="value">{paidPercent.toFixed(1)}%</span>
-                            </div>
-                            <div
-                                className="progress-bar"
-                                role="progressbar"
-                                aria-valuenow={Math.round(paidPercent)}
-                                aria-valuemin={0}
-                                aria-valuemax={100}
-                                aria-label={`${paidPercent.toFixed(1)}% of the loan paid`}
-                            >
-                                <div className="progress-fill" style={{ width: `${paidPercent}%` }}></div>
-                            </div>
-                        </div>
-
-                        <div className="card-actions" style={{ display: 'flex', gap: '0.5rem', marginTop: '1.25rem' }}>
-                            <button
-                                onClick={() => onViewSchedule?.(loan._id)}
-                                className="action-btn secondary small"
-                                style={{ flex: 1 }}
-                            >
-                                View Schedule
-                            </button>
-                            <button
-                                onClick={() => onRecalculate?.(loan._id)}
-                                className="action-btn secondary small"
-                                style={{ flex: 1 }}
-                            >
-                                Recalculate
-                            </button>
-                            <button
-                                onClick={() => onMakePayment?.(loan._id)}
-                                className="action-btn primary small"
-                                style={{ flex: 1 }}
-                            >
-                                Pay EMI
-                            </button>
-                        </div>
-                    </div>
+                        </article>
                     );
                 })}
             </div>

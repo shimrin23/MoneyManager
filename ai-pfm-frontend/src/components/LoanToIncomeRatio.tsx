@@ -16,6 +16,29 @@ interface RatioData {
     recommendation: string;
 }
 
+// Same three status colours as the rest of the app: green / amber / red
+const getRiskTone = (level: string): 'good' | 'warn' | 'bad' => {
+    switch (level) {
+        case 'low':
+            return 'good';
+        case 'medium':
+            return 'warn';
+        default:
+            return 'bad';
+    }
+};
+
+const getRiskLabel = (level: string) => {
+    return level.charAt(0).toUpperCase() + level.slice(1);
+};
+
+const riskScale = [
+    { level: 'low', range: '0-20%' },
+    { level: 'medium', range: '20-35%' },
+    { level: 'high', range: '35-50%' },
+    { level: 'critical', range: '50%+' }
+];
+
 const LoanToIncomeRatio: FC<LoanToIncomeRatioProps> = ({ onRefresh }) => {
     const { getLoanToIncomeRatio } = useLoans();
     const [data, setData] = useState<RatioData | null>(null);
@@ -40,139 +63,92 @@ const LoanToIncomeRatio: FC<LoanToIncomeRatioProps> = ({ onRefresh }) => {
     };
 
     if (loading) {
-        return <div className="loan-to-income-ratio loading">Loading...</div>;
+        return <div className="su-muted">Loading...</div>;
     }
 
     if (error || !data) {
-        return <div className="loan-to-income-ratio error">{error || 'Failed to load data'}</div>;
+        return <div className="rc-banner error">{error || 'Failed to load data'}</div>;
     }
 
     // No income in Profile: a ratio would be made up, so ask for the income instead
     if (data.incomeMissing) {
         return (
-            <div className="loan-to-income-ratio card">
-                <h2 style={{ margin: '0 0 1rem', fontSize: '1.25rem', color: 'var(--color-text)' }}>Loan-to-Income Ratio</h2>
-                <p style={{ color: 'var(--color-text-2)', lineHeight: 1.6 }}>
+            <div className="su-panel">
+                <h3 className="rc-panel-title" style={{ marginBottom: '12px' }}>Loan-to-Income Ratio</h3>
+                <p className="su-muted fin-lead">
                     Your total monthly EMI is <strong>{formatMoney(data.totalMonthlyEMI)}</strong>.
                     To see how much of your income goes to loans, add your monthly income in your Profile.
                 </p>
-                <Link to="/profile" className="action-btn primary small" style={{ display: 'inline-block', marginTop: '0.5rem' }}>
+                <Link to="/profile" className="btn-primary btn-sm">
                     Add monthly income
                 </Link>
             </div>
         );
     }
 
-    const getRiskColor = (level: string) => {
-        switch (level) {
-            case 'low':
-                return '#10b981';
-            case 'medium':
-                return '#f59e0b';
-            case 'high':
-                return '#ef4444';
-            case 'critical':
-                return '#7f1d1d';
-            default:
-                return '#6b7280';
-        }
-    };
-
-    const getRiskLabel = (level: string) => {
-        return level.charAt(0).toUpperCase() + level.slice(1);
-    };
+    const tone = getRiskTone(data.riskLevel);
 
     return (
-        <div className="loan-to-income-ratio card">
-            <div className="ratio-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                <h2 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--color-text)' }}>Loan-to-Income Ratio</h2>
-                <button onClick={() => { loadRatio(); onRefresh?.(); }} className="action-btn secondary small">
-                    Refresh
-                </button>
-            </div>
-
-            <div className="ratio-container" style={{ marginBottom: '2rem' }}>
-                <div className="ratio-gauge" style={{ background: 'var(--color-surface-2)', padding: '2.5rem 2rem', borderRadius: '16px', textAlign: 'center', marginBottom: '1.5rem', border: '1px solid var(--color-border)', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
-                    <div className="gauge-value" style={{ color: getRiskColor(data.riskLevel), fontSize: '3.5rem', fontWeight: 800, lineHeight: 1, letterSpacing: '-0.02em', marginBottom: '0.5rem' }}>
-                        {data.ratio.toFixed(2)}%
-                    </div>
-                    <div className="gauge-label" style={{ color: 'var(--color-text-muted)', marginBottom: '2rem', fontSize: '1rem', fontWeight: 500 }}>Current Debt-to-Income Ratio</div>
-                    <div className="gauge-bar" style={{ height: '8px', background: 'var(--color-bg)', borderRadius: '4px', overflow: 'hidden', marginBottom: '0.75rem' }}>
-                        <div
-                            className="gauge-fill"
-                            style={{
-                                height: '100%',
-                                width: `${Math.min(data.ratio, 100)}%`,
-                                backgroundColor: getRiskColor(data.riskLevel),
-                                borderRadius: '4px',
-                                transition: 'width 1s cubic-bezier(0.4, 0, 0.2, 1)'
-                            }}
-                        ></div>
-                    </div>
-                    <div className="gauge-markers" style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--color-text-muted)', fontSize: '0.8rem', fontWeight: 600 }}>
-                        <span>0%</span>
-                        <span>25%</span>
-                        <span>50%</span>
-                        <span>100%</span>
-                    </div>
+        <div>
+            <div className="su-panel">
+                <div className="rc-panel-head">
+                    <h3 className="rc-panel-title">Loan-to-Income Ratio</h3>
+                    <button onClick={() => { loadRatio(); onRefresh?.(); }} className="btn-secondary btn-sm">
+                        Refresh
+                    </button>
                 </div>
 
-                <div className="ratio-details" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-                    <div className="detail-card" style={{ background: 'var(--color-surface-2)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
-                        <p className="label" style={{ margin: '0 0 0.5rem', color: 'var(--color-text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Total Monthly EMI</p>
-                        <p className="value" style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0, color: 'var(--color-text)', letterSpacing: '-0.02em' }}>{formatMoney(data.totalMonthlyEMI)}</p>
-                    </div>
-                    <div className="detail-card" style={{ background: 'var(--color-surface-2)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
-                        <p className="label" style={{ margin: '0 0 0.5rem', color: 'var(--color-text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Monthly Income</p>
-                        <p className="value" style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0, color: 'var(--color-text)', letterSpacing: '-0.02em' }}>{formatMoney(data.monthlyIncome)}</p>
-                    </div>
-                    <div className="detail-card" style={{ background: 'var(--color-surface-2)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--color-border)' }}>
-                        <p className="label" style={{ margin: '0 0 0.5rem', color: 'var(--color-text-muted)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>Risk Level</p>
-                        <p className="value" style={{ fontSize: '1.6rem', fontWeight: 700, margin: 0, color: getRiskColor(data.riskLevel), letterSpacing: '-0.02em' }}>
-                            {getRiskLabel(data.riskLevel)}
-                        </p>
-                    </div>
+                <div className="fin-center">
+                    <div className={`fin-gauge-value fin-${tone}`}>{data.ratio.toFixed(2)}%</div>
+                    <p className="su-muted" style={{ margin: '4px 0 16px' }}>Current Debt-to-Income Ratio</p>
+                </div>
+                <div className="gl-bar">
+                    <span className={tone} style={{ width: `${Math.min(data.ratio, 100)}%` }} />
+                </div>
+                <div className="fin-gauge-scale">
+                    <span>0%</span>
+                    <span>25%</span>
+                    <span>50%</span>
+                    <span>100%</span>
                 </div>
             </div>
 
-            <div className="ratio-recommendation" style={{ background: 'rgba(96, 165, 250, 0.08)', border: '1px solid rgba(96, 165, 250, 0.25)', padding: '1.5rem', borderRadius: '12px', marginBottom: '2.5rem' }}>
-                <h3 style={{ margin: '0 0 0.75rem 0', fontSize: '1.1rem', color: '#60a5fa', display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                    <span style={{ fontSize: '1.2rem' }}>💡</span> AI Recommendation
-                </h3>
-                <p style={{ margin: 0, color: 'var(--color-text-2)', lineHeight: 1.6, fontSize: '0.95rem' }}>{data.recommendation}</p>
+            <div className="rc-stats rc-stats-3">
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Total Monthly EMI</span>
+                    <span className="rc-stat-value">{formatMoney(data.totalMonthlyEMI)}</span>
+                </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Monthly Income</span>
+                    <span className="rc-stat-value">{formatMoney(data.monthlyIncome)}</span>
+                </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Risk Level</span>
+                    <span className={`rc-stat-value fin-${tone}`}>{getRiskLabel(data.riskLevel)}</span>
+                </div>
             </div>
 
-            <div className="ratio-scale">
-                <h3 style={{ fontSize: '1.1rem', color: 'var(--color-text)', marginBottom: '1.25rem', fontWeight: 600 }}>Risk Scale Guide</h3>
-                <div className="scale-items" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 140px), 1fr))', gap: '1rem' }}>
-                    <div className="scale-item" style={{ background: 'var(--color-surface-2)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                            <span className="scale-label" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-text)' }}>Low</span>
-                            <span className="scale-range" style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>0-20%</span>
+            <div className="gl-insight" style={{ marginBottom: '22px' }}>
+                <div>
+                    <h4>AI Recommendation</h4>
+                    <p>{data.recommendation}</p>
+                </div>
+            </div>
+
+            <div className="su-panel">
+                <h3 className="su-panel-title">Risk Scale Guide</h3>
+                <div className="fin-risk-scale">
+                    {riskScale.map(item => (
+                        <div key={item.level} className="fin-risk-item">
+                            <div>
+                                <span>{getRiskLabel(item.level)}</span>
+                                <span>{item.range}</span>
+                            </div>
+                            <div className="gl-bar">
+                                <span className={getRiskTone(item.level)} style={{ width: '100%' }} />
+                            </div>
                         </div>
-                        <div className="scale-bar" style={{ height: '4px', borderRadius: '2px', backgroundColor: getRiskColor('low') }}></div>
-                    </div>
-                    <div className="scale-item" style={{ background: 'var(--color-surface-2)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                            <span className="scale-label" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-text)' }}>Medium</span>
-                            <span className="scale-range" style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>20-35%</span>
-                        </div>
-                        <div className="scale-bar" style={{ height: '4px', borderRadius: '2px', backgroundColor: getRiskColor('medium') }}></div>
-                    </div>
-                    <div className="scale-item" style={{ background: 'var(--color-surface-2)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                            <span className="scale-label" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-text)' }}>High</span>
-                            <span className="scale-range" style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>35-50%</span>
-                        </div>
-                        <div className="scale-bar" style={{ height: '4px', borderRadius: '2px', backgroundColor: getRiskColor('high') }}></div>
-                    </div>
-                    <div className="scale-item" style={{ background: 'var(--color-surface-2)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--color-border)' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-                            <span className="scale-label" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--color-text)' }}>Critical</span>
-                            <span className="scale-range" style={{ fontSize: '0.85rem', color: 'var(--color-text-muted)' }}>50%+</span>
-                        </div>
-                        <div className="scale-bar" style={{ height: '4px', borderRadius: '2px', backgroundColor: getRiskColor('critical') }}></div>
-                    </div>
+                    ))}
                 </div>
             </div>
         </div>

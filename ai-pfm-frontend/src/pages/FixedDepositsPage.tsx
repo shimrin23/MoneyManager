@@ -37,10 +37,10 @@ const getMonthsUntil = (dateStr: string) => {
 
 const getMaturityStatus = (dateStr: string) => {
     const daysLeft = getDaysUntilMaturity(dateStr);
-    if (daysLeft <= 0) return { label: 'Matures today', color: '#10b981' };
-    if (daysLeft <= 30) return { label: `${daysLeft}d left`, color: '#f59e0b' };
-    if (daysLeft <= 90) return { label: `${daysLeft}d left`, color: '#6366f1' };
-    return { label: `${getMonthsUntil(dateStr)}mo left`, color: '#64748b' };
+    if (daysLeft <= 0) return { label: 'Matures today', tone: 'fin-good' };
+    if (daysLeft <= 30) return { label: `${daysLeft}d left`, tone: 'fin-warn' };
+    if (daysLeft <= 90) return { label: `${daysLeft}d left`, tone: '' };
+    return { label: `${getMonthsUntil(dateStr)}mo left`, tone: '' };
 };
 
 export const FixedDepositsPage = () => {
@@ -167,58 +167,42 @@ export const FixedDepositsPage = () => {
     if (loading) return <div className="loading-spinner">Loading fixed deposits...</div>;
 
     return (
-        <div className="page-container fd-page">
+        <div className="page-container">
             <div className="page-header">
                 <div style={{ flex: 1 }}></div>
-                <button className="action-btn primary" onClick={() => setShowNewFDForm(!showNewFDForm)}>
+                <button className="btn-primary" onClick={() => setShowNewFDForm(!showNewFDForm)}>
                     + Open New FD
                 </button>
             </div>
 
-            {error && (
-                <div className="rec-alert-banner" style={{ marginBottom: '1.5rem', background: 'rgba(239,68,68,0.15)', borderColor: '#ef4444' }}>
-                    {error}
-                </div>
-            )}
+            {error && <div className="rc-banner error">{error}</div>}
 
             {/* Summary */}
-            <div className="rec-summary-grid">
-                <div className="rec-stat-card">
-                    <div className="rec-stat-icon">🏛️</div>
-                    <div>
-                        <div className="rec-stat-value">{activeFDs.length}</div>
-                        <div className="rec-stat-label">Active FDs</div>
-                    </div>
+            <div className="rc-stats">
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Active FDs</span>
+                    <span className="rc-stat-value">{activeFDs.length}</span>
                 </div>
-                <div className="rec-stat-card accepted">
-                    <div className="rec-stat-icon">💵</div>
-                    <div>
-                        <div className="rec-stat-value">{formatMoney(totalPrincipal)}</div>
-                        <div className="rec-stat-label">Total Principal</div>
-                    </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Total Principal</span>
+                    <span className="rc-stat-value">{formatMoney(totalPrincipal)}</span>
                 </div>
-                <div className="rec-stat-card savings">
-                    <div className="rec-stat-icon">📈</div>
-                    <div>
-                        <div className="rec-stat-value">{formatMoney(totalMaturityValue)}</div>
-                        <div className="rec-stat-label">Maturity Value</div>
-                    </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Maturity Value</span>
+                    <span className="rc-stat-value">{formatMoney(totalMaturityValue)}</span>
                 </div>
-                <div className="rec-stat-card pending">
-                    <div className="rec-stat-icon">⏰</div>
-                    <div>
-                        <div className="rec-stat-value">{maturitySoon}</div>
-                        <div className="rec-stat-label">Maturing in 90 Days</div>
-                    </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Maturing in 90 Days</span>
+                    <span className="rc-stat-value">{maturitySoon}</span>
                 </div>
             </div>
 
             {/* New FD Form */}
             {showNewFDForm && (
-                <div className="card fd-form-card">
-                    <h3 className="section-title">Open New Fixed Deposit</h3>
-                    <form onSubmit={handleNewFDSubmit} className="fd-form">
-                        <div className="fd-form-grid">
+                <div className="card form-card gl-form">
+                    <h3 className="gl-form-title">Open New Fixed Deposit</h3>
+                    <form onSubmit={handleNewFDSubmit}>
+                        <div className="form-row">
                             <div className="form-group">
                                 <label>Bank Name</label>
                                 <input
@@ -239,6 +223,8 @@ export const FixedDepositsPage = () => {
                                     required
                                 />
                             </div>
+                        </div>
+                        <div className="form-row">
                             <div className="form-group">
                                 <label>Interest Rate (%)</label>
                                 <input
@@ -254,7 +240,7 @@ export const FixedDepositsPage = () => {
                             </div>
                             <div className="form-group">
                                 <label>Tenure</label>
-                                <div className="fd-tenure-row">
+                                <div className="fin-tenure">
                                     <input
                                         type="number"
                                         min="1"
@@ -273,6 +259,8 @@ export const FixedDepositsPage = () => {
                                     </select>
                                 </div>
                             </div>
+                        </div>
+                        <div className="form-row">
                             <div className="form-group">
                                 <label>Start Date</label>
                                 <input
@@ -292,21 +280,19 @@ export const FixedDepositsPage = () => {
                                 </select>
                             </div>
                         </div>
-                        <div className="fd-form-check">
-                            <label>
-                                <input
-                                    type="checkbox"
-                                    checked={newFD.autoRenewal}
-                                    onChange={e => setNewFD({ ...newFD, autoRenewal: e.target.checked })}
-                                />
-                                Enable Auto-Renewal at maturity
-                            </label>
-                        </div>
-                        <div className="fd-form-actions">
-                            <button type="submit" className="action-btn primary" disabled={submitting}>
+                        <label className="fin-check">
+                            <input
+                                type="checkbox"
+                                checked={newFD.autoRenewal}
+                                onChange={e => setNewFD({ ...newFD, autoRenewal: e.target.checked })}
+                            />
+                            Enable Auto-Renewal at maturity
+                        </label>
+                        <div className="form-actions">
+                            <button type="button" className="btn-secondary" onClick={() => setShowNewFDForm(false)}>Cancel</button>
+                            <button type="submit" className="btn-primary" disabled={submitting}>
                                 {submitting ? 'Opening...' : 'Open FD'}
                             </button>
-                            <button type="button" className="action-btn secondary" onClick={() => setShowNewFDForm(false)}>Cancel</button>
                         </div>
                     </form>
                 </div>
@@ -314,110 +300,92 @@ export const FixedDepositsPage = () => {
 
             {/* Empty State */}
             {fds.length === 0 && !showNewFDForm && (
-                <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
-                    <h3 style={{ marginBottom: '0.5rem' }}>No Fixed Deposits Yet</h3>
-                    <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
-                        Open your first fixed deposit to start earning guaranteed returns.
-                    </p>
-                    <button className="action-btn primary" onClick={() => setShowNewFDForm(true)}>+ Open New FD</button>
+                <div className="empty-state">
+                    <h3>No Fixed Deposits Yet</h3>
+                    <p>Open your first fixed deposit to start earning guaranteed returns.</p>
+                    <button className="btn-primary" onClick={() => setShowNewFDForm(true)}>+ Open New FD</button>
                 </div>
             )}
 
             {/* FD Cards */}
-            <div className="fd-list">
+            <div className="fin-grid">
                 {fds.map(fd => {
                     const matStatus = fd.status === 'active'
                         ? getMaturityStatus(fd.maturityDate)
                         : fd.status === 'matured'
-                            ? { label: `Matured on ${formatDate(fd.maturityDate)}`, color: '#6366f1' }
-                            : { label: 'Withdrawn early', color: '#ef4444' };
+                            ? { label: `Matured on ${formatDate(fd.maturityDate)}`, tone: '' }
+                            : { label: 'Withdrawn early', tone: 'fin-bad' };
                     const progress = fd.status === 'active'
                         ? Math.min(100, Math.max(0, ((new Date().getTime() - new Date(fd.startDate).getTime()) /
                             (new Date(fd.maturityDate).getTime() - new Date(fd.startDate).getTime())) * 100))
                         : 100;
+                    const statusPill = fd.status === 'active' ? 'in-progress' : fd.status === 'matured' ? 'completed' : 'paused';
 
                     return (
-                        <div key={fd._id} className={`fd-card ${fd.status}`}>
-                            <div className="fd-card-header">
-                                <div className="fd-card-title-row">
-                                    <div>
-                                        <div className="fd-account">{fd.accountNumber}</div>
-                                        <div className="fd-bank">{fd.bank}</div>
-                                    </div>
-                                    <div className="fd-badges">
-                                        <span className="fd-type-badge">{fd.type}</span>
-                                        <span className="fd-status-badge" style={{ color: fd.status === 'active' ? '#10b981' : fd.status === 'matured' ? '#6366f1' : '#ef4444' }}>
-                                            {fd.status === 'active' ? 'Active' : fd.status === 'matured' ? 'Matured' : 'Closed'}
-                                        </span>
+                        <article key={fd._id} className="gl-card">
+                            <div className="gl-head">
+                                <div className="gl-head-main">
+                                    <div className="gl-head-text">
+                                        <h3>{fd.accountNumber}</h3>
+                                        <span className="gl-sub">{fd.bank} · {fd.type}</span>
                                     </div>
                                 </div>
+                                <span className={`gl-pill ${statusPill}`}>
+                                    {fd.status === 'active' ? 'Active' : fd.status === 'matured' ? 'Matured' : 'Closed'}
+                                </span>
                             </div>
 
-                            <div className="fd-card-body">
-                                <div className="fd-amounts-row">
-                                    <div className="fd-amount-item">
-                                        <div className="fd-amount-label">Principal</div>
-                                        <div className="fd-amount-value">{formatMoney(fd.principalAmount)}</div>
-                                    </div>
-                                    <div className="fd-amount-item highlight">
-                                        <div className="fd-amount-label">At Maturity</div>
-                                        <div className="fd-amount-value">{formatMoney(fd.maturityAmount)}</div>
-                                    </div>
-                                    <div className="fd-amount-item green">
-                                        <div className="fd-amount-label">Interest</div>
-                                        <div className="fd-amount-value">{formatMoney(fd.interestEarned)}</div>
-                                    </div>
-                                </div>
-
-                                <div className="fd-details-row">
-                                    <span>{fd.interestRate}% p.a.</span>
-                                    <span>{fd.tenure} {fd.tenureUnit}</span>
-                                    <span>{fd.autoRenewal ? 'Auto-Renew On' : 'No Auto-Renew'}</span>
-                                    <span style={{ color: matStatus.color }}>{matStatus.label}</span>
-                                </div>
-
-                                {fd.status === 'active' && (
-                                    <div className="fd-progress-wrap">
-                                        <div className="fd-progress-labels">
-                                            <span>{formatDate(fd.startDate)}</span>
-                                            <span>{Math.round(progress)}% elapsed</span>
-                                            <span>{formatDate(fd.maturityDate)}</span>
-                                        </div>
-                                        <div className="fd-progress-bar">
-                                            <div className="fd-progress-fill" style={{ width: `${progress}%` }} />
-                                        </div>
-                                    </div>
-                                )}
+                            <div className="gl-kv">
+                                <div><span>Principal</span><span>{formatMoney(fd.principalAmount)}</span></div>
+                                <div><span>At Maturity</span><span>{formatMoney(fd.maturityAmount)}</span></div>
+                                <div><span>Interest</span><span>{formatMoney(fd.interestEarned)}</span></div>
+                                <div><span>Rate</span><span>{fd.interestRate}% p.a.</span></div>
+                                <div><span>Tenure</span><span>{fd.tenure} {fd.tenureUnit}</span></div>
+                                <div><span>Auto-Renewal</span><span>{fd.autoRenewal ? 'On' : 'Off'}</span></div>
+                                <div><span>Maturity</span><span className={matStatus.tone}>{matStatus.label}</span></div>
                             </div>
 
-                            <div className="fd-card-actions">
+                            {fd.status === 'active' && (
+                                <div className="gl-progress">
+                                    <div className="gl-bar">
+                                        <span style={{ width: `${progress}%` }} />
+                                    </div>
+                                    <div className="gl-row">
+                                        <span>{formatDate(fd.startDate)}</span>
+                                        <span>{Math.round(progress)}% elapsed</span>
+                                        <span>{formatDate(fd.maturityDate)}</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="gl-actions">
                                 {fd.status === 'active' && (
                                     <>
-                                        <button className="action-btn danger small" onClick={() => handleWithdrawEarly(fd)}>
+                                        <button className="btn-secondary btn-sm" onClick={() => handleWithdrawEarly(fd)}>
                                             Withdraw Early
                                         </button>
-                                        <button className="action-btn secondary small" onClick={() => handleDelete(fd._id)}>
+                                        <button className="btn-secondary btn-sm" onClick={() => handleDelete(fd._id)}>
                                             Delete
                                         </button>
                                     </>
                                 )}
                                 {fd.status === 'matured' && (
                                     <>
-                                        <button className="action-btn primary small" onClick={() => handleRenew(fd)}>
+                                        <button className="btn-primary btn-sm" onClick={() => handleRenew(fd)}>
                                             Renew FD
                                         </button>
-                                        <button className="action-btn secondary small" onClick={() => handleDelete(fd._id)}>
+                                        <button className="btn-secondary btn-sm" onClick={() => handleDelete(fd._id)}>
                                             Delete
                                         </button>
                                     </>
                                 )}
                                 {fd.status === 'prematurely-closed' && (
-                                    <button className="action-btn secondary small" onClick={() => handleDelete(fd._id)}>
+                                    <button className="btn-secondary btn-sm" onClick={() => handleDelete(fd._id)}>
                                         Remove
                                     </button>
                                 )}
                             </div>
-                        </div>
+                        </article>
                     );
                 })}
             </div>

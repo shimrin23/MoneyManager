@@ -29,43 +29,40 @@ const AiLoanInsights: FC<AiLoanInsightsProps> = ({ onRefresh }) => {
     };
 
     if (loading) {
-        return <div className="ai-insights loading">Loading insights...</div>;
+        return <div className="su-muted">Loading insights...</div>;
     }
 
     if (error) {
-        return <div className="ai-insights error">{error}</div>;
-    }
-
-    if (insights.length === 0) {
-        return (
-            <div className="ai-insights card">
-                <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem', color: 'var(--color-text)' }}>AI Loan Insights</h2>
-                <p className="empty-state" style={{ color: 'var(--color-text-muted)' }}>No insights available yet</p>
-            </div>
-        );
+        return <div className="rc-banner error">{error}</div>;
     }
 
     return (
-        <div className="ai-insights card">
-            <div className="insights-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                <h2 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--color-text)' }}>AI Loan Insights</h2>
-                <button onClick={() => { loadInsights(); onRefresh?.(); }} className="action-btn secondary small">
-                    Refresh
-                </button>
+        <div className="su-panel">
+            <div className="rc-panel-head">
+                <h3 className="rc-panel-title">AI Loan Insights</h3>
+                {insights.length > 0 && (
+                    <button onClick={() => { loadInsights(); onRefresh?.(); }} className="btn-secondary btn-sm">
+                        Refresh
+                    </button>
+                )}
             </div>
 
-            <div className="insights-list">
-                {insights.map((insight, idx) => (
-                    <div key={idx} className="insight-card" style={{ padding: '1rem', background: 'var(--color-surface-2)', border: '1px solid var(--color-border)', borderRadius: '8px', marginBottom: '0.75rem', display: 'flex', gap: '0.75rem' }}>
-                        <div style={{ color: 'var(--primary-color, #60a5fa)', marginTop: '2px' }}>✦</div>
-                        <p className="insight-text" style={{ margin: 0, color: 'var(--color-text-2)', fontSize: '0.9rem', lineHeight: '1.5' }}>{insight}</p>
+            {insights.length === 0 ? (
+                <p className="su-muted">No insights available yet</p>
+            ) : (
+                <>
+                    <div className="fin-stack">
+                        {insights.map((insight, idx) => (
+                            <div key={idx} className="gl-ai">
+                                <p>{insight}</p>
+                            </div>
+                        ))}
                     </div>
-                ))}
-            </div>
-
-            <div className="insights-footer" style={{ marginTop: '1.5rem' }}>
-                <p className="tip" style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', textAlign: 'center' }}>These insights are powered by AI and based on your loan data. Check back regularly for updated recommendations.</p>
-            </div>
+                    <p className="fin-note fin-center" style={{ marginTop: '16px' }}>
+                        These insights are powered by AI and based on your loan data. Check back regularly for updated recommendations.
+                    </p>
+                </>
+            )}
         </div>
     );
 };

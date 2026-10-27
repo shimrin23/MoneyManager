@@ -10,7 +10,6 @@ import LoanAlerts from './LoanAlerts';
 import AiLoanInsights from './AiLoanInsights';
 import LoanToIncomeRatio from './LoanToIncomeRatio';
 import WhatIfSimulation from './WhatIfSimulation';
-import './LoansPage.css';
 
 type TabType = 'overview' | 'calculator' | 'schedule' | 'strategies' | 'simulation' | 'insights' | 'ratio';
 
@@ -166,42 +165,44 @@ const LoansPage: FC = () => {
 
     // Lets the Schedule and Simulation tabs pick a loan directly
     const loanSelector = (
-        <div className="form-group loan-selector" style={{ maxWidth: '420px', marginBottom: '1.25rem' }}>
-            <label htmlFor="loan-selector">Loan</label>
-            <select
-                id="loan-selector"
-                value={selectedLoan || ''}
-                onChange={(e) => setSelectedLoan(e.target.value || null)}
-            >
-                <option value="">Select a loan…</option>
-                {loans.map(l => (
-                    <option key={l._id} value={l._id}>
-                        {l.type} – {l.provider} ({formatMoney(Number(l.principal))}){l.status !== 'Active' ? ` · ${l.status}` : ''}
-                    </option>
-                ))}
-            </select>
+        <div className="gl-form fin-selector">
+            <div className="form-group">
+                <label htmlFor="loan-selector">Loan</label>
+                <select
+                    id="loan-selector"
+                    value={selectedLoan || ''}
+                    onChange={(e) => setSelectedLoan(e.target.value || null)}
+                >
+                    <option value="">Select a loan…</option>
+                    {loans.map(l => (
+                        <option key={l._id} value={l._id}>
+                            {l.type} – {l.provider} ({formatMoney(Number(l.principal))}){l.status !== 'Active' ? ` · ${l.status}` : ''}
+                        </option>
+                    ))}
+                </select>
+            </div>
         </div>
     );
 
     if (loading) {
-        return <div className="loans-page loading">Loading loans...</div>;
+        return <div className="loading">Loading loans...</div>;
     }
 
     return (
-        <div className="loans-page">
+        <div className="page-container loans-page">
             <div className="page-header">
-                <h1>Loan Management</h1>
-                <div className="header-actions">
-                    <button onClick={handleAddLoan} className="btn-small btn-primary">
-                        Add Loan
-                    </button>
-                    <button onClick={fetchLoans} className="btn-small btn-secondary">
+                <div style={{ flex: 1 }}></div>
+                <div className="fin-header-actions">
+                    <button onClick={fetchLoans} className="btn-secondary">
                         Refresh
+                    </button>
+                    <button onClick={handleAddLoan} className="btn-primary">
+                        Add Loan
                     </button>
                 </div>
             </div>
 
-            {error && <div className="error-box">{error}</div>}
+            {error && <div className="rc-banner error">{error}</div>}
 
             <div className="rec-filter-row">
                 <button
@@ -255,21 +256,15 @@ const LoansPage: FC = () => {
             <div className="tab-content">
                 {activeTab === 'overview' && (
                     <div className="tab-pane">
-                        <div className="overview-grid">
-                            <div className="overview-section">
-                                <LoanAlerts loanIds={activeLoanIds} />
-                            </div>
-                            <div className="overview-section">
-                                <ActiveLoanCards
-                                    loans={loans}
-                                    onViewSchedule={handleViewSchedule}
-                                    onRecalculate={handleRecalculate}
-                                    onMakePayment={handleMakePayment}
-                                    onEdit={handleEditLoan}
-                                    onDelete={handleDeleteLoan}
-                                />
-                            </div>
-                        </div>
+                        <LoanAlerts loanIds={activeLoanIds} />
+                        <ActiveLoanCards
+                            loans={loans}
+                            onViewSchedule={handleViewSchedule}
+                            onRecalculate={handleRecalculate}
+                            onMakePayment={handleMakePayment}
+                            onEdit={handleEditLoan}
+                            onDelete={handleDeleteLoan}
+                        />
                     </div>
                 )}
 
@@ -302,7 +297,7 @@ const LoansPage: FC = () => {
                                 monthlyEMI={activeLoan.monthlyInstallment}
                             />
                         ) : (
-                            <p className="empty-state">Select a loan to view its schedule</p>
+                            <div className="empty-state"><p>Select a loan to view its schedule</p></div>
                         )}
                     </div>
                 )}
@@ -310,7 +305,7 @@ const LoansPage: FC = () => {
                 {activeTab === 'strategies' && (
                     <div className="tab-pane">
                         {strategiesLoading
-                            ? <p className="empty-state">Comparing payoff strategies…</p>
+                            ? <div className="empty-state"><p>Comparing payoff strategies…</p></div>
                             : <DebtPayoffStrategies strategies={strategies} />}
                     </div>
                 )}
@@ -328,7 +323,7 @@ const LoansPage: FC = () => {
                                 interestRate={activeLoan.interestRate}
                             />
                         ) : (
-                            <p className="empty-state">Select a loan to run simulations</p>
+                            <div className="empty-state"><p>Select a loan to run simulations</p></div>
                         )}
                     </div>
                 )}
@@ -347,16 +342,27 @@ const LoansPage: FC = () => {
             </div>
 
             {showEditModal && (
-                <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
-                    <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2 className="modal-title">Edit Loan</h2>
-                            <button className="modal-close" onClick={() => setShowEditModal(false)}>
-                                ×
+                <div className="su-overlay" onClick={() => setShowEditModal(false)}>
+                    <div
+                        className="gl-form gl-modal"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="loan-edit-title"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="gl-modal-head">
+                            <h2 id="loan-edit-title">Edit Loan</h2>
+                            <button
+                                type="button"
+                                className="gl-modal-close"
+                                onClick={() => setShowEditModal(false)}
+                                aria-label="Close"
+                            >
+                                ✕
                             </button>
                         </div>
-                        {editError && <div className="error-box">{editError}</div>}
-                        <form className="calculator-form" onSubmit={handleEditSubmit}>
+                        {editError && <div className="rc-banner error">{editError}</div>}
+                        <form onSubmit={handleEditSubmit}>
                             <div className="form-row">
                                 <div className="form-group">
                                     <label>Provider</label>
@@ -390,9 +396,9 @@ const LoansPage: FC = () => {
                                 <div className="form-group">
                                     <label>Monthly EMI ({currencyCode()})</label>
                                     <input type="text" value={formatMoney(Number(editForm.monthlyInstallment), 2)} readOnly disabled />
-                                    <small style={{ color: 'var(--color-text-muted)' }}>
+                                    <span className="fin-note">
                                         Recalculated automatically when you change the rate or tenure.
-                                    </small>
+                                    </span>
                                 </div>
                             </div>
                             <div className="form-row">
@@ -416,7 +422,7 @@ const LoansPage: FC = () => {
                                     />
                                 </div>
                             </div>
-                            <div className="action-buttons">
+                            <div className="form-actions">
                                 <button type="button" className="btn-secondary" onClick={() => setShowEditModal(false)}>
                                     Cancel
                                 </button>

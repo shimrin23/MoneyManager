@@ -1,4 +1,4 @@
-import { formatDate, formatDateTime, formatMoney } from '../utils/appFormat';
+import { formatDate, formatMoney } from '../utils/appFormat';
 import { type FC, useState } from 'react';
 
 interface ScheduleItem {
@@ -29,77 +29,70 @@ const RepaymentSchedule: FC<RepaymentScheduleProps> = ({ schedule, loanType, mon
     const totalRemaining = filteredSchedule.reduce((sum, s) => sum + (s.principalPayment + s.interestPayment), 0);
 
     return (
-        <div className="repayment-schedule">
-            <div className="schedule-header">
-                <h2>Repayment Schedule - {loanType} Loan</h2>
-                <div className="filter-buttons">
-                    <button
-                        className={`btn-small ${filter === 'all' ? 'active' : ''}`}
-                        onClick={() => setFilter('all')}
-                    >
-                        All
-                    </button>
-                    <button
-                        className={`btn-small ${filter === 'paid' ? 'active' : ''}`}
-                        onClick={() => setFilter('paid')}
-                    >
-                        Paid
-                    </button>
-                    <button
-                        className={`btn-small ${filter === 'pending' ? 'active' : ''}`}
-                        onClick={() => setFilter('pending')}
-                    >
-                        Pending
-                    </button>
+        <div>
+            <div className="rc-stats rc-stats-3">
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Monthly EMI</span>
+                    <span className="rc-stat-value">{formatMoney(monthlyEMI, 2)}</span>
+                </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Total Paid</span>
+                    <span className="rc-stat-value">{formatMoney(totalPaid, 2)}</span>
+                </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">Remaining</span>
+                    <span className="rc-stat-value">{formatMoney(totalRemaining, 2)}</span>
                 </div>
             </div>
 
-            <div className="schedule-summary">
-                <div className="summary-card">
-                    <p className="label">Monthly EMI</p>
-                    <p className="value">{formatMoney(monthlyEMI, 2)}</p>
-                </div>
-                <div className="summary-card">
-                    <p className="label">Total Paid</p>
-                    <p className="value">{formatMoney(totalPaid, 2)}</p>
-                </div>
-                <div className="summary-card">
-                    <p className="label">Remaining</p>
-                    <p className="value">{formatMoney(totalRemaining, 2)}</p>
-                </div>
-            </div>
-
-            <div className="table-container">
-                <table className="schedule-table">
-                    <thead>
-                        <tr>
-                            <th>Month</th>
-                            <th>Due Date</th>
-                            <th>Principal</th>
-                            <th>Interest</th>
-                            <th>EMI</th>
-                            <th>Balance</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredSchedule.map((item, idx) => (
-                            <tr key={idx} className={item.paid ? 'paid' : 'pending'}>
-                                <td className="month">{item.month}</td>
-                                <td>{formatDate(item.dueDate)}</td>
-                                <td>{formatMoney(item.principalPayment, 2)}</td>
-                                <td>{formatMoney(item.interestPayment, 2)}</td>
-                                <td className="emi">{formatMoney((item.principalPayment + item.interestPayment), 2)}</td>
-                                <td>{formatMoney(item.remainingBalance, 2)}</td>
-                                <td>
-                                    <span className={`status-badge ${item.paid ? 'paid' : 'pending'}`}>
-                                        {item.paid ? '✓ Paid' : '◯ Pending'}
-                                    </span>
-                                </td>
-                            </tr>
+            <div className="su-panel">
+                <div className="rc-panel-head">
+                    <h3 className="rc-panel-title">Repayment Schedule - {loanType} Loan</h3>
+                    <div className="rec-filter-row" style={{ marginBottom: 0 }}>
+                        {(['all', 'paid', 'pending'] as const).map(f => (
+                            <button
+                                key={f}
+                                className={`rec-filter-btn ${filter === f ? 'active' : ''}`}
+                                onClick={() => setFilter(f)}
+                            >
+                                {f.charAt(0).toUpperCase() + f.slice(1)}
+                            </button>
                         ))}
-                    </tbody>
-                </table>
+                    </div>
+                </div>
+
+                <div className="su-table-wrap">
+                    <table className="su-table">
+                        <thead>
+                            <tr>
+                                <th>Month</th>
+                                <th>Due Date</th>
+                                <th>Principal</th>
+                                <th>Interest</th>
+                                <th>EMI</th>
+                                <th>Balance</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredSchedule.map((item, idx) => (
+                                <tr key={idx}>
+                                    <td>{item.month}</td>
+                                    <td>{formatDate(item.dueDate)}</td>
+                                    <td>{formatMoney(item.principalPayment, 2)}</td>
+                                    <td>{formatMoney(item.interestPayment, 2)}</td>
+                                    <td className="strong">{formatMoney((item.principalPayment + item.interestPayment), 2)}</td>
+                                    <td>{formatMoney(item.remainingBalance, 2)}</td>
+                                    <td>
+                                        <span className={`su-pill ${item.paid ? 'good' : 'warn'}`}>
+                                            {item.paid ? 'Paid' : 'Pending'}
+                                        </span>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );
