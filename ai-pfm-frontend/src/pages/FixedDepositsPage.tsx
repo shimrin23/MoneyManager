@@ -167,7 +167,7 @@ export const FixedDepositsPage = () => {
     if (loading) return <div className="loading-spinner">Loading fixed deposits...</div>;
 
     return (
-        <div className="page-container">
+        <div className="page-container fin-page">
             <div className="page-header">
                 <div style={{ flex: 1 }}></div>
                 <button className="btn-primary" onClick={() => setShowNewFDForm(!showNewFDForm)}>

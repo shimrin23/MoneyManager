@@ -189,7 +189,7 @@ const LoansPage: FC = () => {
     }
 
     return (
-        <div className="page-container loans-page">
+        <div className="page-container fin-page loans-page">
             <div className="page-header">
                 <div style={{ flex: 1 }}></div>
                 <div className="fin-header-actions">

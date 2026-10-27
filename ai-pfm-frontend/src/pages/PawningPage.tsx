@@ -142,7 +142,7 @@ export const PawningPage = () => {
     if (loading) return <div className="loading-spinner">Loading pawning items...</div>;
 
     return (
-        <div className="page-container">
+        <div className="page-container fin-page">
             <div className="page-header">
                 <div style={{ flex: 1 }}></div>
                 <button className="btn-primary" onClick={() => setShowNewForm(!showNewForm)}>
