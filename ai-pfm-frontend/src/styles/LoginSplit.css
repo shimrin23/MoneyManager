@@ -1040,3 +1040,10 @@ body:has(.login-split) {
   min-width: 300px;
   max-width: none !important;
 }
+
+/* Google button centred in the form (auto side margins work whatever the wrapper's display) */
+.login-split .auth-google-btn {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  display: flex !important;
+}
