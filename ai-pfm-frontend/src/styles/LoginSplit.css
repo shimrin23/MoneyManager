@@ -572,7 +572,7 @@
 /* Whole form moved up about 1 cm */
 .auth-center-page.login-split .auth-center-card {
   position: relative;
-  top: -23px;
+  top: -8px;
 }
 
 /* Sign-up page: the taller form fits the window (less padding and smaller gaps; login is unchanged) */
@@ -820,4 +820,187 @@ body:has(.login-split) {
 .login-split .forgot-cancel-btn:hover {
   background: transparent;
   color: #667eea;
+}
+
+/* Sign In button keeps the purple gradient when focused, hovered or pressed (the global focus style turned it solid blue) */
+.login-split .auth-submit-btn:focus,
+.login-split .auth-submit-btn:focus-visible,
+.login-split .auth-submit-btn:hover:not(:disabled),
+.login-split .auth-submit-btn:active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  box-shadow: none;
+  outline: none;
+}
+
+
+/* Auth buttons glow with a soft purple light when hovered, focused or pressed (not the Google button) */
+.login-split .auth-submit-btn:hover:not(:disabled),
+.login-split .auth-submit-btn:focus,
+.login-split .auth-submit-btn:focus-visible,
+.login-split .auth-submit-btn:active,
+.login-split .forgot-cancel-btn:focus-visible {
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.25), 0 6px 18px rgba(102, 126, 234, 0.35);
+}
+
+/* Continue with Google: white button with dark text (restored) */
+.login-split .auth-google-btn,
+.login-split .auth-google-btn:hover,
+.login-split .auth-google-btn:focus,
+.login-split .auth-google-btn:active {
+  background: #ffffff !important;
+  color: #111827 !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: none !important;
+}
+
+/* Forgot password dialog: white card with dark text, to match the light sign-in form */
+.auth-forgot-card {
+  background: #ffffff;
+  color: #111827;
+}
+
+.auth-forgot-card h2,
+.auth-forgot-card h3,
+.auth-forgot-card .auth-label {
+  color: #111827;
+}
+
+.auth-forgot-card .forgot-sub {
+  color: #475569;
+}
+
+/* Choose New Password: the whole form moved down a little */
+.login-split.reset-compact .auth-center-card {
+  position: relative;
+  top: 26px;
+}
+
+/* Choose New Password: subtitle and everything below it moved down (the title stays) */
+.login-split.reset-compact .auth-card-sub {
+  position: relative;
+  top: 14px;
+}
+
+.login-split.reset-compact .auth-center-card form,
+.login-split.reset-compact .auth-center-card .forgot-cancel-btn {
+  position: relative;
+  top: 14px;
+}
+
+/* Choose New Password: more space between the title and the subtitle */
+.login-split.reset-compact .auth-card-title {
+  margin-bottom: 12px;
+}
+
+/* Choose New Password: subtitle pushed further from the title */
+.login-split.reset-compact .auth-card-sub {
+  margin-top: 14px !important;
+}
+
+/* Choose New Password: about 5 mm between the title and the subtitle */
+.login-split.reset-compact .auth-card-title {
+  margin-bottom: 26px !important;
+}
+
+.login-split.reset-compact .auth-card-sub {
+  margin-top: 0 !important;
+}
+
+/* Brand panel: feature list and health score box removed from view */
+.login-brand-points,
+.login-brand-score {
+  display: none !important;
+}
+
+/* Brand text centred within the left half */
+.login-split .login-brand {
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.login-split .login-brand-logo {
+  justify-content: center;
+}
+
+.login-split .login-brand-title,
+.login-split .login-brand-lead {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Logo moved to the top-left of the brand panel and made larger */
+.login-split .login-brand {
+  justify-content: flex-start;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.login-split .login-brand-logo {
+  font-size: 26px;
+  gap: 14px;
+  justify-content: flex-start;
+}
+
+.login-split .login-brand-mark {
+  width: 56px;
+  height: 56px;
+  font-size: 28px;
+  border-radius: 14px;
+}
+
+/* Only the logo is at the top-left; the headline and lead text keep their left-aligned place */
+.login-split .login-brand {
+  justify-content: space-between;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.login-split .login-brand-title,
+.login-split .login-brand-lead {
+  margin-left: 0;
+  margin-right: 0;
+  text-align: left;
+}
+
+/* Headline and lead text centred in the middle of the brand panel */
+.login-split .login-brand > div:nth-child(2) {
+  margin-top: auto;
+  margin-bottom: auto;
+  text-align: center;
+}
+
+.login-split .login-brand-title,
+.login-split .login-brand-lead {
+  margin-left: auto;
+  margin-right: auto;
+  text-align: center;
+}
+
+/* Logo moved down about 1 cm (a relative offset, so the other text does not move) */
+.login-split .login-brand-logo {
+  position: relative;
+  top: 110px;
+}
+
+/* Lead text wraps onto three lines */
+.login-split .login-brand-lead {
+  max-width: 36ch;
+}
+
+/* Headline and lead text centred within the left half */
+.login-split .login-brand > div:nth-child(2) {
+  align-self: stretch;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+/* Headline and lead text moved up a little (the logo moves up with it) */
+.login-split .login-brand > div:nth-child(2) {
+  position: relative;
+  top: -26px;
 }
