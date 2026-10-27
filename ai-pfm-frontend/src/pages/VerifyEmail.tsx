@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import '../styles/AuthPages.css';
+import '../styles/LoginSplit.css';
 
 export const VerifyEmail = () => {
     const [searchParams] = useSearchParams();
@@ -99,11 +100,34 @@ export const VerifyEmail = () => {
     };
 
     return (
-        <div className="auth-center-page">
+        <div className="auth-center-page login-split">
             {/* Background orbs */}
             <div className="auth-orb auth-orb-1" />
             <div className="auth-orb auth-orb-2" />
             <div className="auth-orb auth-orb-3" />
+
+            <aside className="login-brand">
+                <div className="login-brand-logo">
+                    <span className="login-brand-mark">💰</span>
+                    <span>MoneyManager</span>
+                </div>
+                <div>
+                    <h2 className="login-brand-title">Know where every rupee goes.</h2>
+                    <p className="login-brand-lead">Track spending, loans, leases, pawning and fixed deposits in one place, with an AI coach that tells you what to do next.</p>
+                </div>
+                <ul className="login-brand-points">
+                    <li>A financial health score from 0 to 100, updated with every transaction</li>
+                    <li>Alerts for unusual charges, duplicate bills and forgotten subscriptions</li>
+                    <li>Made for Sri Lanka: LKR, local banks, and English, සිංහල, தமிழ்</li>
+                </ul>
+                <div className="login-brand-score">
+                    <b>64</b>
+                    <div>
+                        <b>Health score</b>
+                        <small>Savings rate 27% · Risk Medium</small>
+                    </div>
+                </div>
+            </aside>
 
             <div className="auth-center-card">
                 {/* Logo */}
