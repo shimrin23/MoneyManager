@@ -3486,6 +3486,13 @@
     .su-facts { grid-template-columns: 1fr 1fr; }
 }
 
+/* Connect Bank: statement upload buttons use the shared button colours */
+.cb-btn { display: inline-flex; align-items: center; justify-content: center; height: 40px; min-height: 40px; padding: 0 18px; font-size: 14px; font-weight: 600; border-radius: 10px; box-sizing: border-box; margin: 0; }
+.cb-btn:disabled { cursor: not-allowed; }
+/* A global "loading" rule hides text on disabled buttons; here disabled just means no file yet, so keep the label */
+.btn-primary.cb-btn:disabled { color: #ffffff; }
+.btn-secondary.cb-btn:disabled { color: inherit; }
+.cb-btn:disabled::after { display: none; }
 /* ── Fixed Deposits / Loans / Leases / Pawning: reuse the Goals/Subscriptions look ── */
 .rc-banner.error { color: #b91c1c; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); }
 [data-theme='dark'] .rc-banner.error { color: #fca5a5; background: rgba(239, 68, 68, 0.16); border-color: rgba(239, 68, 68, 0.4); }

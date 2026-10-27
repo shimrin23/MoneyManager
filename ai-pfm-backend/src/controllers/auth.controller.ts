@@ -529,9 +529,39 @@ export default class AuthController {
                     address: user.address || '',
                     occupation: user.occupation || '',
                     monthlyIncome: user.monthlyIncome ?? 0,
+                    avatar: user.avatar || '',
                     role: user.role,
                 }
             });
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: 'Server Error' });
+        }
+    }
+
+    // PUT /api/auth/profile/avatar - saves or removes the profile photo (small data URL; empty string removes it)
+    async updateAvatar(req: AuthRequest, res: Response) {
+        try {
+            const userId = req.user?.id;
+            if (!userId) {
+                return res.status(401).json({ error: 'User not authenticated' });
+            }
+
+            const avatar = typeof req.body?.avatar === 'string' ? req.body.avatar : '';
+            const MAX_LENGTH = 90_000; // about 65 KB of image data
+            if (avatar && !/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(avatar)) {
+                return res.status(400).json({ error: 'Please choose a PNG, JPEG or WebP image.' });
+            }
+            if (avatar.length > MAX_LENGTH) {
+                return res.status(400).json({ error: 'The photo is too large. Please choose a smaller image.' });
+            }
+
+            const user = await User.findByIdAndUpdate(userId, { avatar }, { new: true }).select('avatar');
+            if (!user) {
+                return res.status(404).json({ error: 'User not found' });
+            }
+
+            res.json({ message: avatar ? 'Profile photo updated' : 'Profile photo removed', avatar: user.avatar || '' });
         } catch (err) {
             console.error(err);
             res.status(500).json({ error: 'Server Error' });
