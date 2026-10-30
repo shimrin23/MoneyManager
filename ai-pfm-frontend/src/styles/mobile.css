@@ -510,8 +510,8 @@ canvas {
   }
 }
 
-/* Smart Budgets card buttons (Optimize, Set Alert): stacked one above the other on phones */
-@media (max-width: 767px) {
+/* Smart Budgets card buttons (Optimize, Set Alert): two equal columns on phones and tablets */
+@media (max-width: 1439px) {
   .sb-actions {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -632,8 +632,8 @@ canvas {
   }
 }
 
-/* Subscription card actions (View Alternatives, Downgrade, Cancel): three equal columns on phones */
-@media (max-width: 767px) {
+/* Subscription card actions (View Alternatives, Downgrade, Cancel): three equal columns on phones and tablets */
+@media (max-width: 1439px) {
   .su-actions {
     display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
@@ -696,8 +696,15 @@ canvas {
   margin: 2px 0 0;
 }
 
-/* Goal card buttons (Edit, Add Contribution): side by side in two columns on phones */
-@media (max-width: 767px) {
+/* Fixed deposit and pawning buttons: the first action on the left (Withdraw Early, Redeem Item), Delete on the right */
+@media (max-width: 1439px) {
+  .gl-actions.fd-actions {
+    flex-direction: row !important;
+  }
+}
+
+/* Goal and fixed deposit card buttons: side by side in two equal columns on phones and tablets */
+@media (max-width: 1439px) {
   .gl-actions {
     display: flex !important;
     flex-direction: row-reverse !important;
@@ -957,5 +964,50 @@ canvas {
     overflow-wrap: normal;
     flex-shrink: 0;
     margin-right: 12px;
+  }
+}
+
+/* Tablets: the full sidebar with labels is always shown, and the page content sits beside it */
+@media (min-width: 768px) and (max-width: 1439px) {
+  .side-navigation {
+    width: 240px !important;
+  }
+
+  .top-header {
+    left: 240px !important;
+  }
+
+  .main-content.with-sidebar {
+    margin-left: 240px !important;
+    width: calc(100vw - 240px) !important;
+    max-width: calc(100vw - 240px) !important;
+  }
+
+  .logo-text {
+    display: block !important;
+  }
+
+  .nav-label {
+    display: block !important;
+  }
+
+  .nav-item {
+    justify-content: flex-start !important;
+    padding: 10px 14px !important;
+  }
+
+  .sidebar-footer-mobile {
+    display: flex !important;
+  }
+
+  .hamburger-toggle {
+    display: none !important;
+  }
+}
+
+/* Larger screens: only the full date shows on the dashboard */
+@media (min-width: 768px) {
+  .db-eyebrow-short {
+    display: none;
   }
 }
