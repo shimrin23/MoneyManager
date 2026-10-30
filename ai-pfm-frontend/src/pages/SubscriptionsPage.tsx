@@ -331,15 +331,6 @@ export const SubscriptionsPage = () => {
 
     return (
         <div className="page-container su-page">
-            <div className="su-top">
-                <button
-                    className="btn-primary su-add-btn"
-                    onClick={() => setShowAddForm(!showAddForm)}
-                >
-                    + Add Subscription
-                </button>
-            </div>
-
             {/* Feature 1: Subscription Health Score */}
             <section className="su-health">
                 {healthScore ? (
@@ -365,6 +356,15 @@ export const SubscriptionsPage = () => {
                     </div>
                 )}
             </section>
+
+            <div className="su-top">
+                <button
+                    className="btn-primary su-add-btn"
+                    onClick={() => setShowAddForm(!showAddForm)}
+                >
+                    + Add Subscription
+                </button>
+            </div>
 
             {/* Add Subscription Form */}
             {showAddForm && (

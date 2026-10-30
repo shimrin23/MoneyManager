@@ -215,8 +215,11 @@ export const GoalsPage = () => {
     return (
         <div className="page-container">
             <div className="page-header">
-                <div style={{ flex: 1 }}></div>
-                <button 
+                <div className="gl-page-title">
+                    <h2 className="gl-title">Your goals</h2>
+                    <p className="gl-subtitle">{goals.length} {goals.length === 1 ? 'goal' : 'goals'} tracked</p>
+                </div>
+                <button
                     className="btn-primary"
                     onClick={() => setShowForm(!showForm)}
                 >

@@ -1,0 +1,939 @@
+/* Mobile layer for every page. Loaded last in App.tsx so it overrides the page styles. */
+
+/* Nothing wider than the screen */
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+.main-content,
+.page-content {
+  min-width: 0;
+  max-width: 100vw;
+}
+
+/* Tables scroll sideways inside their own box instead of pushing the page */
+.table-wrapper,
+.transactions-table-container,
+.data-table-wrapper {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Tab bars wrap or scroll rather than running off the screen */
+.settings-navigation,
+.notifications-navigation,
+.help-navigation,
+.nav-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  max-width: 100%;
+}
+
+@media (max-width: 767px) {
+  /* 16px side gutter on phones */
+  .page-content,
+  .settings-page,
+  .notifications-page,
+  .help-page,
+  .settings-content,
+  .notifications-content,
+  .help-content {
+    padding-left: 16px;
+    padding-right: 16px;
+    box-sizing: border-box;
+  }
+
+  /* Grids and rows become one column */
+  .dashboard-grid,
+  .charts-grid,
+  .score-stats-grid,
+  .fd-amounts-row,
+  .analytics-grid,
+  .form-row,
+  .fd-form-grid,
+  .notifications-grid,
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+    display: grid;
+    gap: 12px;
+  }
+
+  .form-row,
+  .form-group,
+  .setting-group,
+  .setting-item,
+  .setting-toggle,
+  .action-item {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .setting-item,
+  .setting-toggle,
+  .action-item {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* Inputs and buttons are easy to tap */
+  input,
+  select,
+  textarea {
+    font-size: 16px; /* stops iOS zooming in on focus */
+    max-width: 100%;
+  }
+
+  button,
+  .btn-primary,
+  .btn-secondary,
+  .btn-warning,
+  .btn-danger,
+  .nav-btn,
+  .toggle-btn,
+  .rec-filter-btn {
+    min-height: 44px;
+  }
+
+  /* Less space between sections and cards on phones */
+  .settings-section {
+    margin-bottom: 12px !important;
+    padding-bottom: 0 !important;
+  }
+
+  .np-card {
+    margin-bottom: 12px !important;
+  }
+
+  .danger-zone {
+    margin-top: 0 !important;
+  }
+
+  /* Switch and action rows wrap: text takes the full width, the button drops below it */
+  .np-row {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .np-row-text {
+    flex: 1 1 200px;
+    min-width: 0;
+  }
+
+  .np-row .np-action {
+    flex: 1 1 100%;
+  }
+
+  /* Dropdowns a little smaller */
+  select {
+    font-size: 15px !important;
+    padding-top: 6px !important;
+    padding-bottom: 6px !important;
+    min-height: 36px;
+  }
+
+  /* Financial health stat boxes use the full width of the card */
+  .score-display,
+  .score-stats-grid,
+  .score-stat-item {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  /* Bottom bar tabs fit the 62px bar, so their labels show */
+  .mobile-tab,
+  .mobile-tab-add {
+    min-height: 0 !important;
+  }
+
+  /* Full labels: they wrap onto two lines instead of being cut off */
+  .mobile-tab-label {
+    font-size: 10px;
+    line-height: 1.15;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    text-align: center;
+    color: var(--color-text-muted);
+  }
+
+  /* On/off switches keep their small pill size */
+  .np-switch {
+    min-height: 0 !important;
+    width: 44px !important;
+    height: 24px !important;
+    flex-shrink: 0;
+  }
+
+  /* Scrolling content (score ring, cards) passes under the header, never over it */
+  .top-header {
+    z-index: 1000 !important;
+    background: var(--sidebar-bg) !important;
+  }
+
+  .health-score-card,
+  .score-ring-wrap {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header: menu button, logo and icon buttons sit on one centred row */
+  .top-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px;
+  }
+
+  .header-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px;
+    min-width: 0;
+  }
+
+  .header-action-btn {
+    min-height: 0 !important;
+    width: 40px !important;
+    height: 40px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0;
+  }
+
+  /* Menu button is smaller than the icon buttons beside it */
+  .hamburger-toggle {
+    min-height: 0 !important;
+    width: 34px !important;
+    height: 34px !important;
+    padding: 0 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0;
+  }
+
+  /* The wallet logo is hidden on phones; the menu button and icons stay */
+  .header-logo-mobile {
+    display: none !important;
+  }
+
+  /* Page title in the header shows in full: it uses the free space and wraps if needed */
+  .header-center {
+    flex: 1 1 auto !important;
+    min-width: 0;
+    padding: 0 6px;
+    text-align: center;
+  }
+
+  .header-title-box {
+    min-width: 0;
+  }
+
+  .header-page-heading {
+    font-size: 15px !important;
+    line-height: 1.15 !important;
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    overflow-wrap: anywhere;
+  }
+
+  .header-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .st-actions {
+    display: flex !important;
+    flex-direction: column-reverse !important;
+    gap: 6px;
+    margin-top: 16px;
+    padding-top: 16px;
+  }
+
+  .settings-actions button,
+  .action-item button,
+  .np-action {
+    width: 100%;
+  }
+
+  /* Dialogs fit the screen */
+  .modal,
+  .modal-content,
+  .confirm-dialog,
+  .system-dialog {
+    max-width: calc(100vw - 32px) !important;
+    box-sizing: border-box;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Text in cards and titles wraps on phones instead of showing "..." */
+  [class*='title'],
+  [class*='-name'],
+  [class*='status'],
+  [class*='label'],
+  [class*='desc'],
+  [class*='subtitle'],
+  [class*='message'],
+  [class*='text'] {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 767px) {
+  /* Key financial metrics: two columns on phones */
+  .metrics-card .score-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px;
+  }
+
+  /* Insight cards: the title gets the full width, the button moves to its own row */
+  .insight-item {
+    grid-template-columns: 2rem 1fr !important;
+    align-items: start;
+  }
+
+  .insight-item > button {
+    grid-column: 1 / -1;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .insight-content h4,
+  .insight-content p {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+}
+
+@media (max-width: 479px) {
+  /* Long words and numbers wrap instead of overflowing */
+  /* break-word wraps only long words; "anywhere" lets a heading shrink to one letter per line in a flex row */
+  h1,
+  h2,
+  h3,
+  p,
+  td,
+  th,
+  label {
+    overflow-wrap: break-word;
+  }
+
+  .score-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Expense / Income toggle in the transaction form: readable in light and dark mode */
+.type-toggle-group .type-toggle-btn {
+  color: var(--color-text);
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border-2);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.type-toggle-group .type-toggle-btn.active.expense {
+  color: #f87171;
+  border-color: #f87171;
+}
+
+.type-toggle-group .type-toggle-btn.active.income {
+  color: #34d399;
+  border-color: #34d399;
+}
+
+/* Dark mode: form labels and the date picker icon stay readable */
+[data-theme='dark'] .form-group label,
+[data-theme='dark'] .form-label {
+  color: #d4d4d8;
+}
+
+[data-theme='dark'] input[type='date'] {
+  color-scheme: dark;
+}
+
+[data-theme='dark'] input[type='date']::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  opacity: 0.8;
+  cursor: pointer;
+}
+
+/* Financial Health recommendations: tighter card and item padding on phones */
+@media (max-width: 767px) {
+  .recommendations-card {
+    padding: 1.1rem !important;
+  }
+
+  .recommendations-card .recommendation-item {
+    padding: 0.85rem !important;
+    gap: 0.7rem !important;
+  }
+
+  .recommendations-card .rec-icon {
+    width: 24px !important;
+    height: 24px !important;
+  }
+}
+
+/* Gap between the header and the page content on phones: Smart Budgets tighter, Transactions roomier */
+@media (max-width: 767px) {
+  .page-content:has(.sb-stats),
+  .page-content:has(.sb-panel) {
+    padding-top: 10px !important;
+  }
+
+  .page-content:has(.txn-select) {
+    padding-top: 20px !important;
+  }
+}
+
+/* Transactions: Add button on the left and refresh on the right on phones */
+@media (max-width: 767px) {
+  /* Phone transaction rows: the recurring badge wraps onto two lines */
+@media (max-width: 767px) {
+  .badge-recurring,
+  .txn-badges .badge-recurring {
+    display: inline-block;
+    max-width: 110px;
+    white-space: normal !important;
+    overflow: visible;
+    text-align: center;
+    line-height: 1.25;
+    padding: 4px 10px;
+  }
+}
+
+/* Transaction description: left-aligned in three short lines on phones */
+@media (max-width: 767px) {
+  .description-cell .description-text {
+    display: block;
+    width: 96px;
+    text-align: left;
+    overflow-wrap: break-word;
+  }
+}
+
+/* Transaction cards: thin purple-blue outline on phones, like the peer cards' green outline */
+@media (max-width: 767px) {
+  .responsive-table tbody tr {
+    border: 1px solid rgba(102, 126, 234, 0.35) !important;
+    display: block;
+    margin: 0 6px;
+  }
+}
+
+/* Transaction rows: Edit and Delete as small boxes on phones */
+@media (max-width: 767px) {
+  .table-action-btn {
+    min-height: 28px !important;
+    padding: 4px 12px !important;
+    font-size: 12px;
+    border: 1px solid var(--color-border-2);
+    border-radius: 8px;
+    background: var(--color-surface);
+  }
+}
+
+/* Transaction filters: the two selects share the row evenly and their text is not cut off */
+  .txn-select {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: 34px !important;
+    min-height: 34px !important;
+    padding: 0 28px 0 10px !important;
+    font-size: 13px !important;
+    text-overflow: ellipsis;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Dropdown options use the app's colours */
+  .txn-select option {
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-size: 13px;
+  }
+
+  /* Title on the left, Add and refresh on the right, all on one line */
+  .txn-header {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .txn-header > div:first-child {
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .txn-header-actions {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+    width: auto;
+  }
+
+  /* Add button keeps its own size and sits in the corner, not stretched across the row */
+  .txn-header-actions .txn-btn:not(.txn-btn-icon) {
+    flex: 0 0 auto;
+    width: auto;
+    padding: 0 18px;
+  }
+}
+
+/* Smart Budgets summary boxes, including "The Big Picture": two per row on phones */
+@media (max-width: 767px) {
+  .sb-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+/* Smart Budgets card buttons (Optimize, Set Alert): stacked one above the other on phones */
+@media (max-width: 767px) {
+  .sb-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    margin-top: 16px !important;
+  }
+
+  .sb-actions .action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Profile header: avatar, name and email centred in the card on phones */
+@media (max-width: 767px) {
+  .pf-head-card {
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center;
+  }
+
+  .pf-head-card .profile-avatar-stack {
+    margin: 0 auto;
+  }
+
+  /* Name, email and role badge under the avatar, each centred */
+  .pf-head-card > *:not(.profile-avatar-stack) {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}
+
+/* User menu email: shown in full on phones, wrapping onto more lines instead of "..." */
+@media (max-width: 767px) {
+  .sidebar-user-email {
+    white-space: normal !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    overflow-wrap: anywhere;
+    word-break: break-all;
+  }
+}
+
+/* Refresh buttons: icon only on phones, text hidden; Add Loan on the left, refresh on the right */
+@media (max-width: 767px) {
+  .fin-header-actions {
+    flex-direction: row-reverse;
+  }
+
+  .fin-header-actions .btn-secondary .btn-label {
+    display: none;
+  }
+
+  .fin-header-actions .btn-secondary {
+    width: 40px !important;
+    height: 40px !important;
+    min-height: 40px !important;
+    padding: 0 !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+/* Change password: the Current Password box matches the width of the other two on phones */
+@media (max-width: 767px) {
+  .st-form > .st-field:first-child {
+    width: 100% !important;
+    justify-self: stretch !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .st-form > .st-field:first-child > div {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  .st-form > .st-field:first-child .st-input {
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+}
+
+/* Settings "Reset All Settings": only the button moves down on phones, the text above stays put */
+@media (max-width: 767px) {
+  .st-row > .btn-warning {
+    margin-top: 10px;
+  }
+}
+
+/* Settings data actions (Export All Data, Account & Security): two equal columns on phones */
+@media (max-width: 767px) {
+  .st-row:has(.st-btn-icon) {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+    padding-top: 10px !important;
+  }
+
+  .st-row .st-btn-icon {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Subscription card actions (View Alternatives, Downgrade, Cancel): three equal columns on phones */
+@media (max-width: 767px) {
+  .su-actions {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .su-actions > button {
+    width: 100%;
+    padding-left: 6px !important;
+    padding-right: 6px !important;
+    font-size: 12px;
+    line-height: 1.25;
+    white-space: normal !important;
+  }
+}
+
+/* Subscriptions "+ Add Subscription": sized to its text and placed in the top-right corner on phones */
+@media (max-width: 767px) {
+  .su-top {
+    display: flex !important;
+    justify-content: flex-end;
+  }
+
+  .su-add-btn {
+    width: auto !important;
+    flex: 0 0 auto;
+  }
+}
+
+/* Goals: title and "+ Add New Goal" side by side in one row on phones, button at the right */
+@media (max-width: 767px) {
+  .page-header {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px;
+  }
+
+  .page-header > button {
+    order: 0;
+    width: auto !important;
+    flex: 0 0 auto;
+    margin-left: 0;
+  }
+}
+
+/* Goals page title block: matches the "Your cards" heading on Credit Cards */
+.gl-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.gl-subtitle {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin: 2px 0 0;
+}
+
+/* Goal card buttons (Edit, Add Contribution): side by side in two columns on phones */
+@media (max-width: 767px) {
+  .gl-actions {
+    display: flex !important;
+    flex-direction: row-reverse !important;
+    gap: 10px !important;
+  }
+
+  .gl-actions > button {
+    flex: 1 1 0;
+    width: 100%;
+  }
+}
+
+/* Empty states ("No Credit Cards" and similar): less space above and below on phones */
+@media (max-width: 767px) {
+  .empty-state {
+    padding: 24px 16px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .empty-state .empty-icon {
+    margin-bottom: 8px;
+  }
+}
+
+/* Credit cards "+ Add Card": sized to its text and placed in the top-right corner on phones */
+@media (max-width: 767px) {
+  .cc-add-btn {
+    width: auto !important;
+    align-self: flex-end;
+    margin-left: auto;
+    flex: 0 0 auto;
+  }
+}
+
+/* Recurring card actions (status and Dismiss): two equal columns on phones */
+@media (max-width: 767px) {
+  .rc-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    width: 100%;
+    box-sizing: border-box;
+    justify-self: stretch;
+    align-self: stretch;
+  }
+
+  .rc-actions > .rc-paid,
+  .rc-actions > button {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+}
+
+/* Recurring summary boxes: two per row on phones */
+@media (max-width: 767px) {
+  .rc-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+}
+
+/* Credit cards overview boxes: two per row on phones */
+@media (max-width: 767px) {
+  .cc-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+}
+
+/* Smart Budgets category cards: smaller on phones */
+@media (max-width: 767px) {
+  .sb-grid {
+    gap: 10px !important;
+  }
+
+  .sb-card {
+    padding: 12px !important;
+    gap: 8px !important;
+  }
+}
+
+/* Smart Budgets "The Big Picture" panel: smaller panel and stat boxes on phones */
+@media (max-width: 767px) {
+  .sb-panel {
+    padding: 14px !important;
+  }
+
+  .sb-stats {
+    gap: 8px !important;
+  }
+
+  .sb-stat {
+    padding: 10px 12px !important;
+  }
+
+  .sb-stat-value {
+    font-size: 18px !important;
+  }
+}
+
+/* Peer comparison: the metric cards get a tinted background so they stand out from the white card */
+@media (max-width: 767px) {
+  .peer-benchmarks-card .gl-card {
+    background: var(--color-surface-2);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    box-shadow: none;
+  }
+}
+
+/* Recommendation actions: Accept, Snooze and Decline side by side on phones */
+@media (max-width: 767px) {
+  .rec-card-actions {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.03);
+  }
+
+  .rec-card-actions button {
+    width: 100%;
+    min-height: 40px !important;
+    padding: 8px 6px !important;
+    font-size: 12.5px;
+    line-height: 1.25;
+    white-space: normal;
+  }
+
+  /* Snooze and Decline read as buttons: white, grey border, dark text */
+  .rec-card-actions .btn-secondary {
+    background: var(--color-surface);
+    color: var(--color-text-2);
+    border: 1px solid var(--color-border-2);
+    font-weight: 600;
+  }
+
+  /* Decline is the destructive choice, so it gets red text */
+  .rec-card-actions .btn-secondary:last-child {
+    color: #dc2626;
+  }
+}
+
+/* Dashboard card header buttons (Sync): compact, not stretched across the card */
+@media (max-width: 767px) {
+  .db-card-h .db-btn-sm {
+    width: auto !important;
+    min-height: 32px !important;
+    height: 32px;
+    padding: 0 12px;
+    font-size: 12.5px;
+    flex: 0 0 auto;
+    align-self: center;
+  }
+}
+
+/* Dashboard greeting: smaller date line on phones, name on the line below */
+@media (max-width: 767px) {
+  .db-eyebrow {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    margin-bottom: 2px;
+  }
+
+  .db-hello {
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Phones: greeting first, date line below the name */
+  .db-hello h2 {
+    order: 1;
+  }
+
+  .db-eyebrow {
+    order: 2;
+    margin: 4px 0 0 !important;
+  }
+
+  /* Phones show only the short weekday ("Fri") on the date line */
+  .db-eyebrow-full {
+    display: none;
+  }
+
+  .db-eyebrow-short {
+    display: inline;
+  }
+
+  /* "Welcome back," in the app's brand gradient; the name below it in black (dark mode keeps readable text) */
+  .db-hello h2 {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .db-hello-name {
+    display: block;
+    background: none;
+    color: #000000;
+    -webkit-text-fill-color: #000000;
+  }
+
+  [data-theme='dark'] .db-hello h2 {
+    background: none;
+    color: var(--color-text);
+    -webkit-text-fill-color: var(--color-text);
+  }
+
+  [data-theme='dark'] .db-hello-name {
+    color: var(--color-text);
+    -webkit-text-fill-color: var(--color-text);
+  }
+}
+
+/* Dashboard summary cards: two per row on phones, smaller so more fits on screen */
+@media (max-width: 560px) {
+  .db-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .db-stat {
+    padding: 12px 12px;
+    gap: 3px;
+  }
+
+  .db-stat-l {
+    font-size: 11.5px;
+  }
+
+  .db-stat-v {
+    font-size: 19px;
+  }
+
+  .db-stat-s {
+    font-size: 11px;
+  }
+}
+
+/* Phone card rows: the field name ("DESCRIPTION", "AMOUNT") stays on one line instead of splitting mid-word */
+@media (max-width: 767px) {
+  .responsive-table tbody td::before {
+    white-space: nowrap;
+    overflow-wrap: normal;
+    flex-shrink: 0;
+    margin-right: 12px;
+  }
+}
