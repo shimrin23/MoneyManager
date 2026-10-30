@@ -308,7 +308,7 @@ export const PawningPage = () => {
                                 </div>
                             )}
 
-                            <div className="gl-actions">
+                            <div className="gl-actions fd-actions">
                                 {item.status === 'active' && (
                                     <>
                                         <button className="btn-primary btn-sm" onClick={() => handleRedeem(item)}>Redeem Item</button>

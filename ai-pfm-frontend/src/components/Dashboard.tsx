@@ -108,6 +108,7 @@ const DashboardSummary = ({ showStats }: { showStats: boolean }) => {
     const today = new Date();
     const monthName = today.toLocaleDateString('en-GB', { month: 'long' });
     const dateLabel = today.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const shortDateLabel = today.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
     const net = month ? month.income - month.expenses : 0;
     const savingsRate = month && month.income > 0 ? Math.round((net / month.income) * 100) : null;
     const incomeSources = month?.incomeCategories ?? [];
@@ -120,8 +121,11 @@ const DashboardSummary = ({ showStats }: { showStats: boolean }) => {
     return (
         <>
             <div className="db-hello">
-                <p className="db-eyebrow">{dateLabel}</p>
-                <h2>Welcome back{firstName ? `, ${firstName}` : ''}</h2>
+                <p className="db-eyebrow">
+                    <span className="db-eyebrow-full">{dateLabel}</span>
+                    <span className="db-eyebrow-short">{shortDateLabel}</span>
+                </p>
+                <h2>Welcome back{firstName ? <>,<span className="db-hello-name"> {firstName}</span></> : ''}</h2>
             </div>
 
             {showStats && (

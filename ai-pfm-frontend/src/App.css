@@ -13,11 +13,11 @@
   --color-surface:     #111111;
   --color-surface-2:   #1a1a1a;
   --color-surface-3:   #222222;
-  --color-border:      rgba(255,255,255,0.05);
-  --color-border-2:    rgba(255,255,255,0.1);
+  --color-border:      rgba(255,255,255,0.12);
+  --color-border-2:    rgba(255,255,255,0.18);
   --color-text:        #ededed;
   --color-text-2:      #a1a1aa;
-  --color-text-muted:  #71717a;
+  --color-text-muted:  #c4c4cc;
 
   /* ─ Brand */
   --color-accent:      #ffffff;
@@ -97,8 +97,6 @@
   --success:       var(--color-success);
   --danger:        var(--color-danger);
   --border:        var(--color-border);
-  --header-bg:     var(--header-bg);
-  --sidebar-bg:    var(--sidebar-bg);
   --sidebar-header-bg: var(--color-bg);
   --table-head-bg: var(--color-surface);
   --table-head-text:var(--color-text-2);

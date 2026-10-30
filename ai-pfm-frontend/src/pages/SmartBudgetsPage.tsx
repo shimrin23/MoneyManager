@@ -258,9 +258,9 @@ export const SmartBudgetsPage = () => {
                             </div>
                         ))
                     ) : (
-                        <div className="sb-note good">
-                            <span className="sb-note-icon"><IconCheckCircle size={18} /></span>
-                            <div className="sb-note-body">
+                        <div className="insight-item success">
+                            <span className="insight-icon" style={{ display: 'flex', alignItems: 'center' }}><IconCheckCircle size={20} /></span>
+                            <div className="insight-content">
                                 <h4>No Critical Overspending</h4>
                                 <p>You have no categories currently over budget. Great job!</p>
                             </div>

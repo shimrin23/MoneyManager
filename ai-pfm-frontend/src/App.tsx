@@ -88,6 +88,7 @@ import './styles/UserPages.css';
 import './styles/FinancialPages.css';
 import './styles/HeaderRedesign.css';
 import './styles/PageTint.css';
+import './styles/mobile.css';
 
 type UserRole = 'customer' | 'admin' | 'ops' | 'manager';
 type Language = 'en' | 'si' | 'ta';
@@ -646,39 +647,14 @@ function AppShell() {
                 <span className="mobile-tab-icon"><IconReceipt size={20} /></span>
                 <span className="mobile-tab-label">{T[lang].transactions}</span>
               </NavLink>
-              <button
-                type="button"
-                className="mobile-tab mobile-tab-add"
-                onClick={() => setShowAddTransactionModal(true)}
-                aria-label="Add transaction"
-              >
-                <span className="mobile-add-circle">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <line x1="12" y1="5" x2="12" y2="19"/>
-                    <line x1="5" y1="12" x2="19" y2="12"/>
-                  </svg>
-                </span>
-                <span className="mobile-tab-label">{T[lang].newTx}</span>
-              </button>
               <NavLink to="/smart-budgets" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
                 <span className="mobile-tab-icon"><IconBrain size={20} /></span>
                 <span className="mobile-tab-label">{T[lang].budgets}</span>
               </NavLink>
-              <button
-                type="button"
-                className="mobile-tab mobile-tab-more"
-                onClick={() => setIsMobileSidebarOpen(true)}
-                aria-label="Open full menu"
-              >
-                <span className="mobile-tab-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <line x1="4" y1="7" x2="20" y2="7"></line>
-                    <line x1="4" y1="12" x2="20" y2="12"></line>
-                    <line x1="4" y1="17" x2="20" y2="17"></line>
-                  </svg>
-                </span>
-                <span className="mobile-tab-label">Menu</span>
-              </button>
+              <NavLink to="/financial-health" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                <span className="mobile-tab-icon"><IconActivity size={20} /></span>
+                <span className="mobile-tab-label">{T[lang].health}</span>
+              </NavLink>
             </>
           ) : (
             <>
@@ -694,21 +670,6 @@ function AppShell() {
                 <span className="mobile-tab-icon"><IconClipboardList size={20} /></span>
                 <span className="mobile-tab-label">Audit</span>
               </NavLink>
-              <button
-                type="button"
-                className="mobile-tab mobile-tab-more"
-                onClick={() => setIsMobileSidebarOpen(true)}
-                aria-label="Open admin menu"
-              >
-                <span className="mobile-tab-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <line x1="4" y1="7" x2="20" y2="7"></line>
-                    <line x1="4" y1="12" x2="20" y2="12"></line>
-                    <line x1="4" y1="17" x2="20" y2="17"></line>
-                  </svg>
-                </span>
-                <span className="mobile-tab-label">Menu</span>
-              </button>
             </>
           )}
         </nav>
