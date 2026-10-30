@@ -1,3 +1,4 @@
+import { DateInput } from './DateInput';
 import { formatDate, formatMoney, toLkr, currencyCode } from '../utils/appFormat';
 import { useState, type FC } from 'react';
 import { useLoans } from '../hooks/useLoans';
@@ -182,8 +183,7 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
                         </div>
                         <div className="form-group">
                             <label>Start Date</label>
-                            <input
-                                type="date"
+                            <DateInput
                                 value={formData.startDate}
                                 onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                             />

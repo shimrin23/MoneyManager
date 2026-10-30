@@ -1,3 +1,4 @@
+import { DateInput } from './DateInput';
 // Add Transaction Form — Premium Responsive Layout
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.ts';
@@ -183,10 +184,9 @@ export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, i
                 {/* Date */}
                 <div className="atx-field">
                     <label htmlFor="atxDate">Date <span className="atx-req">*</span></label>
-                    <input
+                    <DateInput
                         id="atxDate"
                         className="atx-input"
-                        type="date"
                         value={formData.date}
                         max={getLocalDateString()}
                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
