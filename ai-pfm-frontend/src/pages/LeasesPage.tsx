@@ -1,3 +1,4 @@
+import { DateInput } from '../components/DateInput';
 import { formatDate, formatDateTime, formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { apiClient, getApiErrorMessage } from '../api/client';
@@ -261,7 +262,7 @@ export const LeasesPage = () => {
                             </div>
                             <div className="form-group">
                                 <label>Start Date</label>
-                                <input type="date" value={newLease.startDate} onChange={e => setNewLease({ ...newLease, startDate: e.target.value })} required />
+                                <DateInput value={newLease.startDate} onChange={e => setNewLease({ ...newLease, startDate: e.target.value })} required />
                             </div>
                         </div>
                         <div className="form-actions">

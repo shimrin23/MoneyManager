@@ -1,3 +1,4 @@
+import { DateInput } from '../components/DateInput';
 import { formatDate, formatDateTime, formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { apiClient, getApiErrorMessage } from '../api/client';
@@ -220,13 +221,13 @@ export const PawningPage = () => {
                             </div>
                             <div className="form-group">
                                 <label>Pledge Date</label>
-                                <input type="date" value={newItem.pledgeDate} onChange={e => setNewItem({ ...newItem, pledgeDate: e.target.value })} required />
+                                <DateInput value={newItem.pledgeDate} onChange={e => setNewItem({ ...newItem, pledgeDate: e.target.value })} required />
                             </div>
                         </div>
                         <div className="form-row">
                             <div className="form-group">
                                 <label>Redemption Date</label>
-                                <input type="date" min={newItem.pledgeDate || undefined} value={newItem.redemptionDate} onChange={e => setNewItem({ ...newItem, redemptionDate: e.target.value })} required />
+                                <DateInput min={newItem.pledgeDate || undefined} value={newItem.redemptionDate} onChange={e => setNewItem({ ...newItem, redemptionDate: e.target.value })} required />
                             </div>
                         </div>
                         <div className="form-actions">

@@ -1,3 +1,4 @@
+import { DateInput } from '../components/DateInput';
 import { formatDate, formatDateTime, formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { apiClient, getApiErrorMessage } from '../api/client';
@@ -247,7 +248,7 @@ export const RecurringTransactionsPage = () => {
                     </div>
                     <div className="rc-field">
                         <label htmlFor="rcDate">Next Due</label>
-                        <input id="rcDate" type="date" className="rc-input" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
+                        <DateInput id="rcDate" className="rc-input" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
                     </div>
                     <div className="rc-form-actions">
                         <button type="submit" className="action-btn primary rc-add-btn" disabled={isAdding}>

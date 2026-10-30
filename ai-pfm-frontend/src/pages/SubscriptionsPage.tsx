@@ -1,3 +1,4 @@
+import { DateInput } from '../components/DateInput';
 import { formatDate, formatDateTime, formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -441,8 +442,7 @@ export const SubscriptionsPage = () => {
                             </div>
                             <div className="form-group">
                                 <label>Next Payment Date</label>
-                                <input
-                                    type="date"
+                                <DateInput
                                     value={newSubscription.nextPayment}
                                     onChange={(e) => setNewSubscription({...newSubscription, nextPayment: e.target.value})}
                                     required

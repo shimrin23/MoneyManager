@@ -1,3 +1,4 @@
+import { DateInput } from '../components/DateInput';
 import { formatDate, formatDateTime, formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { apiClient, getApiErrorMessage } from '../api/client';
@@ -263,8 +264,7 @@ export const FixedDepositsPage = () => {
                         <div className="form-row">
                             <div className="form-group">
                                 <label>Start Date</label>
-                                <input
-                                    type="date"
+                                <DateInput
                                     value={newFD.startDate}
                                     max={getLocalDateString()}
                                     onChange={e => setNewFD({ ...newFD, startDate: e.target.value })}

@@ -1,3 +1,4 @@
+import { DateInput } from '../components/DateInput';
 import { formatDate, formatDateTime, formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { apiClient, getApiErrorMessage } from '../api/client';
@@ -412,10 +413,9 @@ export const CreditCardsPage = () => {
                         </div>
                         <div className="cc-field">
                             <label htmlFor="ccDue">Payment Due Date</label>
-                            <input
+                            <DateInput
                                 id="ccDue"
                                 className="cc-input"
-                                type="date"
                                 value={form.dueDate}
                                 onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
                                 required
@@ -423,10 +423,9 @@ export const CreditCardsPage = () => {
                         </div>
                         <div className="cc-field">
                             <label htmlFor="ccStmt">Statement Date</label>
-                            <input
+                            <DateInput
                                 id="ccStmt"
                                 className="cc-input"
-                                type="date"
                                 value={form.statementDate}
                                 onChange={(e) => setForm({ ...form, statementDate: e.target.value })}
                             />

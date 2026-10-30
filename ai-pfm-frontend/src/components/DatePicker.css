@@ -184,3 +184,405 @@
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Modern calendar in the project's purple-blue style */
+.date-picker-dropdown {
+  border-radius: 16px;
+  box-shadow: 0 18px 40px -12px rgba(102, 126, 234, 0.3);
+  padding: 16px;
+}
+
+.month-year-display {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.month-nav-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.month-nav-btn:hover {
+  background: var(--color-surface-2);
+}
+
+.weekdays {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.calendar-day {
+  height: 36px;
+  border-radius: 10px;
+  font-size: 13px;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.calendar-day:hover:not(:disabled) {
+  background: rgba(102, 126, 234, 0.12);
+  color: #667eea;
+}
+
+.calendar-day.today {
+  color: #667eea;
+  font-weight: 600;
+  border: 1px solid rgba(102, 126, 234, 0.45);
+}
+
+.calendar-day.selected {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.35);
+}
+
+.today-btn,
+.clear-btn {
+  color: #667eea;
+  font-weight: 600;
+}
+
+.date-picker-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.18);
+}
+
+
+/* Calendar reduced vertically and horizontally: short rows instead of square cells, narrower panel */
+.date-picker-dropdown {
+  width: 260px;
+  max-width: 100%;
+  padding: 10px;
+}
+
+.calendar-cell {
+  aspect-ratio: auto;
+  height: 32px;
+}
+
+.calendar-grid {
+  gap: 1px;
+}
+
+.weekdays {
+  margin-bottom: 4px;
+}
+
+/* Calendar columns share the panel width, so no day numbers spill out of the panel */
+.date-picker-dropdown {
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.calendar-grid,
+.weekdays {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.calendar-cell {
+  min-width: 0;
+}
+
+/* Calendar smaller again, both ways */
+.date-picker-dropdown {
+  width: 230px;
+  padding: 8px;
+}
+
+.calendar-cell {
+  height: 26px;
+}
+
+.calendar-day {
+  font-size: 11px;
+}
+
+.weekdays {
+  font-size: 9px;
+}
+
+/* Month and year dropdowns in the calendar header */
+.month-year-selects {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+}
+
+.month-select,
+.year-select {
+  height: 28px;
+  padding: 0 6px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* Month and year dropdowns: clean, rounded, custom chevron, purple focus ring */
+.month-year-selects {
+  gap: 8px;
+}
+
+.month-select,
+.year-select {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 32px;
+  padding: 0 28px 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border-2);
+  background-color: var(--color-surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236b7280' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.month-select {
+  min-width: 112px;
+}
+
+.year-select {
+  min-width: 88px;
+}
+
+.month-select:hover,
+.year-select:hover {
+  border-color: #667eea;
+}
+
+.month-select:focus,
+.year-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.18);
+}
+
+/* Month and year dropdowns smaller */
+.month-select,
+.year-select {
+  height: 28px;
+  padding: 0 24px 0 10px;
+  font-size: 12px;
+}
+
+.month-select {
+  min-width: 96px;
+}
+
+.year-select {
+  min-width: 72px;
+}
+
+/* Month and year dropdown row slightly shorter */
+.month-select,
+.year-select {
+  height: 26px;
+}
+
+/* Month and year dropdown row shorter again */
+.month-select,
+.year-select {
+  height: 24px;
+}
+
+/* Year picker: a scrollable list of about 10 years, any year reachable by scrolling */
+.year-picker {
+  position: relative;
+}
+
+.year-trigger {
+  height: 26px;
+  min-width: 72px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border-2);
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.year-trigger:hover {
+  border-color: #667eea;
+}
+
+.year-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  width: 88px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 4px;
+  z-index: 20;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: 0 12px 28px -8px rgba(102, 126, 234, 0.3);
+}
+
+.year-option {
+  display: block;
+  width: 100%;
+  height: 26px;
+  padding: 0 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.year-option:hover {
+  background: rgba(102, 126, 234, 0.12);
+}
+
+.year-option.on {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Month and year containers the same size and style */
+.month-select,
+.year-trigger {
+  height: 30px;
+  min-width: 104px;
+  padding: 0 26px 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--color-border-2);
+  background-color: var(--color-surface);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236b7280' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  color: var(--color-text);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.year-list {
+  width: 104px;
+}
+
+/* Month and year containers exactly the same width, height and colours (focus included) */
+.month-select,
+.year-trigger {
+  box-sizing: border-box;
+  width: 120px;
+  height: 32px;
+  min-width: 0;
+  line-height: 1.2;
+  margin: 0;
+}
+
+.year-trigger:focus,
+.year-trigger:focus-visible {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.18);
+}
+
+.year-list {
+  width: 120px;
+}
+
+/* Month and year containers wider so the full month name fits; the year list a little shorter */
+.month-select,
+.year-trigger {
+  width: 136px;
+}
+
+.year-list {
+  width: 136px;
+  max-height: 220px;
+}
+
+/* Month and year containers fixed at the same width (the row can no longer shrink the month dropdown) */
+.month-year-selects .month-select,
+.month-year-selects .year-picker {
+  flex: 0 0 136px;
+}
+
+.month-year-selects .month-select,
+.month-year-selects .year-trigger {
+  width: 136px;
+  max-width: 136px;
+  min-width: 136px;
+}
+
+/* Month and year containers narrower */
+.month-year-selects .month-select,
+.month-year-selects .year-picker {
+  flex: 0 0 116px;
+}
+
+.month-year-selects .month-select,
+.month-year-selects .year-trigger {
+  width: 116px;
+  max-width: 116px;
+  min-width: 116px;
+}
+
+.year-list {
+  width: 116px;
+}
+
+/* Month picker: the same custom list as the year, opening below its button */
+.month-picker {
+  position: relative;
+}
+
+.month-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 116px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 4px;
+  z-index: 20;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: 0 12px 28px -8px rgba(102, 126, 234, 0.3);
+}
+
+/* Let the year and month lists show outside the calendar panel, and open upward when there is no room below */
+.date-picker-dropdown {
+  overflow: visible;
+}
+
+.year-list.up,
+.month-list.up {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
+/* Month and year lists identical in width, height and padding */
+.year-list,
+.month-list {
+  box-sizing: border-box;
+  width: 116px;
+  height: 220px;
+  max-height: none;
+}

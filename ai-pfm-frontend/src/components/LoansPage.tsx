@@ -1,3 +1,4 @@
+import { DateInput } from './DateInput';
 import { formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useEffect, useState, type FC, type FormEvent } from 'react';
 import { confirmDialog, notify, promptDialog } from '../utils/systemMessages';
@@ -415,8 +416,7 @@ const LoansPage: FC = () => {
                                 </div>
                                 <div className="form-group">
                                     <label>Next Due Date</label>
-                                    <input
-                                        type="date"
+                                    <DateInput
                                         value={editForm.nextDueDate}
                                         onChange={(e) => handleEditChange('nextDueDate', e.target.value)}
                                     />
