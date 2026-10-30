@@ -473,8 +473,9 @@ canvas {
 
   /* Title on the left, Add and refresh on the right, all on one line */
   .txn-header {
-    display: flex;
-    flex-direction: row;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
@@ -482,7 +483,7 @@ canvas {
 
   .txn-header > div:first-child {
     min-width: 0;
-    flex: 1 1 auto;
+    flex: 1 1 0 !important;
   }
 
   .txn-header-actions {
@@ -586,13 +587,25 @@ canvas {
     grid-template-columns: minmax(0, 1fr) !important;
   }
 
-  .st-form > .st-field:first-child > div {
-    width: 100% !important;
-    max-width: none !important;
+  .st-form {
+    grid-template-columns: minmax(0, 1fr) !important;
   }
 
-  .st-form > .st-field:first-child .st-input {
+  .st-form > .st-field {
     width: 100% !important;
+    grid-column: 1 / -1 !important;
+    justify-self: stretch !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+
+  .st-form > .st-field > div {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .st-form > .st-field .st-input {
+    width: 100% !important;
+    max-width: 100% !important;
     box-sizing: border-box;
   }
 }
@@ -789,10 +802,19 @@ canvas {
 
 /* Peer comparison: the metric cards get a tinted background so they stand out from the white card */
 @media (max-width: 767px) {
+  /* Peer metric titles wrap onto a second line instead of being cut off with "..." */
+  .peer-benchmarks-card .gl-card * {
+    text-overflow: clip !important;
+    overflow: visible !important;
+    white-space: normal !important;
+  }
+
   .peer-benchmarks-card .gl-card {
     background: var(--color-surface-2);
     border: 1px solid rgba(16, 185, 129, 0.3);
     box-shadow: none;
+    margin-left: -6px !important;
+    margin-right: -6px !important;
   }
 }
 
