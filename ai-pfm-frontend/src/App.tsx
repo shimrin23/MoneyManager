@@ -83,6 +83,7 @@ import { AIAssistant } from './components/AIAssistant';
 import { ADMIN_T } from './i18n/adminText';
 import { USER_T } from './i18n/userPagesText';
 import { ACCOUNT_T } from './i18n/accountSettingsText';
+import { PAGE_HDR_T } from './i18n/pageHeaderText';
 import './App.css';
 import './styles/UserPages.css';
 import './styles/FinancialPages.css';
@@ -190,23 +191,24 @@ function AppShell() {
   const [settingsVersion, setSettingsVersion] = useState(0);
 
   const getPageTitleInfo = () => {
+    const H = PAGE_HDR_T[lang];
     switch (location.pathname) {
-      case '/dashboard': return { title: 'Dashboard', subtitle: 'Your financial overview at a glance' };
-      case '/financial-health': return { title: 'Financial Health', subtitle: 'Detailed analysis of your metrics' };
-      case '/recommendations': return { title: 'AI Recommendations', subtitle: 'Insights and suggestions' };
-      case '/transactions': return { title: 'Transactions', subtitle: 'Your transaction history' };
-      case '/credit-cards': return { title: 'Credit Cards', subtitle: 'Manage your credit lines' };
-      case '/anomalies': return { title: 'Anomaly Detection', subtitle: 'Unusual transaction alerts' };
-      case '/smart-budgets': return { title: 'Smart Budgets', subtitle: 'AI-assisted budgeting' };
-      case '/goals': return { title: 'Financial Goals', subtitle: 'Track your saving progress' };
-      case '/recurring': return { title: 'Cash Flow', subtitle: 'Subscriptions and recurring payments' };
-      case '/subscriptions': return { title: T[lang].subscriptions, subtitle: 'Track costs, unused services and cheaper options' };
-      case '/connect-bank': return { title: 'Connect Bank Account', subtitle: 'Link external accounts' };
-      case '/fixed-deposits': return { title: 'Fixed Deposits', subtitle: 'Manage term deposits' };
-      case '/loans': return { title: 'Loans & Debt', subtitle: 'Track your liabilities' };
-      case '/leases': return { title: 'Leases', subtitle: 'Vehicle and equipment leases' };
-      case '/pawning': return { title: 'Pawning', subtitle: 'Gold and item pawning' };
-      case '/notifications': return { title: 'Notifications', subtitle: 'Recent alerts and updates' };
+      case '/dashboard': return H.dashboard;
+      case '/financial-health': return H.financialHealth;
+      case '/recommendations': return H.recommendations;
+      case '/transactions': return H.transactions;
+      case '/credit-cards': return H.creditCards;
+      case '/anomalies': return H.anomalies;
+      case '/smart-budgets': return H.smartBudgets;
+      case '/goals': return H.goals;
+      case '/recurring': return H.recurring;
+      case '/subscriptions': return { title: T[lang].subscriptions, subtitle: H.subscriptionsSub };
+      case '/connect-bank': return H.connectBank;
+      case '/fixed-deposits': return H.fixedDeposits;
+      case '/loans': return H.loans;
+      case '/leases': return H.leases;
+      case '/pawning': return H.pawning;
+      case '/notifications': return H.notifications;
       case '/profile': return { title: USER_T[lang].hdrProfile, subtitle: USER_T[lang].hdrProfileSub };
       case '/settings': return { title: USER_T[lang].hdrSettings, subtitle: USER_T[lang].hdrSettingsSub };
       case '/account-settings': return { title: ACCOUNT_T[lang].title, subtitle: ACCOUNT_T[lang].subtitle };
@@ -243,6 +245,11 @@ function AppShell() {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  // Language on <html> so CSS can target Sinhala and Tamil text (for example, to let longer labels wrap)
+  useEffect(() => {
+    document.documentElement.setAttribute('lang', lang);
+  }, [lang]);
 
   const switchLang = (l: Language) => {
     setLang(l);

@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import { confirmDialog } from '../utils/systemMessages';
+import { useAdminLang } from '../i18n/adminText';
+import { NOTIF_T } from '../i18n/notificationsText';
+import { fillText } from '../i18n/dashboardText';
 import '../styles/NotificationPreferences.css';
 
 interface Notification {
@@ -19,6 +22,19 @@ interface Notification {
 
 // Same preference data as the Settings page (/settings/notifications)
 type Preferences = Record<string, boolean>;
+
+const NOTIFICATION_ICON_PATHS: Record<Notification['type'], string[]> = {
+    info: ['M12 16v-4', 'M12 8h.01', 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z'],
+    warning: ['M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z', 'M12 9v4', 'M12 17h.01'],
+    success: ['M22 11.1V12a10 10 0 1 1-5.9-9.1', 'M22 4 12 14.01l-3-3'],
+    alert: ['M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9', 'M13.7 21a2 2 0 0 1-3.4 0']
+};
+
+const NotificationIcon = ({ type }: { type: Notification['type'] }) => (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        {NOTIFICATION_ICON_PATHS[type].map(d => <path key={d} d={d} />)}
+    </svg>
+);
 
 const PREFERENCE_GROUPS = [
     {
@@ -53,21 +69,14 @@ const PREFERENCE_GROUPS = [
     }
 ];
 
-const NOTIFICATION_ICON_PATHS: Record<Notification['type'], string[]> = {
-    info: ['M12 16v-4', 'M12 8h.01', 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20z'],
-    warning: ['M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z', 'M12 9v4', 'M12 17h.01'],
-    success: ['M22 11.1V12a10 10 0 1 1-5.9-9.1', 'M22 4 12 14.01l-3-3'],
-    alert: ['M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9', 'M13.7 21a2 2 0 0 1-3.4 0']
-};
-
-const NotificationIcon = ({ type }: { type: Notification['type'] }) => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        {NOTIFICATION_ICON_PATHS[type].map(d => <path key={d} d={d} />)}
-    </svg>
-);
 
 export const NotificationsPage = () => {
+    const t = NOTIF_T[useAdminLang()];
     const navigate = useNavigate();
+    const groupTitles: Record<string, string> = {
+        'Financial Alerts': t.groupFinancial, 'Reports & Insights': t.groupReports,
+        'Security & Marketing': t.groupSecurity, 'Delivery': t.groupDelivery,
+    };
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [preferences, setPreferences] = useState<Preferences | null>(null);
     const [loading, setLoading] = useState(true);
@@ -84,7 +93,7 @@ export const NotificationsPage = () => {
             setLoadError('');
         } catch (err) {
             console.error('Failed to fetch notifications', err);
-            setLoadError('Could not load notifications. Please try again.');
+            setLoadError(t.loadFailed);
         } finally {
             setLoading(false);
         }
@@ -142,9 +151,9 @@ export const NotificationsPage = () => {
     // Asks before deleting from the bin button
     const confirmDelete = async (notification: Notification) => {
         const confirmed = await confirmDialog({
-            title: 'Delete notification?',
-            message: `"${notification.title}" will be removed.`,
-            confirmText: 'Delete',
+            title: t.deleteTitle,
+            message: fillText(t.deleteMsg, { title: notification.title }),
+            confirmText: t.delete,
             danger: true,
         });
         if (confirmed) deleteNotification(notification.id);
@@ -172,10 +181,10 @@ export const NotificationsPage = () => {
         const time = new Date(timestamp);
         const diffInHours = Math.floor((now.getTime() - time.getTime()) / (1000 * 60 * 60));
 
-        if (diffInHours < 1) return 'Just now';
-        if (diffInHours < 24) return `${diffInHours}h ago`;
+        if (diffInHours < 1) return t.justNow;
+        if (diffInHours < 24) return fillText(t.hoursAgo, { n: diffInHours });
         const diffInDays = Math.floor(diffInHours / 24);
-        if (diffInDays < 7) return `${diffInDays}d ago`;
+        if (diffInDays < 7) return fillText(t.daysAgo, { n: diffInDays });
         return formatDate(time);
     };
 
@@ -187,7 +196,7 @@ export const NotificationsPage = () => {
     const unreadCount = notifications.filter(notif => !notif.read).length;
 
     if (loading) {
-        return <div className="page-loading">Loading notifications...</div>;
+        return <div className="page-loading">{t.loading}</div>;
     }
 
     return (
@@ -200,7 +209,7 @@ export const NotificationsPage = () => {
                         className={`nt-tab ${activeTab === 'all' ? 'on' : ''}`}
                         onClick={() => setActiveTab('all')}
                     >
-                        All ({notifications.length})
+                        {t.tabAll} ({notifications.length})
                     </button>
                     <button
                         role="tab"
@@ -208,7 +217,7 @@ export const NotificationsPage = () => {
                         className={`nt-tab ${activeTab === 'unread' ? 'on' : ''}`}
                         onClick={() => setActiveTab('unread')}
                     >
-                        Unread ({unreadCount})
+                        {t.tabUnread} ({unreadCount})
                     </button>
                     <button
                         role="tab"
@@ -216,12 +225,12 @@ export const NotificationsPage = () => {
                         className={`nt-tab ${activeTab === 'settings' ? 'on' : ''}`}
                         onClick={() => setActiveTab('settings')}
                     >
-                        Settings
+                        {t.tabSettings}
                     </button>
                 </div>
                 {activeTab !== 'settings' && unreadCount > 0 && (
                     <button className="btn-secondary nt-mark-all" onClick={markAllAsRead}>
-                        Mark All as Read
+                        {t.markAll}
                     </button>
                 )}
             </div>
@@ -234,8 +243,8 @@ export const NotificationsPage = () => {
                         {filteredNotifications.length === 0 ? (
                             <div className="nt-empty">
                                 <span className="nt-empty-icon"><NotificationIcon type="alert" /></span>
-                                <h3>No notifications</h3>
-                                <p>You're all caught up!</p>
+                                <h3>{t.emptyTitle}</h3>
+                                <p>{t.emptyText}</p>
                             </div>
                         ) : (
                             <div className="nt-list">
@@ -257,10 +266,10 @@ export const NotificationsPage = () => {
                                             {notification.actionRequired && (
                                                 <div className="nt-actions">
                                                     <button className="btn-primary btn-sm" onClick={() => takeAction(notification)}>
-                                                        Take Action
+                                                        {t.takeAction}
                                                     </button>
                                                     <button className="btn-secondary btn-sm" onClick={() => deleteNotification(notification.id)}>
-                                                        Dismiss
+                                                        {t.dismiss}
                                                     </button>
                                                 </div>
                                             )}
@@ -270,8 +279,8 @@ export const NotificationsPage = () => {
                                                 <button
                                                     className="nt-icon-btn"
                                                     onClick={() => markAsRead(notification.id)}
-                                                    title="Mark as read"
-                                                    aria-label="Mark as read"
+                                                    title={t.markRead}
+                                                    aria-label={t.markRead}
                                                 >
                                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                                         <path d="M20 6 9 17l-5-5" />
@@ -281,8 +290,8 @@ export const NotificationsPage = () => {
                                             <button
                                                 className="nt-icon-btn delete"
                                                 onClick={() => confirmDelete(notification)}
-                                                title="Delete"
-                                                aria-label="Delete"
+                                                title={t.delete}
+                                                aria-label={t.delete}
                                             >
                                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                                                     <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
@@ -299,35 +308,36 @@ export const NotificationsPage = () => {
 
             {activeTab === 'settings' && (
                 <div className="nt-settings">
-                    <h2>Notification Preferences</h2>
-                    <p>Choose what notifications you want to receive. These are the same as on the Settings page.</p>
+                    <h2>{t.prefTitle}</h2>
+                    <p>{t.prefIntro}</p>
 
                     {!preferences ? (
-                        <p className="np-loading">Loading preferences...</p>
+                        <p className="np-loading">{t.prefLoading}</p>
                     ) : (
                         PREFERENCE_GROUPS.map(group => (
                             <section className="np-card" key={group.title}>
-                                <h3 className="np-group-title">{group.title}</h3>
+                                <h3 className="np-group-title">{groupTitles[group.title]}</h3>
                                 {group.items.map(item => {
-                                    const isRequired = item.key === 'securityAlerts';
-                                    const isOn = isRequired ? true : !!preferences[item.key];
+                                    const key = item.key;
+                                    const isRequired = key === 'securityAlerts';
+                                    const isOn = isRequired ? true : !!preferences[key];
                                     return (
-                                        <div className="np-row" key={item.key}>
+                                        <div className="np-row" key={key}>
                                             <div className="np-row-text">
                                                 <span className="np-label">
-                                                    {item.label}
-                                                    {isRequired && <span className="np-badge">Required</span>}
+                                                    {t.prefLabel[key]}
+                                                    {isRequired && <span className="np-badge">{t.required}</span>}
                                                 </span>
-                                                <span className="np-description">{item.description}</span>
+                                                <span className="np-description">{t.prefDesc[key]}</span>
                                             </div>
                                             <button
                                                 type="button"
                                                 role="switch"
                                                 aria-checked={isOn}
-                                                aria-label={item.label}
+                                                aria-label={t.prefLabel[key]}
                                                 className={`np-switch ${isOn ? 'on' : ''}`}
                                                 disabled={isRequired}
-                                                onClick={() => togglePreference(item.key)}
+                                                onClick={() => togglePreference(key)}
                                             >
                                                 <span className="np-knob" />
                                             </button>

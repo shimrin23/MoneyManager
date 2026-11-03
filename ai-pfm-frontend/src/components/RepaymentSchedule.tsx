@@ -1,5 +1,8 @@
 import { formatDate, formatMoney } from '../utils/appFormat';
 import { type FC, useState } from 'react';
+import { useAdminLang } from '../i18n/adminText';
+import { LOAN_TABS_T } from '../i18n/loanTabsText';
+import { fillText } from '../i18n/dashboardText';
 
 interface ScheduleItem {
     month: number;
@@ -17,6 +20,7 @@ interface RepaymentScheduleProps {
 }
 
 const RepaymentSchedule: FC<RepaymentScheduleProps> = ({ schedule, loanType, monthlyEMI }) => {
+    const t = LOAN_TABS_T[useAdminLang()];
     const [filter, setFilter] = useState('all'); // all, paid, pending
 
     const filteredSchedule = schedule.filter(item => {
@@ -32,22 +36,22 @@ const RepaymentSchedule: FC<RepaymentScheduleProps> = ({ schedule, loanType, mon
         <div>
             <div className="rc-stats rc-stats-3">
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Monthly EMI</span>
+                    <span className="rc-stat-label">{t.schedEmi}</span>
                     <span className="rc-stat-value">{formatMoney(monthlyEMI, 2)}</span>
                 </div>
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Total Paid</span>
+                    <span className="rc-stat-label">{t.schedPaid}</span>
                     <span className="rc-stat-value">{formatMoney(totalPaid, 2)}</span>
                 </div>
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Remaining</span>
+                    <span className="rc-stat-label">{t.schedRemaining}</span>
                     <span className="rc-stat-value">{formatMoney(totalRemaining, 2)}</span>
                 </div>
             </div>
 
             <div className="su-panel">
                 <div className="rc-panel-head">
-                    <h3 className="rc-panel-title">Repayment Schedule - {loanType} Loan</h3>
+                    <h3 className="rc-panel-title">{fillText(t.schedTitle, { type: loanType })}</h3>
                     <div className="rec-filter-row" style={{ marginBottom: 0 }}>
                         {(['all', 'paid', 'pending'] as const).map(f => (
                             <button
@@ -55,7 +59,7 @@ const RepaymentSchedule: FC<RepaymentScheduleProps> = ({ schedule, loanType, mon
                                 className={`rec-filter-btn ${filter === f ? 'active' : ''}`}
                                 onClick={() => setFilter(f)}
                             >
-                                {f.charAt(0).toUpperCase() + f.slice(1)}
+                                {({ all: t.filterAll, paid: t.filterPaid, pending: t.filterPending })[f]}
                             </button>
                         ))}
                     </div>
@@ -65,13 +69,13 @@ const RepaymentSchedule: FC<RepaymentScheduleProps> = ({ schedule, loanType, mon
                     <table className="su-table">
                         <thead>
                             <tr>
-                                <th>Month</th>
-                                <th>Due Date</th>
-                                <th>Principal</th>
-                                <th>Interest</th>
-                                <th>EMI</th>
-                                <th>Balance</th>
-                                <th>Status</th>
+                                <th>{t.colMonth}</th>
+                                <th>{t.colDue}</th>
+                                <th>{t.colPrincipal}</th>
+                                <th>{t.colInterest}</th>
+                                <th>{t.colEmi}</th>
+                                <th>{t.colBalance}</th>
+                                <th>{t.colStatus}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -85,7 +89,7 @@ const RepaymentSchedule: FC<RepaymentScheduleProps> = ({ schedule, loanType, mon
                                     <td>{formatMoney(item.remainingBalance, 2)}</td>
                                     <td>
                                         <span className={`su-pill ${item.paid ? 'good' : 'warn'}`}>
-                                            {item.paid ? 'Paid' : 'Pending'}
+                                            {item.paid ? t.statusPaid : t.statusPending}
                                         </span>
                                     </td>
                                 </tr>

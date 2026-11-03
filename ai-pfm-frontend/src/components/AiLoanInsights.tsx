@@ -1,11 +1,14 @@
 import { type FC, useEffect, useState } from 'react';
 import { useLoans } from '../hooks/useLoans';
+import { useAdminLang } from '../i18n/adminText';
+import { LOAN_TABS_T } from '../i18n/loanTabsText';
 
 interface AiLoanInsightsProps {
     onRefresh?: () => void;
 }
 
 const AiLoanInsights: FC<AiLoanInsightsProps> = ({ onRefresh }) => {
+    const t = LOAN_TABS_T[useAdminLang()];
     const { getAIInsights } = useLoans();
     const [insights, setInsights] = useState<string[]>([]);
     const [loading, setLoading] = useState(true);
@@ -29,7 +32,7 @@ const AiLoanInsights: FC<AiLoanInsightsProps> = ({ onRefresh }) => {
     };
 
     if (loading) {
-        return <div className="su-muted">Loading insights...</div>;
+        return <div className="su-muted">{t.aiLoading}</div>;
     }
 
     if (error) {
@@ -39,16 +42,16 @@ const AiLoanInsights: FC<AiLoanInsightsProps> = ({ onRefresh }) => {
     return (
         <div className="su-panel">
             <div className="rc-panel-head">
-                <h3 className="rc-panel-title">AI Loan Insights</h3>
+                <h3 className="rc-panel-title">{t.aiTitle}</h3>
                 {insights.length > 0 && (
                     <button onClick={() => { loadInsights(); onRefresh?.(); }} className="btn-secondary btn-sm">
-                        Refresh
+                        {t.refresh}
                     </button>
                 )}
             </div>
 
             {insights.length === 0 ? (
-                <p className="su-muted">No insights available yet</p>
+                <p className="su-muted">{t.noInsights}</p>
             ) : (
                 <>
                     <div className="fin-stack">
@@ -59,7 +62,7 @@ const AiLoanInsights: FC<AiLoanInsightsProps> = ({ onRefresh }) => {
                         ))}
                     </div>
                     <p className="fin-note fin-center" style={{ marginTop: '16px' }}>
-                        These insights are powered by AI and based on your loan data. Check back regularly for updated recommendations.
+                        {t.aiNote}
                     </p>
                 </>
             )}

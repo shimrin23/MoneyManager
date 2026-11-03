@@ -1,5 +1,7 @@
 import { type FC, useEffect, useState } from 'react';
 import { useLoans } from '../hooks/useLoans';
+import { useAdminLang } from '../i18n/adminText';
+import { LOAN_PANELS_T } from '../i18n/loanPanelsText';
 
 interface Alert {
     type: 'due-soon' | 'overdue' | 'high-emi-ratio';
@@ -21,6 +23,10 @@ const severityClass: Record<Alert['severity'], string> = {
 };
 
 const LoanAlerts: FC<LoanAlertsProps> = ({ loanIds, onDismiss }) => {
+    const t = LOAN_PANELS_T[useAdminLang()];
+    const alertTypeLabels: Record<Alert['type'], string> = {
+        'due-soon': t.typeDueSoon, overdue: t.typeOverdue, 'high-emi-ratio': t.typeHighEmi
+    };
     const { getLoanAlerts } = useLoans();
     const [allAlerts, setAllAlerts] = useState<Alert[]>([]);
     const [loading, setLoading] = useState(false);
@@ -59,29 +65,29 @@ const LoanAlerts: FC<LoanAlertsProps> = ({ loanIds, onDismiss }) => {
     const visibleAlerts = allAlerts.filter(alert => !dismissedAlerts.has(alert.loanId));
 
     if (loading) {
-        return <div className="su-muted fin-section">Loading alerts...</div>;
+        return <div className="su-muted fin-section">{t.loadingAlerts}</div>;
     }
 
     if (visibleAlerts.length === 0) {
         return (
             <div className="su-impact fin-section">
-                All loans are in good standing.
+                {t.allGood}
             </div>
         );
     }
 
     return (
         <div className="fin-section">
-            <h3 className="su-panel-title">Loan Alerts</h3>
+            <h3 className="su-panel-title">{t.loanAlerts}</h3>
             {visibleAlerts.map((alert, idx) => (
                 <div key={idx} className={`su-note ${severityClass[alert.severity]} fin-alert`}>
                     <div className="fin-alert-body">
                         <p>{alert.message}</p>
-                        <span className="fin-alert-type">{alert.type.replace(/-/g, ' ')}</span>
+                        <span className="fin-alert-type">{alertTypeLabels[alert.type]}</span>
                     </div>
-                    {alert.actionRequired && <span className="rc-tag">Action Required</span>}
+                    {alert.actionRequired && <span className="rc-tag">{t.actionRequired}</span>}
                     <button onClick={() => handleDismiss(alert.loanId)} className="btn-secondary btn-sm">
-                        Dismiss
+                        {t.dismiss}
                     </button>
                 </div>
             ))}

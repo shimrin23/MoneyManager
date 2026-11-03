@@ -5,6 +5,9 @@ import { DatePicker } from '../components/DatePicker';
 import { getLocalDateString } from '../utils/date';
 import { notify, confirmDialog, promptDialog } from '../utils/systemMessages';
 import { IconUser, IconLandmark, IconLightbulb, IconAlertTriangle, IconBuilding, IconTrendingUp, IconCar, IconWallet, IconTarget } from '../components/Icons';
+import { useAdminLang } from '../i18n/adminText';
+import { GOALS_T } from '../i18n/goalsText';
+import { fillText } from '../i18n/dashboardText';
 
 const DAY_MS = 1000 * 60 * 60 * 24;
 
@@ -22,6 +25,7 @@ interface Goal {
 }
 
 export const GoalsPage = () => {
+    const t = GOALS_T[useAdminLang()];
     const [goals, setGoals] = useState<Goal[]>([]);
     const [showForm, setShowForm] = useState(false);
     const [editingGoal, setEditingGoal] = useState<Goal | null>(null);
@@ -63,10 +67,10 @@ export const GoalsPage = () => {
             setGoals([response.data.goal, ...goals]);
             setNewGoal({ title: '', targetAmount: 0, currentAmount: 0, deadline: '', status: 'In Progress', category: 'Personal', priority: 'Medium', description: '' });
             setShowForm(false);
-            notify.success(`Goal "${response.data.goal.title}" created.`);
+            notify.success(fillText(t.created, { title: response.data.goal.title }));
         } catch (error) {
             console.error('Error creating goal:', error);
-            notify.error(getApiErrorMessage(error, 'Failed to create goal. Please try again.'));
+            notify.error(getApiErrorMessage(error, t.createFailed));
         }
     };
 
@@ -79,18 +83,18 @@ export const GoalsPage = () => {
             setGoals(goals.map(g => g._id === editingGoal._id ? response.data.goal : g));
             setEditingGoal(null);
             setShowDetailsModal(false);
-            notify.success('Goal updated successfully.');
+            notify.success(t.updated);
         } catch (error) {
             console.error('Error updating goal:', error);
-            notify.error(getApiErrorMessage(error, 'Failed to update goal. Please try again.'));
+            notify.error(getApiErrorMessage(error, t.updateFailed));
         }
     };
 
     const handleDeleteGoal = async (goalId: string) => {
         const confirmed = await confirmDialog({
-            title: 'Delete goal?',
-            message: 'This goal and its saved progress will be removed. This cannot be undone.',
-            confirmText: 'Delete',
+            title: t.deleteTitle,
+            message: t.deleteMessage,
+            confirmText: t.confirmDelete,
             danger: true,
         });
         if (!confirmed) return;
@@ -99,10 +103,10 @@ export const GoalsPage = () => {
             await apiClient.delete(`/goals/${goalId}`);
             setGoals(goals.filter(g => g._id !== goalId));
             setShowDetailsModal(false);
-            notify.success('Goal deleted.');
+            notify.success(t.deleted);
         } catch (error) {
             console.error('Error deleting goal:', error);
-            notify.error(getApiErrorMessage(error, 'Failed to delete goal. Please try again.'));
+            notify.error(getApiErrorMessage(error, t.deleteFailed));
         }
     };
 
@@ -113,26 +117,26 @@ export const GoalsPage = () => {
             setGoals(goals.map(goal =>
                 goal._id === goalId ? updated : goal
             ));
-            if (updated.status === 'Completed') notify.success(`Goal "${updated.title}" reached. Well done!`);
-            else notify.success(`${formatCurrency(toLkr(amount))} added to "${updated.title}".`);
+            if (updated.status === 'Completed') notify.success(fillText(t.reached, { title: updated.title }));
+            else notify.success(fillText(t.progressAdded, { amount: formatCurrency(toLkr(amount)), title: updated.title }));
         } catch (error) {
             console.error('Error adding progress:', error);
-            notify.error(getApiErrorMessage(error, 'Failed to add progress. Please try again.'));
+            notify.error(getApiErrorMessage(error, t.progressFailed));
         }
     };
 
     const handleContributionClick = async (goal: Goal, monthlyRequired: number) => {
         if (!goal._id) return;
         const input = await promptDialog({
-            title: 'Add contribution',
-            message: `${goal.title}: ${formatCurrency(goal.currentAmount)} of ${formatCurrency(goal.targetAmount)} saved. Monthly needed: ${formatCurrency(monthlyRequired)}.`,
-            label: `Amount (${currencyCode()})`,
+            title: t.contributionTitle,
+            message: fillText(t.contributionMessage, { title: goal.title, current: formatCurrency(goal.currentAmount), target: formatCurrency(goal.targetAmount), monthly: formatCurrency(monthlyRequired) }),
+            label: fillText(t.amountLabel, { cur: currencyCode() }),
             inputType: 'number',
             placeholder: String(fromLkr(monthlyRequired) || ''),
-            confirmText: 'Add',
+            confirmText: t.addBtn,
             validate: (value) => {
                 const amount = Number(value);
-                return !value.trim() || !Number.isFinite(amount) || amount <= 0 ? 'Please enter an amount greater than 0.' : null;
+                return !value.trim() || !Number.isFinite(amount) || amount <= 0 ? t.amountInvalid : null;
             },
         });
         if (input === null) return; // Cancelled
@@ -179,19 +183,24 @@ export const GoalsPage = () => {
 
     const getDaysRemaining = (deadline: string) => {
         const days = Math.ceil((new Date(deadline).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
-        return days > 0 ? `${days} days left` : 'Overdue';
+        return days > 0 ? fillText(t.daysLeft, { n: days }) : t.overdue;
     };
+
+    // Names shown for stored values (the values themselves are unchanged)
+    const prioName = (p?: string) => (p === 'High' ? t.prioHigh : p === 'Low' ? t.prioLow : t.prioMedium);
+    const statusName = (s: string) => (s === 'Paused' ? t.stPaused : s === 'Completed' ? t.stCompleted : t.stInProgress);
+    const catName = (c: string) => ({ Personal: t.catPersonal, Travel: t.catTravel, Education: t.catEducation, Emergency: t.catEmergency, Home: t.catHome, Investment: t.catInvestment, Vehicle: t.catVehicle, Retirement: t.catRetirement } as Record<string, string>)[c] ?? c;
 
     const getAISuggestion = (goal: Goal) => {
         const riskStatus = getGoalRiskStatus(goal);
         if (riskStatus.status === 'Completed') {
-            return `Goal reached! You saved ${formatCurrency(goal.currentAmount)}.`;
+            return fillText(t.aiReached, { amount: formatCurrency(goal.currentAmount) });
         } else if (riskStatus.status === 'On Track') {
-            return `You're on track! Continue saving ${formatMoney(getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline))} monthly.`;
+            return fillText(t.aiOnTrack, { amount: formatMoney(getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline)) });
         } else if (riskStatus.status === 'Slightly Behind') {
-            return `You're slightly behind. Increase monthly savings to ${formatMoney((getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline) * 1.2))} to stay on track.`;
+            return fillText(t.aiBehind, { amount: formatMoney((getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline) * 1.2)) });
         } else {
-            return `High risk! Try to save ${formatMoney((getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline) * 1.5))} monthly to catch up.`;
+            return fillText(t.aiHighRisk, { amount: formatMoney((getMonthlyRequired(goal.targetAmount, goal.currentAmount, goal.deadline) * 1.5)) });
         }
     };
 
@@ -210,52 +219,52 @@ export const GoalsPage = () => {
         return <Icon size={24} />;
     };
 
-    if (loading) return <div className="loading">Loading your goals...</div>;
+    if (loading) return <div className="loading">{t.loading}</div>;
 
     return (
         <div className="page-container">
             <div className="page-header">
                 <div className="gl-page-title">
-                    <h2 className="gl-title">Your goals</h2>
-                    <p className="gl-subtitle">{goals.length} {goals.length === 1 ? 'goal' : 'goals'} tracked</p>
+                    <h2 className="gl-title">{t.yourGoals}</h2>
+                    <p className="gl-subtitle">{goals.length} {goals.length === 1 ? t.goalTracked : t.goalsTracked}</p>
                 </div>
                 <button
                     className="btn-primary"
                     onClick={() => setShowForm(!showForm)}
                 >
-                    + Add New Goal
+                    {t.addNewGoal}
                 </button>
             </div>
 
             {showForm && (
                 <div className="card form-card gl-form">
-                    <h3 className="gl-form-title">Create New Financial Goal</h3>
+                    <h3 className="gl-form-title">{t.createTitle}</h3>
                     <form onSubmit={handleCreateGoal} className="goal-form">
                         <div className="form-row">
                             <div className="form-group">
-                                <label>Goal Title</label>
+                                <label>{t.goalTitle}</label>
                                 <input
                                     type="text"
                                     value={newGoal.title}
                                     onChange={(e) => setNewGoal({...newGoal, title: e.target.value})}
-                                    placeholder="e.g., Buy a House"
+                                    placeholder={t.titlePlaceholder}
                                     required
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Target Amount ({currencyCode()})</label>
+                                <label>{fillText(t.targetAmount, { cur: currencyCode() })}</label>
                                 <input
                                     type="number"
                                     value={newGoal.targetAmount}
                                     onChange={(e) => setNewGoal({...newGoal, targetAmount: Number(e.target.value)})}
-                                    placeholder="500000"
+                                    placeholder={t.targetPlaceholder}
                                     required
                                 />
                             </div>
                         </div>
                         <div className="form-row">
                             <div className="form-group">
-                                <label>Current Savings ({currencyCode()})</label>
+                                <label>{fillText(t.currentSavings, { cur: currencyCode() })}</label>
                                 <input
                                     type="number"
                                     value={newGoal.currentAmount}
@@ -265,21 +274,21 @@ export const GoalsPage = () => {
                             </div>
                             <div className="form-group">
                                 <DatePicker
-                                    label="Target Deadline"
+                                    label={t.targetDeadline}
                                     value={newGoal.deadline}
                                     onChange={(date) => setNewGoal({...newGoal, deadline: date})}
                                     required
                                     minDate={getLocalDateString()} // Can't select past dates
-                                    placeholder="Select target date"
+                                    placeholder={t.selectDate}
                                 />
                             </div>
                         </div>
                         <div className="form-actions">
                             <button type="button" className="btn-secondary" onClick={() => setShowForm(false)}>
-                                Cancel
+                                {t.cancel}
                             </button>
                             <button type="submit" className="btn-primary">
-                                Create Goal
+                                {t.createGoal}
                             </button>
                         </div>
                     </form>
@@ -299,11 +308,11 @@ export const GoalsPage = () => {
                                     <span className="gl-icon">{getCategoryIcon(goal.category)}</span>
                                     <div className="gl-head-text">
                                         <h3>{goal.title}</h3>
-                                        {goal.priority && <span className="gl-sub">Priority: {goal.priority}</span>}
+                                        {goal.priority && <span className="gl-sub">{t.prioLabel} {prioName(goal.priority)}</span>}
                                     </div>
                                 </div>
                                 <span className={`gl-pill ${goal.status.toLowerCase().replace(' ', '-')}`}>
-                                    {goal.status}
+                                    {statusName(goal.status)}
                                 </span>
                             </div>
 
@@ -324,7 +333,7 @@ export const GoalsPage = () => {
                             {/* Smart Goal Metrics */}
                             <div className="gl-kv">
                                 <div>
-                                    <span>Monthly Required:</span>
+                                    <span>{t.monthlyRequired}</span>
                                     <span>{formatCurrency(monthlyRequired)}</span>
                                 </div>
                                 <div>
@@ -352,13 +361,13 @@ export const GoalsPage = () => {
                                         setShowDetailsModal(true);
                                     }}
                                 >
-                                    Edit
+                                    {t.edit}
                                 </button>
                                 <button
                                     className="btn-primary btn-sm"
                                     onClick={() => handleContributionClick(goal, monthlyRequired)}
                                 >
-                                    Add Contribution
+                                    {t.addContribution}
                                 </button>
                             </div>
                         </article>
@@ -369,10 +378,10 @@ export const GoalsPage = () => {
             {goals.length === 0 && (
                 <div className="empty-state">
                     <div className="empty-icon">🎯</div>
-                    <h3>No Goals Yet</h3>
-                    <p>Start by creating your first financial goal to track your progress!</p>
+                    <h3>{t.noGoals}</h3>
+                    <p>{t.noGoalsSub}</p>
                     <button className="btn-primary" onClick={() => setShowForm(true)}>
-                        Create Your First Goal
+                        {t.createFirstGoal}
                     </button>
                 </div>
             )}
@@ -393,12 +402,12 @@ export const GoalsPage = () => {
                 }}>
                     <div className="gl-form gl-modal" role="dialog" aria-modal="true" aria-labelledby="gl-edit-title">
                         <div className="gl-modal-head">
-                            <h2 id="gl-edit-title">Edit Goal Details</h2>
+                            <h2 id="gl-edit-title">{t.editTitle}</h2>
                             <button
                                 type="button"
                                 className="gl-modal-close"
                                 onClick={() => setShowDetailsModal(false)}
-                                aria-label="Close"
+                                aria-label={t.close}
                             >
                                 ✕
                             </button>
@@ -406,7 +415,7 @@ export const GoalsPage = () => {
 
                         <form onSubmit={handleUpdateGoal}>
                             <div className="form-group" style={{ marginBottom: '16px' }}>
-                                <label>Goal Title</label>
+                                <label>{t.goalTitle}</label>
                                 <input
                                     type="text"
                                     value={editingGoal.title}
@@ -417,44 +426,44 @@ export const GoalsPage = () => {
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label>Category</label>
+                                    <label>{t.category}</label>
                                     <select
                                         value={editingGoal.category || 'Personal'}
                                         onChange={(e) => setEditingGoal({...editingGoal, category: e.target.value})}
                                     >
-                                        <option>Personal</option>
-                                        <option>Travel</option>
-                                        <option>Education</option>
-                                        <option>Emergency</option>
-                                        <option>Home</option>
-                                        <option>Investment</option>
+                                        <option value="Personal">{t.catPersonal}</option>
+                                        <option value="Travel">{t.catTravel}</option>
+                                        <option value="Education">{t.catEducation}</option>
+                                        <option value="Emergency">{t.catEmergency}</option>
+                                        <option value="Home">{t.catHome}</option>
+                                        <option value="Investment">{t.catInvestment}</option>
                                     </select>
                                 </div>
                                 <div className="form-group">
-                                    <label>Priority</label>
+                                    <label>{t.priority}</label>
                                     <select
                                         value={editingGoal.priority || 'Medium'}
                                         onChange={(e) => setEditingGoal({...editingGoal, priority: e.target.value as 'High' | 'Medium' | 'Low'})}
                                     >
-                                        <option>High</option>
-                                        <option>Medium</option>
-                                        <option>Low</option>
+                                        <option value="High">{t.prioHigh}</option>
+                                        <option value="Medium">{t.prioMedium}</option>
+                                        <option value="Low">{t.prioLow}</option>
                                     </select>
                                 </div>
                             </div>
 
                             <div className="form-group" style={{ marginBottom: '16px' }}>
-                                <label>Description</label>
+                                <label>{t.description}</label>
                                 <textarea
                                     value={editingGoal.description || ''}
                                     onChange={(e) => setEditingGoal({...editingGoal, description: e.target.value})}
-                                    placeholder="Why is this goal important to you?"
+                                    placeholder={t.descriptionPlaceholder}
                                 />
                             </div>
 
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label>Target Amount ({currencyCode()})</label>
+                                    <label>{fillText(t.targetAmount, { cur: currencyCode() })}</label>
                                     <input
                                         type="number"
                                         value={editingGoal.targetAmount}
@@ -463,7 +472,7 @@ export const GoalsPage = () => {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label>Current Savings ({currencyCode()})</label>
+                                    <label>{fillText(t.currentSavings, { cur: currencyCode() })}</label>
                                     <input
                                         type="number"
                                         value={editingGoal.currentAmount}
@@ -475,7 +484,7 @@ export const GoalsPage = () => {
                             <div className="form-row">
                                 <div className="form-group">
                                     <DatePicker
-                                        label="Target Deadline"
+                                        label={t.targetDeadline}
                                         value={editingGoal.deadline}
                                         onChange={(date) => setEditingGoal({...editingGoal, deadline: date})}
                                         required
@@ -484,14 +493,14 @@ export const GoalsPage = () => {
                                 </div>
 
                                 <div className="form-group">
-                                    <label>Status</label>
+                                    <label>{t.status}</label>
                                     <select
                                         value={editingGoal.status}
                                         onChange={(e) => setEditingGoal({...editingGoal, status: e.target.value as 'In Progress' | 'Completed' | 'Paused'})}
                                     >
-                                        <option>In Progress</option>
-                                        <option>Paused</option>
-                                        <option>Completed</option>
+                                        <option value="In Progress">{t.stInProgress}</option>
+                                        <option value="Paused">{t.stPaused}</option>
+                                        <option value="Completed">{t.stCompleted}</option>
                                     </select>
                                 </div>
                             </div>
@@ -500,10 +509,10 @@ export const GoalsPage = () => {
                             <div className="gl-insight">
                                 <span className="gl-ai-icon"><IconLightbulb size={16} /></span>
                                 <div>
-                                    <h4>AI Insights</h4>
+                                    <h4>{t.aiInsights}</h4>
                                     <p>{getAISuggestion(editingGoal)}</p>
                                     <p>
-                                        Monthly Savings Required: <strong>{formatCurrency(getMonthlyRequired(editingGoal.targetAmount, editingGoal.currentAmount, editingGoal.deadline))}</strong>
+                                        {t.monthlySavingsRequired} <strong>{formatCurrency(getMonthlyRequired(editingGoal.targetAmount, editingGoal.currentAmount, editingGoal.deadline))}</strong>
                                     </p>
                                 </div>
                             </div>
@@ -517,9 +526,9 @@ export const GoalsPage = () => {
                                         setEditingGoal(null);
                                     }}
                                 >
-                                    Cancel
+                                    {t.cancel}
                                 </button>
-                                <button 
+                                <button
                                     type="button"
                                     className="btn-danger gl-delete-btn"
                                     onClick={() => {
@@ -528,10 +537,10 @@ export const GoalsPage = () => {
                                         }
                                     }}
                                 >
-                                    Delete
+                                    {t.delete}
                                 </button>
                                 <button type="submit" className="btn-primary gl-save-btn">
-                                    Save Changes
+                                    {t.saveChanges}
                                 </button>
                             </div>
                         </form>

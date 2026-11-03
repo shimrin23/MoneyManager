@@ -3,6 +3,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { apiClient, getApiErrorMessage } from '../api/client';
 import { notify } from '../utils/systemMessages';
+import { useAdminLang } from '../i18n/adminText';
+import { RECS_T } from '../i18n/recommendationsText';
+import { fillText } from '../i18n/dashboardText';
 
 type RecommendationStatus = 'pending' | 'accepted' | 'declined' | 'snoozed';
 type RecommendationCategory = 'all' | 'budget' | 'goal' | 'debt' | 'subscription' | 'alert';
@@ -13,13 +16,6 @@ interface ExecutionResult {
     message: string;
     link: string;
 }
-
-const LINK_LABELS: Record<string, string> = {
-    '/goals': 'Open Goals',
-    '/smart-budgets': 'Open Smart Budgets',
-    '/loans': 'Open Loans',
-    '/credit-cards': 'Open Cards',
-};
 
 interface Recommendation {
     _id: string;
@@ -38,10 +34,6 @@ interface Recommendation {
 
 // Mock recommendations removed. Data is now fetched exclusively from the backend.
 
-const categoryLabels: Record<string, string> = {
-    budget: 'Budget', goal: 'Goal', debt: 'Debt', subscription: 'Subscription', alert: 'Alert'
-};
-
 const priorityColors: Record<string, string> = {
     critical: '#ef4444', high: '#f59e0b', medium: '#6366f1', low: '#10b981'
 };
@@ -54,10 +46,14 @@ const statusColors: Record<RecommendationStatus, string> = {
 const ExecutionModal = ({
     rec, onClose, onExecuted
 }: { rec: Recommendation; onClose: () => void; onExecuted: (updated: Recommendation) => void; }) => {
+    const t = RECS_T[useAdminLang()];
     const navigate = useNavigate();
     const [step, setStep] = useState<ExecStep>('confirm');
     const [result, setResult] = useState<ExecutionResult | null>(null);
     const [error, setError] = useState('');
+    const linkLabels: Record<string, string> = {
+        '/goals': t.linkGoals, '/smart-budgets': t.linkBudgets, '/loans': t.linkLoans, '/credit-cards': t.linkCards,
+    };
 
     const handleExecute = async () => {
         setStep('progress');
@@ -67,7 +63,7 @@ const ExecutionModal = ({
             onExecuted(response.data.recommendation);
             setStep('done');
         } catch (err) {
-            setError(getApiErrorMessage(err, 'Could not apply this recommendation. Please try again.'));
+            setError(getApiErrorMessage(err, t.failApply));
             setStep('error');
         }
     };
@@ -83,28 +79,28 @@ const ExecutionModal = ({
                 {step === 'confirm' && (
                     <>
                         <div className="modal-header">
-                            <h2 className="modal-title">Execute Recommendation</h2>
+                            <h2 className="modal-title">{t.execTitle}</h2>
                             <button className="modal-close" onClick={onClose}>×</button>
                         </div>
                         <div className="onetap-body">
                             <div className="onetap-title">{rec.title}</div>
                             <div className="onetap-section">
-                                <div className="onetap-label">What will happen</div>
+                                <div className="onetap-label">{t.whatHappens}</div>
                                 <div className="onetap-text">{rec.action}</div>
                             </div>
                             <div className="onetap-section">
-                                <div className="onetap-label">Projected impact</div>
+                                <div className="onetap-label">{t.projImpact}</div>
                                 <div className="onetap-impact">{rec.projectedImpact}</div>
                             </div>
                             <div className="onetap-section">
-                                <div className="onetap-label">Execution path</div>
+                                <div className="onetap-label">{t.execPath}</div>
                                 <div className="onetap-path">{rec.executionPath}</div>
                             </div>
                             <div className="onetap-actions">
                                 <button className="action-btn primary" onClick={handleExecute}>
-                                    Execute Now
+                                    {t.executeNow}
                                 </button>
-                                <button className="action-btn secondary" onClick={onClose}>Cancel</button>
+                                <button className="action-btn secondary" onClick={onClose}>{t.cancel}</button>
                             </div>
                         </div>
                     </>
@@ -112,33 +108,33 @@ const ExecutionModal = ({
 
                 {step === 'progress' && (
                     <div className="onetap-body onetap-center">
-                        <div className="onetap-title">Applying...</div>
-                        <div className="onetap-text">Applying your recommendation.</div>
+                        <div className="onetap-title">{t.applying}</div>
+                        <div className="onetap-text">{t.applyingText}</div>
                     </div>
                 )}
 
                 {step === 'done' && result && (
                     <div className="onetap-body onetap-center">
-                        <div className="onetap-title" style={{ color: '#10b981' }}>Done</div>
+                        <div className="onetap-title" style={{ color: '#10b981' }}>{t.done}</div>
                         <div className="onetap-text" style={{ marginBottom: '1.5rem' }}>
                             {result.message}
                         </div>
                         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                             <button className="action-btn primary" onClick={goToLink}>
-                                {LINK_LABELS[result.link] || 'Open'}
+                                {linkLabels[result.link] || t.linkOpen}
                             </button>
-                            <button className="action-btn secondary" onClick={onClose}>Close</button>
+                            <button className="action-btn secondary" onClick={onClose}>{t.close}</button>
                         </div>
                     </div>
                 )}
 
                 {step === 'error' && (
                     <div className="onetap-body onetap-center">
-                        <div className="onetap-title" style={{ color: '#ef4444' }}>Not applied</div>
+                        <div className="onetap-title" style={{ color: '#ef4444' }}>{t.notApplied}</div>
                         <div className="onetap-text" style={{ marginBottom: '1.5rem' }}>{error}</div>
                         <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
-                            <button className="action-btn primary" onClick={handleExecute}>Try Again</button>
-                            <button className="action-btn secondary" onClick={onClose}>Close</button>
+                            <button className="action-btn primary" onClick={handleExecute}>{t.tryAgain}</button>
+                            <button className="action-btn secondary" onClick={onClose}>{t.close}</button>
                         </div>
                     </div>
                 )}
@@ -160,6 +156,7 @@ interface CategoryTips {
 
 /* Shown when "Optimize" is clicked on a Smart Budget: tips for that one category */
 const CategoryTipsPanel = ({ category, onClose }: { category: string; onClose: () => void }) => {
+    const t = RECS_T[useAdminLang()];
     const navigate = useNavigate();
     const [tips, setTips] = useState<CategoryTips | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -167,24 +164,24 @@ const CategoryTipsPanel = ({ category, onClose }: { category: string; onClose: (
     useEffect(() => {
         apiClient.get('/budgets/tips', { params: { category } })
             .then(response => setTips(response.data))
-            .catch(err => setError(getApiErrorMessage(err, `Could not load tips for ${category}.`)));
+            .catch(err => setError(getApiErrorMessage(err, fillText(t.couldNotTips, { cat: category }))));
     }, [category]);
 
     return (
         <div className="card" style={{ padding: '1.25rem 1.5rem', marginBottom: '1.5rem', border: '1px solid rgba(99, 102, 241, 0.35)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '1rem', marginBottom: '0.75rem' }}>
                 <div>
-                    <h3 style={{ margin: 0, color: 'var(--text)' }}>Optimize {category}</h3>
+                    <h3 style={{ margin: 0, color: 'var(--text)' }}>{fillText(t.optimizeTitle, { cat: category })}</h3>
                     {tips && tips.allocated !== null && (
                         <p style={{ margin: '0.25rem 0 0', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                            {formatMoney(tips.spent)} of {formatMoney(tips.allocated)} spent this month ({tips.percentageUsed}%)
+                            {fillText(t.spentOf, { spent: formatMoney(tips.spent), alloc: formatMoney(tips.allocated), pct: tips.percentageUsed ?? '' })}
                         </p>
                     )}
                 </div>
-                <button className="modal-close" onClick={onClose} aria-label="Close tips" title="Close">×</button>
+                <button className="modal-close" onClick={onClose} aria-label={t.closeTips} title={t.close}>×</button>
             </div>
 
-            {!tips && !error && <p style={{ margin: 0, color: 'var(--text-muted)' }}>Loading tips...</p>}
+            {!tips && !error && <p style={{ margin: 0, color: 'var(--text-muted)' }}>{t.loadingTips}</p>}
             {error && <p style={{ margin: 0, color: '#ef4444' }}>{error}</p>}
 
             {tips && (
@@ -195,7 +192,7 @@ const CategoryTipsPanel = ({ category, onClose }: { category: string; onClose: (
 
                     {tips.topPlaces.length > 0 && (
                         <div style={{ marginBottom: '1rem' }}>
-                            <div className="rec-detail-label" style={{ marginBottom: '0.35rem' }}>Where it went this month</div>
+                            <div className="rec-detail-label" style={{ marginBottom: '0.35rem' }}>{t.whereWent}</div>
                             {tips.topPlaces.map(place => (
                                 <div key={place.name} style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', padding: '0.3rem 0', borderBottom: '1px solid var(--border)', color: 'var(--text)', fontSize: '0.9rem' }}>
                                     <span>{place.name} <span style={{ color: 'var(--text-muted)' }}>({place.count}×)</span></span>
@@ -205,13 +202,13 @@ const CategoryTipsPanel = ({ category, onClose }: { category: string; onClose: (
                         </div>
                     )}
 
-                    <div className="rec-detail-label" style={{ marginBottom: '0.35rem' }}>How to spend less</div>
+                    <div className="rec-detail-label" style={{ marginBottom: '0.35rem' }}>{t.howLess}</div>
                     <ul style={{ margin: '0 0 1rem', paddingLeft: '1.25rem', color: 'var(--text)', lineHeight: 1.6 }}>
                         {tips.tips.map((line, i) => <li key={i}>{line}</li>)}
                     </ul>
 
                     <button className="action-btn secondary small" onClick={() => navigate('/smart-budgets')}>
-                        Back to Smart Budgets
+                        {t.backSB}
                     </button>
                 </>
             )}
@@ -220,6 +217,16 @@ const CategoryTipsPanel = ({ category, onClose }: { category: string; onClose: (
 };
 
 export const RecommendationsPage = () => {
+    const t = RECS_T[useAdminLang()];
+    const categoryLabels: Record<string, string> = {
+        budget: t.catBudget, goal: t.catGoal, debt: t.catDebt, subscription: t.catSubscription, alert: t.catAlert
+    };
+    const priorityLabels: Record<string, string> = {
+        critical: t.priorityCritical, high: t.priorityHigh, medium: t.priorityMedium, low: t.priorityLow
+    };
+    const statusLabels: Record<RecommendationStatus, string> = {
+        pending: t.statusPending, accepted: t.statusAccepted, declined: t.statusDeclined, snoozed: t.statusSnoozed
+    };
     const location = useLocation();
     const navigate = useNavigate();
     // Set when the user arrives from a budget's "Optimize" button
@@ -239,7 +246,7 @@ export const RecommendationsPage = () => {
                 setHasData(response.data.hasData !== false);
             } catch (error) {
                 console.error('Failed to fetch recommendations', error);
-                setLoadError(getApiErrorMessage(error, 'Could not load recommendations. Please refresh the page.'));
+                setLoadError(getApiErrorMessage(error, t.loadFailed));
                 setRecommendations([]);
             } finally {
                 setLoading(false);
@@ -256,10 +263,10 @@ export const RecommendationsPage = () => {
         
         try {
             await apiClient.patch(`/recommendations/${id}`, { status: newStatus });
-            notify.success(newStatus === 'snoozed' ? 'Snoozed for 7 days.' : newStatus === 'declined' ? 'Recommendation declined.' : 'Moved back to pending.');
+            notify.success(newStatus === 'snoozed' ? t.snoozedNote : newStatus === 'declined' ? t.declinedNote : t.backPendingNote);
         } catch (error) {
             console.error('Failed to update status', error);
-            notify.error(getApiErrorMessage(error, 'Could not update the recommendation.'));
+            notify.error(getApiErrorMessage(error, t.failUpdate));
             // Revert on failure (simple reload for now)
             const response = await apiClient.get('/recommendations');
             setRecommendations(response.data.recommendations || []);
@@ -281,7 +288,7 @@ export const RecommendationsPage = () => {
         .filter(r => r.status === 'accepted')
         .reduce((sum, r) => sum + (r.savingsAmount || 0), 0);
 
-    if (loading) return <div className="loading-spinner">Loading recommendations...</div>;
+    if (loading) return <div className="loading-spinner">{t.loading}</div>;
 
     return (
         <div className="page-container recommendations-page">
@@ -295,19 +302,19 @@ export const RecommendationsPage = () => {
             <div className="rec-summary-grid">
                 <div className="rec-stat-card">
                     <div className="rec-stat-value">{recommendations.length}</div>
-                    <div className="rec-stat-label">Total Recommendations</div>
+                    <div className="rec-stat-label">{t.totalRecs}</div>
                 </div>
                 <div className="rec-stat-card pending">
                     <div className="rec-stat-value">{pending}</div>
-                    <div className="rec-stat-label">Pending Action</div>
+                    <div className="rec-stat-label">{t.pendingAction}</div>
                 </div>
                 <div className="rec-stat-card accepted">
                     <div className="rec-stat-value">{accepted}</div>
-                    <div className="rec-stat-label">Accepted</div>
+                    <div className="rec-stat-label">{t.accepted}</div>
                 </div>
                 <div className="rec-stat-card savings">
                     <div className="rec-stat-value">{formatMoney(plannedSavings)}</div>
-                    <div className="rec-stat-label">Planned Monthly Savings</div>
+                    <div className="rec-stat-label">{t.plannedSavings}</div>
                 </div>
             </div>
 
@@ -318,7 +325,7 @@ export const RecommendationsPage = () => {
                         className={`rec-filter-btn ${activeFilter === f ? 'active' : ''}`}
                         onClick={() => setActiveFilter(f)}
                     >
-                        {f === 'all' ? 'All' : categoryLabels[f]}
+                        {f === 'all' ? t.filterAll : categoryLabels[f]}
                         {f !== 'all' && (
                             <span className="rec-filter-count">
                                 {recommendations.filter(r => r.category === f).length}
@@ -334,13 +341,11 @@ export const RecommendationsPage = () => {
                 )}
                 {!loadError && recommendations.length === 0 && (
                     <div className="rec-empty">
-                        {hasData
-                            ? 'No recommendations right now. Your finances look on track.'
-                            : 'Add your income and expenses for the last 30 days to get personalised recommendations.'}
+                        {hasData ? t.emptyNoData : t.emptyNeedData}
                     </div>
                 )}
                 {!loadError && recommendations.length > 0 && filtered.length === 0 && (
-                    <div className="rec-empty">No recommendations in this category.</div>
+                    <div className="rec-empty">{t.emptyCategory}</div>
                 )}
                 {filtered.map(rec => (
                     <div key={rec._id} className={`rec-card ${rec.status}`}>
@@ -378,7 +383,7 @@ export const RecommendationsPage = () => {
                                                         boxShadow: rec.priority === 'critical' ? '0 0 6px rgba(239, 68, 68, 0.6)' : 'none'
                                                     }} 
                                                 />
-                                                {rec.priority} Priority
+                                                {fillText(t.priorityBadge, { p: priorityLabels[rec.priority] || rec.priority })}
                                             </span>
                                             {rec.status !== 'pending' && (
                                                 <span 
@@ -392,7 +397,7 @@ export const RecommendationsPage = () => {
                                                         textTransform: 'uppercase'
                                                     }}
                                                 >
-                                                    {rec.status}
+                                                    {statusLabels[rec.status]}
                                                 </span>
                                             )}
                                         </div>
@@ -403,19 +408,19 @@ export const RecommendationsPage = () => {
 
                         <div className="rec-card-body">
                             <div className="rec-detail-row">
-                                <div className="rec-detail-label">Why</div>
+                                <div className="rec-detail-label">{t.why}</div>
                                 <div className="rec-detail-text">{rec.reason}</div>
                             </div>
                             <div className="rec-detail-row">
-                                <div className="rec-detail-label">Action</div>
+                                <div className="rec-detail-label">{t.action}</div>
                                 <div className="rec-detail-text action">{rec.action}</div>
                             </div>
                             <div className="rec-detail-row">
-                                <div className="rec-detail-label">Impact</div>
+                                <div className="rec-detail-label">{t.impact}</div>
                                 <div className="rec-detail-text impact">{rec.projectedImpact}</div>
                             </div>
                             <div className="rec-detail-row">
-                                <div className="rec-detail-label">How</div>
+                                <div className="rec-detail-label">{t.how}</div>
                                 <div className="rec-detail-text muted">{rec.executionPath}</div>
                             </div>
                         </div>
@@ -423,20 +428,20 @@ export const RecommendationsPage = () => {
                         {rec.status === 'pending' && (
                             <div className="rec-card-actions">
                                 <button className="btn-primary btn-sm" onClick={() => handleAccept(rec)}>
-                                    Accept & Execute
+                                    {t.acceptExecute}
                                 </button>
                                 <button className="btn-secondary btn-sm" onClick={() => updateStatus(rec._id, 'snoozed')}>
-                                    Snooze
+                                    {t.snooze}
                                 </button>
                                 <button className="btn-secondary btn-sm" onClick={() => updateStatus(rec._id, 'declined')}>
-                                    Decline
+                                    {t.decline}
                                 </button>
                             </div>
                         )}
                         {rec.status !== 'pending' && (
                             <div className="rec-card-actions">
                                 <button className="btn-secondary btn-sm" onClick={() => updateStatus(rec._id, 'pending')}>
-                                    Restore to Pending
+                                    {t.restorePending}
                                 </button>
                             </div>
                         )}

@@ -1011,3 +1011,26 @@ canvas {
     display: none;
   }
 }
+
+/* Translated button labels are often longer: let them wrap inside the button instead of spilling out */
+/* Sinhala and Tamil labels are longer than English: only in those languages, let the buttons wrap */
+:lang(ta) .cc-actions,
+:lang(si) .cc-actions {
+  flex-wrap: wrap !important;
+}
+
+:lang(ta) .cc-actions .btn-sm,
+:lang(si) .cc-actions .btn-sm {
+  height: auto !important;
+  min-height: 32px;
+  max-width: 100%;
+  white-space: normal !important;
+  line-height: 1.25;
+  text-align: center;
+}
+
+/* Sinhala and Tamil labels are wider than English: only in those languages, give the recommendation labels more room */
+:lang(ta) .rec-detail-row,
+:lang(si) .rec-detail-row {
+  grid-template-columns: 110px 1fr !important;
+}
