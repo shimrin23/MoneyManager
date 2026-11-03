@@ -174,3 +174,13 @@ export const useAdminLang = (): AdminLang => {
 
   return lang;
 };
+
+// Reads the language the user picked, for helpers that are not React components (they cannot use the hook)
+export const readLang = (): AdminLang => {
+  try {
+    const saved = localStorage.getItem('lang');
+    return saved === 'si' || saved === 'ta' ? saved : 'en';
+  } catch {
+    return 'en';
+  }
+};

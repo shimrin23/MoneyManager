@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import { formatMoney } from '../utils/appFormat';
+import { useAdminLang } from '../i18n/adminText';
+import { DASHBOARD_T } from '../i18n/dashboardText';
 
 export const BarChart = ({ data }: { data: { category: string; value: number }[] }) => {
     const max = Math.max(...data.map(d => d.value), 1);
@@ -92,6 +94,7 @@ export const LineChart = ({ data }: { data: { category: string; value: number }[
 
 export const SpendingTrends = () => {
     const navigate = useNavigate();
+    const t = DASHBOARD_T[useAdminLang()];
     const [chartData, setChartData] = useState<{ category: string; value: number }[]>(DEFAULT_TRENDS);
     const [isDemo, setIsDemo] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -136,9 +139,9 @@ export const SpendingTrends = () => {
     if (loading) {
         return (
             <div className="card" style={{ padding: '1.75rem', height: '100%' }}>
-                <h3 className="section-title">Spending Trends</h3>
+                <h3 className="section-title">{t.spendingTrends}</h3>
                 <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-secondary)' }}>
-                    Loading charts…
+                    {t.loadingCharts}
                 </div>
             </div>
         );
@@ -149,11 +152,11 @@ export const SpendingTrends = () => {
             className="card sp-card"
             style={{ padding: '1.75rem', height: '100%' }}
             onClick={() => navigate('/smart-budgets')}
-            title="View smart budgets"
+            title={t.viewSmartBudgets}
         >
             <div className="sp-head">
-                <h3 className="section-title">Spending Trends</h3>
-                {isDemo && <span className="sp-badge">Sample Preview</span>}
+                <h3 className="section-title">{t.spendingTrends}</h3>
+                {isDemo && <span className="sp-badge">{t.samplePreview}</span>}
             </div>
             {/* Amounts per category on the left, share of spending on the right */}
             <div className="sp-body">

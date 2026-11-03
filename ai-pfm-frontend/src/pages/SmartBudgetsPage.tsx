@@ -4,6 +4,9 @@ import { useNavigate } from 'react-router-dom';
 import { apiClient, getApiErrorMessage } from '../api/client';
 import { notify, confirmDialog } from '../utils/systemMessages';
 import { IconAlertTriangle, IconCheckCircle, IconTarget, IconBell, IconTrendingUp, IconTrendingDown, IconLightbulb } from '../components/Icons';
+import { useAdminLang } from '../i18n/adminText';
+import { SB_T } from '../i18n/smartBudgetsText';
+import { fillText } from '../i18n/dashboardText';
 
 interface Budget {
     _id?: string;
@@ -24,6 +27,7 @@ interface Budget {
 import { SpendingTrends } from '../components/SpendingTrends';
 
 export const SmartBudgetsPage = () => {
+    const t = SB_T[useAdminLang()];
     const navigate = useNavigate();
     const [budgets, setBudgets] = useState<Budget[]>([]);
     const [activeTab, setActiveTab] = useState<'tracker' | 'planner'>('tracker');
@@ -88,7 +92,7 @@ export const SmartBudgetsPage = () => {
         if (!alertBudget?._id) return;
         const level = parseFloat(alertLevel);
         if (!remove && (isNaN(level) || level < 1 || level > 100)) {
-            notify.warning('Please enter an alert level between 1 and 100 percent.');
+            notify.warning(t.warnAlertRange);
             return;
         }
 
@@ -96,13 +100,13 @@ export const SmartBudgetsPage = () => {
         try {
             await apiClient.patch(`/budgets/${alertBudget._id}/alert`, { alertThreshold: remove ? null : level });
             notify.success(remove
-                ? `Alert removed for ${alertBudget.category}.`
-                : `Alert set: you'll be warned when ${alertBudget.category} reaches ${level}%.`);
+                ? fillText(t.alertRemoved, { cat: alertBudget.category })
+                : fillText(t.alertSet, { cat: alertBudget.category, level }));
             setAlertBudget(null);
             fetchBudgets();
         } catch (error) {
             console.error('Failed to set budget alert:', error);
-            notify.error(getApiErrorMessage(error, 'Failed to set the alert. Please try again.'));
+            notify.error(getApiErrorMessage(error, t.failAlert));
         } finally {
             setIsSavingAlert(false);
         }
@@ -111,20 +115,20 @@ export const SmartBudgetsPage = () => {
     const handleDeleteBudget = async (budget: Budget) => {
         if (!budget._id) return;
         const confirmed = await confirmDialog({
-            title: 'Delete budget?',
-            message: `The ${budget.category} budget will be removed.`,
-            confirmText: 'Delete',
+            title: t.deleteTitle,
+            message: fillText(t.deleteMsg, { cat: budget.category }),
+            confirmText: t.deleteBtn,
             danger: true,
         });
         if (!confirmed) return;
 
         try {
             await apiClient.delete(`/budgets/${budget._id}`);
-            notify.success(`${budget.category} budget deleted.`);
+            notify.success(fillText(t.deletedNote, { cat: budget.category }));
             fetchBudgets();
         } catch (error) {
             console.error('Failed to delete budget:', error);
-            notify.error(getApiErrorMessage(error, 'Failed to delete budget. Please try again.'));
+            notify.error(getApiErrorMessage(error, t.failDelete));
         }
     };
 
@@ -137,19 +141,19 @@ export const SmartBudgetsPage = () => {
         if (!editingBudget || !editingBudget._id) return;
         const amount = parseFloat(editAmount);
         if (isNaN(amount) || amount < 0) {
-            notify.warning('Please enter a budget limit of 0 or more.');
+            notify.warning(t.warnLimit);
             return;
         }
 
         setIsSaving(true);
         try {
             await apiClient.put(`/budgets/${editingBudget._id}`, { allocatedAmount: toLkr(amount) });
-            notify.success(`${editingBudget.category} limit updated to ${formatMoney(toLkr(amount))}.`);
+            notify.success(fillText(t.limitUpdated, { cat: editingBudget.category, amount: formatMoney(toLkr(amount)) }));
             setEditingBudget(null);
             fetchBudgets(); // Refresh data to update progress bars
         } catch (error) {
             console.error('Failed to update budget:', error);
-            notify.error(getApiErrorMessage(error, 'Failed to update budget. Please try again.'));
+            notify.error(getApiErrorMessage(error, t.failUpdate));
         } finally {
             setIsSaving(false);
         }
@@ -159,31 +163,31 @@ export const SmartBudgetsPage = () => {
         e.preventDefault();
         const amount = parseFloat(newCategoryAmount);
         if (!newCategoryName.trim()) {
-            notify.warning('Please enter a category name.');
+            notify.warning(t.warnCatName);
             return;
         }
         if (isNaN(amount) || amount < 0) {
-            notify.warning('Please enter a budget limit of 0 or more.');
+            notify.warning(t.warnLimit);
             return;
         }
 
         setIsAdding(true);
         try {
             await apiClient.post('/budgets', { category: newCategoryName.trim(), allocatedAmount: toLkr(amount) });
-            notify.success(`${newCategoryName.trim()} budget added.`);
+            notify.success(fillText(t.addedNote, { cat: newCategoryName.trim() }));
             setNewCategoryName('');
             setNewCategoryAmount('');
             fetchBudgets(); // Refresh to show new category
         } catch (error) {
             console.error('Failed to add category:', error);
-            notify.error(getApiErrorMessage(error, 'Failed to add category. Please try again.'));
+            notify.error(getApiErrorMessage(error, t.failAdd));
         } finally {
             setIsAdding(false);
         }
     };
 
     if (loading) {
-        return <div className="loading-spinner">Loading smart budgets...</div>;
+        return <div className="loading-spinner">{t.loading}</div>;
     }
 
     return (
@@ -191,17 +195,17 @@ export const SmartBudgetsPage = () => {
 
             {/* Tabs Header */}
             <div className="rec-filters" style={{ marginBottom: '32px' }}>
-                <button 
+                <button
                     className={`rec-filter-btn ${activeTab === 'tracker' ? 'active' : ''}`}
                     onClick={() => setActiveTab('tracker')}
                 >
-                    Budget Tracker
+                    {t.tabTracker}
                 </button>
-                <button 
+                <button
                     className={`rec-filter-btn ${activeTab === 'planner' ? 'active' : ''}`}
                     onClick={() => setActiveTab('planner')}
                 >
-                    Budget Planner
+                    {t.tabPlanner}
                 </button>
             </div>
 
@@ -213,33 +217,33 @@ export const SmartBudgetsPage = () => {
             {/* Budget Summary */}
             <div className="sb-stats">
                 <div className="sb-stat">
-                    <span className="sb-stat-label">{totalIncome > 0 ? 'Monthly Income' : 'No income recorded this month'}</span>
+                    <span className="sb-stat-label">{totalIncome > 0 ? t.statIncome : t.noIncome}</span>
                     <span className="sb-stat-value">{formatMoney(totalIncome)}</span>
                 </div>
                 <div className="sb-stat">
-                    <span className="sb-stat-label">Total Budgeted</span>
+                    <span className="sb-stat-label">{t.statBudgeted}</span>
                     <span className="sb-stat-value">{formatMoney(totalAllocated)}</span>
                 </div>
                 <div className="sb-stat">
-                    <span className="sb-stat-label">Income Allocated</span>
+                    <span className="sb-stat-label">{t.statIncomeAllocated}</span>
                     <span className="sb-stat-value">{totalIncome > 0 ? `${Math.round((totalAllocated / totalIncome) * 100)}%` : '—'}</span>
                 </div>
                 <div className="sb-stat">
-                    <span className="sb-stat-label">Over Budget Categories</span>
+                    <span className="sb-stat-label">{t.statOverCats}</span>
                     <span className="sb-stat-value">{overBudgetCount}</span>
                 </div>
             </div>
 
             {/* AI Budget Insights */}
             <section className="sb-panel">
-                <h3 className="sb-panel-title">AI Budget Insights</h3>
+                <h3 className="sb-panel-title">{t.insightsTitle}</h3>
                 <div className="sb-insights">
                     {budgets.filter(b => b.alertTriggered).map((budget) => (
                         <div key={`alert-${budget._id}`} className="sb-note bad">
                             <span className="sb-note-icon"><IconBell size={18} /></span>
                             <div className="sb-note-body">
-                                <h4>Budget Alert: {budget.category}</h4>
-                                <p>You have used {budget.percentageUsed}% of your {budget.category} budget (alert set at {budget.alertThreshold}%).</p>
+                                <h4>{fillText(t.alertTitle, { cat: budget.category })}</h4>
+                                <p>{fillText(t.alertBody, { pct: budget.percentageUsed, cat: budget.category, threshold: budget.alertThreshold ?? '' })}</p>
                             </div>
                         </div>
                     ))}
@@ -249,10 +253,10 @@ export const SmartBudgetsPage = () => {
                             <div key={`critical-${idx}`} className="sb-note bad">
                                 <span className="sb-note-icon"><IconAlertTriangle size={18} /></span>
                                 <div className="sb-note-body">
-                                    <h4>Critical: {budget.category} Overspend</h4>
+                                    <h4>{fillText(t.criticalTitle, { cat: budget.category })}</h4>
                                     <p>{budget.aiRecommendation}</p>
                                     <button className="sb-note-btn" onClick={() => navigate('/recommendations')}>
-                                        <IconTarget size={14} /> Fix Now
+                                        <IconTarget size={14} /> {t.fixNow}
                                     </button>
                                 </div>
                             </div>
@@ -261,8 +265,8 @@ export const SmartBudgetsPage = () => {
                         <div className="insight-item success">
                             <span className="insight-icon" style={{ display: 'flex', alignItems: 'center' }}><IconCheckCircle size={20} /></span>
                             <div className="insight-content">
-                                <h4>No Critical Overspending</h4>
-                                <p>You have no categories currently over budget. Great job!</p>
+                                <h4>{t.noCritTitle}</h4>
+                                <p>{t.noCritText}</p>
                             </div>
                         </div>
                     )}
@@ -272,10 +276,10 @@ export const SmartBudgetsPage = () => {
                             <div key={`success-${idx}`} className="sb-note good">
                                 <span className="sb-note-icon"><IconCheckCircle size={18} /></span>
                                 <div className="sb-note-body">
-                                    <h4>Good: {budget.category} Control</h4>
+                                    <h4>{fillText(t.goodTitle, { cat: budget.category })}</h4>
                                     <p>{budget.aiRecommendation}</p>
                                     <button className="sb-note-btn" onClick={() => navigate('/')}>
-                                        <IconTrendingUp size={14} /> View Details
+                                        <IconTrendingUp size={14} /> {t.viewDetails}
                                     </button>
                                 </div>
                             </div>
@@ -295,11 +299,11 @@ export const SmartBudgetsPage = () => {
                                 <h4>{budget.category}</h4>
                             </div>
                             {budget.isOverBudget ? (
-                                <span className="sb-pill bad">Over Budget</span>
+                                <span className="sb-pill bad">{t.pillOver}</span>
                             ) : budget.percentageUsed > 80 ? (
-                                <span className="sb-pill warn">Almost Full</span>
+                                <span className="sb-pill warn">{t.pillAlmost}</span>
                             ) : (
-                                <span className="sb-pill good">On Track</span>
+                                <span className="sb-pill good">{t.pillOnTrack}</span>
                             )}
                         </div>
 
@@ -315,33 +319,33 @@ export const SmartBudgetsPage = () => {
                         <div className="sb-row">
                             <span>{budget.percentageUsed}%</span>
                             <span>
-                                {budget.remainingAmount >= 0 ? 'Remaining' : 'Over by'}: {formatMoney(Math.abs(budget.remainingAmount))}
+                                {budget.remainingAmount >= 0 ? t.remaining : t.overBy}: {formatMoney(Math.abs(budget.remainingAmount))}
                             </span>
                         </div>
 
                         <div className="sb-meta">
                             <span className={`sb-trend ${budget.trends.change > 0 ? 'up' : 'down'}`}>
                                 {budget.trends.change > 0 ? <IconTrendingUp size={14} /> : <IconTrendingDown size={14} />}
-                                {Math.abs(budget.trends.change).toFixed(1)}% vs last month
+                                {fillText(t.vsLastMonth, { pct: Math.abs(budget.trends.change).toFixed(1) })}
                             </span>
                             {budget.alertThreshold != null && (
                                 <span className={`sb-pill ${budget.alertTriggered ? 'bad' : 'warn'}`}>
-                                    <IconBell size={12} /> Alert at {budget.alertThreshold}%
+                                    <IconBell size={12} /> {fillText(t.alertAt, { n: budget.alertThreshold })}
                                 </span>
                             )}
                         </div>
 
                         <div className="sb-ai">
                             <span className="sb-ai-icon"><IconLightbulb size={16} /></span>
-                            <p><strong>AI Recommendation:</strong> {budget.aiRecommendation}</p>
+                            <p><strong>{t.aiRec}</strong> {budget.aiRecommendation}</p>
                         </div>
 
                         <div className="sb-actions">
                             <button className="action-btn primary" onClick={() => handleOptimizeBudget(budget.category)}>
-                                <IconTarget size={16} /> Optimize
+                                <IconTarget size={16} /> {t.optimize}
                             </button>
                             <button className="action-btn secondary" onClick={() => handleSetAlert(budget)}>
-                                <IconBell size={16} /> {budget.alertThreshold != null ? 'Edit Alert' : 'Set Alert'}
+                                <IconBell size={16} /> {budget.alertThreshold != null ? t.editAlert : t.setAlert}
                             </button>
                         </div>
                     </article>
@@ -354,39 +358,39 @@ export const SmartBudgetsPage = () => {
             {activeTab === 'planner' && (
                 <div className="planner-tab-content">
                     <section className="sb-panel">
-                        <h3 className="sb-panel-title">The Big Picture</h3>
+                        <h3 className="sb-panel-title">{t.bigPicture}</h3>
                         <div className="sb-stats sb-stats-3">
                             <div className="sb-stat">
-                                <span className="sb-stat-label">Total Income</span>
+                                <span className="sb-stat-label">{t.totalIncome}</span>
                                 <span className="sb-stat-value">{formatMoney(totalIncome)}</span>
                             </div>
                             <div className="sb-stat">
-                                <span className="sb-stat-label">Total Allocated</span>
+                                <span className="sb-stat-label">{t.totalAllocated}</span>
                                 <span className="sb-stat-value">{formatMoney(totalAllocated)}</span>
                             </div>
                             <div className="sb-stat">
-                                <span className="sb-stat-label">Unallocated Cash</span>
+                                <span className="sb-stat-label">{t.unallocated}</span>
                                 <span className="sb-stat-value">{formatMoney((totalIncome - totalAllocated))}</span>
                             </div>
                         </div>
                     </section>
 
                     <section className="sb-panel">
-                        <h3 className="sb-panel-title">Add New Category</h3>
+                        <h3 className="sb-panel-title">{t.addNewCat}</h3>
                         <form onSubmit={handleAddCategory} className="sb-form">
                             <div className="sb-field">
-                                <label htmlFor="sbCatName">Category Name</label>
+                                <label htmlFor="sbCatName">{t.catName}</label>
                                 <input
                                     id="sbCatName"
                                     type="text"
                                     className="sb-input"
-                                    placeholder="e.g. Vacation, Gifts"
+                                    placeholder={t.catPh}
                                     value={newCategoryName}
                                     onChange={(e) => setNewCategoryName(e.target.value)}
                                 />
                             </div>
                             <div className="sb-field">
-                                <label htmlFor="sbCatLimit">Budget Limit ({currencyCode()})</label>
+                                <label htmlFor="sbCatLimit">{fillText(t.budgetLimit, { cur: currencyCode() })}</label>
                                 <input
                                     id="sbCatLimit"
                                     type="number"
@@ -397,26 +401,26 @@ export const SmartBudgetsPage = () => {
                                 />
                             </div>
                             <button type="submit" className="action-btn primary sb-form-btn" disabled={isAdding}>
-                                {isAdding ? 'Adding...' : 'Add Budget'}
+                                {isAdding ? t.adding : t.addBudget}
                             </button>
                         </form>
                     </section>
 
                     <section className="sb-panel">
-                        <h3 className="sb-panel-title">Manage Allocations</h3>
+                        <h3 className="sb-panel-title">{t.manage}</h3>
                         <div className="sb-alloc-list">
                             {budgets.map(budget => (
                                 <div key={`manage-${budget._id}`} className="sb-alloc-row">
                                     <div className="sb-alloc-info">
                                         <h4>{budget.category}</h4>
-                                        <p>Limit: {formatMoney(budget.allocatedAmount)}</p>
+                                        <p>{fillText(t.limit, { amount: formatMoney(budget.allocatedAmount) })}</p>
                                     </div>
                                     <div className="sb-alloc-actions">
                                         <button className="action-btn secondary" onClick={() => handleEditClick(budget)}>
-                                            Edit Limit
+                                            {t.editLimit}
                                         </button>
                                         <button className="action-btn danger" onClick={() => handleDeleteBudget(budget)}>
-                                            Delete
+                                            {t.delete}
                                         </button>
                                     </div>
                                 </div>
@@ -431,13 +435,13 @@ export const SmartBudgetsPage = () => {
                 <div className="modal-overlay" onClick={() => setAlertBudget(null)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
                         <div className="modal-header">
-                            <h2 className="modal-title">Budget Alert: {alertBudget.category}</h2>
+                            <h2 className="modal-title">{fillText(t.alertTitle, { cat: alertBudget.category })}</h2>
                             <button className="modal-close" onClick={() => setAlertBudget(null)}>×</button>
                         </div>
 
                         <div className="modal-body" style={{ marginTop: '16px' }}>
                             <div className="form-group" style={{ marginBottom: '20px' }}>
-                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Alert me when I have used (%)</label>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>{t.alertLabel}</label>
                                 <input
                                     type="number"
                                     min="1"
@@ -448,7 +452,7 @@ export const SmartBudgetsPage = () => {
                                     style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', fontSize: '16px' }}
                                 />
                                 <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '8px' }}>
-                                    Currently used: {alertBudget.percentageUsed}% ({formatMoney(alertBudget.spentAmount)} of {formatMoney(alertBudget.allocatedAmount)})
+                                    {fillText(t.currentlyUsed, { pct: alertBudget.percentageUsed, spent: formatMoney(alertBudget.spentAmount), alloc: formatMoney(alertBudget.allocatedAmount) })}
                                 </p>
                             </div>
                         </div>
@@ -461,7 +465,7 @@ export const SmartBudgetsPage = () => {
                                     disabled={isSavingAlert}
                                     style={{ marginRight: 'auto' }}
                                 >
-                                    Remove Alert
+                                    {t.removeAlert}
                                 </button>
                             )}
                             <button
@@ -469,14 +473,14 @@ export const SmartBudgetsPage = () => {
                                 onClick={() => setAlertBudget(null)}
                                 disabled={isSavingAlert}
                             >
-                                Cancel
+                                {t.cancel}
                             </button>
                             <button
                                 className="action-btn primary"
                                 onClick={() => handleSaveAlert()}
                                 disabled={isSavingAlert || !alertLevel}
                             >
-                                {isSavingAlert ? 'Saving...' : 'Save Alert'}
+                                {isSavingAlert ? t.saving : t.saveAlert}
                             </button>
                         </div>
                     </div>
@@ -488,13 +492,13 @@ export const SmartBudgetsPage = () => {
                 <div className="modal-overlay" onClick={() => setEditingBudget(null)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '400px' }}>
                         <div className="modal-header">
-                            <h2 className="modal-title">Edit Budget: {editingBudget.category}</h2>
+                            <h2 className="modal-title">{fillText(t.editTitle, { cat: editingBudget.category })}</h2>
                             <button className="modal-close" onClick={() => setEditingBudget(null)}>×</button>
                         </div>
                         
                         <div className="modal-body" style={{ marginTop: '16px' }}>
                             <div className="form-group" style={{ marginBottom: '20px' }}>
-                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>Budget Limit ({currencyCode()})</label>
+                                <label style={{ display: 'block', marginBottom: '8px', fontWeight: '500' }}>{fillText(t.budgetLimit, { cur: currencyCode() })}</label>
                                 <input 
                                     type="number" 
                                     className="form-input"
@@ -503,7 +507,7 @@ export const SmartBudgetsPage = () => {
                                     style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-main)', color: 'var(--text-main)', fontSize: '16px' }}
                                 />
                                 <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '8px' }}>
-                                    Currently spent: {formatMoney(editingBudget.spentAmount)}
+                                    {fillText(t.currentlySpent, { amount: formatMoney(editingBudget.spentAmount) })}
                                 </p>
                             </div>
                         </div>
@@ -514,14 +518,14 @@ export const SmartBudgetsPage = () => {
                                 onClick={() => setEditingBudget(null)}
                                 disabled={isSaving}
                             >
-                                Cancel
+                                {t.cancel}
                             </button>
-                            <button 
-                                className="action-btn primary" 
+                            <button
+                                className="action-btn primary"
                                 onClick={handleSaveBudget}
                                 disabled={isSaving || !editAmount}
                             >
-                                {isSaving ? 'Saving...' : 'Save Limit'}
+                                {isSaving ? t.saving : t.saveLimit}
                             </button>
                         </div>
                     </div>

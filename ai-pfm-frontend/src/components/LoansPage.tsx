@@ -11,10 +11,14 @@ import LoanAlerts from './LoanAlerts';
 import AiLoanInsights from './AiLoanInsights';
 import LoanToIncomeRatio from './LoanToIncomeRatio';
 import WhatIfSimulation from './WhatIfSimulation';
+import { useAdminLang } from '../i18n/adminText';
+import { LOANS_T } from '../i18n/loansText';
+import { fillText } from '../i18n/dashboardText';
 
 type TabType = 'overview' | 'calculator' | 'schedule' | 'strategies' | 'simulation' | 'insights' | 'ratio';
 
 const LoansPage: FC = () => {
+    const t = LOANS_T[useAdminLang()];
     const { loans, loading, error, fetchLoans, updateLoan, deleteLoan, recordPayment, getDebtPayoffStrategies } = useLoans();
     const [activeTab, setActiveTab] = useState<TabType>('overview');
     const [selectedLoan, setSelectedLoan] = useState<string | null>(null);
@@ -68,16 +72,16 @@ const LoansPage: FC = () => {
         const remaining = Number(loan.remainingAmount);
         const suggested = Math.min(Number(loan.monthlyInstallment), remaining);
         const input = await promptDialog({
-            title: 'Pay EMI',
+            title: t.payEmiTitle,
             message: `${loan.type} loan (${loan.provider}): ${formatMoney(remaining, 2)} remaining. Monthly EMI: ${formatMoney(Number(loan.monthlyInstallment), 2)}.`,
-            label: `Payment amount (${currencyCode()})`,
+            label: fillText(t.paymentAmount, { cur: currencyCode() }),
             inputType: 'number',
             defaultValue: fromLkr(suggested).toFixed(2),
-            confirmText: 'Pay',
+            confirmText: t.payButton,
             validate: (value) => {
                 const amount = Number(value);
-                if (!value.trim() || !Number.isFinite(amount) || amount <= 0) return 'Please enter an amount greater than 0.';
-                if (toLkr(amount) > remaining + 0.01) return `Payment cannot be more than the remaining ${formatMoney(remaining, 2)}.`;
+                if (!value.trim() || !Number.isFinite(amount) || amount <= 0) return t.amountInvalid;
+                if (toLkr(amount) > remaining + 0.01) return fillText(t.paymentTooHigh, { amount: formatMoney(remaining, 2) });
                 return null;
             },
         });
@@ -86,10 +90,10 @@ const LoansPage: FC = () => {
         try {
             const updated = await recordPayment(loanId, toLkr(Number(input)));
             await fetchLoans();
-            if (updated?.status === 'Closed') notify.success(`Loan fully paid and closed. Well done!`);
-            else notify.success(`Payment of ${formatMoney(toLkr(Number(input)), 2)} recorded.`);
+            if (updated?.status === 'Closed') notify.success(t.loanClosed);
+            else notify.success(fillText(t.paymentRecorded, { amount: formatMoney(toLkr(Number(input)), 2) }));
         } catch (err) {
-            notify.error(err instanceof Error ? err.message : 'Failed to record payment.');
+            notify.error(err instanceof Error ? err.message : t.paymentFailed);
         }
     };
 
@@ -139,17 +143,17 @@ const LoansPage: FC = () => {
             });
             setShowEditModal(false);
             await fetchLoans();
-            notify.success('Loan updated.');
+            notify.success(t.loanUpdated);
         } catch (err: any) {
-            setEditError(err.message || 'Failed to update loan');
+            setEditError(err.message || t.updateFailed);
         }
     };
 
     const handleDeleteLoan = async (loanId: string) => {
         const confirmed = await confirmDialog({
-            title: 'Delete loan?',
-            message: 'This loan will be removed. This cannot be undone.',
-            confirmText: 'Delete',
+            title: t.deleteLoanTitle,
+            message: t.deleteLoanMessage,
+            confirmText: t.deleteConfirm,
             danger: true,
         });
         if (!confirmed) return;
@@ -158,9 +162,9 @@ const LoansPage: FC = () => {
             await deleteLoan(loanId);
             if (selectedLoan === loanId) setSelectedLoan(null);
             await fetchLoans();
-            notify.success('Loan deleted.');
+            notify.success(t.loanDeleted);
         } catch (err) {
-            notify.error(err instanceof Error ? err.message : 'Failed to delete loan.');
+            notify.error(err instanceof Error ? err.message : t.deleteFailed);
         }
     };
 
@@ -168,13 +172,13 @@ const LoansPage: FC = () => {
     const loanSelector = (
         <div className="gl-form fin-selector">
             <div className="form-group">
-                <label htmlFor="loan-selector">Loan</label>
+                <label htmlFor="loan-selector">{t.loanLabel}</label>
                 <select
                     id="loan-selector"
                     value={selectedLoan || ''}
                     onChange={(e) => setSelectedLoan(e.target.value || null)}
                 >
-                    <option value="">Select a loan…</option>
+                    <option value="">{t.selectLoan}</option>
                     {loans.map(l => (
                         <option key={l._id} value={l._id}>
                             {l.type} – {l.provider} ({formatMoney(Number(l.principal))}){l.status !== 'Active' ? ` · ${l.status}` : ''}
@@ -186,7 +190,7 @@ const LoansPage: FC = () => {
     );
 
     if (loading) {
-        return <div className="loading">Loading loans...</div>;
+        return <div className="loading">{t.loading}</div>;
     }
 
     return (
@@ -194,17 +198,17 @@ const LoansPage: FC = () => {
             <div className="page-header">
                 <div style={{ flex: 1 }}></div>
                 <div className="fin-header-actions">
-                    <button onClick={fetchLoans} className="btn-secondary" aria-label="Refresh" title="Refresh">
+                    <button onClick={fetchLoans} className="btn-secondary" aria-label={t.refresh} title={t.refresh}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M3 12a9 9 0 0 1 15.5-6.2L21 8" />
                             <path d="M21 3v5h-5" />
                             <path d="M21 12a9 9 0 0 1-15.5 6.2L3 16" />
                             <path d="M3 21v-5h5" />
                         </svg>
-                        <span className="btn-label">Refresh</span>
+                        <span className="btn-label">{t.refresh}</span>
                     </button>
                     <button onClick={handleAddLoan} className="btn-primary">
-                        Add Loan
+                        {t.addLoan}
                     </button>
                 </div>
             </div>
@@ -216,13 +220,13 @@ const LoansPage: FC = () => {
                     className={`rec-filter-btn ${activeTab === 'overview' ? 'active' : ''}`}
                     onClick={() => setActiveTab('overview')}
                 >
-                    Overview
+                    {t.tabOverview}
                 </button>
                 <button
                     className={`rec-filter-btn ${activeTab === 'calculator' ? 'active' : ''}`}
                     onClick={handleAddLoan}
                 >
-                    Calculator
+                    {t.tabCalculator}
                 </button>
                 {loans.length > 0 && (
                     <>
@@ -230,31 +234,31 @@ const LoansPage: FC = () => {
                             className={`rec-filter-btn ${activeTab === 'schedule' ? 'active' : ''}`}
                             onClick={() => setActiveTab('schedule')}
                         >
-                            Schedule
+                            {t.tabSchedule}
                         </button>
                         <button
                             className={`rec-filter-btn ${activeTab === 'strategies' ? 'active' : ''}`}
                             onClick={() => setActiveTab('strategies')}
                         >
-                            Strategies
+                            {t.tabStrategies}
                         </button>
                         <button
                             className={`rec-filter-btn ${activeTab === 'simulation' ? 'active' : ''}`}
                             onClick={() => setActiveTab('simulation')}
                         >
-                            Simulation
+                            {t.tabSimulation}
                         </button>
                         <button
                             className={`rec-filter-btn ${activeTab === 'insights' ? 'active' : ''}`}
                             onClick={() => setActiveTab('insights')}
                         >
-                            Insights
+                            {t.tabInsights}
                         </button>
                         <button
                             className={`rec-filter-btn ${activeTab === 'ratio' ? 'active' : ''}`}
                             onClick={() => setActiveTab('ratio')}
                         >
-                            Debt-to-Income
+                            {t.tabRatio}
                         </button>
                     </>
                 )}
@@ -304,7 +308,7 @@ const LoansPage: FC = () => {
                                 monthlyEMI={activeLoan.monthlyInstallment}
                             />
                         ) : (
-                            <div className="empty-state"><p>Select a loan to view its schedule</p></div>
+                            <div className="empty-state"><p>{t.selectLoanSchedule}</p></div>
                         )}
                     </div>
                 )}
@@ -312,7 +316,7 @@ const LoansPage: FC = () => {
                 {activeTab === 'strategies' && (
                     <div className="tab-pane">
                         {strategiesLoading
-                            ? <div className="empty-state"><p>Comparing payoff strategies…</p></div>
+                            ? <div className="empty-state"><p>{t.comparingStrategies}</p></div>
                             : <DebtPayoffStrategies strategies={strategies} />}
                     </div>
                 )}
@@ -330,7 +334,7 @@ const LoansPage: FC = () => {
                                 interestRate={activeLoan.interestRate}
                             />
                         ) : (
-                            <div className="empty-state"><p>Select a loan to run simulations</p></div>
+                            <div className="empty-state"><p>{t.selectLoanSimulation}</p></div>
                         )}
                     </div>
                 )}
@@ -358,12 +362,12 @@ const LoansPage: FC = () => {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="gl-modal-head">
-                            <h2 id="loan-edit-title">Edit Loan</h2>
+                            <h2 id="loan-edit-title">{t.editLoanTitle}</h2>
                             <button
                                 type="button"
                                 className="gl-modal-close"
                                 onClick={() => setShowEditModal(false)}
-                                aria-label="Close"
+                                aria-label={t.close}
                             >
                                 ✕
                             </button>
@@ -372,7 +376,7 @@ const LoansPage: FC = () => {
                         <form onSubmit={handleEditSubmit}>
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label>Provider</label>
+                                    <label>{t.provider}</label>
                                     <input
                                         type="text"
                                         value={editForm.provider}
@@ -381,7 +385,7 @@ const LoansPage: FC = () => {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label>Interest Rate (%)</label>
+                                    <label>{t.interestRate}</label>
                                     <input
                                         type="number"
                                         value={editForm.interestRate}
@@ -392,7 +396,7 @@ const LoansPage: FC = () => {
                             </div>
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label>Tenure (Months)</label>
+                                    <label>{t.tenureMonths}</label>
                                     <input
                                         type="number"
                                         value={editForm.tenure}
@@ -401,27 +405,27 @@ const LoansPage: FC = () => {
                                     />
                                 </div>
                                 <div className="form-group">
-                                    <label>Monthly EMI ({currencyCode()})</label>
+                                    <label>{fillText(t.monthlyEmi, { cur: currencyCode() })}</label>
                                     <input type="text" value={formatMoney(Number(editForm.monthlyInstallment), 2)} readOnly disabled />
                                     <span className="fin-note">
-                                        Recalculated automatically when you change the rate or tenure.
+                                        {t.emiNote}
                                     </span>
                                 </div>
                             </div>
                             <div className="form-row">
                                 <div className="form-group">
-                                    <label>Status</label>
+                                    <label>{t.status}</label>
                                     <select
                                         value={editForm.status}
                                         onChange={(e) => handleEditChange('status', e.target.value)}
                                     >
-                                        <option value="Active">Active</option>
-                                        <option value="Closed">Closed</option>
-                                        <option value="Overdue">Overdue</option>
+                                        <option value="Active">{t.stActive}</option>
+                                        <option value="Closed">{t.stClosed}</option>
+                                        <option value="Overdue">{t.stOverdue}</option>
                                     </select>
                                 </div>
                                 <div className="form-group">
-                                    <label>Next Due Date</label>
+                                    <label>{t.nextDueDate}</label>
                                     <DateInput
                                         value={editForm.nextDueDate}
                                         onChange={(e) => handleEditChange('nextDueDate', e.target.value)}
@@ -430,10 +434,10 @@ const LoansPage: FC = () => {
                             </div>
                             <div className="form-actions">
                                 <button type="button" className="btn-secondary" onClick={() => setShowEditModal(false)}>
-                                    Cancel
+                                    {t.cancel}
                                 </button>
                                 <button type="submit" className="btn-primary">
-                                    Save Changes
+                                    {t.saveChanges}
                                 </button>
                             </div>
                         </form>
