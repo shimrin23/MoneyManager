@@ -3371,6 +3371,14 @@
 .rc-yearly { font-size: 12.5px; color: var(--text-muted); }
 .rc-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-top: 8px; }
 .rc-actions .rec-action-btn { height: 32px; min-height: 32px; padding: 0 12px; font-size: 13px; border-radius: 8px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; }
+/* Confirm / Pay / Add use the same purple gradient as the primary buttons on the other pages */
+.recurring-page .rc-actions .rec-action-btn.accept,
+[data-theme='light'] .recurring-page .rc-actions .rec-action-btn.accept,
+.recurring-page .rc-form .rc-add-btn,
+[data-theme='light'] .recurring-page .rc-form .rc-add-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; border: 0; }
+.recurring-page .rc-actions .rec-action-btn.accept:hover,
+.recurring-page .rc-form .rc-add-btn:hover:not(:disabled) { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); filter: brightness(1.08); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(118, 75, 162, 0.3); }
+.recurring-page .rc-form .rc-add-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .rc-paid { display: inline-flex; align-items: center; height: 32px; padding: 0 10px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #059669; background: rgba(16, 185, 129, 0.12); }
 
 .rc-pay-summary { margin-bottom: 18px; }
