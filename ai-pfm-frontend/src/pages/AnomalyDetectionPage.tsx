@@ -2,6 +2,9 @@ import { formatMoney } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { apiClient } from '../api/client';
+import { useAdminLang, readLang } from '../i18n/adminText';
+import { ANOMALY_T } from '../i18n/anomalyText';
+import { fillText } from '../i18n/dashboardText';
 
 type AnomalyType = 'duplicate' | 'spike' | 'unusual-merchant' | 'unusual-time' | 'geo-mismatch';
 type AnomalyStatus = 'open' | 'reviewed-safe' | 'reviewed-fraud' | 'dismissed';
@@ -32,20 +35,21 @@ const riskColor = (score: number) => {
 };
 
 const riskLabel = (score: number) => {
-    if (score >= 85) return 'High Risk';
-    if (score >= 65) return 'Medium Risk';
-    return 'Low Risk';
-};
-
-const typeLabels: Record<AnomalyType, string> = {
-    duplicate: 'Duplicate Charge',
-    spike: 'Spending Spike',
-    'unusual-merchant': 'Unknown Merchant',
-    'unusual-time': 'Unusual Time',
-    'geo-mismatch': 'Location Mismatch'
+    const t = ANOMALY_T[readLang()];
+    if (score >= 85) return t.riskHigh;
+    if (score >= 65) return t.riskMedium;
+    return t.riskLow;
 };
 
 export const AnomalyDetectionPage = () => {
+    const t = ANOMALY_T[useAdminLang()];
+    const typeLabels: Record<AnomalyType, string> = {
+        duplicate: t.typeDuplicate,
+        spike: t.typeSpike,
+        'unusual-merchant': t.typeMerchant,
+        'unusual-time': t.typeTime,
+        'geo-mismatch': t.typeGeo
+    };
     const [anomalies, setAnomalies] = useState<AnomalyAlert[]>([]);
     const [loading, setLoading] = useState(true);
     const [expanded, setExpanded] = useState<string | null>(null);
@@ -59,7 +63,7 @@ export const AnomalyDetectionPage = () => {
                 setAnomalies(res.data.anomalies || []);
             } catch (err) {
                 setAnomalies([]);
-                setError(apiErrorMessage(err, 'Could not load anomaly alerts. Please try again later.'));
+                setError(apiErrorMessage(err, t.loadFailed));
             } finally {
                 setLoading(false);
             }
@@ -76,7 +80,7 @@ export const AnomalyDetectionPage = () => {
         } catch (err) {
             // Roll back so the screen matches what is saved
             if (previous) setAnomalies(prev => prev.map(a => a._id === id ? { ...a, status: previous } : a));
-            setError(apiErrorMessage(err, 'Could not update the alert. Please try again.'));
+            setError(apiErrorMessage(err, t.updateFailed));
         }
     };
 
@@ -84,7 +88,7 @@ export const AnomalyDetectionPage = () => {
     const openCount = anomalies.filter(a => a.status === 'open').length;
     const highRisk = anomalies.filter(a => a.riskScore >= 85 && a.status === 'open').length;
 
-    if (loading) return <div className="loading-spinner">Scanning for anomalies...</div>;
+    if (loading) return <div className="loading-spinner">{t.loading}</div>;
 
     return (
         <div className="page-container anomaly-page">
@@ -95,7 +99,7 @@ export const AnomalyDetectionPage = () => {
                             <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
                             <path d="M12 9v4M12 17h.01" />
                         </svg>
-                        {openCount} open alert{openCount > 1 ? 's' : ''} need{openCount === 1 ? 's' : ''} your review
+                        {fillText(openCount > 1 ? t.bannerMany : t.bannerOne, { n: openCount })}
                     </div>
                 </div>
             )}
@@ -109,19 +113,19 @@ export const AnomalyDetectionPage = () => {
             {/* Summary */}
             <div className="an-stats">
                 <div className="an-stat">
-                    <div className="an-stat-label">Total Flagged</div>
+                    <div className="an-stat-label">{t.statTotal}</div>
                     <div className="an-stat-value">{anomalies.length}</div>
                 </div>
                 <div className="an-stat">
-                    <div className="an-stat-label">High Risk Open</div>
+                    <div className="an-stat-label">{t.statHighOpen}</div>
                     <div className="an-stat-value">{highRisk}</div>
                 </div>
                 <div className="an-stat">
-                    <div className="an-stat-label">Awaiting Review</div>
+                    <div className="an-stat-label">{t.statAwaiting}</div>
                     <div className="an-stat-value">{openCount}</div>
                 </div>
                 <div className="an-stat">
-                    <div className="an-stat-label">Marked Safe</div>
+                    <div className="an-stat-label">{t.statSafe}</div>
                     <div className="an-stat-value">{anomalies.filter(a => a.status === 'reviewed-safe').length}</div>
                 </div>
             </div>
@@ -134,7 +138,7 @@ export const AnomalyDetectionPage = () => {
                         className={`rec-filter-btn ${filter === f ? 'active' : ''}`}
                         onClick={() => setFilter(f)}
                     >
-                        {f === 'all' ? 'All' : f === 'reviewed-safe' ? 'Safe' : f === 'reviewed-fraud' ? 'Fraud' : f.charAt(0).toUpperCase() + f.slice(1)}
+                        {({ all: t.filterAll, open: t.filterOpen, 'reviewed-safe': t.filterSafe, 'reviewed-fraud': t.filterFraud, dismissed: t.filterDismissed })[f]}
                         <span className="rec-filter-count">{(f === 'all' ? anomalies : anomalies.filter(a => a.status === f)).length}</span>
                     </button>
                 ))}
@@ -143,7 +147,7 @@ export const AnomalyDetectionPage = () => {
             {/* Anomaly Cards */}
             <div className="anomaly-list">
                 {filtered.length === 0 && (
-                    <div className="rec-empty">No alerts in this category.</div>
+                    <div className="rec-empty">{t.noAlerts}</div>
                 )}
                 {filtered.map(anomaly => {
                     const isOpen = expanded === anomaly._id;
@@ -156,7 +160,7 @@ export const AnomalyDetectionPage = () => {
                                         <div className="anomaly-meta">
                                             <span>{typeLabels[anomaly.type]}</span>
                                             <span>{anomaly.merchant}</span>
-                                            <span>{anomaly.date} {anomaly.time !== '—' ? `at ${anomaly.time}` : ''}</span>
+                                            <span>{anomaly.date} {anomaly.time !== '—' ? fillText(t.atTime, { time: anomaly.time }) : ''}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -176,39 +180,39 @@ export const AnomalyDetectionPage = () => {
                                 <div className="anomaly-card-body">
                                     <p className="anomaly-desc">{anomaly.description}</p>
                                     <div className="anomaly-detail-row">
-                                        <span className="anomaly-detail-label">AI Reason</span>
+                                        <span className="anomaly-detail-label">{t.aiReason}</span>
                                         <span className="anomaly-detail-text">{anomaly.detectedReason}</span>
                                     </div>
                                     <div className="anomaly-detail-row">
-                                        <span className="anomaly-detail-label">Transaction ID</span>
+                                        <span className="anomaly-detail-label">{t.txnId}</span>
                                         <span className="anomaly-detail-text mono">{anomaly.transactionId}</span>
                                     </div>
                                     <div className="anomaly-detail-row">
-                                        <span className="anomaly-detail-label">Category</span>
+                                        <span className="anomaly-detail-label">{t.category}</span>
                                         <span className="anomaly-detail-text">{anomaly.category}</span>
                                     </div>
 
                                     {anomaly.status === 'open' && (
                                         <div className="anomaly-actions">
                                             <button className="rec-action-btn accept" onClick={() => updateStatus(anomaly._id, 'reviewed-safe')}>
-                                                This is Safe
+                                                {t.thisSafe}
                                             </button>
                                             <button className="rec-action-btn decline" onClick={() => updateStatus(anomaly._id, 'reviewed-fraud')}>
-                                                Report as Fraud
+                                                {t.reportFraud}
                                             </button>
                                             <button className="rec-action-btn snooze" onClick={() => updateStatus(anomaly._id, 'dismissed')}>
-                                                Dismiss
+                                                {t.dismiss}
                                             </button>
                                         </div>
                                     )}
                                     {anomaly.status !== 'open' && (
                                         <div className="anomaly-actions">
                                             <span className={`status-pill ${anomaly.status}`}>
-                                                {anomaly.status === 'reviewed-safe' ? 'Marked Safe' :
-                                                    anomaly.status === 'reviewed-fraud' ? 'Reported as Fraud' : 'Dismissed'}
+                                                {anomaly.status === 'reviewed-safe' ? t.markedSafe :
+                                                    anomaly.status === 'reviewed-fraud' ? t.reportedFraud : t.dismissed}
                                             </span>
                                             <button className="rec-action-btn restore small" onClick={() => updateStatus(anomaly._id, 'open')}>
-                                                Reopen
+                                                {t.reopen}
                                             </button>
                                         </div>
                                     )}

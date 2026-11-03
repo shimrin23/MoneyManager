@@ -4,6 +4,9 @@ import { apiClient } from '../api/client.ts';
 import { notify } from '../utils/systemMessages';
 import axios from 'axios';
 import { AddTransactionForm } from './AddTransactionForm';
+import { useAdminLang } from '../i18n/adminText';
+import { TRANSACTIONS_T } from '../i18n/transactionsText';
+import { fillText } from '../i18n/dashboardText';
 
 interface Transaction {
     _id: string;
@@ -20,6 +23,7 @@ interface Transaction {
 }
 
 export const TransactionList = () => {
+    const t = TRANSACTIONS_T[useAdminLang()];
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -81,10 +85,10 @@ export const TransactionList = () => {
                     error.response?.data?.message ||
                     error.response?.data?.error ||
                     error.response?.data?.details;
-                notify.error(apiMessage ? `Sync failed: ${apiMessage}` : 'Sync failed. Please try again.');
+                notify.error(apiMessage ? fillText(t.syncFailed, { msg: apiMessage }) : t.syncFailedGeneric);
                 return;
             }
-            notify.error('Sync failed. Please try again.');
+            notify.error(t.syncFailedGeneric);
         }
     };
 
@@ -129,7 +133,7 @@ export const TransactionList = () => {
             }
         } catch (error) {
             console.error('Failed to delete transaction', error);
-            notify.error('Failed to delete transaction. Please try again.');
+            notify.error(t.deleteFailed);
         } finally {
             setDeletingId(null);
         }
@@ -139,11 +143,11 @@ export const TransactionList = () => {
         <div className="card transaction-list">
             <div className="txn-header">
                 <div>
-                    <h2 className="txn-title">All transactions</h2>
-                    <p className="txn-subtitle">Search, filter and edit your history</p>
+                    <h2 className="txn-title">{t.title}</h2>
+                    <p className="txn-subtitle">{t.subtitle}</p>
                 </div>
                 <div className="txn-header-actions">
-                    <button type="button" className="btn-secondary txn-btn txn-btn-icon" onClick={refreshData} title="Refresh data" aria-label="Refresh data">
+                    <button type="button" className="btn-secondary txn-btn txn-btn-icon" onClick={refreshData} title={t.refresh} aria-label={t.refreshAria}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M3 12a9 9 0 0 1 15.5-6.2L21 8" />
                             <path d="M21 3v5h-5" />
@@ -155,7 +159,7 @@ export const TransactionList = () => {
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
                             <path d="M12 5v14M5 12h14" />
                         </svg>
-                        Add
+                        {t.add}
                     </button>
                 </div>
             </div>
@@ -169,29 +173,29 @@ export const TransactionList = () => {
                     <input
                         type="text"
                         className="txn-input"
-                        placeholder="Search description or category"
+                        placeholder={t.searchPlaceholder}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        aria-label="Search transactions"
+                        aria-label={t.searchAria}
                     />
                 </div>
                 <select
                     className="txn-select"
                     value={typeFilter}
                     onChange={(e) => setTypeFilter(e.target.value as 'all' | 'income' | 'expense')}
-                    aria-label="Filter by type"
+                    aria-label={t.filterTypeAria}
                 >
-                    <option value="all">All types</option>
-                    <option value="income">Income</option>
-                    <option value="expense">Expense</option>
+                    <option value="all">{t.allTypes}</option>
+                    <option value="income">{t.income}</option>
+                    <option value="expense">{t.expense}</option>
                 </select>
                 <select
                     className="txn-select"
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
-                    aria-label="Filter by category"
+                    aria-label={t.filterCategoryAria}
                 >
-                    <option value="all">All categories</option>
+                    <option value="all">{t.allCategories}</option>
                     {categories.map((c) => (
                         <option key={c} value={c}>{c}</option>
                     ))}
@@ -202,65 +206,65 @@ export const TransactionList = () => {
                 <table className="responsive-table txn-table">
                     <thead>
                         <tr>
-                            <th>Date</th>
-                            <th>Description</th>
-                            <th>Category</th>
-                            <th>Amount</th>
-                            <th>Actions</th>
+                            <th>{t.colDate}</th>
+                            <th>{t.colDescription}</th>
+                            <th>{t.colCategory}</th>
+                            <th>{t.colAmount}</th>
+                            <th>{t.colActions}</th>
                         </tr>
                     </thead>
                     <tbody>
                         {filteredTransactions.length === 0 && (
                             <tr>
                                 <td colSpan={5} className="txn-empty">
-                                    {transactions.length === 0 ? 'No transactions yet.' : 'No transactions match your filters.'}
+                                    {transactions.length === 0 ? t.noTransactions : t.noMatch}
                                 </td>
                             </tr>
                         )}
-                        {filteredTransactions.map((t) => {
-                            const isDeleting = deletingId === t._id;
+                        {filteredTransactions.map((tx) => {
+                            const isDeleting = deletingId === tx._id;
 
                             return (
-                                <tr key={t._id} className={t.type}>
-                                    <td data-label="Date">
-                                        {formatDate(t.date)}
+                                <tr key={tx._id} className={tx.type}>
+                                    <td data-label={t.colDate}>
+                                        {formatDate(tx.date)}
                                     </td>
-                                    <td data-label="Description" className="description-cell">
-                                        <span className="description-text">{t.description}</span>
+                                    <td data-label={t.colDescription} className="description-cell">
+                                        <span className="description-text">{tx.description}</span>
                                         <div className="txn-badges">
-                                            {t.isRecurring && (
+                                            {tx.isRecurring && (
                                                 <span className="badge badge-recurring">
-                                                    Recurring{t.recurringFrequency ? ` (${t.recurringFrequency})` : ''}
+                                                    {t.recurring}{tx.recurringFrequency ? ` (${tx.recurringFrequency})` : ''}
                                                 </span>
                                             )}
-                                            {t.isAnomaly && (
+                                            {tx.isAnomaly && (
                                                 <span className="badge badge-anomaly">
-                                                    Anomaly {Math.round((t.anomalyScore || 0) * 100)}%
+                                                    {t.anomaly} {Math.round((tx.anomalyScore || 0) * 100)}%
                                                 </span>
                                             )}
                                         </div>
                                     </td>
-                                    <td data-label="Category">
-                                        <span className="category-tag">{t.category}</span>
+                                    <td data-label={t.colCategory}>
+                                        <span className="category-tag">{tx.category}</span>
                                     </td>
-                                    <td data-label="Amount" className="amount">
-                                        {t.type === 'income' ? '+' : '-'}{formatMoney(t.amount)}
+                                    <td data-label={t.colAmount} className="amount">
+                                        {tx.type === 'income' ? '+' : '-'}{formatMoney(tx.amount)}
                                     </td>
-                                    <td data-label="Actions">
+                                    <td data-label={t.colActions}>
                                         <div className="table-actions">
                                             <button
                                                 className="table-action-btn edit"
-                                                onClick={() => startEditing(t)}
+                                                onClick={() => startEditing(tx)}
                                                 disabled={deletingId !== null}
                                             >
-                                                Edit
+                                                {t.edit}
                                             </button>
                                             <button
                                                 className="table-action-btn delete"
-                                                onClick={() => confirmDeleteTransaction(t._id)}
+                                                onClick={() => confirmDeleteTransaction(tx._id)}
                                                 disabled={isDeleting}
                                             >
-                                                {isDeleting ? 'Deleting...' : 'Delete'}
+                                                {isDeleting ? t.deleting : t.delete}
                                             </button>
                                         </div>
                                     </td>
@@ -273,7 +277,7 @@ export const TransactionList = () => {
 
             <div className="txn-footer">
                 <span className="txn-footer-count">
-                    {filteredTransactions.length} {filteredTransactions.length === 1 ? 'transaction' : 'transactions'}
+                    {filteredTransactions.length} {filteredTransactions.length === 1 ? t.transactionOne : t.transactionMany}
                 </span>
                 <span className="txn-footer-totals">
                     <span className="txn-footer-income">+{formatMoney(totals.income)}</span>
@@ -286,7 +290,7 @@ export const TransactionList = () => {
                 <div className="modal-overlay" onClick={() => setIsAdding(false)}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h2 className="modal-title">Add Transaction</h2>
+                            <h2 className="modal-title">{t.addTitle}</h2>
                             <button className="modal-close" onClick={() => setIsAdding(false)}>×</button>
                         </div>
                         <AddTransactionForm
@@ -301,7 +305,7 @@ export const TransactionList = () => {
                 <div className="modal-overlay" onClick={cancelEditing}>
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h2 className="modal-title">Edit Transaction</h2>
+                            <h2 className="modal-title">{t.editTitle}</h2>
                             <button className="modal-close" onClick={cancelEditing}>×</button>
                         </div>
                         <AddTransactionForm 
@@ -318,22 +322,22 @@ export const TransactionList = () => {
                 <div className="modal-overlay" onClick={cancelDelete}>
                     <div className="modal-content txn-confirm" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h2 className="modal-title">Confirm Deletion</h2>
-                            <button className="modal-close" onClick={cancelDelete} aria-label="Close">×</button>
+                            <h2 className="modal-title">{t.confirmDeleteTitle}</h2>
+                            <button className="modal-close" onClick={cancelDelete} aria-label={t.close}>×</button>
                         </div>
                         <p className="txn-confirm-text">
-                            Are you sure you want to delete this transaction? This action cannot be undone.
+                            {t.confirmDeleteText}
                         </p>
                         <div className="txn-confirm-actions">
                             <button className="btn-secondary" onClick={cancelDelete}>
-                                Cancel
+                                {t.cancel}
                             </button>
                             <button
                                 className="btn-primary"
                                 style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }}
                                 onClick={executeDeleteTransaction}
                             >
-                                Delete
+                                {t.delete}
                             </button>
                         </div>
                     </div>

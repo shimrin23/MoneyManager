@@ -1,5 +1,7 @@
 // One financial health scale for every page. Keep in step with getHealthStatus
 // in ai-pfm-backend/src/services/health-score.utils.ts.
+import { readLang } from '../i18n/adminText';
+import { HEALTH_T } from '../i18n/healthText';
 
 export interface HealthStatus {
     label: string;        // Excellent / Good / Needs Work / Critical
@@ -10,20 +12,21 @@ export interface HealthStatus {
 }
 
 export const getHealthStatus = (score: number): HealthStatus => {
+    const t = HEALTH_T[readLang()];
     if (score >= 80) {
-        return { label: 'Excellent', risk: 'Low', riskClass: 'low', color: '#10b981', description: 'Great financial habits. Keep it up.' };
+        return { label: t.excellent, risk: t.low, riskClass: 'low', color: '#10b981', description: t.descExcellent };
     }
     if (score >= 60) {
-        return { label: 'Good', risk: 'Medium', riskClass: 'medium', color: '#84cc16', description: 'A healthy profile with room to grow.' };
+        return { label: t.good, risk: t.medium, riskClass: 'medium', color: '#10b981', description: t.descGood };
     }
     if (score >= 40) {
-        return { label: 'Needs Work', risk: 'High', riskClass: 'high', color: '#f59e0b', description: 'A few areas need attention.' };
+        return { label: t.needsWork, risk: t.high, riskClass: 'high', color: '#f59e0b', description: t.descNeedsWork };
     }
-    return { label: 'Critical', risk: 'Very High', riskClass: 'critical', color: '#ef4444', description: 'Immediate attention needed.' };
+    return { label: t.critical, risk: t.veryHigh, riskClass: 'critical', color: '#ef4444', description: t.descCritical };
 };
 
 // What to tell the user when there isn't enough data for a score yet
 export const noScoreMessage = (reason?: string | null) =>
     reason === 'no-income'
-        ? 'Add your income for the last 30 days (or your monthly income in Profile) to get a score.'
-        : 'Add your income and expenses for the last 30 days to get your financial health score.';
+        ? HEALTH_T[readLang()].noScoreIncome
+        : HEALTH_T[readLang()].noScoreDefault;
