@@ -353,7 +353,13 @@ export const GoalsPage = () => {
                                 <p>{getAISuggestion(goal)}</p>
                             </div>
 
-                            <div className="gl-actions">
+                            <div className="gl-actions goal-actions">
+                                <button
+                                    className="btn-primary btn-sm"
+                                    onClick={() => handleContributionClick(goal, monthlyRequired)}
+                                >
+                                    {t.addContribution}
+                                </button>
                                 <button
                                     className="btn-secondary btn-sm"
                                     onClick={() => {
@@ -362,12 +368,6 @@ export const GoalsPage = () => {
                                     }}
                                 >
                                     {t.edit}
-                                </button>
-                                <button
-                                    className="btn-primary btn-sm"
-                                    onClick={() => handleContributionClick(goal, monthlyRequired)}
-                                >
-                                    {t.addContribution}
                                 </button>
                             </div>
                         </article>

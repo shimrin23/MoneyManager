@@ -433,6 +433,21 @@ function AppShell() {
             </div>
 
             <div className="sidebar-footer">
+              {/* Phones: the header language switch is hidden, so the same choice sits at the bottom of the sidebar */}
+              <div className="sidebar-lang-seg" role="group" aria-label="Language">
+                {([['en', 'En', 'English'], ['si', 'සිං', 'Sinhala'], ['ta', 'த', 'Tamil']] as [Language, string, string][]).map(([l, label, name]) => (
+                  <button
+                    key={l}
+                    type="button"
+                    className={lang === l ? 'active' : ''}
+                    onClick={() => switchLang(l)}
+                    title={name}
+                    aria-pressed={lang === l}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
               <UserHeader theme={theme} onToggleTheme={() => setTheme(p => p === 'dark' ? 'light' : 'dark')} />
             </div>
           </nav>
