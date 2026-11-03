@@ -284,14 +284,17 @@ export const CreditCardsPage = () => {
         return days;
     };
 
-    const getCardColor = (provider: string) => {
-        const colors = {
-            'Commercial Bank': 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            'Sampath Bank': 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-            'HNB': 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-            'BOC': 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)'
+    // Each bank gets its own soft tint (colours live in FinancialPages.css as .cc-bank-*)
+    const getBankClass = (provider: string) => {
+        const banks: Record<string, string> = {
+            'Commercial Bank': 'combank',
+            'Sampath Bank': 'sampath',
+            'HNB': 'hnb',
+            'BOC': 'boc',
+            'DFCC': 'dfcc',
+            'Nations Trust': 'ntb'
         };
-        return colors[provider as keyof typeof colors] || 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        return `cc-bank-${banks[provider] || 'default'}`;
     };
 
     if (loading) return <div className="loading">Loading your credit cards...</div>;
@@ -464,17 +467,15 @@ export const CreditCardsPage = () => {
 
                     return (
                         <div key={card._id} className="card cc-card">
-                            <div
-                                className="cc-visual"
-                                style={{
-                                    background: getCardColor(card.provider)
-                                }}
-                            >
+                            <div className={`cc-visual ${getBankClass(card.provider)}`}>
                                 <div className="cc-visual-top">
                                     <span className="cc-visual-provider">{card.provider}</span>
                                     <span className="cc-visual-name">{card.cardName}</span>
                                 </div>
-                                <div className="cc-visual-number">•••• •••• •••• {card.lastFour || '••••'}</div>
+                                <div className="cc-visual-number">
+                                    <span className="cc-chip" aria-hidden="true" />
+                                    •••• •••• •••• {card.lastFour || '••••'}
+                                </div>
                                 <div className="cc-visual-label">Current balance</div>
                                 <div className="cc-visual-balance">{formatCurrency(card.currentBalance)}</div>
                             </div>

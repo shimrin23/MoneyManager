@@ -399,13 +399,28 @@
 
 .card.cc-card { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px 24px; margin: 0; overflow: hidden; border-radius: 14px; }
 
-.cc-visual { border-radius: 14px; padding: 14px 16px; min-height: 0; color: white; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; }
+/* Bank card face: soft pastel tint per bank with dark text, so it reads in light and dark mode */
+.cc-visual { --cc-from: #e9e7fb; --cc-to: #d9d3f3; --cc-ink: #2b2750; --cc-accent: rgba(118, 75, 162, 0.16);
+    position: relative; overflow: hidden; border-radius: 14px; padding: 14px 16px; min-height: 0; color: var(--cc-ink); background: linear-gradient(135deg, var(--cc-from) 0%, var(--cc-to) 100%); border: 1px solid rgba(255, 255, 255, 0.55); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08); box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between; gap: 6px; }
+/* Soft sheen and a ring, like the printed pattern on a real card */
+.cc-visual::before { content: ''; position: absolute; width: 190px; height: 190px; right: -70px; top: -90px; border-radius: 50%; background: var(--cc-accent); pointer-events: none; }
+.cc-visual::after { content: ''; position: absolute; width: 130px; height: 130px; right: 10px; bottom: -80px; border-radius: 50%; border: 18px solid var(--cc-accent); pointer-events: none; }
+.cc-visual > * { position: relative; z-index: 1; }
 .cc-visual-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.cc-visual-provider { font-size: 14px; font-weight: 700; opacity: 0.95; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cc-visual-name { font-size: 13px; opacity: 0.8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cc-visual-number { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 15px; letter-spacing: 0.14em; opacity: 0.9; }
-.cc-visual-label { font-size: 12px; opacity: 0.75; }
+.cc-visual-provider { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc-visual-name { font-size: 13px; opacity: 0.7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc-visual-number { display: flex; align-items: center; gap: 10px; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 15px; letter-spacing: 0.14em; opacity: 0.85; }
+.cc-chip { flex-shrink: 0; width: 30px; height: 22px; border-radius: 5px; background: linear-gradient(135deg, #f3e3b5 0%, #d9bd78 100%); border: 1px solid rgba(120, 90, 20, 0.35); box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.25); }
+.cc-visual-label { font-size: 12px; opacity: 0.65; }
 .cc-visual-balance { font-size: 24px; font-weight: 600; line-height: 1.2; }
+
+.cc-bank-default { --cc-from: #ebe8fb; --cc-to: #d8d0f2; --cc-ink: #2b2750; --cc-accent: rgba(118, 75, 162, 0.14); }
+.cc-bank-combank { --cc-from: #e3eefb; --cc-to: #c9dcf5; --cc-ink: #1b3558; --cc-accent: rgba(37, 99, 176, 0.14); }
+.cc-bank-sampath { --cc-from: #fdebe0; --cc-to: #f8d4bf; --cc-ink: #5a2a12; --cc-accent: rgba(217, 100, 40, 0.16); }
+.cc-bank-hnb     { --cc-from: #fbf3d5; --cc-to: #f3e3a6; --cc-ink: #4a3b0a; --cc-accent: rgba(190, 150, 20, 0.18); }
+.cc-bank-boc     { --cc-from: #e3f3ee; --cc-to: #c6e4da; --cc-ink: #17463a; --cc-accent: rgba(30, 140, 110, 0.15); }
+.cc-bank-dfcc    { --cc-from: #fbe6ec; --cc-to: #f4cbd7; --cc-ink: #531a2c; --cc-accent: rgba(190, 50, 90, 0.14); }
+.cc-bank-ntb     { --cc-from: #e6f0e0; --cc-to: #cfe3c4; --cc-ink: #26421a; --cc-accent: rgba(80, 140, 50, 0.16); }
 
 .cc-util { display: flex; flex-direction: column; gap: 4px; }
 .cc-util-bar { height: 8px; border-radius: 99px; margin: 0; }
