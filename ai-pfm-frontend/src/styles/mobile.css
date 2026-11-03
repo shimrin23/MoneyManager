@@ -510,19 +510,17 @@ canvas {
   }
 }
 
-/* Smart Budgets card buttons (Optimize, Set Alert): two equal columns on phones and tablets */
-@media (max-width: 1439px) {
-  .sb-actions {
-    display: grid !important;
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 12px !important;
-    margin-top: 16px !important;
-  }
+/* Smart Budgets card buttons (Optimize, Set Alert): always two equal columns */
+.sb-actions {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+  margin-top: 16px !important;
+}
 
-  .sb-actions .action-btn {
-    width: 100%;
-    justify-content: center;
-  }
+.sb-actions .action-btn {
+  width: 100%;
+  justify-content: center;
 }
 
 /* Profile header: avatar, name and email centred in the card on phones */
@@ -1033,4 +1031,206 @@ canvas {
 :lang(ta) .rec-detail-row,
 :lang(si) .rec-detail-row {
   grid-template-columns: 110px 1fr !important;
+}
+
+/* Subscription card buttons (View Alternatives, Downgrade, Cancel): three equal columns at every width */
+.su-actions {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.su-actions > button {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Goal card buttons (Add Contribution, Edit): two equal columns at every width */
+.goal-actions {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.goal-actions > button {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Fixed deposit card buttons (Withdraw Early, Delete): two equal columns at every width */
+.fd-card-actions {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.fd-card-actions > button {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Lease card buttons (Record Payment, Mark Completed, Delete): three equal columns at every width */
+.gl-actions.lease-card-actions {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.gl-actions.lease-card-actions > button {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Pawning card buttons (Redeem Item, Delete): two equal columns at every width */
+.pawn-card-actions {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.pawn-card-actions > button {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Loan card buttons in English: five equal columns on one row */
+.loan-card-actions {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+}
+
+.loan-card-actions > button {
+  width: 100%;
+  justify-content: center;
+  padding: 0 6px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Sinhala and Tamil labels are longer, so only in those languages let the loan buttons wrap inside the card */
+:lang(ta) .loan-card-actions,
+:lang(si) .loan-card-actions {
+  display: flex !important;
+  grid-template-columns: none !important;
+  flex-wrap: wrap !important;
+}
+
+:lang(ta) .loan-card-actions .btn-sm,
+:lang(si) .loan-card-actions .btn-sm {
+  height: auto !important;
+  min-height: 32px;
+  max-width: 100%;
+  white-space: normal !important;
+  line-height: 1.25;
+  text-align: center;
+}
+
+/* Card buttons in fixed columns: Sinhala and Tamil labels are longer, so let the text wrap inside each equal column */
+:lang(ta) .lease-card-actions .btn-sm,
+:lang(si) .lease-card-actions .btn-sm,
+:lang(ta) .goal-actions .btn-sm,
+:lang(si) .goal-actions .btn-sm,
+:lang(ta) .su-actions .btn-sm,
+:lang(si) .su-actions .btn-sm,
+:lang(ta) .sb-actions .btn-sm,
+:lang(si) .sb-actions .btn-sm,
+:lang(ta) .fd-card-actions .btn-sm,
+:lang(si) .fd-card-actions .btn-sm,
+:lang(ta) .pawn-card-actions .btn-sm,
+:lang(si) .pawn-card-actions .btn-sm {
+  height: auto !important;
+  min-height: 32px;
+  max-width: 100%;
+  white-space: normal !important;
+  line-height: 1.25;
+  text-align: center;
+}
+
+/* Recommendation card buttons: move to the right corner on tablets and desktops (phones keep their grid) */
+@media (min-width: 768px) {
+  .rec-card-actions {
+    justify-content: flex-end;
+  }
+}
+
+/* Phones: language switch at the bottom of the sidebar (the header switch is hidden at this width) */
+.sidebar-lang-seg {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .sidebar-lang-seg {
+    display: flex;
+    gap: 4px;
+    margin-top: 10px;
+    padding: 0 4px;
+  }
+
+  .sidebar-lang-seg button {
+    flex: 0 0 auto;
+    min-width: 44px;
+    height: 26px;
+    padding: 0 8px;
+    border: 1px solid var(--color-border-2, rgba(128, 128, 128, 0.3));
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-text-2, inherit);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .sidebar-lang-seg button.active {
+    background: var(--color-surface-3, rgba(128, 128, 128, 0.15));
+    color: var(--color-text, inherit);
+  }
+}
+
+/* Sinhala and Tamil card headers: the title and the status pill wrap onto their own lines instead of squeezing the title into a narrow column */
+:lang(ta) .gl-head,
+:lang(si) .gl-head {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+:lang(ta) .gl-head-main,
+:lang(si) .gl-head-main {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+:lang(ta) .gl-head-text,
+:lang(si) .gl-head-text {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* Credit card buttons on tablets: two equal columns so the labels fit inside their buttons */
+@media (min-width: 768px) and (max-width: 1439px) {
+  .cc-actions {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .cc-actions .btn-sm {
+    width: 100%;
+    justify-content: center;
+    white-space: nowrap;
+    padding: 0 6px;
+  }
+}
+
+/* Sinhala and Tamil credit card buttons: the label wraps inside its own column and never runs into the next button */
+:lang(ta) .cc-actions .btn-sm,
+:lang(si) .cc-actions .btn-sm {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  white-space: normal !important;
+  height: auto !important;
+  min-height: 32px;
+  line-height: 1.25;
+  padding: 6px 8px;
 }

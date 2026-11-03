@@ -88,7 +88,7 @@ const ActiveLoanCards: FC<ActiveLoanCardsProps> = ({
                                 </div>
                             </div>
 
-                            <div className="gl-actions">
+                            <div className="gl-actions loan-card-actions">
                                 <button onClick={() => onMakePayment?.(loan._id)} className="btn-primary btn-sm">
                                     {t.payEmi}
                                 </button>

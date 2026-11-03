@@ -364,7 +364,7 @@ export const FixedDepositsPage = () => {
                                 </div>
                             )}
 
-                            <div className="gl-actions fd-actions">
+                            <div className="gl-actions fd-actions fd-card-actions">
                                 {fd.status === 'active' && (
                                     <>
                                         <button className="btn-secondary btn-sm" onClick={() => handleWithdrawEarly(fd)}>

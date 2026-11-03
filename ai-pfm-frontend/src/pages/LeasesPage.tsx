@@ -351,7 +351,7 @@ export const LeasesPage = () => {
                                 </div>
                             </div>
 
-                            <div className="gl-actions">
+                            <div className="gl-actions lease-card-actions">
                                 {lease.status === 'active' && (
                                     <>
                                         <button className="btn-primary btn-sm" onClick={() => handleRecordPayment(lease)}>{t.recordPayment}</button>

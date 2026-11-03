@@ -314,7 +314,7 @@ export const PawningPage = () => {
                                 </div>
                             )}
 
-                            <div className="gl-actions fd-actions">
+                            <div className="gl-actions fd-actions pawn-card-actions">
                                 {item.status === 'active' && (
                                     <>
                                         <button className="btn-primary btn-sm" onClick={() => handleRedeem(item)}>{t.redeemItem}</button>
