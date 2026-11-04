@@ -510,6 +510,11 @@
     margin-top: 1rem;
 }
 
+/* Paid percentage: green, same as the positive indicators on the Financial Health page */
+.loan-progress .progress-fill {
+    background: #10b981;
+}
+
 /* Strategies */
 .strategies-card {
     grid-column: 1 / -1;
