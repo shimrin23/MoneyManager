@@ -1,6 +1,9 @@
 import { formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useState, type FC } from 'react';
 import { useLoans } from '../hooks/useLoans';
+import { useAdminLang } from '../i18n/adminText';
+import { LOAN_RS_T } from '../i18n/loanRatioSimText';
+import { fillText } from '../i18n/dashboardText';
 
 interface WhatIfSimulationProps {
     loanId: string;
@@ -29,6 +32,7 @@ const WhatIfSimulation: FC<WhatIfSimulationProps> = ({
     tenure,
     interestRate
 }) => {
+    const t = LOAN_RS_T[useAdminLang()];
     const { simulateIncreasedEMI, simulateLumpSum, simulateRefinance } = useLoans();
     const [activeTab, setActiveTab] = useState<'emi' | 'lump' | 'refinance'>('emi');
     const [simulationResults, setSimulationResults] = useState<SimulationResult[]>([]);
@@ -86,7 +90,7 @@ const WhatIfSimulation: FC<WhatIfSimulationProps> = ({
 
     return (
         <div>
-            <p className="su-muted fin-lead">Explore different scenarios to optimize your loan repayment</p>
+            <p className="su-muted fin-lead">{t.simLead}</p>
 
             {error && <div className="rc-banner error">{error}</div>}
 
@@ -95,30 +99,30 @@ const WhatIfSimulation: FC<WhatIfSimulationProps> = ({
                     className={`rec-filter-btn ${activeTab === 'emi' ? 'active' : ''}`}
                     onClick={() => setActiveTab('emi')}
                 >
-                    Increase EMI
+                    {t.tabEmi}
                 </button>
                 <button
                     className={`rec-filter-btn ${activeTab === 'lump' ? 'active' : ''}`}
                     onClick={() => setActiveTab('lump')}
                 >
-                    Lump Sum
+                    {t.tabLump}
                 </button>
                 <button
                     className={`rec-filter-btn ${activeTab === 'refinance' ? 'active' : ''}`}
                     onClick={() => setActiveTab('refinance')}
                 >
-                    Refinance
+                    {t.tabRefi}
                 </button>
             </div>
 
             <div className="card form-card gl-form">
                 {activeTab === 'emi' && (
                     <>
-                        <h3 className="gl-form-title">Increase Monthly EMI</h3>
-                        <p className="su-muted fin-lead">See how increasing your EMI can help you pay off the loan faster and save interest.</p>
+                        <h3 className="gl-form-title">{t.emiTitle}</h3>
+                        <p className="su-muted fin-lead">{t.emiLead}</p>
 
                         <div className="form-group">
-                            <label>New Monthly EMI: {formatMoney(increasedEMI, 2)}</label>
+                            <label>{fillText(t.newEmi, { amount: formatMoney(increasedEMI, 2) })}</label>
                             <input
                                 type="range"
                                 min={currentEMI}
@@ -127,12 +131,12 @@ const WhatIfSimulation: FC<WhatIfSimulationProps> = ({
                                 onChange={(e) => setIncreasedEMI(Number(e.target.value))}
                                 step={100}
                             />
-                            <span className="fin-note">Current EMI: {formatMoney(currentEMI, 2)}</span>
+                            <span className="fin-note">{fillText(t.currentEmi, { amount: formatMoney(currentEMI, 2) })}</span>
                         </div>
 
                         <div className="form-actions">
                             <button onClick={handleSimulateEMI} disabled={loading} className="btn-primary">
-                                {loading ? 'Simulating...' : 'Simulate'}
+                                {loading ? t.simulating : t.simulate}
                             </button>
                         </div>
                     </>
@@ -140,11 +144,11 @@ const WhatIfSimulation: FC<WhatIfSimulationProps> = ({
 
                 {activeTab === 'lump' && (
                     <>
-                        <h3 className="gl-form-title">Lump Sum Payment</h3>
-                        <p className="su-muted fin-lead">Make an extra payment to reduce your loan balance and interest.</p>
+                        <h3 className="gl-form-title">{t.lumpTitle}</h3>
+                        <p className="su-muted fin-lead">{t.lumpLead}</p>
 
                         <div className="form-group">
-                            <label>Lump Sum Amount ({currencyCode()})</label>
+                            <label>{fillText(t.lumpAmount, { cur: currencyCode() })}</label>
                             <input
                                 type="number"
                                 value={fromLkr(lumpSumAmount)}
@@ -152,11 +156,11 @@ const WhatIfSimulation: FC<WhatIfSimulationProps> = ({
                                 min={0}
                                 max={remainingBalance}
                             />
-                            <span className="fin-note">Max available: {formatMoney(remainingBalance, 2)}</span>
+                            <span className="fin-note">{fillText(t.maxAvail, { amount: formatMoney(remainingBalance, 2) })}</span>
                         </div>
 
                         <div className="form-group">
-                            <label>Apply in Month: {monthToApply}</label>
+                            <label>{fillText(t.applyMonth, { n: monthToApply })}</label>
                             <input
                                 type="range"
                                 min={1}
@@ -164,12 +168,12 @@ const WhatIfSimulation: FC<WhatIfSimulationProps> = ({
                                 value={monthToApply}
                                 onChange={(e) => setMonthToApply(Number(e.target.value))}
                             />
-                            <span className="fin-note">Total tenure: {tenure} months</span>
+                            <span className="fin-note">{fillText(t.totalTenure, { n: tenure })}</span>
                         </div>
 
                         <div className="form-actions">
                             <button onClick={handleSimulateLumpSum} disabled={loading} className="btn-primary">
-                                {loading ? 'Simulating...' : 'Simulate'}
+                                {loading ? t.simulating : t.simulate}
                             </button>
                         </div>
                     </>
@@ -177,11 +181,11 @@ const WhatIfSimulation: FC<WhatIfSimulationProps> = ({
 
                 {activeTab === 'refinance' && (
                     <>
-                        <h3 className="gl-form-title">Refinance Loan</h3>
-                        <p className="su-muted fin-lead">See potential savings if you refinance at a lower interest rate.</p>
+                        <h3 className="gl-form-title">{t.refiTitle}</h3>
+                        <p className="su-muted fin-lead">{t.refiLead}</p>
 
                         <div className="form-group">
-                            <label>New Interest Rate: {newRate.toFixed(2)}% p.a.</label>
+                            <label>{fillText(t.newRate, { rate: newRate.toFixed(2) })}</label>
                             <input
                                 type="range"
                                 min={0}
@@ -190,12 +194,12 @@ const WhatIfSimulation: FC<WhatIfSimulationProps> = ({
                                 value={newRate}
                                 onChange={(e) => setNewRate(Number(e.target.value))}
                             />
-                            <span className="fin-note">Current rate: {interestRate}% p.a.</span>
+                            <span className="fin-note">{fillText(t.currentRate, { rate: interestRate })}</span>
                         </div>
 
                         <div className="form-actions">
                             <button onClick={handleSimulateRefinance} disabled={loading} className="btn-primary">
-                                {loading ? 'Simulating...' : 'Simulate'}
+                                {loading ? t.simulating : t.simulate}
                             </button>
                         </div>
                     </>
@@ -204,33 +208,33 @@ const WhatIfSimulation: FC<WhatIfSimulationProps> = ({
 
             {simulationResults.length > 0 && (
                 <div className="su-panel">
-                    <h3 className="su-panel-title">Simulation Results</h3>
+                    <h3 className="su-panel-title">{t.resultsTitle}</h3>
                     {simulationResults.map((result, idx) => (
                         <div key={idx}>
                             <h4 className="fin-sub-title">{result.scenarioName}</h4>
 
                             <div className="rc-stats rc-stats-3">
                                 <div className="rc-stat">
-                                    <span className="rc-stat-label">Monthly EMI</span>
+                                    <span className="rc-stat-label">{t.monthlyEmi}</span>
                                     <span className="rc-stat-value">{formatMoney(result.monthlyEMI, 2)}</span>
                                 </div>
                                 <div className="rc-stat">
-                                    <span className="rc-stat-label">Total Interest</span>
+                                    <span className="rc-stat-label">{t.totalInterest}</span>
                                     <span className="rc-stat-value">{formatMoney(result.totalInterest, 2)}</span>
                                 </div>
                                 <div className="rc-stat">
-                                    <span className="rc-stat-label">Time to Payoff</span>
-                                    <span className="rc-stat-value">{result.timeToPayoff} months</span>
+                                    <span className="rc-stat-label">{t.timeToPayoff}</span>
+                                    <span className="rc-stat-value">{result.timeToPayoff} {t.monthsSuffix}</span>
                                 </div>
                             </div>
 
                             {result.savings && (
                                 <div className="su-impact">
-                                    <strong>Potential Savings</strong>
+                                    <strong>{t.potentialSavings}</strong>
                                     <ul>
-                                        <li>Interest Saved: <strong>{formatMoney(result.savings.interestSaved, 2)}</strong></li>
+                                        <li>{t.interestSavedLabel} <strong>{formatMoney(result.savings.interestSaved, 2)}</strong></li>
                                         {result.savings.timeSaved > 0 && (
-                                            <li>Time Saved: <strong>{result.savings.timeSaved} months</strong></li>
+                                            <li>{t.timeSavedLabel} <strong>{fillText(t.timeSaved, { n: result.savings.timeSaved })}</strong></li>
                                         )}
                                     </ul>
                                 </div>

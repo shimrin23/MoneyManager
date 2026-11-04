@@ -1,7 +1,11 @@
+import { DateInput } from '../components/DateInput';
 import { formatDate, formatDateTime, formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { apiClient, getApiErrorMessage } from '../api/client';
 import { notify, confirmDialog } from '../utils/systemMessages';
+import { useAdminLang } from '../i18n/adminText';
+import { PAWN_T } from '../i18n/pawningText';
+import { fillText } from '../i18n/dashboardText';
 
 interface PawnItem {
     _id: string;
@@ -22,10 +26,6 @@ interface PawnItem {
     totalDue: number;
 }
 
-const itemTypeLabel: Record<string, string> = {
-    gold: 'Gold', jewelry: 'Jewelry', electronics: 'Electronics', documents: 'Documents', other: 'Other'
-};
-
 const urgencyTone = (days: number): 'bad' | 'warn' | 'good' => {
     if (days <= 7) return 'bad';
     if (days <= 21) return 'warn';
@@ -33,6 +33,13 @@ const urgencyTone = (days: number): 'bad' | 'warn' | 'good' => {
 };
 
 export const PawningPage = () => {
+    const t = PAWN_T[useAdminLang()];
+    const itemTypeLabel: Record<string, string> = {
+        gold: t.typeGold, jewelry: t.typeJewelry, electronics: t.typeElectronics, documents: t.typeDocuments, other: t.typeOther
+    };
+    const statusLabel: Record<string, string> = {
+        active: t.statusActive, redeemed: t.statusRedeemed, auctioned: t.statusAuctioned, renewed: t.statusRenewed
+    };
     const [items, setItems] = useState<PawnItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'active' | 'redeemed'>('all');
@@ -62,7 +69,7 @@ export const PawningPage = () => {
             setItems(res.data.pawning || []);
         } catch (err) {
             console.error('Failed to fetch pawning items:', err);
-            setError('Unable to load pawning items. Please try again.');
+            setError(t.loadFailed);
             setItems([]);
         } finally {
             setLoading(false);
@@ -88,11 +95,11 @@ export const PawningPage = () => {
                 itemDescription: '', itemType: 'gold', pledgedValue: '', loanAmount: '',
                 interestRate: '', pledgeDate: '', redemptionDate: '', branch: '', ticketNumber: '', icon: '💍'
             });
-            notify.success('Pawn item added.');
+            notify.success(t.addedNote);
             await fetchItems();
         } catch (err) {
             console.error('Failed to create pawning item:', err);
-            notify.error(getApiErrorMessage(err, 'Failed to create pawning item. Please try again.'));
+            notify.error(getApiErrorMessage(err, t.failCreate));
         } finally {
             setSubmitting(false);
         }
@@ -100,36 +107,36 @@ export const PawningPage = () => {
 
     const handleRedeem = async (item: PawnItem) => {
         const confirmed = await confirmDialog({
-            title: 'Redeem item?',
-            message: `Mark ${item.itemDescription} (#${item.ticketNumber}) as redeemed? Total due now is ${formatMoney(Math.round(item.totalDue))}. This can't be undone.`,
-            confirmText: 'Redeem',
+            title: t.redeemTitle,
+            message: fillText(t.redeemMsg, { desc: item.itemDescription, ticket: item.ticketNumber, amount: formatMoney(Math.round(item.totalDue)) }),
+            confirmText: t.redeem,
         });
         if (!confirmed) return;
         try {
             await apiClient.put(`/pawning/${item._id}`, { status: 'redeemed' });
-            notify.success('Item marked as redeemed.');
+            notify.success(t.redeemedNote);
             await fetchItems();
         } catch (err) {
             console.error('Failed to update pawning item:', err);
-            notify.error(getApiErrorMessage(err, 'Failed to update pawning item. Please try again.'));
+            notify.error(getApiErrorMessage(err, t.failUpdate));
         }
     };
 
     const handleDelete = async (id: string) => {
         const confirmed = await confirmDialog({
-            title: 'Delete pawning item?',
-            message: 'Are you sure you want to delete this pawning item?',
-            confirmText: 'Delete',
+            title: t.deleteTitle,
+            message: t.deleteMsg,
+            confirmText: t.delete,
             danger: true,
         });
         if (!confirmed) return;
         try {
             await apiClient.delete(`/pawning/${id}`);
             setItems(prev => prev.filter(i => i._id !== id));
-            notify.success('Pawning item deleted.');
+            notify.success(t.deletedNote);
         } catch (err) {
             console.error('Failed to delete pawning item:', err);
-            notify.error('Failed to delete pawning item. Please try again.');
+            notify.error(t.failDelete);
         }
     };
 
@@ -139,14 +146,14 @@ export const PawningPage = () => {
     const totalPledged = active.reduce((s, i) => s + i.pledgedValue, 0);
     const urgentItems = active.filter(i => i.daysRemaining <= 21).length;
 
-    if (loading) return <div className="loading-spinner">Loading pawning items...</div>;
+    if (loading) return <div className="loading-spinner">{t.loading}</div>;
 
     return (
         <div className="page-container fin-page">
             <div className="page-header">
                 <div style={{ flex: 1 }}></div>
                 <button className="btn-primary" onClick={() => setShowNewForm(!showNewForm)}>
-                    + Add Pawn Item
+                    {t.addBtn}
                 </button>
             </div>
 
@@ -155,19 +162,19 @@ export const PawningPage = () => {
             {/* Summary */}
             <div className="rc-stats">
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Active Items</span>
+                    <span className="rc-stat-label">{t.statActive}</span>
                     <span className="rc-stat-value">{active.length}</span>
                 </div>
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Total Loan Taken</span>
+                    <span className="rc-stat-label">{t.statLoan}</span>
                     <span className="rc-stat-value">{formatMoney(totalLoan)}</span>
                 </div>
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Pledged Value</span>
+                    <span className="rc-stat-label">{t.statPledged}</span>
                     <span className="rc-stat-value">{formatMoney(totalPledged)}</span>
                 </div>
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Overdue or Due in &lt; 21 Days</span>
+                    <span className="rc-stat-label">{t.statUrgent}</span>
                     <span className="rc-stat-value">{urgentItems}</span>
                 </div>
             </div>
@@ -175,64 +182,64 @@ export const PawningPage = () => {
             {/* New Pawn Item Form */}
             {showNewForm && (
                 <div className="card form-card gl-form">
-                    <h3 className="gl-form-title">Add Pawn Item</h3>
+                    <h3 className="gl-form-title">{t.formTitle}</h3>
                     <form onSubmit={handleNewItemSubmit}>
                         <div className="form-row">
                             <div className="form-group">
-                                <label>Item Description</label>
-                                <input type="text" placeholder="e.g. 22K Gold Chain" value={newItem.itemDescription} onChange={e => setNewItem({ ...newItem, itemDescription: e.target.value })} required />
+                                <label>{t.itemDesc}</label>
+                                <input type="text" placeholder={t.phDesc} value={newItem.itemDescription} onChange={e => setNewItem({ ...newItem, itemDescription: e.target.value })} required />
                             </div>
                             <div className="form-group">
-                                <label>Item Type</label>
+                                <label>{t.itemType}</label>
                                 <select value={newItem.itemType} onChange={e => setNewItem({ ...newItem, itemType: e.target.value as PawnItem['itemType'] })}>
-                                    <option value="gold">Gold</option>
-                                    <option value="jewelry">Jewelry</option>
-                                    <option value="electronics">Electronics</option>
-                                    <option value="documents">Documents</option>
-                                    <option value="other">Other</option>
+                                    <option value="gold">{t.typeGold}</option>
+                                    <option value="jewelry">{t.typeJewelry}</option>
+                                    <option value="electronics">{t.typeElectronics}</option>
+                                    <option value="documents">{t.typeDocuments}</option>
+                                    <option value="other">{t.typeOther}</option>
                                 </select>
                             </div>
                         </div>
                         <div className="form-row">
                             <div className="form-group">
-                                <label>Pledged Value ({currencyCode()})</label>
-                                <input type="number" min="1" placeholder="e.g. 180000" value={newItem.pledgedValue} onChange={e => setNewItem({ ...newItem, pledgedValue: e.target.value })} required />
+                                <label>{fillText(t.pledgedLabel, { cur: currencyCode() })}</label>
+                                <input type="number" min="1" placeholder={t.phPledged} value={newItem.pledgedValue} onChange={e => setNewItem({ ...newItem, pledgedValue: e.target.value })} required />
                             </div>
                             <div className="form-group">
-                                <label>Loan Amount ({currencyCode()})</label>
-                                <input type="number" min="1" placeholder="e.g. 126000" value={newItem.loanAmount} onChange={e => setNewItem({ ...newItem, loanAmount: e.target.value })} required />
-                            </div>
-                        </div>
-                        <div className="form-row">
-                            <div className="form-group">
-                                <label>Interest Rate (% p.a.)</label>
-                                <input type="number" step="0.01" min="0" max="100" placeholder="e.g. 24" value={newItem.interestRate} onChange={e => setNewItem({ ...newItem, interestRate: e.target.value })} required />
-                            </div>
-                            <div className="form-group">
-                                <label>Branch</label>
-                                <input type="text" placeholder="e.g. Colombo 03" value={newItem.branch} onChange={e => setNewItem({ ...newItem, branch: e.target.value })} required />
+                                <label>{fillText(t.loanLabel, { cur: currencyCode() })}</label>
+                                <input type="number" min="1" placeholder={t.phLoan} value={newItem.loanAmount} onChange={e => setNewItem({ ...newItem, loanAmount: e.target.value })} required />
                             </div>
                         </div>
                         <div className="form-row">
                             <div className="form-group">
-                                <label>Ticket Number</label>
-                                <input type="text" placeholder="e.g. PWN-1234" value={newItem.ticketNumber} onChange={e => setNewItem({ ...newItem, ticketNumber: e.target.value })} required />
+                                <label>{t.interestLabel}</label>
+                                <input type="number" step="0.01" min="0" max="100" placeholder={t.phInterest} value={newItem.interestRate} onChange={e => setNewItem({ ...newItem, interestRate: e.target.value })} required />
                             </div>
                             <div className="form-group">
-                                <label>Pledge Date</label>
-                                <input type="date" value={newItem.pledgeDate} onChange={e => setNewItem({ ...newItem, pledgeDate: e.target.value })} required />
+                                <label>{t.branch}</label>
+                                <input type="text" placeholder={t.phBranch} value={newItem.branch} onChange={e => setNewItem({ ...newItem, branch: e.target.value })} required />
                             </div>
                         </div>
                         <div className="form-row">
                             <div className="form-group">
-                                <label>Redemption Date</label>
-                                <input type="date" min={newItem.pledgeDate || undefined} value={newItem.redemptionDate} onChange={e => setNewItem({ ...newItem, redemptionDate: e.target.value })} required />
+                                <label>{t.ticket}</label>
+                                <input type="text" placeholder={t.phTicket} value={newItem.ticketNumber} onChange={e => setNewItem({ ...newItem, ticketNumber: e.target.value })} required />
+                            </div>
+                            <div className="form-group">
+                                <label>{t.pledgeDate}</label>
+                                <DateInput value={newItem.pledgeDate} onChange={e => setNewItem({ ...newItem, pledgeDate: e.target.value })} required />
+                            </div>
+                        </div>
+                        <div className="form-row">
+                            <div className="form-group">
+                                <label>{t.redemptionDate}</label>
+                                <DateInput min={newItem.pledgeDate || undefined} value={newItem.redemptionDate} onChange={e => setNewItem({ ...newItem, redemptionDate: e.target.value })} required />
                             </div>
                         </div>
                         <div className="form-actions">
-                            <button type="button" className="btn-secondary" onClick={() => setShowNewForm(false)}>Cancel</button>
+                            <button type="button" className="btn-secondary" onClick={() => setShowNewForm(false)}>{t.cancel}</button>
                             <button type="submit" className="btn-primary" disabled={submitting}>
-                                {submitting ? 'Saving...' : 'Save Pawn Item'}
+                                {submitting ? t.saving : t.save}
                             </button>
                         </div>
                     </form>
@@ -242,9 +249,9 @@ export const PawningPage = () => {
             {/* Empty State */}
             {items.length === 0 && !showNewForm && (
                 <div className="empty-state">
-                    <h3>No Pawning Items Added</h3>
-                    <p>Track your pawned items, keep an eye on redemption dates, and never miss a payment.</p>
-                    <button className="btn-primary" onClick={() => setShowNewForm(true)}>+ Add Pawn Item</button>
+                    <h3>{t.emptyTitle}</h3>
+                    <p>{t.emptyText}</p>
+                    <button className="btn-primary" onClick={() => setShowNewForm(true)}>{t.addBtn}</button>
                 </div>
             )}
 
@@ -253,7 +260,7 @@ export const PawningPage = () => {
                 <div className="rec-filter-row fin-filters">
                     {(['all', 'active', 'redeemed'] as const).map(f => (
                         <button key={f} className={`rec-filter-btn ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
-                            {f.charAt(0).toUpperCase() + f.slice(1)}
+                            {({ all: t.filterAll, active: t.filterActive, redeemed: t.filterRedeemed })[f]}
                             <span className="rec-filter-count">{(f === 'all' ? items : items.filter(i => i.status === f)).length}</span>
                         </button>
                     ))}
@@ -274,22 +281,22 @@ export const PawningPage = () => {
                                         <span className="gl-sub">{item.branch} | #{item.ticketNumber} · {itemTypeLabel[item.itemType]}</span>
                                     </div>
                                 </div>
-                                <span className={`gl-pill ${statusPill}`}>{item.status.toUpperCase()}</span>
+                                <span className={`gl-pill ${statusPill}`}>{statusLabel[item.status]}</span>
                             </div>
 
                             <div className="gl-kv">
-                                <div><span>Loan Amount</span><span>{formatMoney(item.loanAmount)}</span></div>
-                                <div><span>Total Due Now</span><span>{formatMoney(Math.round(item.totalDue))}</span></div>
-                                <div><span>Pledged Value</span><span>{formatMoney(item.pledgedValue)}</span></div>
-                                <div><span>Interest Rate</span><span>{item.interestRate}% p.a. ({formatMoney(Math.round(item.monthlyInterest))}/mo)</span></div>
-                                <div><span>Accrued Interest</span><span>{formatMoney(Math.round(item.totalInterestAccrued))}</span></div>
+                                <div><span>{t.kvLoan}</span><span>{formatMoney(item.loanAmount)}</span></div>
+                                <div><span>{t.kvDueNow}</span><span>{formatMoney(Math.round(item.totalDue))}</span></div>
+                                <div><span>{t.kvPledged}</span><span>{formatMoney(item.pledgedValue)}</span></div>
+                                <div><span>{t.kvRate}</span><span>{fillText(t.kvRateValue, { rate: item.interestRate, monthly: formatMoney(Math.round(item.monthlyInterest)) })}</span></div>
+                                <div><span>{t.kvAccrued}</span><span>{formatMoney(Math.round(item.totalInterestAccrued))}</span></div>
                                 {item.status === 'active' && (
                                     <>
-                                        <div><span>Redemption Date</span><span>{formatDate(item.redemptionDate)}</span></div>
+                                        <div><span>{t.kvRedemption}</span><span>{formatDate(item.redemptionDate)}</span></div>
                                         <div>
-                                            <span>Time Left</span>
+                                            <span>{t.kvTimeLeft}</span>
                                             <span className={`fin-${tone}`}>
-                                                {item.daysRemaining < 0 ? `Overdue by ${-item.daysRemaining} days` : `${item.daysRemaining} days`}
+                                                {item.daysRemaining < 0 ? fillText(t.overdueBy, { n: -item.daysRemaining }) : fillText(t.daysLeft, { n: item.daysRemaining })}
                                             </span>
                                         </div>
                                     </>
@@ -307,15 +314,15 @@ export const PawningPage = () => {
                                 </div>
                             )}
 
-                            <div className="gl-actions">
+                            <div className="gl-actions fd-actions pawn-card-actions">
                                 {item.status === 'active' && (
                                     <>
-                                        <button className="btn-primary btn-sm" onClick={() => handleRedeem(item)}>Redeem Item</button>
-                                        <button className="btn-secondary btn-sm" onClick={() => handleDelete(item._id)}>Delete</button>
+                                        <button className="btn-primary btn-sm" onClick={() => handleRedeem(item)}>{t.redeemItem}</button>
+                                        <button className="btn-secondary btn-sm" onClick={() => handleDelete(item._id)}>{t.delete}</button>
                                     </>
                                 )}
                                 {item.status !== 'active' && (
-                                    <button className="btn-secondary btn-sm" onClick={() => handleDelete(item._id)}>Delete</button>
+                                    <button className="btn-secondary btn-sm" onClick={() => handleDelete(item._id)}>{t.delete}</button>
                                 )}
                             </div>
                         </article>

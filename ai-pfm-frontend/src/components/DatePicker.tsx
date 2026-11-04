@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { getLocalDateString, parseLocalDateString } from '../utils/date';
 import './DatePicker.css';
 
@@ -12,6 +13,8 @@ interface DatePickerProps {
   maxDate?: string;
   disabled?: boolean;
   className?: string;
+  inputClassName?: string;
+  id?: string;
 }
 
 export const DatePicker: React.FC<DatePickerProps> = ({
@@ -23,12 +26,22 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   minDate,
   maxDate,
   disabled = false,
-  className = ""
+  className = "",
+  inputClassName = "",
+  id
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [yearOpen, setYearOpen] = useState(false);
+  const [monthOpen, setMonthOpen] = useState(false);
+  const [yearUp, setYearUp] = useState(false);
+  const [monthUp, setMonthUp] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const yearListRef = useRef<HTMLDivElement>(null);
+  const monthListRef = useRef<HTMLDivElement>(null);
+  const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
 
   useEffect(() => {
     if (value) {
@@ -47,14 +60,65 @@ export const DatePicker: React.FC<DatePickerProps> = ({
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
+      const target = event.target as Node;
+      if (containerRef.current?.contains(target) || dropdownRef.current?.contains(target)) return;
+      setIsOpen(false);
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    // Capture phase so a click that a React handler stops from bubbling still closes the picker
+    document.addEventListener('mousedown', handleClickOutside, true);
+    return () => document.removeEventListener('mousedown', handleClickOutside, true);
   }, []);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setYearOpen(false);
+      setMonthOpen(false);
+    }
+  }, [isOpen]);
+
+  // Centre the selected year and month once when their lists open, so later re-renders do not reset the user's scroll
+  useLayoutEffect(() => {
+    const el = yearListRef.current;
+    const current = el?.querySelector('.year-option.on') as HTMLElement | null;
+    if (el && current) el.scrollTop = current.offsetTop - el.clientHeight / 2 + current.clientHeight / 2;
+  }, [yearOpen]);
+
+  useLayoutEffect(() => {
+    const el = monthListRef.current;
+    const current = el?.querySelector('.year-option.on') as HTMLElement | null;
+    if (el && current) el.scrollTop = current.offsetTop - el.clientHeight / 2 + current.clientHeight / 2;
+  }, [monthOpen]);
+
+  // The dropdown is portalled to body so modal containers (overflow: auto) cannot clip it
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+
+    const updatePosition = (event?: Event) => {
+      // Scrolling inside the dropdown (the year list) must not re-render and reset its scroll position
+      if (event && dropdownRef.current?.contains(event.target as Node)) return;
+      const el = containerRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const dropdownHeight = dropdownRef.current?.offsetHeight ?? 340;
+      const dropdownWidth = dropdownRef.current?.offsetWidth ?? 300;
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const openUp = spaceBelow < dropdownHeight + 8 && rect.top > spaceBelow;
+      const left = Math.max(8, Math.min(rect.left, window.innerWidth - dropdownWidth - 8));
+
+      setDropdownStyle(openUp
+        ? { position: 'fixed', left, top: 'auto', bottom: window.innerHeight - rect.top + 8, zIndex: 10000 }
+        : { position: 'fixed', left, top: rect.bottom + 8, bottom: 'auto', zIndex: 10000 });
+    };
+
+    updatePosition();
+    window.addEventListener('scroll', updatePosition, true);
+    window.addEventListener('resize', updatePosition);
+    return () => {
+      window.removeEventListener('scroll', updatePosition, true);
+      window.removeEventListener('resize', updatePosition);
+    };
+  }, [isOpen]);
 
   const formatDisplayDate = (date: Date): string => {
     const day = date.getDate().toString().padStart(2, '0');
@@ -170,11 +234,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   };
 
   const navigateMonth = (direction: number) => {
-    setCurrentMonth(prev => {
-      const newMonth = new Date(prev);
-      newMonth.setMonth(newMonth.getMonth() + direction);
-      return newMonth;
-    });
+    // Start from the 1st so a 31st does not overflow into the following month (e.g. 31 Jan + 1 month)
+    setCurrentMonth(prev => new Date(prev.getFullYear(), prev.getMonth() + direction, 1));
   };
 
   const getDaysInMonth = () => {
@@ -265,11 +326,13 @@ export const DatePicker: React.FC<DatePickerProps> = ({
       
       <div className="date-picker-input-container">
         <input
+          id={id}
           type="text"
           value={inputValue}
           placeholder={placeholder}
+          required={required}
           disabled={disabled}
-          className="date-picker-input"
+          className={`date-picker-input ${inputClassName}`}
           onChange={handleInputChange}
           onBlur={handleInputBlur}
           onClick={() => !disabled && setIsOpen(!isOpen)}
@@ -279,8 +342,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         </div>
       </div>
 
-      {isOpen && !disabled && (
-        <div className="date-picker-dropdown">
+      {isOpen && !disabled && createPortal(
+        <div className="date-picker-dropdown" ref={dropdownRef} style={dropdownStyle}>
           <div className="date-picker-header">
             <button
               type="button"
@@ -289,8 +352,81 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
             </button>
-            <div className="month-year-display">
-              {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+            <div className="month-year-selects">
+              <div className="month-picker">
+                <button
+                  type="button"
+                  className="month-select"
+                  onClick={(e) => {
+                    setMonthUp(window.innerHeight - e.currentTarget.getBoundingClientRect().bottom < 240);
+                    setMonthOpen(!monthOpen);
+                    setYearOpen(false);
+                  }}
+                  aria-haspopup="listbox"
+                  aria-expanded={monthOpen}
+                  aria-label="Month"
+                >
+                  {monthNames[currentMonth.getMonth()]}
+                </button>
+                {monthOpen && (
+                  <div className={`month-list${monthUp ? " up" : ""}`} role="listbox" ref={monthListRef}>
+                    {monthNames.map((name, i) => (
+                      <button
+                        key={name}
+                        type="button"
+                        role="option"
+                        aria-selected={i === currentMonth.getMonth()}
+                        className={`year-option ${i === currentMonth.getMonth() ? 'on' : ''}`}
+                        onClick={() => {
+                          setCurrentMonth(prev => new Date(prev.getFullYear(), i, 1));
+                          setMonthOpen(false);
+                        }}
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="year-picker">
+                <button
+                  type="button"
+                  className="year-trigger"
+                  onClick={(e) => {
+                    setYearUp(window.innerHeight - e.currentTarget.getBoundingClientRect().bottom < 240);
+                    setYearOpen(!yearOpen);
+                    setMonthOpen(false);
+                  }}
+                  aria-haspopup="listbox"
+                  aria-expanded={yearOpen}
+                  aria-label="Year"
+                >
+                  {currentMonth.getFullYear()}
+                </button>
+                {yearOpen && (
+                  <div
+                    className={`year-list${yearUp ? " up" : ""}`}
+                    role="listbox"
+                    ref={yearListRef}
+                  >
+                    {Array.from({ length: 201 }, (_, i) => currentMonth.getFullYear() - 100 + i).map(y => (
+                      <button
+                        key={y}
+                        type="button"
+                        role="option"
+                        aria-selected={y === currentMonth.getFullYear()}
+                        className={`year-option ${y === currentMonth.getFullYear() ? 'on' : ''}`}
+                        onClick={() => {
+                          setCurrentMonth(prev => new Date(y, prev.getMonth(), 1));
+                          setYearOpen(false);
+                        }}
+                      >
+                        {y}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <button
               type="button"
@@ -365,7 +501,8 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               Clear
             </button>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

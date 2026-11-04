@@ -7,11 +7,18 @@ import { notify } from '../utils/systemMessages';
 import axios from 'axios';
 import { AIAssistant } from './AIAssistant';
 import { SpendingTrends } from './SpendingTrends';
-import { IconRefreshCw, IconRepeat, IconBrain } from './Icons';
+import { IconRefreshCw, IconBrain } from './Icons';
 import { getHealthStatus, noScoreMessage } from '../utils/healthScore';
+import { useAdminLang } from '../i18n/adminText';
+import { DASHBOARD_T, fillText } from '../i18n/dashboardText';
+
+// Date and month names follow the selected language
+const DATE_LOCALE = { en: 'en-GB', si: 'si-LK', ta: 'ta-LK' } as const;
 
 // Minimal layout: balance across all recorded transactions, and this month's income and expenses
 const BalanceSummary = () => {
+    const lang = useAdminLang();
+    const t = DASHBOARD_T[lang];
     const [totals, setTotals] = useState<{ balance: number; income: number; expenses: number } | null>(null);
 
     useEffect(() => {
@@ -41,27 +48,127 @@ const BalanceSummary = () => {
 
     return (
         <div className="card" style={{ padding: '1.75rem', gridColumn: '1 / -1' }}>
-            <div className="ds-card-title">Balance Summary</div>
-            <div className="ds-card-subtitle">All recorded transactions, and this month&apos;s totals</div>
+            <div className="ds-card-title">{t.balanceTitle}</div>
+            <div className="ds-card-subtitle">{t.balanceSub}</div>
             <div className="score-stats-grid" style={{ marginTop: '1rem' }}>
                 <div className="score-stat-item">
                     <span className="score-stat-value">{totals ? money(totals.balance) : '—'}</span>
-                    <span className="score-stat-label">Balance</span>
+                    <span className="score-stat-label">{t.balance}</span>
                 </div>
                 <div className="score-stat-item">
                     <span className="score-stat-value" style={{ color: '#10b981' }}>{totals ? money(totals.income) : '—'}</span>
-                    <span className="score-stat-label">Income this month</span>
+                    <span className="score-stat-label">{t.incomeThisMonth}</span>
                 </div>
                 <div className="score-stat-item">
                     <span className="score-stat-value" style={{ color: '#f43f5e' }}>{totals ? money(totals.expenses) : '—'}</span>
-                    <span className="score-stat-label">Expenses this month</span>
+                    <span className="score-stat-label">{t.expensesThisMonth}</span>
                 </div>
             </div>
         </div>
     );
 };
 
+// Greeting and this month's headline numbers (income, expenses, net saved, available credit)
+const DashboardSummary = ({ showStats }: { showStats: boolean }) => {
+    const lang = useAdminLang();
+    const t = DASHBOARD_T[lang];
+    const [firstName, setFirstName] = useState('');
+    const [month, setMonth] = useState<{ income: number; expenses: number; expenseCount: number; incomeCategories: string[] } | null>(null);
+    const [credit, setCredit] = useState<{ available: number; cards: number } | null>(null);
+
+    useEffect(() => {
+        apiClient.get('/auth/profile')
+            .then(res => setFirstName(String(res.data?.user?.name || '').trim().split(' ')[0]))
+            .catch(() => setFirstName(''));
+
+        apiClient.get('/transactions')
+            .then(res => {
+                const list: any[] = res.data?.data ?? [];
+                const now = new Date();
+                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                let income = 0;
+                let expenses = 0;
+                let expenseCount = 0;
+                const incomeCategories: string[] = [];
+                list.forEach(t => {
+                    if (new Date(t.date) < monthStart) return;
+                    const amount = Number(t.amount) || 0;
+                    if (t.type === 'income') {
+                        income += amount;
+                        if (t.category && !incomeCategories.includes(t.category)) incomeCategories.push(t.category);
+                    } else {
+                        expenses += amount;
+                        expenseCount += 1;
+                    }
+                });
+                setMonth({ income, expenses, expenseCount, incomeCategories });
+            })
+            .catch(() => setMonth(null));
+
+        apiClient.get('/credit-cards')
+            .then(res => {
+                const cards: any[] = res.data?.cards ?? [];
+                const available = cards.reduce((sum, c) => sum + ((Number(c.creditLimit) || 0) - (Number(c.currentBalance) || 0)), 0);
+                setCredit({ available, cards: cards.length });
+            })
+            .catch(() => setCredit(null));
+    }, []);
+
+    const today = new Date();
+    const locale = DATE_LOCALE[lang];
+    const monthName = today.toLocaleDateString(locale, { month: 'long' });
+    const dateLabel = today.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    const shortDateLabel = today.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    const net = month ? month.income - month.expenses : 0;
+    const savingsRate = month && month.income > 0 ? Math.round((net / month.income) * 100) : null;
+    const incomeSources = month?.incomeCategories ?? [];
+    const incomeSub = incomeSources.length === 0
+        ? t.noIncomeYet
+        : incomeSources.length <= 2
+            ? incomeSources.join(' and ')
+            : `${incomeSources.slice(0, 2).join(', ')} and more`;
+
+    return (
+        <>
+            <div className="db-hello">
+                <p className="db-eyebrow">
+                    <span className="db-eyebrow-full">{dateLabel}</span>
+                    <span className="db-eyebrow-short">{shortDateLabel}</span>
+                </p>
+                <h2>{t.welcomeBack}{firstName ? <>,<span className="db-hello-name"> {firstName}</span></> : ''}</h2>
+            </div>
+
+            {showStats && (
+                <div className="db-stats">
+                    <div className="db-stat">
+                        <span className="db-stat-l">{fillText(t.incomeLabel, { month: monthName })}</span>
+                        <span className="db-stat-v" style={{ color: '#10b981' }}>{month ? formatMoney(month.income) : '—'}</span>
+                        <span className="db-stat-s">{month ? incomeSub : ''}</span>
+                    </div>
+                    <div className="db-stat">
+                        <span className="db-stat-l">{fillText(t.expensesLabel, { month: monthName })}</span>
+                        <span className="db-stat-v">{month ? formatMoney(month.expenses) : '—'}</span>
+                        <span className="db-stat-s">{month ? (month.expenseCount === 1 ? fillText(t.txCountOne, { n: 1 }) : fillText(t.txCount, { n: month.expenseCount })) : ''}</span>
+                    </div>
+                    <div className="db-stat">
+                        <span className="db-stat-l">{t.netSaved}</span>
+                        <span className="db-stat-v" style={{ color: net < 0 ? '#f43f5e' : undefined }}>{month ? formatMoney(net) : '—'}</span>
+                        <span className="db-stat-s">{savingsRate !== null ? fillText(t.savingsRate, { n: savingsRate }) : ''}</span>
+                    </div>
+                    <div className="db-stat">
+                        <span className="db-stat-l">{t.availableCredit}</span>
+                        <span className="db-stat-v">{credit ? formatMoney(credit.available) : '—'}</span>
+                        <span className="db-stat-s">{credit ? (credit.cards === 0 ? t.noCardsAdded : credit.cards === 1 ? fillText(t.cardCountOne, { n: 1 }) : fillText(t.cardCount, { n: credit.cards })) : ''}</span>
+                    </div>
+                </div>
+            )}
+        </>
+    );
+};
+
 export const Dashboard = () => {
+    const lang = useAdminLang();
+    const t = DASHBOARD_T[lang];
     // Dashboard layout chosen in Settings: detailed, compact or minimal
     const layout = getAppPrefs().dashboardLayout;
     const navigate = useNavigate();
@@ -140,9 +247,9 @@ export const Dashboard = () => {
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 const msg = error.response?.data?.message || error.response?.data?.error || error.response?.data?.details;
-                notify.error(msg ? `Sync failed: ${msg}` : 'Sync failed. Please try again.');
+                notify.error(msg ? fillText(t.syncFailed, { msg }) : t.syncFailedGeneric);
             } else {
-                notify.error('Sync failed. Please try again.');
+                notify.error(t.syncFailedGeneric);
             }
         } finally {
             setSyncing(false);
@@ -154,11 +261,11 @@ export const Dashboard = () => {
     const healthStatus = hasScore
         ? getHealthStatus(score)
         : {
-            label: scoreState === 'error' ? 'Unavailable' : 'No score yet',
+            label: scoreState === 'error' ? t.unavailable : t.noScoreYet,
             risk: '—',
             riskClass: 'none',
             color: '#94a3b8',
-            description: scoreState === 'error' ? 'Could not load your score. Please refresh the page.' : noScoreMessage(noDataReason),
+            description: scoreState === 'error' ? t.couldNotLoadScore : noScoreMessage(noDataReason),
         };
 
     const formatDate = (dateString: string) => {
@@ -177,48 +284,49 @@ export const Dashboard = () => {
     const dashOffset = CIRCUMFERENCE - (displayScore / 100) * CIRCUMFERENCE;
 
     return (
-        <div className="notifications-page" style={{ width: '100%' }}>
+        <div className="page-container db-page">
+            {/* Minimal layout already shows its own balance summary below */}
+            <DashboardSummary showStats={layout !== 'minimal'} />
 
-            <div className="notifications-content">
-                <div className="dashboard-grid">
+            <div className="db-grid">
                 {layout === 'minimal' && <BalanceSummary />}
 
                 {/* ── Financial Health Score Card ── */}
                 {layout !== 'minimal' && (
-                <div className="card health-score-card" style={{ padding: '1.75rem', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center' }}>
-                    <div className="score-card-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', width: '100%', margin: 0 }}>
+                <section className="db-card db-span4 db-health">
+                    <header className="db-card-h">
                         <div>
-                            <div className="ds-card-title">Financial Health</div>
-                            <div className="ds-card-subtitle">Based on the last 30 days</div>
+                            <h3>{t.financialHealth}</h3>
+                            <p>{t.basedOn30}</p>
                         </div>
-                    </div>
+                        <span className={`db-pill status-${healthStatus.riskClass}`} style={{ color: scoreColor }}>
+                            {healthStatus.label}
+                        </span>
+                    </header>
 
-                    <div className="score-display" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '0.5rem', margin: '0.5rem 0 0 0' }}>
+                    <div className="db-health-body">
                         {/* SVG Animated Ring */}
-                        <div className="score-ring-wrap" style={{ width: 128, height: 128 }}>
+                        <div className="db-ring">
                             <svg
-                                width="128"
-                                height="128"
+                                width="150"
+                                height="150"
                                 viewBox="0 0 128 128"
                                 role="img"
                                 aria-label={`Financial health score: ${score} out of 100`}
                             >
-                                {/* Gradient definition */}
                                 <defs>
                                     <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                                         <stop offset="0%" stopColor={scoreColor} />
                                         <stop offset="100%" stopColor={scoreColor} stopOpacity={0.7} />
                                     </linearGradient>
                                 </defs>
-                                {/* Track */}
                                 <circle
+                                    className="db-ring-track"
                                     cx="64" cy="64" r={RADIUS}
                                     fill="none"
-                                    stroke="rgba(255,255,255,0.06)"
                                     strokeWidth="12"
                                     transform="rotate(-90 64 64)"
                                 />
-                                {/* Fill */}
                                 <circle
                                     cx="64" cy="64" r={RADIUS}
                                     fill="none"
@@ -231,185 +339,128 @@ export const Dashboard = () => {
                                     style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)' }}
                                 />
                             </svg>
-                            {/* Center label */}
-                            <div className="score-ring-center">
-                                <span className="score-number" style={{ color: scoreColor }}>
+                            <div className="db-ring-center">
+                                <span className="db-ring-value" style={{ color: scoreColor }}>
                                     {loadingScore ? '…' : hasScore ? displayScore : '—'}
                                 </span>
                             </div>
                         </div>
 
-                        {/* Status */}
-                        <div className="score-status" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
-                            <span className={`status-text status-${healthStatus.riskClass}`} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <span className="status-dot" aria-hidden="true">●</span>
-                                {healthStatus.label}
-                            </span>
-                            <p className="status-description" style={{ marginTop: '0.25rem', margin: 0 }}>
-                                {healthStatus.description}
-                            </p>
-                        </div>
+                        <p className="db-health-desc">{healthStatus.description}</p>
                     </div>
 
                     {/* Stats row */}
-                    <div 
-                        className="score-stats-grid" 
-                        style={{ marginTop: 'auto', cursor: 'pointer', transition: 'transform 0.2s', ...({ '&:hover': { transform: 'scale(1.02)' } } as any) }}
+                    <button
+                        type="button"
+                        className="db-mini3"
                         onClick={() => navigate('/financial-health')}
-                        title="View detailed financial health"
+                        title={t.viewDetailedHealth}
                     >
-                        <div className="score-stat-item">
-                            <span className="score-stat-value" style={{ color: scoreColor }}>
-                                {loadingScore || !hasScore ? '—' : score}
-                            </span>
-                            <span className="score-stat-label">Score</span>
-                        </div>
-                        <div className="score-stat-item">
-                            <span className="score-stat-value" style={{ color: savingsRate !== null && savingsRate >= 0 ? '#10b981' : '#f43f5e' }}>
+                        <span>
+                            <b style={{ color: scoreColor }}>{loadingScore || !hasScore ? '—' : score}</b>
+                            <small>{t.score}</small>
+                        </span>
+                        <span>
+                            <b style={{ color: savingsRate !== null && savingsRate >= 0 ? '#10b981' : '#f43f5e' }}>
                                 {loadingScore || !hasScore ? '—' : savingsRate !== null ? `${Math.round(savingsRate * 100)}%` : '0%'}
-                            </span>
-                            <span className="score-stat-label">Savings</span>
-                        </div>
-                        <div className="score-stat-item">
-                            <span className="score-stat-value">{loadingScore ? '—' : healthStatus.risk}</span>
-                            <span className="score-stat-label">Risk</span>
-                        </div>
-                    </div>
-                </div>
-
+                            </b>
+                            <small>{t.savings}</small>
+                        </span>
+                        <span>
+                            <b>{loadingScore ? '—' : healthStatus.risk}</b>
+                            <small>{t.risk}</small>
+                        </span>
+                    </button>
+                </section>
                 )}
+
                 {/* ── Spending Trends Card ── */}
-                {layout !== 'minimal' && <SpendingTrends />}
+                {layout !== 'minimal' && (
+                    <div className="db-span8 db-trends">
+                        <SpendingTrends />
+                    </div>
+                )}
 
                 {/* ── Recent Transactions Card ── */}
                 {layout === 'detailed' && (
-                <div className="card transactions-card" style={{ padding: '1.75rem' }}>
-                    <div className="transactions-header">
+                <section className="db-card db-span8">
+                    <header className="db-card-h">
                         <div>
-                            <h3 style={{ marginBottom: 2 }}>Recent Transactions</h3>
-                            <p style={{ fontSize: 'var(--font-xs)', color: 'var(--color-text-muted)', margin: 0 }}>
-                                Latest {transactions.length} activities
-                            </p>
+                            <h3>{t.recentTransactions}</h3>
+                            <p>{fillText(t.latestActivities, { n: transactions.length })}</p>
                         </div>
-                        <div className="transactions-header-actions">
-                            <button
-                                className="btn-sync"
-                                onClick={syncBank}
-                                disabled={syncing}
-                                title="Sync latest bank transactions"
-                                aria-label="Sync bank transactions"
-                            >
-                                <span aria-hidden="true" style={{ display: 'flex' }}><IconRefreshCw size={16} /></span>
-                                <span>{syncing ? 'Syncing…' : 'Sync'}</span>
-                            </button>
-                        </div>
-                    </div>
+                        <button
+                            className="btn-secondary db-btn-sm"
+                            onClick={syncBank}
+                            disabled={syncing}
+                            title={t.syncTitle}
+                            aria-label={t.syncAria}
+                        >
+                            <span aria-hidden="true" style={{ display: 'flex' }}><IconRefreshCw size={14} /></span>
+                            <span>{syncing ? t.syncing : t.sync}</span>
+                        </button>
+                    </header>
 
-                    <div className="transactions-table-container">
-                        <table className="transactions-table responsive-table" aria-label="Recent transactions">
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Description</th>
-                                    <th>Category</th>
-                                    <th className="text-right">Amount</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {loadingTransactions ? (
-                                    <tr>
-                                        <td colSpan={4} className="text-center">
-                                            Loading transactions…
-                                        </td>
-                                    </tr>
-                                ) : transactions.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={4} className="text-center">
-                                            No transactions yet. Add your first transaction to get started.
-                                        </td>
-                                    </tr>
-                                ) : (
-                                    transactions.map((tx) => (
-                                        <tr key={tx._id || tx.id}>
-                                            <td data-label="Date" style={{ color: 'var(--color-text-muted)' }}>
-                                                {formatDate(tx.date)}
-                                            </td>
-                                            <td data-label="Description" style={{ fontWeight: 500, maxWidth: 220 }}>
-                                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block', maxWidth: 200 }}>
-                                                    {tx.description || '—'}
-                                                </span>
-                                            </td>
-                                            <td data-label="Category">
-                                                <span className="category-badge">
-                                                    {tx.category}
-                                                </span>
-                                            </td>
-                                            <td
-                                                data-label="Amount"
-                                                className={`text-right ${tx.type === 'expense' ? 'text-danger' : 'text-success'}`}
-                                                style={{ fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}
-                                            >
-                                                {formatAmount(tx.amount, tx.type)}
-                                            </td>
-                                        </tr>
-                                    ))
-                                )}
-                            </tbody>
-                        </table>
+                    <div className="db-list" aria-label="Recent transactions">
+                        {loadingTransactions ? (
+                            <p className="db-empty">{t.loadingTransactions}</p>
+                        ) : transactions.length === 0 ? (
+                            <p className="db-empty">{t.noTransactionsYet}</p>
+                        ) : (
+                            transactions.map((tx) => (
+                                <div key={tx._id || tx.id} className="db-list-i">
+                                    <div className="db-list-main">
+                                        <div className="db-list-t">{tx.category || '—'}</div>
+                                        <div className="db-list-s">
+                                            {formatDate(tx.date)}{tx.description ? ` · ${tx.description}` : ''}
+                                        </div>
+                                    </div>
+                                    <div className={`db-amt ${tx.type === 'expense' ? 'expense' : 'income'}`}>
+                                        {formatAmount(tx.amount, tx.type)}
+                                    </div>
+                                </div>
+                            ))
+                        )}
                     </div>
-                </div>
-
+                </section>
                 )}
+
                 {/* ── Recurring Subscriptions Card ── */}
                 {layout === 'detailed' && (
-                <div 
-                    className="card subscriptions-card" 
-                    style={{ 
-                        padding: '1.75rem',
-                        cursor: 'pointer',
-                        transition: 'transform 0.2s',
-                        ...({ '&:hover': { transform: 'scale(1.02)' } } as any)
-                    }}
+                <section
+                    className="db-card db-span4 db-clickable"
                     onClick={() => navigate('/recurring')}
-                    title="View cash flow and subscriptions"
+                    title={t.viewCashFlow}
                 >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                        <div className="ds-card-icon" style={{
-                            background: 'rgba(99,102,241,0.1)',
-                            border: '1px solid rgba(99,102,241,0.2)'
-                        }}><IconRepeat size={24} /></div>
+                    <header className="db-card-h">
                         <div>
-                            <div className="ds-card-title">Subscriptions</div>
-                            <div className="ds-card-subtitle">Recurring charges detected</div>
+                            <h3>{t.subscriptionsTitle}</h3>
+                            <p>{t.recurringDetected}</p>
                         </div>
                         <button
                             type="button"
-                            className="ds-btn ds-btn-ghost ds-btn-sm"
+                            className="db-ghost-btn"
                             onClick={(e) => {
                                 e.stopPropagation();
                                 setAiOpen(true);
                             }}
-                            style={{ marginLeft: 'auto', fontSize: 12 }}
-                            aria-label="Open AI Assistant"
+                            aria-label={t.openAiAria}
                         >
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><IconBrain size={14} /> AI Coach</span>
+                            <IconBrain size={14} /> {t.openAiCoach}
                         </button>
-                    </div>
+                    </header>
 
-                    <div className="subscriptions-content">
-                        <div className="subscriptions-icon" style={{ display: 'none' }}></div>
-                        <div className="subscriptions-info">
-                            <h3>Recurring Subscriptions</h3>
-                            <p>Detected from your transaction history.</p>
-                        </div>
-                        <div className="subscriptions-status">
-                            <p>None found</p>
+                    <div className="db-list">
+                        <div className="db-list-i">
+                            <div className="db-list-main">
+                                <div className="db-list-t">{t.recurringSubscriptions}</div>
+                                <div className="db-list-s">{t.detectedFromHistory}</div>
+                            </div>
+                            <div className="db-amt db-muted">{t.noneFound}</div>
                         </div>
                     </div>
-                </div>
+                </section>
                 )}
-
-            </div>
             </div>
 
             {/* AI Assistant Modal */}

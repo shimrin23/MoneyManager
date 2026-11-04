@@ -1,7 +1,11 @@
+import { DateInput } from './DateInput';
 import { formatDate, formatMoney, toLkr, currencyCode } from '../utils/appFormat';
 import { useState, type FC } from 'react';
 import { useLoans } from '../hooks/useLoans';
 import { notify } from '../utils/systemMessages';
+import { useAdminLang } from '../i18n/adminText';
+import { LOAN_CALC_T } from '../i18n/loanCalcText';
+import { fillText } from '../i18n/dashboardText';
 
 interface LoanFormValues {
     type: string;
@@ -32,6 +36,10 @@ const emptyForm = (): LoanFormValues => ({
 });
 
 const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues, previewOnly = false }) => {
+    const t = LOAN_CALC_T[useAdminLang()];
+    const typeNames: Record<string, string> = {
+        Personal: t.typePersonal, Home: t.typeHome, Vehicle: t.typeVehicle, Education: t.typeEducation
+    };
     const { calculateEMI, getSchedule, createLoan } = useLoans();
 
     const [formData, setFormData] = useState<LoanFormValues>(initialValues || emptyForm());
@@ -44,10 +52,10 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
 
     const handleCalculate = async () => {
         const newErrors: string[] = [];
-        if (!previewOnly && !formData.provider.trim()) newErrors.push('Enter the provider / bank name');
-        if (!formData.principal || Number(formData.principal) <= 0) newErrors.push('Enter valid principal amount');
-        if (formData.interestRate === '' || Number(formData.interestRate) < 0) newErrors.push('Enter valid interest rate');
-        if (!formData.tenure || Number(formData.tenure) <= 0) newErrors.push('Enter valid tenure (months)');
+        if (!previewOnly && !formData.provider.trim()) newErrors.push(t.errProvider);
+        if (!formData.principal || Number(formData.principal) <= 0) newErrors.push(t.errPrincipal);
+        if (formData.interestRate === '' || Number(formData.interestRate) < 0) newErrors.push(t.errRate);
+        if (!formData.tenure || Number(formData.tenure) <= 0) newErrors.push(t.errTenure);
 
         if (newErrors.length > 0) {
             setErrors(newErrors);
@@ -98,7 +106,7 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
             setResult(null);
             setSchedule([]);
             setStep(1);
-            notify.success('Loan created.');
+            notify.success(t.loanCreated);
             onLoanCreated?.();
         } catch (err: any) {
             setErrors([err.message]);
@@ -111,8 +119,8 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
         <div>
             {previewOnly && (
                 <p className="su-muted fin-lead">
-                    Recalculating {formData.type} loan from {formData.provider}. Change the values to compare.
-                    To change the loan itself, use <strong>Edit</strong> on the loan card.
+                    {fillText(t.recalcIntro, { type: typeNames[formData.type] ?? formData.type, provider: formData.provider })}
+                    {' '}{t.recalcEditHint} <strong>{t.editWord}</strong> {t.recalcEditTail}
                 </p>
             )}
 
@@ -126,22 +134,22 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
 
             {step === 1 && (
                 <div className="card form-card gl-form">
-                    <h3 className="gl-form-title">EMI Calculator</h3>
+                    <h3 className="gl-form-title">{t.calcTitle}</h3>
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Loan Type</label>
+                            <label>{t.loanType}</label>
                             <select value={formData.type} onChange={(e) => setFormData({ ...formData, type: e.target.value })}>
-                                <option>Personal</option>
-                                <option>Home</option>
-                                <option>Vehicle</option>
-                                <option>Education</option>
+                                <option value="Personal">{t.typePersonal}</option>
+                                <option value="Home">{t.typeHome}</option>
+                                <option value="Vehicle">{t.typeVehicle}</option>
+                                <option value="Education">{t.typeEducation}</option>
                             </select>
                         </div>
                         <div className="form-group">
-                            <label>Provider/Bank</label>
+                            <label>{t.providerBank}</label>
                             <input
                                 type="text"
-                                placeholder="e.g., ICICI Bank"
+                                placeholder={t.providerPh}
                                 value={formData.provider}
                                 onChange={(e) => setFormData({ ...formData, provider: e.target.value })}
                             />
@@ -150,7 +158,7 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Principal Amount ({currencyCode()})</label>
+                            <label>{fillText(t.principalLabel, { cur: currencyCode() })}</label>
                             <input
                                 type="number"
                                 placeholder="100000"
@@ -159,7 +167,7 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
                             />
                         </div>
                         <div className="form-group">
-                            <label>Interest Rate (% p.a.)</label>
+                            <label>{t.rateLabel}</label>
                             <input
                                 type="number"
                                 placeholder="8.5"
@@ -172,7 +180,7 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
 
                     <div className="form-row">
                         <div className="form-group">
-                            <label>Tenure (Months)</label>
+                            <label>{t.tenureLabel}</label>
                             <input
                                 type="number"
                                 placeholder="60"
@@ -181,9 +189,8 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
                             />
                         </div>
                         <div className="form-group">
-                            <label>Start Date</label>
-                            <input
-                                type="date"
+                            <label>{t.startDate}</label>
+                            <DateInput
                                 value={formData.startDate}
                                 onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
                             />
@@ -191,9 +198,9 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
                     </div>
 
                     <div className="form-group">
-                        <label>Notes (Optional)</label>
+                        <label>{t.notes}</label>
                         <textarea
-                            placeholder="Any notes about this loan..."
+                            placeholder={t.notesPh}
                             value={formData.customNotes}
                             onChange={(e) => setFormData({ ...formData, customNotes: e.target.value })}
                             rows={3}
@@ -202,7 +209,7 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
 
                     <div className="form-actions">
                         <button onClick={handleCalculate} disabled={loading} className="btn-primary">
-                            {loading ? 'Calculating...' : 'Calculate EMI'}
+                            {loading ? t.calculating : t.calcBtn}
                         </button>
                     </div>
                 </div>
@@ -212,29 +219,29 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
                 <div>
                     <div className="rc-stats rc-stats-3">
                         <div className="rc-stat">
-                            <span className="rc-stat-label">Monthly EMI</span>
+                            <span className="rc-stat-label">{t.monthlyEmi}</span>
                             <span className="rc-stat-value">{formatMoney(result.monthlyEMI, 2)}</span>
                         </div>
                         <div className="rc-stat">
-                            <span className="rc-stat-label">Total Interest</span>
+                            <span className="rc-stat-label">{t.totalInterest}</span>
                             <span className="rc-stat-value">{formatMoney(result.totalInterest, 2)}</span>
                         </div>
                         <div className="rc-stat">
-                            <span className="rc-stat-label">Total Payable</span>
+                            <span className="rc-stat-label">{t.totalPayable}</span>
                             <span className="rc-stat-value">{formatMoney(result.totalPayable, 2)}</span>
                         </div>
                     </div>
 
                     <div className="su-panel">
-                        <h3 className="su-panel-title">First 6 Months Preview</h3>
+                        <h3 className="su-panel-title">{t.preview6}</h3>
                         <div className="su-table-wrap">
                             <table className="su-table">
                                 <thead>
                                     <tr>
-                                        <th>Month</th>
-                                        <th>Principal</th>
-                                        <th>Interest</th>
-                                        <th>Balance</th>
+                                        <th>{t.colMonth}</th>
+                                        <th>{t.colPrincipal}</th>
+                                        <th>{t.colInterest}</th>
+                                        <th>{t.colBalance}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -250,17 +257,17 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
                             </table>
                         </div>
                         <button onClick={() => setStep(3)} className="btn-secondary btn-sm">
-                            View Full Schedule
+                            {t.viewFull}
                         </button>
                     </div>
 
                     <div className="fin-actions">
                         <button onClick={() => setStep(1)} className="btn-secondary">
-                            Back
+                            {t.back}
                         </button>
                         {!previewOnly && (
                             <button onClick={handleCreateLoan} disabled={loading} className="btn-primary">
-                                {loading ? 'Creating...' : 'Create Loan'}
+                                {loading ? t.creating : t.createLoan}
                             </button>
                         )}
                     </div>
@@ -270,17 +277,17 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
             {step === 3 && (
                 <div>
                     <div className="su-panel">
-                        <h3 className="su-panel-title">Complete Repayment Schedule</h3>
+                        <h3 className="su-panel-title">{t.fullSchedule}</h3>
                         <div className="su-table-wrap">
                             <table className="su-table">
                                 <thead>
                                     <tr>
-                                        <th>Month</th>
-                                        <th>Due Date</th>
-                                        <th>Principal</th>
-                                        <th>Interest</th>
-                                        <th>EMI</th>
-                                        <th>Balance</th>
+                                        <th>{t.colMonth}</th>
+                                        <th>{t.colDue}</th>
+                                        <th>{t.colPrincipal}</th>
+                                        <th>{t.colInterest}</th>
+                                        <th>{t.colEmi}</th>
+                                        <th>{t.colBalance}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -300,11 +307,11 @@ const LoanCalculator: FC<LoanCalculatorProps> = ({ onLoanCreated, initialValues,
                     </div>
                     <div className="fin-actions">
                         <button onClick={() => setStep(2)} className="btn-secondary">
-                            Back
+                            {t.back}
                         </button>
                         {!previewOnly && (
                             <button onClick={handleCreateLoan} disabled={loading} className="btn-primary">
-                                {loading ? 'Creating...' : 'Create Loan'}
+                                {loading ? t.creating : t.createLoan}
                             </button>
                         )}
                     </div>

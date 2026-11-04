@@ -10,6 +10,7 @@ export interface IUser extends Document {
   address?: string;
   occupation?: string;
   monthlyIncome?: number; // For loan-to-income ratio calculations
+  avatar?: string; // Profile photo as a small data URL (resized in the browser)
   bankAccounts?: Array<{
     accountId: string;
     instrumentType?:
@@ -67,6 +68,7 @@ const UserSchema: Schema = new Schema(
     address: { type: String, default: '' },
     occupation: { type: String, default: '' },
     monthlyIncome: { type: Number }, // Set by the user in Profile; used for loan-to-income ratio
+    avatar: { type: String, default: '' }, // Profile photo (data URL), set from the Edit Profile page
     bankAccounts: [
       {
         accountId: { type: String, required: true },

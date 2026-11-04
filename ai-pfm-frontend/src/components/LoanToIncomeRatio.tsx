@@ -2,6 +2,8 @@ import { formatMoney } from '../utils/appFormat';
 import { type FC, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLoans } from '../hooks/useLoans';
+import { useAdminLang, readLang } from '../i18n/adminText';
+import { LOAN_RS_T } from '../i18n/loanRatioSimText';
 
 interface LoanToIncomeRatioProps {
     onRefresh?: () => void;
@@ -28,10 +30,6 @@ const getRiskTone = (level: string): 'good' | 'warn' | 'bad' => {
     }
 };
 
-const getRiskLabel = (level: string) => {
-    return level.charAt(0).toUpperCase() + level.slice(1);
-};
-
 const riskScale = [
     { level: 'low', range: '0-20%' },
     { level: 'medium', range: '20-35%' },
@@ -39,7 +37,14 @@ const riskScale = [
     { level: 'critical', range: '50%+' }
 ];
 
+const getRiskLabel = (level: string) => {
+    const t = LOAN_RS_T[readLang()];
+    const riskNames: Record<string, string> = { low: t.riskLow, medium: t.riskMedium, high: t.riskHigh, critical: t.riskCritical };
+    return riskNames[level] ?? level;
+};
+
 const LoanToIncomeRatio: FC<LoanToIncomeRatioProps> = ({ onRefresh }) => {
+    const t = LOAN_RS_T[useAdminLang()];
     const { getLoanToIncomeRatio } = useLoans();
     const [data, setData] = useState<RatioData | null>(null);
     const [loading, setLoading] = useState(true);
@@ -63,24 +68,24 @@ const LoanToIncomeRatio: FC<LoanToIncomeRatioProps> = ({ onRefresh }) => {
     };
 
     if (loading) {
-        return <div className="su-muted">Loading...</div>;
+        return <div className="su-muted">{t.loading}</div>;
     }
 
     if (error || !data) {
-        return <div className="rc-banner error">{error || 'Failed to load data'}</div>;
+        return <div className="rc-banner error">{error || t.failedData}</div>;
     }
 
     // No income in Profile: a ratio would be made up, so ask for the income instead
     if (data.incomeMissing) {
         return (
             <div className="su-panel">
-                <h3 className="rc-panel-title" style={{ marginBottom: '12px' }}>Loan-to-Income Ratio</h3>
+                <h3 className="rc-panel-title" style={{ marginBottom: '12px' }}>{t.ratioTitle}</h3>
                 <p className="su-muted fin-lead">
-                    Your total monthly EMI is <strong>{formatMoney(data.totalMonthlyEMI)}</strong>.
-                    To see how much of your income goes to loans, add your monthly income in your Profile.
+                    {t.emiIs} <strong>{formatMoney(data.totalMonthlyEMI)}</strong>.
+                    {' '}{t.incomeHint}
                 </p>
                 <Link to="/profile" className="btn-primary btn-sm">
-                    Add monthly income
+                    {t.addIncome}
                 </Link>
             </div>
         );
@@ -92,15 +97,15 @@ const LoanToIncomeRatio: FC<LoanToIncomeRatioProps> = ({ onRefresh }) => {
         <div>
             <div className="su-panel">
                 <div className="rc-panel-head">
-                    <h3 className="rc-panel-title">Loan-to-Income Ratio</h3>
+                    <h3 className="rc-panel-title">{t.ratioTitle}</h3>
                     <button onClick={() => { loadRatio(); onRefresh?.(); }} className="btn-secondary btn-sm">
-                        Refresh
+                        {t.refresh}
                     </button>
                 </div>
 
                 <div className="fin-center">
                     <div className={`fin-gauge-value fin-${tone}`}>{data.ratio.toFixed(2)}%</div>
-                    <p className="su-muted" style={{ margin: '4px 0 16px' }}>Current Debt-to-Income Ratio</p>
+                    <p className="su-muted" style={{ margin: '4px 0 16px' }}>{t.currentDti}</p>
                 </div>
                 <div className="gl-bar">
                     <span className={tone} style={{ width: `${Math.min(data.ratio, 100)}%` }} />
@@ -115,28 +120,28 @@ const LoanToIncomeRatio: FC<LoanToIncomeRatioProps> = ({ onRefresh }) => {
 
             <div className="rc-stats rc-stats-3">
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Total Monthly EMI</span>
+                    <span className="rc-stat-label">{t.statEmi}</span>
                     <span className="rc-stat-value">{formatMoney(data.totalMonthlyEMI)}</span>
                 </div>
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Monthly Income</span>
+                    <span className="rc-stat-label">{t.statIncome}</span>
                     <span className="rc-stat-value">{formatMoney(data.monthlyIncome)}</span>
                 </div>
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Risk Level</span>
+                    <span className="rc-stat-label">{t.statRisk}</span>
                     <span className={`rc-stat-value fin-${tone}`}>{getRiskLabel(data.riskLevel)}</span>
                 </div>
             </div>
 
             <div className="gl-insight" style={{ marginBottom: '22px' }}>
                 <div>
-                    <h4>AI Recommendation</h4>
+                    <h4>{t.aiRec}</h4>
                     <p>{data.recommendation}</p>
                 </div>
             </div>
 
             <div className="su-panel">
-                <h3 className="su-panel-title">Risk Scale Guide</h3>
+                <h3 className="su-panel-title">{t.riskGuide}</h3>
                 <div className="fin-risk-scale">
                     {riskScale.map(item => (
                         <div key={item.level} className="fin-risk-item">

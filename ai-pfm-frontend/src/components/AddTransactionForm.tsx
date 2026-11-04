@@ -1,9 +1,13 @@
+import { DateInput } from './DateInput';
 // Add Transaction Form — Premium Responsive Layout
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client.ts';
 import { DatePicker } from './DatePicker';
 import { getLocalDateString } from '../utils/date';
 import { currencyCode, fromLkr, toLkr } from '../utils/appFormat';
+import { useAdminLang } from '../i18n/adminText';
+import { TX_FORM_T } from '../i18n/txFormText';
+import { fillText } from '../i18n/dashboardText';
 
 interface TransactionFormProps {
     onTransactionAdded: () => void;
@@ -23,6 +27,9 @@ const DEFAULT_EXPENSE_CATEGORIES = ['Food & Dining', 'Shopping', 'Entertainment'
     'Bills & Utilities', 'Healthcare', 'Education', 'Travel', 'Other'];
 
 export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, isEditMode }: TransactionFormProps) => {
+    const t = TX_FORM_T[useAdminLang()];
+    // Shows the translated name for a category; the saved value stays in English
+    const catLabel = (cat: string) => t.categories[cat] ?? cat;
     const today = getLocalDateString();
     // Default type comes from Settings (saved on the device when Settings is saved)
     const defaultType: 'income' | 'expense' = localStorage.getItem('pfm_default_tx_type') === 'income' ? 'income' : 'expense';
@@ -61,11 +68,11 @@ export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, i
         setError('');
         setLoading(true);
         try {
-            if (!formData.amount || !formData.category) throw new Error('Amount and category are required');
+            if (!formData.amount || !formData.category) throw new Error(t.amountErr);
             const amount = parseFloat(formData.amount);
-            if (isNaN(amount) || amount <= 0) throw new Error('Please enter a valid amount');
+            if (isNaN(amount) || amount <= 0) throw new Error(t.amountInvalid);
             const token = localStorage.getItem('token');
-            if (!token) throw new Error('Please login again');
+            if (!token) throw new Error(t.loginAgain);
 
             if (isEditMode && initialData?._id) {
                 await apiClient.put(`/transactions/${initialData._id}`, { ...formData, amount: toLkr(amount) }, {
@@ -84,8 +91,8 @@ export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, i
                 onTransactionAdded();
             }, 1000);
         } catch (err: any) {
-            const errorMsg = err.response?.data?.details || err.response?.data?.error || err.message || 'Failed to add transaction';
-            setError(`Error: ${errorMsg}`);
+            const errorMsg = err.response?.data?.details || err.response?.data?.error || err.message || t.failAdd;
+            setError(fillText(t.errPrefix, { msg: errorMsg }));
             console.error("Backend Error Details:", err.response?.data);
         } finally {
             setLoading(false);
@@ -101,13 +108,6 @@ export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, i
 
     return (
         <div className="add-transaction-form" style={{ width: '100%' }}>
-            <h3 style={{
-                fontSize: 'var(--font-lg)', fontWeight: 700, color: 'var(--color-text)',
-                marginBottom: 'var(--sp-5)', display: 'none'
-            }}>
-                {loading ? (isEditMode ? 'Updating...' : 'Adding...') : (isEditMode ? 'Update Transaction' : 'Add Transaction')}
-            </h3>
-
             {error && (
                 <div className="alert-error" style={{ marginBottom: 'var(--sp-4)' }}>
                     ⚠️ {error}
@@ -115,13 +115,13 @@ export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, i
             )}
             {success && (
                 <div style={{ color: '#059669', marginBottom: 'var(--sp-4)', padding: '0.75rem', backgroundColor: '#ecfdf5', borderRadius: '8px', border: '1px solid #a7f3d0' }}>
-                    ✅ Transaction {isEditMode ? 'updated' : 'added'} successfully!
+                    ✅ {isEditMode ? t.updatedOk : t.addedOk}
                 </div>
             )}
 
             <form onSubmit={handleSubmit} className="atx-form">
                 {/* Type toggle — full width */}
-                <div className="atx-toggle" role="group" aria-label="Transaction type">
+                <div className="atx-toggle" role="group" aria-label={t.typeGroup}>
                     <button
                         type="button"
                         className={`atx-toggle-btn ${formData.type === 'expense' ? 'on expense' : ''}`}
@@ -130,7 +130,7 @@ export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, i
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M12 5v14M19 12l-7 7-7-7" />
                         </svg>
-                        Expense
+                        {t.expense}
                     </button>
                     <button
                         type="button"
@@ -140,13 +140,13 @@ export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, i
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M12 19V5M5 12l7-7 7 7" />
                         </svg>
-                        Income
+                        {t.income}
                     </button>
                 </div>
 
                 {/* Amount */}
                 <div className="atx-field">
-                    <label htmlFor="atxAmount">Amount ({currencyCode()}) <span className="atx-req">*</span></label>
+                    <label htmlFor="atxAmount">{fillText(t.amountLabel, { cur: currencyCode() })} <span className="atx-req">*</span></label>
                     <div className="atx-prefix-wrap">
                         <span className="atx-prefix">{currencyCode()}</span>
                         <input
@@ -165,7 +165,7 @@ export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, i
 
                 {/* Category */}
                 <div className="atx-field">
-                    <label htmlFor="atxCategory">Category <span className="atx-req">*</span></label>
+                    <label htmlFor="atxCategory">{t.category} <span className="atx-req">*</span></label>
                     <select
                         id="atxCategory"
                         className="atx-input atx-select"
@@ -173,20 +173,19 @@ export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, i
                         onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                         required
                     >
-                        <option value="">Select a category</option>
+                        <option value="">{t.selectCat}</option>
                         {categories[formData.type as 'expense' | 'income']?.map((cat: string) => (
-                            <option key={cat} value={cat}>{cat}</option>
+                            <option key={cat} value={cat}>{catLabel(cat)}</option>
                         ))}
                     </select>
                 </div>
 
                 {/* Date */}
                 <div className="atx-field">
-                    <label htmlFor="atxDate">Date <span className="atx-req">*</span></label>
-                    <input
+                    <label htmlFor="atxDate">{t.date} <span className="atx-req">*</span></label>
+                    <DateInput
                         id="atxDate"
                         className="atx-input"
-                        type="date"
                         value={formData.date}
                         max={getLocalDateString()}
                         onChange={(e) => setFormData({ ...formData, date: e.target.value })}
@@ -196,12 +195,12 @@ export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, i
 
                 {/* Description */}
                 <div className="atx-field">
-                    <label htmlFor="atxDesc">Description</label>
+                    <label htmlFor="atxDesc">{t.description}</label>
                     <input
                         id="atxDesc"
                         className="atx-input"
                         type="text"
-                        placeholder="What was this for?"
+                        placeholder={t.descPh}
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     />
@@ -210,7 +209,7 @@ export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, i
                 <div className="atx-actions">
                     {onCancel && (
                         <button type="button" className="btn-secondary" onClick={onCancel}>
-                            Cancel
+                            {t.cancel}
                         </button>
                     )}
                     <button
@@ -224,8 +223,8 @@ export const AddTransactionForm =({ onTransactionAdded, onCancel, initialData, i
                         }}
                     >
                         {loading
-                            ? (isEditMode ? 'Updating…' : 'Adding…')
-                            : (isEditMode ? 'Update' : `Add ${isExpense ? 'Expense' : 'Income'}`)}
+                            ? (isEditMode ? t.updating : t.adding)
+                            : (isEditMode ? t.update : (isExpense ? t.addExpense : t.addIncome))}
                     </button>
                 </div>
             </form>

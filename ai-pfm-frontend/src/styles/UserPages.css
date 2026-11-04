@@ -2038,3 +2038,35 @@
 @media (max-width: 600px) {
   .hp-guides, .hp-contacts, .hp-form { grid-template-columns: 1fr; }
 }
+
+/* Edit Profile: photo + black-and-white camera button */
+.profile-header-avatar.pf-has-photo { padding: 0; overflow: hidden; }
+.pf-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
+.profile-avatar-camera-btn.pf-camera-btn { background: #ffffff; color: #111111; border: 1px solid #d4d4d8; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15); display: grid; place-items: center; cursor: pointer; }
+.profile-avatar-camera-btn.pf-camera-btn:hover:not(:disabled) { background: #f4f4f5; }
+.profile-avatar-camera-btn.pf-camera-btn:disabled { cursor: wait; }
+[data-theme='dark'] .profile-avatar-camera-btn.pf-camera-btn { background: #18181b; color: #fafafa; border-color: #3f3f46; }
+.pf-camera-spin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid currentColor; border-top-color: transparent; animation: pfSpin 0.8s linear infinite; }
+@keyframes pfSpin { to { transform: rotate(360deg); } }
+
+/* Edit Profile: separate cards — header card with avatar beside the details */
+.pf-page { display: flex; flex-direction: column; gap: 22px; }
+.profile-page .profile-header.pf-head-card { display: flex; flex-direction: row; align-items: center; justify-content: flex-start; gap: 20px; flex-wrap: wrap; text-align: left; background: var(--color-surface); border: 1px solid var(--color-border-2); border-radius: 14px; padding: 24px; margin: 0; box-shadow: none; }
+.pf-head-card .profile-avatar-stack { position: relative; width: 84px; height: 84px; margin: 0; flex-shrink: 0; }
+.pf-head-card .profile-header-avatar { width: 84px; height: 84px; box-sizing: border-box; font-size: 28px; margin: 0; box-shadow: none; }
+.pf-head-card .profile-avatar-camera-btn { position: absolute; right: -4px; bottom: -4px; width: 32px !important; min-width: 32px !important; height: 32px; min-height: 32px; padding: 0; border-radius: 10px; }
+.pf-head-card .profile-header-info { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; margin: 0; text-align: left; }
+.pf-head-card .profile-header-name { font-size: 22px; font-weight: 600; color: var(--color-text); letter-spacing: -0.01em; }
+.pf-head-card .profile-header-email { font-size: 14.5px; color: var(--color-text-muted); }
+.pf-head-card .profile-header-role-badge { margin-top: 4px; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 99px; }
+
+.pf-page .profile-content { margin: 0; padding: 0; background: none; border: 0; box-shadow: none; }
+.pf-page .pf-form .form-grid { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+
+/* Edit Profile: keep plain inputs and the date picker on the same line */
+.pf-page .pf-form .form-grid { align-items: end; }
+.pf-page .pf-form .form-group > label,
+.pf-page .pf-form .date-picker-label { display: block; margin: 0; padding: 0; line-height: 1.4; font-size: 13px; font-weight: 600; }
+.pf-page .pf-form .form-group > input,
+.pf-page .pf-form .date-picker-input { margin: 0; }
+.pf-page .pf-form .date-picker-container { gap: 6px; margin: 0; }

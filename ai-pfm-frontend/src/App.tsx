@@ -83,11 +83,13 @@ import { AIAssistant } from './components/AIAssistant';
 import { ADMIN_T } from './i18n/adminText';
 import { USER_T } from './i18n/userPagesText';
 import { ACCOUNT_T } from './i18n/accountSettingsText';
+import { PAGE_HDR_T } from './i18n/pageHeaderText';
 import './App.css';
 import './styles/UserPages.css';
 import './styles/FinancialPages.css';
 import './styles/HeaderRedesign.css';
 import './styles/PageTint.css';
+import './styles/mobile.css';
 
 type UserRole = 'customer' | 'admin' | 'ops' | 'manager';
 type Language = 'en' | 'si' | 'ta';
@@ -189,23 +191,24 @@ function AppShell() {
   const [settingsVersion, setSettingsVersion] = useState(0);
 
   const getPageTitleInfo = () => {
+    const H = PAGE_HDR_T[lang];
     switch (location.pathname) {
-      case '/dashboard': return { title: 'Dashboard', subtitle: 'Your financial overview at a glance' };
-      case '/financial-health': return { title: 'Financial Health', subtitle: 'Detailed analysis of your metrics' };
-      case '/recommendations': return { title: 'AI Recommendations', subtitle: 'Insights and suggestions' };
-      case '/transactions': return { title: 'Transactions', subtitle: 'Your transaction history' };
-      case '/credit-cards': return { title: 'Credit Cards', subtitle: 'Manage your credit lines' };
-      case '/anomalies': return { title: 'Anomaly Detection', subtitle: 'Unusual transaction alerts' };
-      case '/smart-budgets': return { title: 'Smart Budgets', subtitle: 'AI-assisted budgeting' };
-      case '/goals': return { title: 'Financial Goals', subtitle: 'Track your saving progress' };
-      case '/recurring': return { title: 'Cash Flow', subtitle: 'Subscriptions and recurring payments' };
-      case '/subscriptions': return { title: T[lang].subscriptions, subtitle: 'Track costs, unused services and cheaper options' };
-      case '/connect-bank': return { title: 'Connect Bank Account', subtitle: 'Link external accounts' };
-      case '/fixed-deposits': return { title: 'Fixed Deposits', subtitle: 'Manage term deposits' };
-      case '/loans': return { title: 'Loans & Debt', subtitle: 'Track your liabilities' };
-      case '/leases': return { title: 'Leases', subtitle: 'Vehicle and equipment leases' };
-      case '/pawning': return { title: 'Pawning', subtitle: 'Gold and item pawning' };
-      case '/notifications': return { title: 'Notifications', subtitle: 'Recent alerts and updates' };
+      case '/dashboard': return H.dashboard;
+      case '/financial-health': return H.financialHealth;
+      case '/recommendations': return H.recommendations;
+      case '/transactions': return H.transactions;
+      case '/credit-cards': return H.creditCards;
+      case '/anomalies': return H.anomalies;
+      case '/smart-budgets': return H.smartBudgets;
+      case '/goals': return H.goals;
+      case '/recurring': return H.recurring;
+      case '/subscriptions': return { title: T[lang].subscriptions, subtitle: H.subscriptionsSub };
+      case '/connect-bank': return H.connectBank;
+      case '/fixed-deposits': return H.fixedDeposits;
+      case '/loans': return H.loans;
+      case '/leases': return H.leases;
+      case '/pawning': return H.pawning;
+      case '/notifications': return H.notifications;
       case '/profile': return { title: USER_T[lang].hdrProfile, subtitle: USER_T[lang].hdrProfileSub };
       case '/settings': return { title: USER_T[lang].hdrSettings, subtitle: USER_T[lang].hdrSettingsSub };
       case '/account-settings': return { title: ACCOUNT_T[lang].title, subtitle: ACCOUNT_T[lang].subtitle };
@@ -242,6 +245,11 @@ function AppShell() {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  // Language on <html> so CSS can target Sinhala and Tamil text (for example, to let longer labels wrap)
+  useEffect(() => {
+    document.documentElement.setAttribute('lang', lang);
+  }, [lang]);
 
   const switchLang = (l: Language) => {
     setLang(l);
@@ -425,6 +433,21 @@ function AppShell() {
             </div>
 
             <div className="sidebar-footer">
+              {/* Phones: the header language switch is hidden, so the same choice sits at the bottom of the sidebar */}
+              <div className="sidebar-lang-seg" role="group" aria-label="Language">
+                {([['en', 'En', 'English'], ['si', 'සිං', 'Sinhala'], ['ta', 'த', 'Tamil']] as [Language, string, string][]).map(([l, label, name]) => (
+                  <button
+                    key={l}
+                    type="button"
+                    className={lang === l ? 'active' : ''}
+                    onClick={() => switchLang(l)}
+                    title={name}
+                    aria-pressed={lang === l}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
               <UserHeader theme={theme} onToggleTheme={() => setTheme(p => p === 'dark' ? 'light' : 'dark')} />
             </div>
           </nav>
@@ -646,39 +669,14 @@ function AppShell() {
                 <span className="mobile-tab-icon"><IconReceipt size={20} /></span>
                 <span className="mobile-tab-label">{T[lang].transactions}</span>
               </NavLink>
-              <button
-                type="button"
-                className="mobile-tab mobile-tab-add"
-                onClick={() => setShowAddTransactionModal(true)}
-                aria-label="Add transaction"
-              >
-                <span className="mobile-add-circle">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <line x1="12" y1="5" x2="12" y2="19"/>
-                    <line x1="5" y1="12" x2="19" y2="12"/>
-                  </svg>
-                </span>
-                <span className="mobile-tab-label">{T[lang].newTx}</span>
-              </button>
               <NavLink to="/smart-budgets" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
                 <span className="mobile-tab-icon"><IconBrain size={20} /></span>
                 <span className="mobile-tab-label">{T[lang].budgets}</span>
               </NavLink>
-              <button
-                type="button"
-                className="mobile-tab mobile-tab-more"
-                onClick={() => setIsMobileSidebarOpen(true)}
-                aria-label="Open full menu"
-              >
-                <span className="mobile-tab-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <line x1="4" y1="7" x2="20" y2="7"></line>
-                    <line x1="4" y1="12" x2="20" y2="12"></line>
-                    <line x1="4" y1="17" x2="20" y2="17"></line>
-                  </svg>
-                </span>
-                <span className="mobile-tab-label">Menu</span>
-              </button>
+              <NavLink to="/financial-health" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                <span className="mobile-tab-icon"><IconActivity size={20} /></span>
+                <span className="mobile-tab-label">{T[lang].health}</span>
+              </NavLink>
             </>
           ) : (
             <>
@@ -694,21 +692,6 @@ function AppShell() {
                 <span className="mobile-tab-icon"><IconClipboardList size={20} /></span>
                 <span className="mobile-tab-label">Audit</span>
               </NavLink>
-              <button
-                type="button"
-                className="mobile-tab mobile-tab-more"
-                onClick={() => setIsMobileSidebarOpen(true)}
-                aria-label="Open admin menu"
-              >
-                <span className="mobile-tab-icon">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                    <line x1="4" y1="7" x2="20" y2="7"></line>
-                    <line x1="4" y1="12" x2="20" y2="12"></line>
-                    <line x1="4" y1="17" x2="20" y2="17"></line>
-                  </svg>
-                </span>
-                <span className="mobile-tab-label">Menu</span>
-              </button>
             </>
           )}
         </nav>

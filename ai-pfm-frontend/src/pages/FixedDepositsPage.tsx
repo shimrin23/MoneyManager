@@ -1,8 +1,12 @@
+import { DateInput } from '../components/DateInput';
 import { formatDate, formatDateTime, formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { apiClient, getApiErrorMessage } from '../api/client';
 import { notify, confirmDialog } from '../utils/systemMessages';
 import { getLocalDateString } from '../utils/date';
+import { useAdminLang, readLang } from '../i18n/adminText';
+import { FD_T } from '../i18n/fixedDepositsText';
+import { fillText } from '../i18n/dashboardText';
 
 interface FixedDeposit {
     _id: string;
@@ -36,14 +40,17 @@ const getMonthsUntil = (dateStr: string) => {
 };
 
 const getMaturityStatus = (dateStr: string) => {
+    const t = FD_T[readLang()];
     const daysLeft = getDaysUntilMaturity(dateStr);
-    if (daysLeft <= 0) return { label: 'Matures today', tone: 'fin-good' };
-    if (daysLeft <= 30) return { label: `${daysLeft}d left`, tone: 'fin-warn' };
-    if (daysLeft <= 90) return { label: `${daysLeft}d left`, tone: '' };
-    return { label: `${getMonthsUntil(dateStr)}mo left`, tone: '' };
+    if (daysLeft <= 0) return { label: t.matureToday, tone: 'fin-good' };
+    if (daysLeft <= 30) return { label: fillText(t.daysLeft, { n: daysLeft }), tone: 'fin-warn' };
+    if (daysLeft <= 90) return { label: fillText(t.daysLeft, { n: daysLeft }), tone: '' };
+    return { label: fillText(t.monthsLeft, { n: getMonthsUntil(dateStr) }), tone: '' };
 };
 
 export const FixedDepositsPage = () => {
+    const t = FD_T[useAdminLang()];
+    const unitName = (u: string) => (u === 'years' ? t.years : t.months);
     const [fds, setFDs] = useState<FixedDeposit[]>([]);
     const [loading, setLoading] = useState(true);
     const [showNewFDForm, setShowNewFDForm] = useState(false);
@@ -69,7 +76,7 @@ export const FixedDepositsPage = () => {
             setFDs(res.data.fixedDeposits || []);
         } catch (err) {
             console.error('Failed to fetch fixed deposits:', err);
-            setError('Unable to load fixed deposits. Please try again.');
+            setError(t.loadError);
             setFDs([]);
         } finally {
             setLoading(false);
@@ -95,17 +102,17 @@ export const FixedDepositsPage = () => {
                 tenure: Number(newFD.tenure),
                 tenureUnit: newFD.tenureUnit,
                 type: newFD.type,
-                bank: newFD.bank || 'Your Bank',
+                bank: newFD.bank || t.defaultBank,
                 autoRenewal: newFD.autoRenewal,
                 startDate: newFD.startDate
             });
             setNewFD({ principalAmount: '', interestRate: '', tenure: '', tenureUnit: 'months', type: 'Standard', bank: '', autoRenewal: false, startDate: getLocalDateString() });
             setShowNewFDForm(false);
-            notify.success('Fixed deposit opened.');
+            notify.success(t.openedNote);
             await fetchFDs();
         } catch (err) {
             console.error('Failed to create FD:', err);
-            notify.error(getApiErrorMessage(err, 'Failed to create fixed deposit. Please try again.'));
+            notify.error(getApiErrorMessage(err, t.createFailed));
         } finally {
             setSubmitting(false);
         }
@@ -113,65 +120,65 @@ export const FixedDepositsPage = () => {
 
     const handleWithdrawEarly = async (fd: FixedDeposit) => {
         const confirmed = await confirmDialog({
-            title: 'Withdraw early?',
-            message: `Close ${fd.accountNumber} before its maturity date? This can't be undone, and banks usually pay less interest on early withdrawal.`,
-            confirmText: 'Withdraw Early',
+            title: t.withdrawTitle,
+            message: fillText(t.withdrawMessage, { account: fd.accountNumber }),
+            confirmText: t.withdrawConfirm,
             danger: true,
         });
         if (!confirmed) return;
         try {
             await apiClient.put(`/fixed-deposits/${fd._id}`, { status: 'prematurely-closed' });
-            notify.success('Fixed deposit withdrawn early.');
+            notify.success(t.withdrawnNote);
             await fetchFDs();
         } catch (err) {
             console.error('Failed to update FD:', err);
-            notify.error(getApiErrorMessage(err, 'Failed to withdraw fixed deposit. Please try again.'));
+            notify.error(getApiErrorMessage(err, t.withdrawFailed));
         }
     };
 
     const handleRenew = async (fd: FixedDeposit) => {
         const confirmed = await confirmDialog({
-            title: 'Renew fixed deposit?',
-            message: `Start a new ${fd.tenure} ${fd.tenureUnit} term from today at ${fd.interestRate}% with ${formatMoney(fd.maturityAmount)} (principal plus interest).`,
-            confirmText: 'Renew',
+            title: t.renewTitle,
+            message: fillText(t.renewMessage, { tenure: fd.tenure, unit: unitName(fd.tenureUnit), rate: fd.interestRate, amount: formatMoney(fd.maturityAmount) }),
+            confirmText: t.renewConfirm,
         });
         if (!confirmed) return;
         try {
             await apiClient.post(`/fixed-deposits/${fd._id}/renew`);
-            notify.success('Fixed deposit renewed.');
+            notify.success(t.renewedNote);
             await fetchFDs();
         } catch (err) {
             console.error('Failed to renew FD:', err);
-            notify.error(getApiErrorMessage(err, 'Failed to renew fixed deposit. Please try again.'));
+            notify.error(getApiErrorMessage(err, t.renewFailed));
         }
     };
 
     const handleDelete = async (id: string) => {
         const confirmed = await confirmDialog({
-            title: 'Delete fixed deposit?',
-            message: 'Are you sure you want to delete this fixed deposit?',
-            confirmText: 'Delete',
+            title: t.deleteTitle,
+            message: t.deleteMessage,
+            confirmText: t.deleteConfirm,
             danger: true,
         });
         if (!confirmed) return;
         try {
             await apiClient.delete(`/fixed-deposits/${id}`);
             setFDs(prev => prev.filter(f => f._id !== id));
-            notify.success('Fixed deposit deleted.');
+            notify.success(t.deletedNote);
         } catch (err) {
             console.error('Failed to delete FD:', err);
-            notify.error('Failed to delete fixed deposit. Please try again.');
+            notify.error(t.deleteFailed);
         }
     };
 
-    if (loading) return <div className="loading-spinner">Loading fixed deposits...</div>;
+    if (loading) return <div className="loading-spinner">{t.loading}</div>;
 
     return (
         <div className="page-container fin-page">
             <div className="page-header">
                 <div style={{ flex: 1 }}></div>
                 <button className="btn-primary" onClick={() => setShowNewFDForm(!showNewFDForm)}>
-                    + Open New FD
+                    {t.openNew}
                 </button>
             </div>
 
@@ -180,19 +187,19 @@ export const FixedDepositsPage = () => {
             {/* Summary */}
             <div className="rc-stats">
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Active FDs</span>
+                    <span className="rc-stat-label">{t.activeFds}</span>
                     <span className="rc-stat-value">{activeFDs.length}</span>
                 </div>
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Total Principal</span>
+                    <span className="rc-stat-label">{t.totalPrincipal}</span>
                     <span className="rc-stat-value">{formatMoney(totalPrincipal)}</span>
                 </div>
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Maturity Value</span>
+                    <span className="rc-stat-label">{t.maturityValue}</span>
                     <span className="rc-stat-value">{formatMoney(totalMaturityValue)}</span>
                 </div>
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Maturing in 90 Days</span>
+                    <span className="rc-stat-label">{t.maturing90}</span>
                     <span className="rc-stat-value">{maturitySoon}</span>
                 </div>
             </div>
@@ -200,20 +207,20 @@ export const FixedDepositsPage = () => {
             {/* New FD Form */}
             {showNewFDForm && (
                 <div className="card form-card gl-form">
-                    <h3 className="gl-form-title">Open New Fixed Deposit</h3>
+                    <h3 className="gl-form-title">{t.openNewTitle}</h3>
                     <form onSubmit={handleNewFDSubmit}>
                         <div className="form-row">
                             <div className="form-group">
-                                <label>Bank Name</label>
+                                <label>{t.bankName}</label>
                                 <input
                                     type="text"
-                                    placeholder="e.g. Commercial Bank"
+                                    placeholder={t.bankPlaceholder}
                                     value={newFD.bank}
                                     onChange={e => setNewFD({ ...newFD, bank: e.target.value })}
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Principal Amount ({currencyCode()})</label>
+                                <label>{fillText(t.principalAmount, { cur: currencyCode() })}</label>
                                 <input
                                     type="number"
                                     min="1"
@@ -226,7 +233,7 @@ export const FixedDepositsPage = () => {
                         </div>
                         <div className="form-row">
                             <div className="form-group">
-                                <label>Interest Rate (%)</label>
+                                <label>{t.interestRate}</label>
                                 <input
                                     type="number"
                                     step="0.01"
@@ -239,7 +246,7 @@ export const FixedDepositsPage = () => {
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Tenure</label>
+                                <label>{t.tenure}</label>
                                 <div className="fin-tenure">
                                     <input
                                         type="number"
@@ -254,17 +261,16 @@ export const FixedDepositsPage = () => {
                                         value={newFD.tenureUnit}
                                         onChange={e => setNewFD({ ...newFD, tenureUnit: e.target.value as 'months' | 'years' })}
                                     >
-                                        <option value="months">Months</option>
-                                        <option value="years">Years</option>
+                                        <option value="months">{t.months}</option>
+                                        <option value="years">{t.years}</option>
                                     </select>
                                 </div>
                             </div>
                         </div>
                         <div className="form-row">
                             <div className="form-group">
-                                <label>Start Date</label>
-                                <input
-                                    type="date"
+                                <label>{t.startDate}</label>
+                                <DateInput
                                     value={newFD.startDate}
                                     max={getLocalDateString()}
                                     onChange={e => setNewFD({ ...newFD, startDate: e.target.value })}
@@ -272,11 +278,11 @@ export const FixedDepositsPage = () => {
                                 />
                             </div>
                             <div className="form-group">
-                                <label>FD Type</label>
+                                <label>{t.fdType}</label>
                                 <select value={newFD.type} onChange={e => setNewFD({ ...newFD, type: e.target.value as FixedDeposit['type'] })}>
-                                    <option value="Standard">Standard</option>
-                                    <option value="Goal-Linked">Goal-Linked</option>
-                                    <option value="Tax Saver">Tax Saver</option>
+                                    <option value="Standard">{t.typeStandard}</option>
+                                    <option value="Goal-Linked">{t.typeGoal}</option>
+                                    <option value="Tax Saver">{t.typeTax}</option>
                                 </select>
                             </div>
                         </div>
@@ -286,12 +292,12 @@ export const FixedDepositsPage = () => {
                                 checked={newFD.autoRenewal}
                                 onChange={e => setNewFD({ ...newFD, autoRenewal: e.target.checked })}
                             />
-                            Enable Auto-Renewal at maturity
+                            {t.autoRenewalCheck}
                         </label>
                         <div className="form-actions">
-                            <button type="button" className="btn-secondary" onClick={() => setShowNewFDForm(false)}>Cancel</button>
+                            <button type="button" className="btn-secondary" onClick={() => setShowNewFDForm(false)}>{t.cancel}</button>
                             <button type="submit" className="btn-primary" disabled={submitting}>
-                                {submitting ? 'Opening...' : 'Open FD'}
+                                {submitting ? t.opening : t.openFd}
                             </button>
                         </div>
                     </form>
@@ -301,9 +307,9 @@ export const FixedDepositsPage = () => {
             {/* Empty State */}
             {fds.length === 0 && !showNewFDForm && (
                 <div className="empty-state">
-                    <h3>No Fixed Deposits Yet</h3>
-                    <p>Open your first fixed deposit to start earning guaranteed returns.</p>
-                    <button className="btn-primary" onClick={() => setShowNewFDForm(true)}>+ Open New FD</button>
+                    <h3>{t.noFds}</h3>
+                    <p>{t.noFdsSub}</p>
+                    <button className="btn-primary" onClick={() => setShowNewFDForm(true)}>{t.openNew}</button>
                 </div>
             )}
 
@@ -313,8 +319,8 @@ export const FixedDepositsPage = () => {
                     const matStatus = fd.status === 'active'
                         ? getMaturityStatus(fd.maturityDate)
                         : fd.status === 'matured'
-                            ? { label: `Matured on ${formatDate(fd.maturityDate)}`, tone: '' }
-                            : { label: 'Withdrawn early', tone: 'fin-bad' };
+                            ? { label: fillText(t.maturedOn, { date: formatDate(fd.maturityDate) }), tone: '' }
+                            : { label: t.withdrawnEarly, tone: 'fin-bad' };
                     const progress = fd.status === 'active'
                         ? Math.min(100, Math.max(0, ((new Date().getTime() - new Date(fd.startDate).getTime()) /
                             (new Date(fd.maturityDate).getTime() - new Date(fd.startDate).getTime())) * 100))
@@ -331,18 +337,18 @@ export const FixedDepositsPage = () => {
                                     </div>
                                 </div>
                                 <span className={`gl-pill ${statusPill}`}>
-                                    {fd.status === 'active' ? 'Active' : fd.status === 'matured' ? 'Matured' : 'Closed'}
+                                    {fd.status === 'active' ? t.stActive : fd.status === 'matured' ? t.stMatured : t.stClosed}
                                 </span>
                             </div>
 
                             <div className="gl-kv">
-                                <div><span>Principal</span><span>{formatMoney(fd.principalAmount)}</span></div>
-                                <div><span>At Maturity</span><span>{formatMoney(fd.maturityAmount)}</span></div>
-                                <div><span>Interest</span><span>{formatMoney(fd.interestEarned)}</span></div>
-                                <div><span>Rate</span><span>{fd.interestRate}% p.a.</span></div>
-                                <div><span>Tenure</span><span>{fd.tenure} {fd.tenureUnit}</span></div>
-                                <div><span>Auto-Renewal</span><span>{fd.autoRenewal ? 'On' : 'Off'}</span></div>
-                                <div><span>Maturity</span><span className={matStatus.tone}>{matStatus.label}</span></div>
+                                <div><span>{t.principal}</span><span>{formatMoney(fd.principalAmount)}</span></div>
+                                <div><span>{t.atMaturity}</span><span>{formatMoney(fd.maturityAmount)}</span></div>
+                                <div><span>{t.interest}</span><span>{formatMoney(fd.interestEarned)}</span></div>
+                                <div><span>{t.rate}</span><span>{fd.interestRate}% p.a.</span></div>
+                                <div><span>{t.tenureLabel}</span><span>{fd.tenure} {unitName(fd.tenureUnit)}</span></div>
+                                <div><span>{t.autoRenewal}</span><span>{fd.autoRenewal ? t.on : t.off}</span></div>
+                                <div><span>{t.maturity}</span><span className={matStatus.tone}>{matStatus.label}</span></div>
                             </div>
 
                             {fd.status === 'active' && (
@@ -352,36 +358,36 @@ export const FixedDepositsPage = () => {
                                     </div>
                                     <div className="gl-row">
                                         <span>{formatDate(fd.startDate)}</span>
-                                        <span>{Math.round(progress)}% elapsed</span>
+                                        <span>{fillText(t.elapsed, { n: Math.round(progress) })}</span>
                                         <span>{formatDate(fd.maturityDate)}</span>
                                     </div>
                                 </div>
                             )}
 
-                            <div className="gl-actions">
+                            <div className="gl-actions fd-actions fd-card-actions">
                                 {fd.status === 'active' && (
                                     <>
                                         <button className="btn-secondary btn-sm" onClick={() => handleWithdrawEarly(fd)}>
-                                            Withdraw Early
+                                            {t.withdrawEarly}
                                         </button>
                                         <button className="btn-secondary btn-sm" onClick={() => handleDelete(fd._id)}>
-                                            Delete
+                                            {t.delete}
                                         </button>
                                     </>
                                 )}
                                 {fd.status === 'matured' && (
                                     <>
                                         <button className="btn-primary btn-sm" onClick={() => handleRenew(fd)}>
-                                            Renew FD
+                                            {t.renewFd}
                                         </button>
                                         <button className="btn-secondary btn-sm" onClick={() => handleDelete(fd._id)}>
-                                            Delete
+                                            {t.delete}
                                         </button>
                                     </>
                                 )}
                                 {fd.status === 'prematurely-closed' && (
                                     <button className="btn-secondary btn-sm" onClick={() => handleDelete(fd._id)}>
-                                        Remove
+                                        {t.remove}
                                     </button>
                                 )}
                             </div>

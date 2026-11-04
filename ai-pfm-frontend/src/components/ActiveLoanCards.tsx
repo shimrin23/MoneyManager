@@ -1,5 +1,8 @@
 import { formatDate, formatMoney } from '../utils/appFormat';
 import { type FC } from 'react';
+import { useAdminLang } from '../i18n/adminText';
+import { LOAN_PANELS_T } from '../i18n/loanPanelsText';
+import { fillText } from '../i18n/dashboardText';
 
 interface Loan {
     _id: string;
@@ -30,20 +33,21 @@ const ActiveLoanCards: FC<ActiveLoanCardsProps> = ({
     onEdit,
     onDelete
 }) => {
+    const t = LOAN_PANELS_T[useAdminLang()];
     const activeLoan = loans.filter(l => l.status === 'Active');
 
     if (activeLoan.length === 0) {
         return (
             <div className="empty-state">
-                <h3>No Active Loans</h3>
-                <p>Add your first loan to start tracking it.</p>
+                <h3>{t.noActive}</h3>
+                <p>{t.addFirst}</p>
             </div>
         );
     }
 
     return (
         <div className="fin-section">
-            <h3 className="su-panel-title">Active Loans</h3>
+            <h3 className="su-panel-title">{t.activeLoans}</h3>
             <div className="fin-grid">
                 {activeLoan.map((loan) => {
                     const paidPercent = loan.totalAmount > 0
@@ -54,18 +58,18 @@ const ActiveLoanCards: FC<ActiveLoanCardsProps> = ({
                             <div className="gl-head">
                                 <div className="gl-head-main">
                                     <div className="gl-head-text">
-                                        <h3>{loan.type} Loan</h3>
+                                        <h3>{fillText(t.loanSuffix, { type: loan.type })}</h3>
                                         <span className="gl-sub">{loan.provider}</span>
                                     </div>
                                 </div>
-                                <span className="gl-pill in-progress">Active</span>
+                                <span className="gl-pill in-progress">{t.statusActive}</span>
                             </div>
 
                             <div className="gl-kv">
-                                <div><span>Monthly EMI</span><span>{formatMoney(loan.monthlyInstallment, 2)}</span></div>
-                                <div><span>Remaining Amount</span><span>{formatMoney(loan.remainingAmount, 2)}</span></div>
-                                <div><span>Interest Rate</span><span>{loan.interestRate}% p.a.</span></div>
-                                <div><span>Next Due Date</span><span>{formatDate(loan.nextDueDate)}</span></div>
+                                <div><span>{t.monthlyEmi}</span><span>{formatMoney(loan.monthlyInstallment, 2)}</span></div>
+                                <div><span>{t.remainingAmount}</span><span>{formatMoney(loan.remainingAmount, 2)}</span></div>
+                                <div><span>{t.interestRate}</span><span>{fillText(t.rateValue, { rate: loan.interestRate })}</span></div>
+                                <div><span>{t.nextDue}</span><span>{formatDate(loan.nextDueDate)}</span></div>
                             </div>
 
                             <div className="gl-progress">
@@ -75,30 +79,30 @@ const ActiveLoanCards: FC<ActiveLoanCardsProps> = ({
                                     aria-valuenow={Math.round(paidPercent)}
                                     aria-valuemin={0}
                                     aria-valuemax={100}
-                                    aria-label={`${paidPercent.toFixed(1)}% of the loan paid`}
+                                    aria-label={fillText(t.progressLabel, { pct: paidPercent.toFixed(1) })}
                                 >
                                     <span style={{ width: `${paidPercent}%` }} />
                                 </div>
                                 <div className="gl-row">
-                                    <span>{paidPercent.toFixed(1)}% paid</span>
+                                    <span>{fillText(t.paidLabel, { pct: paidPercent.toFixed(1) })}</span>
                                 </div>
                             </div>
 
-                            <div className="gl-actions">
+                            <div className="gl-actions loan-card-actions">
                                 <button onClick={() => onMakePayment?.(loan._id)} className="btn-primary btn-sm">
-                                    Pay EMI
+                                    {t.payEmi}
                                 </button>
                                 <button onClick={() => onViewSchedule?.(loan._id)} className="btn-secondary btn-sm">
-                                    View Schedule
+                                    {t.viewSchedule}
                                 </button>
                                 <button onClick={() => onRecalculate?.(loan._id)} className="btn-secondary btn-sm">
-                                    Recalculate
+                                    {t.recalculate}
                                 </button>
                                 <button onClick={() => onEdit?.(loan._id)} className="btn-secondary btn-sm">
-                                    Edit
+                                    {t.edit}
                                 </button>
                                 <button onClick={() => onDelete?.(loan._id)} className="btn-secondary btn-sm">
-                                    Delete
+                                    {t.delete}
                                 </button>
                             </div>
                         </article>

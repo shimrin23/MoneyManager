@@ -1,12 +1,13 @@
 import { fromLkr, toLkr, currencyCode } from '../utils/appFormat';
 // Edit Profile Page
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client.ts';
 import { DatePicker } from '../components/DatePicker';
 import { getLocalDateString } from '../utils/date';
 import { useAdminLang } from '../i18n/adminText';
 import { USER_T } from '../i18n/userPagesText';
+import { notify } from '../utils/systemMessages';
 
 interface UserProfile {
     id: string;
@@ -17,7 +18,47 @@ interface UserProfile {
     address?: string;
     occupation?: string;
     monthlyIncome?: number;
+    avatar?: string;
 }
+
+// Shrinks the chosen image to a 256px square JPEG so it stays small enough to save with the profile
+const resizeImage = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+            const size = 256;
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) {
+                URL.revokeObjectURL(url);
+                reject(new Error('Canvas not supported'));
+                return;
+            }
+            // Centre-crop to a square, then scale down
+            const side = Math.min(img.width, img.height);
+            const sx = (img.width - side) / 2;
+            const sy = (img.height - side) / 2;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, size, size);
+            ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+            URL.revokeObjectURL(url);
+            let quality = 0.85;
+            let dataUrl = canvas.toDataURL('image/jpeg', quality);
+            while (dataUrl.length > 85_000 && quality > 0.4) {
+                quality -= 0.15;
+                dataUrl = canvas.toDataURL('image/jpeg', quality);
+            }
+            resolve(dataUrl);
+        };
+        img.onerror = () => {
+            URL.revokeObjectURL(url);
+            reject(new Error('Could not read the image'));
+        };
+        img.src = url;
+    });
 
 const getFallbackProfile = (): UserProfile => {
     const role = localStorage.getItem('userRole') || 'customer';
@@ -39,9 +80,36 @@ export const ProfilePage = () => {
     const t = USER_T[useAdminLang()];
     const [profile, setProfile] = useState<UserProfile>(getFallbackProfile);
     const [saving, setSaving] = useState(false);
-    const [message, setMessage] = useState('');
-    const [error, setError] = useState('');
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const navigate = useNavigate();
+
+    // Saves the photo straight away (separately from the Save Changes button)
+    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        e.target.value = ''; // allow choosing the same file again
+        if (!file) return;
+        if (!/^image\/(png|jpeg|webp)$/.test(file.type)) {
+            notify.error('Please choose a PNG, JPEG or WebP image.');
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            notify.error('The photo is too large. Please choose an image under 10 MB.');
+            return;
+        }
+        setUploadingAvatar(true);
+        try {
+            const avatar = await resizeImage(file);
+            const response = await apiClient.put('/auth/profile/avatar', { avatar });
+            setProfile(prev => ({ ...prev, avatar: response.data?.avatar ?? avatar }));
+            notify.success(response.data?.message || 'Profile photo updated');
+            window.dispatchEvent(new Event('profile-updated'));
+        } catch (err: any) {
+            notify.error(err.response?.data?.error || 'Could not upload the photo. Please try again.');
+        } finally {
+            setUploadingAvatar(false);
+        }
+    };
 
     useEffect(() => {
         fetchProfile();
@@ -60,14 +128,14 @@ export const ProfilePage = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
-        setError('');
-        setMessage('');
 
         try {
-            await apiClient.put('/auth/profile', { ...profile, monthlyIncome: toLkr(profile.monthlyIncome || 0) });
-            setMessage(t.profUpdated);
+            // The photo is saved on its own endpoint, so it is left out here
+            const { avatar: _avatar, ...details } = profile;
+            await apiClient.put('/auth/profile', { ...details, monthlyIncome: toLkr(profile.monthlyIncome || 0) });
+            notify.success(t.profUpdated);
         } catch (err: any) {
-            setError(err.response?.data?.error || t.profUpdateFailed);
+            notify.error(err.response?.data?.error || t.profUpdateFailed);
         } finally {
             setSaving(false);
         }
@@ -88,17 +156,39 @@ export const ProfilePage = () => {
     const role = localStorage.getItem('userRole') || 'customer';
 
     return (
-        <div className="profile-page">
-          <div className="pf-card">
-            {/* Header: avatar → name / email / role */}
-            <div className="profile-header profile-header-flex pf-header">
+        <div className="profile-page pf-page">
+            {/* Header card: avatar on the left, name / email / role beside it */}
+            <div className="profile-header pf-head-card">
                 <div className="profile-avatar-stack">
-                    <div className="profile-header-avatar">
-                        {getInitials(profile.name)}
+                    <div className={`profile-header-avatar ${profile.avatar ? 'pf-has-photo' : ''}`}>
+                        {profile.avatar
+                            ? <img src={profile.avatar} alt={profile.name} className="pf-avatar-img" />
+                            : getInitials(profile.name)}
                     </div>
-                    <button type="button" className="profile-avatar-camera-btn" aria-label={t.profChangeAvatar}>
-                        📷
+                    <button
+                        type="button"
+                        className="profile-avatar-camera-btn pf-camera-btn"
+                        aria-label={t.profChangeAvatar}
+                        title={t.profChangeAvatar}
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploadingAvatar}
+                    >
+                        {uploadingAvatar ? (
+                            <span className="pf-camera-spin" aria-hidden="true" />
+                        ) : (
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                                <circle cx="12" cy="13" r="4" />
+                            </svg>
+                        )}
                     </button>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/png,image/jpeg,image/webp"
+                        onChange={handleAvatarChange}
+                        hidden
+                    />
                 </div>
                 {/* User info pulled from profile / registration data */}
                 <div className="profile-header-info">
@@ -112,8 +202,6 @@ export const ProfilePage = () => {
 
             <div className="profile-content">
                     <form onSubmit={handleSubmit} className="profile-form pf-form">
-                        {message && <div className="alert-success">{message}</div>}
-                        {error && <div className="alert-error">{error}</div>}
 
                         <div className="form-section">
                             <h3>{t.profPersonal}</h3>
@@ -222,7 +310,6 @@ export const ProfilePage = () => {
                         </div>
                     </form>
             </div>
-          </div>
         </div>
     );
 };

@@ -39,5 +39,6 @@ router.delete('/account', authenticateToken, authController.deleteAccount.bind(a
 
 router.get('/profile', authenticateToken, authController.getProfile.bind(authController));
 router.put('/profile', authenticateToken, authController.updateProfile.bind(authController));
+router.put('/profile/avatar', authenticateToken, authController.updateAvatar.bind(authController));
 
 export default router;

@@ -1,7 +1,11 @@
+import { DateInput } from '../components/DateInput';
 import { formatDate, formatDateTime, formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { apiClient, getApiErrorMessage } from '../api/client';
 import { notify } from '../utils/systemMessages';
+import { useAdminLang } from '../i18n/adminText';
+import { REC_T } from '../i18n/recurringText';
+import { fillText } from '../i18n/dashboardText';
 
 type RecurringStatus = 'unconfirmed' | 'confirmed' | 'dismissed';
 
@@ -45,18 +49,14 @@ interface ConfirmAction {
 }
 
 
-const freqLabel: Record<string, string> = {
-    weekly: 'Weekly',
-    monthly: 'Monthly',
-    yearly: 'Yearly'
-};
-
 const getDaysUntil = (dateStr: string) => {
     const diff = new Date(dateStr).getTime() - new Date().getTime();
     return Math.ceil(diff / (1000 * 60 * 60 * 24));
 };
 
 export const RecurringTransactionsPage = () => {
+    const t = REC_T[useAdminLang()];
+    const freqLabel: Record<string, string> = { weekly: t.freqWeekly, monthly: t.freqMonthly, yearly: t.freqYearly };
     const [items, setItems] = useState<RecurringTransaction[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'unconfirmed' | 'confirmed' | 'dismissed'>('all');
@@ -85,7 +85,7 @@ export const RecurringTransactionsPage = () => {
                 frequency: sub.frequency,
                 nextDueDate: new Date(sub.nextPayment).toISOString().split('T')[0],
                 lastCharged: sub.lastUsed ? new Date(sub.lastUsed).toISOString().split('T')[0] : 'N/A',
-                sourceAccount: 'Primary Account',
+                sourceAccount: t.primaryAccount,
                 status: sub.isActive ? (sub.isZombie ? 'unconfirmed' : 'confirmed') : 'dismissed',
                 detectedAt: new Date(sub.createdAt).toISOString().split('T')[0],
                 totalPaidThisYear: sub.amount * (sub.frequency === 'monthly' ? 12 : 1)
@@ -106,11 +106,11 @@ export const RecurringTransactionsPage = () => {
     const handleAddSubscription = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!newName.trim() || !newProvider.trim() || !newAmount || !newCategory.trim() || !newDate) {
-            notify.warning('Please fill in provider, name, amount, category and next due date.');
+            notify.warning(t.warnFields);
             return;
         }
         if (!(Number(newAmount) > 0)) {
-            notify.warning('Amount must be greater than 0.');
+            notify.warning(t.warnAmount);
             return;
         }
         setIsAdding(true);
@@ -129,11 +129,11 @@ export const RecurringTransactionsPage = () => {
             setNewCategory('');
             setNewDate('');
             setNewFrequency('monthly');
-            notify.success('Subscription added.');
+            notify.success(t.addedNote);
             fetchSubscriptions();
         } catch (error) {
             console.error('Failed to add subscription', error);
-            notify.error(getApiErrorMessage(error, 'Failed to add subscription. Please try again.'));
+            notify.error(getApiErrorMessage(error, t.failAdd));
         } finally {
             setIsAdding(false);
         }
@@ -145,12 +145,12 @@ export const RecurringTransactionsPage = () => {
             const isZombie = status === 'unconfirmed';
             await apiClient.put(`/subscriptions/${id}`, { isActive, isZombie });
             setItems(prev => prev.map(i => i._id === id ? { ...i, status } : i));
-            if (status === 'dismissed') notify.success('Moved to Dismissed. You can restore it from there.');
-            else if (status === 'unconfirmed') notify.success('Restored. Confirm it to track payments again.');
-            else notify.success('Confirmed as recurring.');
+            if (status === 'dismissed') notify.success(t.movedDismissed);
+            else if (status === 'unconfirmed') notify.success(t.restoredNote);
+            else notify.success(t.confirmedNote);
         } catch (error) {
             console.error('Failed to update subscription status', error);
-            notify.error(getApiErrorMessage(error, 'Failed to update subscription. Please try again.'));
+            notify.error(getApiErrorMessage(error, t.failStatus));
         }
     };
 
@@ -159,11 +159,11 @@ export const RecurringTransactionsPage = () => {
         try {
             const res = await apiClient.post('/subscriptions/detect');
             const found = res.data?.detectedCount || 0;
-            notify.info(found > 0 ? `Found ${found} new recurring payment${found > 1 ? 's' : ''}.` : 'No new recurring payments found.');
+            notify.info(found > 0 ? fillText(found > 1 ? t.foundMany : t.foundOne, { n: found }) : t.noNew);
             await fetchSubscriptions(); // Refresh list to show newly detected items
         } catch (error) {
             console.error('Failed to run AI scan', error);
-            notify.error(getApiErrorMessage(error, 'AI scan failed. Please try again.'));
+            notify.error(getApiErrorMessage(error, t.failScan));
         } finally {
             setIsScanning(false);
         }
@@ -173,11 +173,11 @@ export const RecurringTransactionsPage = () => {
         try {
             const res = await apiClient.post(`/subscriptions/${id}/pay`);
             const next = res.data?.nextPayment ? formatDate(res.data.nextPayment) : null;
-            notify.success(next ? `Payment logged. Next payment due ${next}.` : 'Payment logged.');
+            notify.success(next ? fillText(t.paidNext, { date: next }) : t.paidNote);
             await fetchSubscriptions();
         } catch (error) {
             console.error('Failed to log payment', error);
-            notify.error(getApiErrorMessage(error, 'Failed to log payment. Please try again.'));
+            notify.error(getApiErrorMessage(error, t.failPay));
         } finally {
             setConfirmAction(null);
         }
@@ -188,10 +188,10 @@ export const RecurringTransactionsPage = () => {
             // Delete only appears on dismissed items, so remove it for good
             await apiClient.delete(`/subscriptions/${id}`, { params: { permanent: true } });
             setItems(prev => prev.filter(i => i._id !== id));
-            notify.success('Subscription deleted.');
+            notify.success(t.deletedNote);
         } catch (error) {
             console.error('Failed to delete subscription', error);
-            notify.error(getApiErrorMessage(error, 'Failed to delete subscription. Please try again.'));
+            notify.error(getApiErrorMessage(error, t.failDelete));
         } finally {
             setConfirmAction(null);
         }
@@ -205,7 +205,7 @@ export const RecurringTransactionsPage = () => {
     const unconfirmedCount = items.filter(i => i.status === 'unconfirmed').length;
     const dueSoon = items.filter(i => getDaysUntil(i.nextDueDate) <= 7 && i.status !== 'dismissed').length;
 
-    if (loading) return <div className="loading-spinner">Detecting recurring transactions...</div>;
+    if (loading) return <div className="loading-spinner">{t.loading}</div>;
 
     return (
         <>
@@ -213,45 +213,45 @@ export const RecurringTransactionsPage = () => {
             {/* Add Subscription Form */}
             <section className="rc-panel">
                 <div className="rc-panel-head">
-                    <h3 className="rc-panel-title">Add Subscription</h3>
+                    <h3 className="rc-panel-title">{t.addTitle}</h3>
                     <button onClick={handleRunScan} className="rc-scan-btn" disabled={isScanning}>
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                             <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z" />
                         </svg>
-                        {isScanning ? 'Scanning...' : 'Run AI Scan'}
+                        {isScanning ? t.scanning : t.runScan}
                     </button>
                 </div>
                 <form onSubmit={handleAddSubscription} className="rc-form">
                     <div className="rc-field">
-                        <label htmlFor="rcProvider">Provider</label>
-                        <input id="rcProvider" type="text" className="rc-input" placeholder="e.g. Netflix" value={newProvider} onChange={(e) => setNewProvider(e.target.value)} />
+                        <label htmlFor="rcProvider">{t.providerLabel}</label>
+                        <input id="rcProvider" type="text" className="rc-input" placeholder={t.providerPh} value={newProvider} onChange={(e) => setNewProvider(e.target.value)} />
                     </div>
                     <div className="rc-field">
-                        <label htmlFor="rcName">Name (Desc)</label>
-                        <input id="rcName" type="text" className="rc-input" placeholder="e.g. Premium Plan" value={newName} onChange={(e) => setNewName(e.target.value)} />
+                        <label htmlFor="rcName">{t.nameLabel}</label>
+                        <input id="rcName" type="text" className="rc-input" placeholder={t.namePh} value={newName} onChange={(e) => setNewName(e.target.value)} />
                     </div>
                     <div className="rc-field">
-                        <label htmlFor="rcAmount">Amount ({currencyCode()})</label>
+                        <label htmlFor="rcAmount">{fillText(t.amountLabel, { cur: currencyCode() })}</label>
                         <input id="rcAmount" type="number" className="rc-input" placeholder="0" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} />
                     </div>
                     <div className="rc-field">
-                        <label htmlFor="rcCategory">Category</label>
-                        <input id="rcCategory" type="text" className="rc-input" placeholder="Entertainment" value={newCategory} onChange={(e) => setNewCategory(e.target.value)} />
+                        <label htmlFor="rcCategory">{t.categoryLabel}</label>
+                        <input id="rcCategory" type="text" className="rc-input" placeholder={t.categoryPh} value={newCategory} onChange={(e) => setNewCategory(e.target.value)} />
                     </div>
                     <div className="rc-field">
-                        <label htmlFor="rcFrequency">Frequency</label>
+                        <label htmlFor="rcFrequency">{t.frequencyLabel}</label>
                         <select id="rcFrequency" className="rc-input rc-select" value={newFrequency} onChange={(e) => setNewFrequency(e.target.value as 'monthly' | 'yearly')}>
-                            <option value="monthly">Monthly</option>
-                            <option value="yearly">Yearly</option>
+                            <option value="monthly">{t.freqMonthly}</option>
+                            <option value="yearly">{t.freqYearly}</option>
                         </select>
                     </div>
                     <div className="rc-field">
-                        <label htmlFor="rcDate">Next Due</label>
-                        <input id="rcDate" type="date" className="rc-input" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
+                        <label htmlFor="rcDate">{t.nextDue}</label>
+                        <DateInput id="rcDate" className="rc-input" value={newDate} onChange={(e) => setNewDate(e.target.value)} />
                     </div>
                     <div className="rc-form-actions">
                         <button type="submit" className="action-btn primary rc-add-btn" disabled={isAdding}>
-                            {isAdding ? 'Adding...' : 'Add'}
+                            {isAdding ? t.adding : t.add}
                         </button>
                     </div>
                 </form>
@@ -263,26 +263,26 @@ export const RecurringTransactionsPage = () => {
                         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                         <path d="M13.7 21a2 2 0 0 1-3.4 0" />
                     </svg>
-                    {unconfirmedCount} new pattern{unconfirmedCount > 1 ? 's' : ''} detected — review below
+                    {fillText(t.newPatterns, { n: unconfirmedCount })}
                 </div>
             )}
 
             {/* Summary */}
             <div className="rc-stats">
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Active Recurring</span>
+                    <span className="rc-stat-label">{t.activeRecurring}</span>
                     <span className="rc-stat-value">{items.filter(i => i.status !== 'dismissed').length}</span>
                 </div>
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Awaiting Review</span>
+                    <span className="rc-stat-label">{t.awaitingReview}</span>
                     <span className="rc-stat-value">{unconfirmedCount}</span>
                 </div>
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Due Within 7 Days</span>
+                    <span className="rc-stat-label">{t.dueWithin7}</span>
                     <span className="rc-stat-value">{dueSoon}</span>
                 </div>
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Monthly Total</span>
+                    <span className="rc-stat-label">{t.monthlyTotal}</span>
                     <span className="rc-stat-value">{formatMoney(totalMonthly)}</span>
                 </div>
             </div>
@@ -295,7 +295,7 @@ export const RecurringTransactionsPage = () => {
                         className={`rec-filter-btn ${filter === f ? 'active' : ''}`}
                         onClick={() => setFilter(f)}
                     >
-                        {f.charAt(0).toUpperCase() + f.slice(1)}
+                        {({ all: t.filterAll, unconfirmed: t.filterUnconfirmed, confirmed: t.filterConfirmed, dismissed: t.filterDismissed })[f]}
                         <span className="rec-filter-count">{(f === 'all' ? items : items.filter(i => i.status === f)).length}</span>
                     </button>
                 ))}
@@ -321,22 +321,22 @@ export const RecurringTransactionsPage = () => {
                                     <span className="rc-tag">{item.sourceAccount}</span>
                                 </div>
                                 <div className="rc-dates">
-                                    <span>Last charged: {item.lastCharged}</span>
+                                    <span>{fillText(t.lastCharged, { date: item.lastCharged })}</span>
                                     <span className={`rc-next ${isUrgent || daysUntil < 0 ? 'urgent' : ''}`}>
-                                        Next: {item.nextDueDate} ({daysUntil > 0 ? `${daysUntil}d` : daysUntil === 0 ? 'Today' : `Overdue ${Math.abs(daysUntil)}d`})
+                                        {fillText(t.nextOn, { date: item.nextDueDate })} ({daysUntil > 0 ? `${daysUntil}${t.daysShort}` : daysUntil === 0 ? t.today : fillText(t.overdueDays, { n: Math.abs(daysUntil) })})
                                     </span>
                                 </div>
                             </div>
                             <div className="rc-item-side">
                                 <div className="rc-amount">{formatMoney(item.amount)}</div>
-                                <div className="rc-yearly">{formatMoney(item.totalPaidThisYear)} this year</div>
+                                <div className="rc-yearly">{fillText(t.thisYear, { amount: formatMoney(item.totalPaidThisYear) })}</div>
                                 {item.status === 'unconfirmed' && (
                                     <div className="rc-actions">
                                         <button className="rec-action-btn accept small" onClick={() => updateStatus(item._id, 'confirmed')}>
-                                            Confirm
+                                            {t.confirm}
                                         </button>
                                         <button className="rec-action-btn decline small" onClick={() => updateStatus(item._id, 'dismissed')}>
-                                            Not Recurring
+                                            {t.notRecurring}
                                         </button>
                                     </div>
                                 )}
@@ -347,15 +347,15 @@ export const RecurringTransactionsPage = () => {
                                         <div className="rc-actions">
                                             {alreadyPaid ? (
                                                 <span className="rc-paid">
-                                                    Paid — due in {days}d
+                                                    {fillText(t.paidDue, { n: days })}
                                                 </span>
                                             ) : (
                                                 <button className="rec-action-btn accept small" onClick={() => setConfirmAction({ id: item._id, type: 'pay', date: item.nextDueDate, amount: item.amount, name: item.merchantName })}>
-                                                    Pay
+                                                    {t.pay}
                                                 </button>
                                             )}
                                             <button className="rec-action-btn restore small" onClick={() => updateStatus(item._id, 'dismissed')}>
-                                                Dismiss
+                                                {t.dismiss}
                                             </button>
                                         </div>
                                     );
@@ -363,10 +363,10 @@ export const RecurringTransactionsPage = () => {
                                 {item.status === 'dismissed' && (
                                     <div className="rc-actions">
                                         <button className="rec-action-btn restore small" onClick={() => updateStatus(item._id, 'unconfirmed')}>
-                                            Restore
+                                            {t.restore}
                                         </button>
                                         <button className="rec-action-btn decline small" onClick={() => setConfirmAction({ id: item._id, type: 'delete', name: item.merchantName })}>
-                                            Delete
+                                            {t.delete}
                                         </button>
                                     </div>
                                 )}
@@ -382,37 +382,37 @@ export const RecurringTransactionsPage = () => {
                 <div className="modal-content txn-confirm" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
                     <div className="modal-header">
                         <h2 className="modal-title">
-                            {confirmAction.type === 'pay' ? 'Confirm Payment' : 'Delete Subscription'}
+                            {confirmAction.type === 'pay' ? t.confirmPayTitle : t.deleteSubTitle}
                         </h2>
-                        <button className="modal-close" onClick={() => setConfirmAction(null)} aria-label="Close">×</button>
+                        <button className="modal-close" onClick={() => setConfirmAction(null)} aria-label={t.close}>×</button>
                     </div>
 
                     {confirmAction.type === 'pay' ? (
                         <>
                             <div className="rc-pay-summary">
-                                <p className="txn-confirm-text rc-pay-intro">You are about to log a payment for:</p>
+                                <p className="txn-confirm-text rc-pay-intro">{t.payIntro}</p>
                                 <div className="rc-pay-box">
                                     <span className="rc-pay-name">{confirmAction.name}</span>
                                     <span className="rc-pay-amount">{formatMoney((confirmAction.amount || 0))}</span>
                                 </div>
                                 <p className="rc-pay-date">
-                                    Payment date: <strong>{confirmAction.date}</strong>
+                                    {t.paymentDate} <strong>{confirmAction.date}</strong>
                                 </p>
                             </div>
                             <div className="txn-confirm-actions">
-                                <button className="btn-secondary" onClick={() => setConfirmAction(null)}>Cancel</button>
-                                <button className="btn-primary" onClick={() => handlePay(confirmAction!.id)}>Confirm Pay</button>
+                                <button className="btn-secondary" onClick={() => setConfirmAction(null)}>{t.cancel}</button>
+                                <button className="btn-primary" onClick={() => handlePay(confirmAction!.id)}>{t.confirmPay}</button>
                             </div>
                         </>
                     ) : (
                         <>
                             <p className="txn-confirm-text">
-                                Are you sure you want to delete <strong>{confirmAction.name}</strong>? This action cannot be undone.
+                                {t.deleteConfirmText} <strong>{confirmAction.name}</strong>? This action cannot be undone.
                             </p>
                             <div className="txn-confirm-actions">
-                                <button className="btn-secondary" onClick={() => setConfirmAction(null)}>Cancel</button>
+                                <button className="btn-secondary" onClick={() => setConfirmAction(null)}>{t.cancel}</button>
                                 <button className="btn-primary" style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }} onClick={() => handleDelete(confirmAction!.id)}>
-                                    Delete
+                                    {t.deleteConfirm}
                                 </button>
                             </div>
                         </>

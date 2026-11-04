@@ -1,6 +1,9 @@
 import { useState, useRef } from 'react';
 import axios from 'axios';
 import { apiClient, getApiErrorMessage } from '../api/client';
+import { useAdminLang } from '../i18n/adminText';
+import { BANK_T } from '../i18n/connectBankText';
+import { fillText } from '../i18n/dashboardText';
 import '../styles/FinancialPages.css';
 
 interface SriLankanBank {
@@ -72,6 +75,7 @@ interface SkippedRow {
 }
 
 export const ConnectBankPage = () => {
+    const t = BANK_T[useAdminLang()];
     // Statement Import State
     const [selectedBank, setSelectedBank] = useState<SriLankanBank>(SRI_LANKAN_BANKS[0]);
     const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -103,17 +107,17 @@ export const ConnectBankPage = () => {
         const name = file.name.toLowerCase();
         if (!name.endsWith('.csv') && !name.endsWith('.txt')) {
             resetFile();
-            setErrorMsg('Please upload a valid .csv bank statement file.');
+            setErrorMsg(t.errNotCsv);
             return;
         }
         if (file.size === 0) {
             resetFile();
-            setErrorMsg('This file is empty. Export the statement again from your bank and try once more.');
+            setErrorMsg(t.errEmpty);
             return;
         }
         if (file.size > MAX_FILE_BYTES) {
             resetFile();
-            setErrorMsg('This file is larger than 5 MB. Export a shorter date range (for example one month) and import it in parts.');
+            setErrorMsg(t.errTooLarge);
             return;
         }
 
@@ -124,19 +128,19 @@ export const ConnectBankPage = () => {
             const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
             if (lines.length === 0) {
                 resetFile();
-                setErrorMsg('This file is empty. Export the statement again from your bank and try once more.');
+                setErrorMsg(t.errEmpty);
                 return;
             }
             if (lines.length < 2) {
                 resetFile();
-                setErrorMsg('This file only has a header row and no transactions.');
+                setErrorMsg(t.errHeaderOnly);
                 return;
             }
             setFileContent(text);
         };
         reader.onerror = () => {
             resetFile();
-            setErrorMsg('Could not read this file. Please try again.');
+            setErrorMsg(t.errRead);
         };
         reader.readAsText(file);
     };
@@ -165,7 +169,7 @@ export const ConnectBankPage = () => {
 
     const handleImportStatement = async () => {
         if (!fileContent) {
-            setErrorMsg('Please select a bank statement CSV file first.');
+            setErrorMsg(t.errNoFile);
             return;
         }
 
@@ -186,10 +190,10 @@ export const ConnectBankPage = () => {
         } catch (err) {
             console.error('Import error', err);
             if (axios.isAxiosError(err) && err.response?.status === 413) {
-                setErrorMsg('This statement is too large to import at once. Export a shorter date range and import it in parts.');
+                setErrorMsg(t.errTooLargeImport);
             } else {
                 if (axios.isAxiosError(err)) setSkippedRows(err.response?.data?.skippedRows || []);
-                setErrorMsg(getApiErrorMessage(err, 'Could not process bank statement. Please verify the CSV format.'));
+                setErrorMsg(getApiErrorMessage(err, t.errImportDefault));
             }
         } finally {
             setUploading(false);
@@ -217,14 +221,14 @@ export const ConnectBankPage = () => {
     return (
         <div className="page-container connect-bank-page">
             <div className="page-header" style={{ marginBottom: '1.5rem' }}>
-                <h1 className="page-title">Connect Sri Lankan Bank</h1>
+                <h1 className="page-title">{t.title}</h1>
             </div>
 
             <div className="connect-bank-grid" style={{ display: 'grid', gap: '1.5rem' }}>
                 {/* Bank Selection List */}
                 <div className="card" style={{ padding: '1.25rem' }}>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '1rem', color: 'var(--text)' }}>
-                        1. Select Your Bank
+                        1. {t.step1}
                     </h3>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                         {SRI_LANKAN_BANKS.map((b) => {
@@ -265,10 +269,10 @@ export const ConnectBankPage = () => {
                 {/* Statement Upload & Preview */}
                 <div className="card" style={{ padding: '1.25rem' }}>
                     <h3 style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text)' }}>
-                        2. Upload Statement for {selectedBank.name}
+                        2. {fillText(t.step2, { bank: selectedBank.name })}
                     </h3>
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-                        {selectedBank.guide}
+                        {t.guide[selectedBank.id] ?? selectedBank.guide}
                     </p>
 
                     {/* Drop Zone */}
@@ -298,48 +302,29 @@ export const ConnectBankPage = () => {
                         />
                         <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📄</div>
                         <div style={{ fontWeight: 600, color: 'var(--text)', marginBottom: '0.25rem' }}>
-                            {dragActive ? 'Drop the CSV file here' : selectedFile ? selectedFile.name : 'Click to upload or drag & drop CSV'}
+                            {dragActive ? t.dropActive : selectedFile ? selectedFile.name : t.dropDefault}
                         </div>
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                            Supports Commercial Bank, HNB, Sampath, BOC, FriMi & generic CSV statements (up to 5 MB)
+                            {t.dropHint}
                         </div>
                     </div>
 
                     {/* Action buttons */}
                     <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
                         <button
-                            className="primary"
+                            className="btn-primary cb-btn"
                             onClick={handleImportStatement}
                             disabled={!fileContent || uploading}
-                            style={{
-                                padding: '0.65rem 1.5rem',
-                                borderRadius: '8px',
-                                fontWeight: 600,
-                                background: '#2563eb',
-                                color: '#ffffff',
-                                border: 'none',
-                                cursor: fileContent && !uploading ? 'pointer' : 'not-allowed',
-                                opacity: fileContent && !uploading ? 1 : 0.6,
-                            }}
                         >
-                            {uploading ? 'Processing Statement…' : 'Import Statement'}
+                            {uploading ? t.processing : t.importBtn}
                         </button>
 
                         <button
                             type="button"
+                            className="btn-secondary cb-btn"
                             onClick={loadSampleStatement}
-                            style={{
-                                padding: '0.65rem 1rem',
-                                borderRadius: '8px',
-                                fontWeight: 500,
-                                fontSize: '0.85rem',
-                                background: 'var(--card-hover)',
-                                color: 'var(--text)',
-                                border: '1px solid var(--border)',
-                                cursor: 'pointer',
-                            }}
                         >
-                            Load Sample ComBank CSV
+                            {t.sampleBtn}
                         </button>
                     </div>
 
@@ -354,18 +339,18 @@ export const ConnectBankPage = () => {
                     {importSuccess && (
                         <div style={{ marginTop: '1rem', padding: '1rem', borderRadius: '8px', backgroundColor: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.35)' }}>
                             <h4 style={{ color: '#22c55e', fontWeight: 600, margin: '0 0 0.5rem 0' }}>
-                                ✓ Statement Imported Successfully!
+                                {t.successTitle}
                             </h4>
                             <ul style={{ margin: 0, paddingLeft: '1.25rem', color: 'var(--text)', fontSize: '0.875rem' }}>
-                                <li>Parsed transactions: <strong>{importSuccess.totalParsed}</strong></li>
-                                <li>Added to your account: <strong>{importSuccess.inserted}</strong></li>
-                                <li>Skipped duplicate records: <strong>{importSuccess.skippedDuplicates}</strong></li>
+                                <li>{t.parsed} <strong>{importSuccess.totalParsed}</strong></li>
+                                <li>{t.added} <strong>{importSuccess.inserted}</strong></li>
+                                <li>{t.skippedDup} <strong>{importSuccess.skippedDuplicates}</strong></li>
                                 {!!importSuccess.invalidRows && (
-                                    <li>Rows that couldn't be read: <strong>{importSuccess.invalidRows}</strong></li>
+                                    <li>{t.invalidRows} <strong>{importSuccess.invalidRows}</strong></li>
                                 )}
                             </ul>
                             <p style={{ margin: '0.75rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                                Your Dashboard, Transactions, and Spending Trends have now been refreshed with this data.
+                                {t.refreshed}
                             </p>
                         </div>
                     )}
@@ -373,10 +358,10 @@ export const ConnectBankPage = () => {
                     {/* Rows the server could not read */}
                     {skippedRows.length > 0 && (
                         <div style={{ marginTop: '1rem', padding: '0.75rem 1rem', borderRadius: '8px', backgroundColor: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.35)', fontSize: '0.85rem', color: 'var(--text)' }}>
-                            <strong style={{ color: '#f59e0b' }}>These rows were not imported:</strong>
+                            <strong style={{ color: '#f59e0b' }}>{t.skippedTitle}</strong>
                             <ul style={{ margin: '0.5rem 0 0 0', paddingLeft: '1.25rem' }}>
                                 {skippedRows.map((r) => (
-                                    <li key={r.row}>Row {r.row}: {r.reason}</li>
+                                    <li key={r.row}>{fillText(t.rowLabel, { n: r.row, reason: r.reason })}</li>
                                 ))}
                             </ul>
                         </div>

@@ -1,8 +1,12 @@
+import { DateInput } from '../components/DateInput';
 import { formatDate, formatDateTime, formatMoney, toLkr, fromLkr, currencyCode } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient, getApiErrorMessage } from '../api/client';
 import { notify, confirmDialog } from '../utils/systemMessages';
+import { useAdminLang } from '../i18n/adminText';
+import { SUBS_T } from '../i18n/subscriptionsText';
+import { fillText } from '../i18n/dashboardText';
 
 interface Subscription {
     _id?: string;
@@ -19,15 +23,6 @@ interface Subscription {
     cancelledAt?: string;
 }
 
-const CANCEL_REASON_LABELS: Record<string, string> = {
-    'too-expensive': 'Too expensive',
-    'not-used': 'Not using it',
-    'found-alternative': 'Found a cheaper alternative',
-    'temporary-pause': 'Temporary pause',
-    'other': 'Other',
-    'zombie-bulk-cancel': 'Cancelled as unused',
-};
-
 interface CheaperAlternative {
     name: string;
     price: number;
@@ -41,6 +36,15 @@ interface SubscriptionTrend {
 }
 
 export const SubscriptionsPage = () => {
+    const t = SUBS_T[useAdminLang()];
+    const CANCEL_REASON_LABELS: Record<string, string> = {
+        'too-expensive': t.reasonExpensive,
+        'not-used': t.reasonNotUsed,
+        'found-alternative': t.reasonAlt,
+        'temporary-pause': t.reasonPause,
+        'other': t.reasonOther,
+        'zombie-bulk-cancel': t.reasonZombie,
+    };
     const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
     const [loading, setLoading] = useState(true);
     const [showAddForm, setShowAddForm] = useState(false);
@@ -130,25 +134,25 @@ export const SubscriptionsPage = () => {
     const getHealthScore = () => {
         if (!monthlyIncome) return null;
         const percentOfIncome = (totalMonthlyCost / monthlyIncome) * 100;
-        if (percentOfIncome < 5) return { score: 'Healthy', icon: '', percentage: percentOfIncome };
-        if (percentOfIncome < 10) return { score: 'Needs Review', icon: '', percentage: percentOfIncome };
-        return { score: 'Overloaded', icon: '', percentage: percentOfIncome };
+        if (percentOfIncome < 5) return { score: t.healthHealthy, icon: '', percentage: percentOfIncome };
+        if (percentOfIncome < 10) return { score: t.healthReview, icon: '', percentage: percentOfIncome };
+        return { score: t.healthOverloaded, icon: '', percentage: percentOfIncome };
     };
 
     // Feature 2: Usage Status Determination
     const getUsageStatus = (subscription: Subscription) => {
-        if (subscription.isZombie) return { status: 'Zombie', icon: '', label: 'No activity detected' };
-        
+        if (subscription.isZombie) return { status: t.stZombie, icon: '', label: t.usageNoActivity };
+
         if (subscription.lastUsed) {
             const lastUsedDate = new Date(subscription.lastUsed);
             const now = new Date();
             const daysAgo = Math.floor((now.getTime() - lastUsedDate.getTime()) / (1000 * 60 * 60 * 24));
-            
-            if (daysAgo < 7) return { status: 'Actively Used', icon: '', label: `Last used: ${daysAgo} days ago` };
-            if (daysAgo < 60) return { status: 'Rarely Used', icon: '', label: `Last used: ${Math.floor(daysAgo / 7)} weeks ago` };
-            return { status: 'Zombie', icon: '', label: `Last used: ${Math.floor(daysAgo / 30)} months ago` };
+
+            if (daysAgo < 7) return { status: t.stActive, icon: '', label: fillText(t.usageDays, { n: daysAgo }) };
+            if (daysAgo < 60) return { status: t.stRarely, icon: '', label: fillText(t.usageWeeks, { n: Math.floor(daysAgo / 7) }) };
+            return { status: t.stZombie, icon: '', label: fillText(t.usageMonths, { n: Math.floor(daysAgo / 30) }) };
         }
-        return { status: 'Unknown', icon: '', label: 'No usage data' };
+        return { status: t.stUnknown, icon: '', label: t.usageNoData };
     };
 
 
@@ -164,10 +168,10 @@ export const SubscriptionsPage = () => {
 
     const getDueStatus = (subscription: Subscription) => {
         const days = getDaysUntilPayment(subscription.nextPayment);
-        if (days < 0) return { overdue: true, label: `Overdue by ${-days} day${days === -1 ? '' : 's'}`, color: '#ef4444' };
-        if (days === 0) return { overdue: false, label: 'Due today', color: '#f59e0b' };
-        if (days <= 7) return { overdue: false, label: `Due in ${days} day${days === 1 ? '' : 's'}`, color: '#f59e0b' };
-        return { overdue: false, label: `Due in ${days} days`, color: 'var(--text-muted)' };
+        if (days < 0) return { overdue: true, label: days === -1 ? t.overdueByOne : fillText(t.overdueByMany, { n: -days }), color: '#ef4444' };
+        if (days === 0) return { overdue: false, label: t.dueToday, color: '#f59e0b' };
+        if (days <= 7) return { overdue: false, label: days === 1 ? t.dueInOne : fillText(t.dueInMany, { n: days }), color: '#f59e0b' };
+        return { overdue: false, label: fillText(t.dueInMany, { n: days }), color: 'var(--text-muted)' };
     };
 
     // Feature 5: Renewal Risk Detection
@@ -178,8 +182,8 @@ export const SubscriptionsPage = () => {
         
         if (daysUntilRenewal <= 3 && daysUntilRenewal > 0) {
             const usageStatus = getUsageStatus(subscription);
-            if (usageStatus.status === 'Rarely Used' || usageStatus.status === 'Zombie') {
-                return { risk: true, message: `Renews in ${daysUntilRenewal} days - Rarely used` };
+            if (usageStatus.status === t.stRarely || usageStatus.status === t.stZombie) {
+                return { risk: true, message: fillText(t.renewsIn, { n: daysUntilRenewal }) };
             }
         }
         return { risk: false };
@@ -199,7 +203,7 @@ export const SubscriptionsPage = () => {
                 data: { reason: cancelReason || undefined }
             });
 
-            notify.success(`${selectedSubscription.name} cancelled. You can restore it from Cancelled Subscriptions.`);
+            notify.success(fillText(t.cancelledNote, { name: selectedSubscription.name }));
             setShowCancelModal(false);
             setCancelReason('');
             setSelectedSubscription(null);
@@ -207,38 +211,38 @@ export const SubscriptionsPage = () => {
             fetchTrends();
         } catch (error) {
             console.error('Failed to cancel subscription:', error);
-            notify.error(getApiErrorMessage(error, 'Failed to cancel subscription. Please try again.'));
+            notify.error(getApiErrorMessage(error, t.cancelFailed));
         }
     };
 
     const handleRestoreSubscription = async (subscription: Subscription) => {
         try {
             await apiClient.put(`/subscriptions/${subscription._id}`, { isActive: true, isZombie: false });
-            notify.success(`${subscription.name} restored.`);
+            notify.success(fillText(t.restoredNote, { name: subscription.name }));
             await fetchSubscriptions();
         } catch (error) {
             console.error('Failed to restore subscription:', error);
-            notify.error(getApiErrorMessage(error, 'Failed to restore subscription. Please try again.'));
+            notify.error(getApiErrorMessage(error, t.restoreFailed));
         }
     };
 
     const handleCancelAllZombies = async () => {
         const confirmed = await confirmDialog({
-            title: `Cancel ${zombieSubs.length} zombie subscription${zombieSubs.length > 1 ? 's' : ''}?`,
-            message: `This cancels ${zombieSubs.map(s => s.name).join(', ')} and saves ${formatMoney(savings)}/month. You can restore them later from Cancelled Subscriptions.`,
-            confirmText: 'Cancel All',
-            cancelText: 'Keep Them',
+            title: fillText(t.cancelAllTitle, { n: zombieSubs.length, s: zombieSubs.length > 1 ? 's' : '' }),
+            message: fillText(t.cancelAllMessage, { names: zombieSubs.map(s => s.name).join(', '), amount: formatMoney(savings) }),
+            confirmText: t.cancelAllConfirm,
+            cancelText: t.keepThem,
             danger: true,
         });
         if (!confirmed) return;
         try {
             const zombieIds = zombieSubs.map(sub => sub._id!);
             const response = await apiClient.post('/subscriptions/bulk-cancel', { subscriptionIds: zombieIds });
-            notify.success(`Cancelled ${response.data?.cancelledCount ?? zombieIds.length} subscription(s).`);
+            notify.success(fillText(t.bulkCancelled, { n: response.data?.cancelledCount ?? zombieIds.length }));
             await fetchSubscriptions();
         } catch (error) {
             console.error('Failed to cancel zombie subscriptions:', error);
-            notify.error(getApiErrorMessage(error, 'Failed to cancel subscriptions. Please try again.'));
+            notify.error(getApiErrorMessage(error, t.cancelAllFailed));
         }
     };
 
@@ -267,11 +271,11 @@ export const SubscriptionsPage = () => {
         try {
             // Validation
             if (!newSubscription.name.trim() || !newSubscription.provider.trim() || !newSubscription.category || !newSubscription.nextPayment) {
-                notify.warning('Please fill in all required fields.');
+                notify.warning(t.requiredFields);
                 return;
             }
             if (!(newSubscription.amount > 0)) {
-                notify.warning('Amount must be greater than 0.');
+                notify.warning(t.amountPositive);
                 return;
             }
 
@@ -289,14 +293,14 @@ export const SubscriptionsPage = () => {
                 isZombie: false
             });
             setShowAddForm(false);
-            notify.success('Subscription added.');
+            notify.success(t.addedNote);
 
             // Refresh subscription list
             await fetchSubscriptions();
             fetchAIInsights();
         } catch (error) {
             console.error('Failed to create subscription:', error);
-            notify.error(getApiErrorMessage(error, 'Failed to create subscription. Please try again.'));
+            notify.error(getApiErrorMessage(error, t.createFailed));
         }
     };
 
@@ -325,69 +329,69 @@ export const SubscriptionsPage = () => {
     };
 
     if (loading) {
-        return <div className="loading-spinner">Loading subscriptions...</div>;
+        return <div className="loading-spinner">{t.loading}</div>;
     }
 
     return (
         <div className="page-container su-page">
-            <div className="su-top">
-                <button
-                    className="btn-primary su-add-btn"
-                    onClick={() => setShowAddForm(!showAddForm)}
-                >
-                    + Add Subscription
-                </button>
-            </div>
-
             {/* Feature 1: Subscription Health Score */}
             <section className="su-health">
                 {healthScore ? (
                     <div className="su-health-row">
                         <div>
-                            <h3>Subscription Health Score</h3>
+                            <h3>{t.healthTitle}</h3>
                             <p>
-                                {healthScore.icon} <strong>{healthScore.score}</strong> — Your subscriptions are {(healthScore.percentage).toFixed(1)}% of monthly income
+                                {healthScore.icon} <strong>{healthScore.score}</strong> — {fillText(t.healthBody.split(' — ')[1], { pct: (healthScore.percentage).toFixed(1) })}
                             </p>
                         </div>
                         <div className="su-health-badge">
                             <div className="su-health-value">{(healthScore.percentage).toFixed(1)}%</div>
-                            <div className="su-health-label">of Income</div>
+                            <div className="su-health-label">{t.ofIncome}</div>
                         </div>
                     </div>
                 ) : (
                     <div>
-                        <h3>Subscription Health Score</h3>
+                        <h3>{t.healthTitle}</h3>
                         <p>
-                            You spend {formatMoney(totalMonthlyCost)}/month on subscriptions. To see what share of your income that is,{' '}
-                            <Link to="/profile" className="su-health-link">add your monthly income in Profile</Link>.
+                            {fillText(t.healthSpend, { amount: formatMoney(totalMonthlyCost) })}{' '}
+                            <Link to="/profile" className="su-health-link">{t.addIncome}</Link>.
                         </p>
                     </div>
                 )}
             </section>
 
+            <div className="su-top">
+                <button
+                    className="btn-primary su-add-btn"
+                    onClick={() => setShowAddForm(!showAddForm)}
+                >
+                    {t.addSub}
+                </button>
+            </div>
+
             {/* Add Subscription Form */}
             {showAddForm && (
                 <div className="card form-card gl-form">
-                    <h3 className="gl-form-title">Add New Subscription</h3>
+                    <h3 className="gl-form-title">{t.addFormTitle}</h3>
                     <form onSubmit={handleCreateSubscription} className="subscription-form">
                         <div className="form-row">
                             <div className="form-group">
-                                <label>Service Name</label>
+                                <label>{t.serviceName}</label>
                                 <input
                                     type="text"
                                     value={newSubscription.name}
                                     onChange={(e) => setNewSubscription({...newSubscription, name: e.target.value})}
-                                    placeholder="e.g., Netflix Premium"
+                                    placeholder={t.servicePlaceholder}
                                     required
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Provider</label>
+                                <label>{t.provider}</label>
                                 <input
                                     type="text"
                                     value={newSubscription.provider}
                                     onChange={(e) => setNewSubscription({...newSubscription, provider: e.target.value})}
-                                    placeholder="e.g., Netflix"
+                                    placeholder={t.providerPlaceholder}
                                     required
                                 />
                             </div>
@@ -395,7 +399,7 @@ export const SubscriptionsPage = () => {
 
                         <div className="form-row">
                             <div className="form-group">
-                                <label>Amount ({currencyCode()})</label>
+                                <label>{fillText(t.amount, { cur: currencyCode() })}</label>
                                 <input
                                     type="number"
                                     value={newSubscription.amount || ''}
@@ -407,42 +411,41 @@ export const SubscriptionsPage = () => {
                                 />
                             </div>
                             <div className="form-group">
-                                <label>Frequency</label>
+                                <label>{t.frequency}</label>
                                 <select
                                     value={newSubscription.frequency}
                                     onChange={(e) => setNewSubscription({...newSubscription, frequency: e.target.value as 'monthly' | 'yearly'})}
                                     required
                                 >
-                                    <option value="monthly">Monthly</option>
-                                    <option value="yearly">Yearly</option>
+                                    <option value="monthly">{t.monthly}</option>
+                                    <option value="yearly">{t.yearly}</option>
                                 </select>
                             </div>
                         </div>
 
                         <div className="form-row">
                             <div className="form-group">
-                                <label>Category</label>
+                                <label>{t.category}</label>
                                 <select
                                     value={newSubscription.category}
                                     onChange={(e) => setNewSubscription({...newSubscription, category: e.target.value})}
                                     required
                                 >
-                                    <option value="">Select Category</option>
-                                    <option value="Entertainment">Entertainment</option>
-                                    <option value="Software">Software</option>
-                                    <option value="Health">Health & Fitness</option>
-                                    <option value="Education">Education</option>
-                                    <option value="News">News & Media</option>
-                                    <option value="Gaming">Gaming</option>
-                                    <option value="Music">Music</option>
-                                    <option value="Cloud Storage">Cloud Storage</option>
-                                    <option value="Other">Other</option>
+                                    <option value="">{t.selectCategory}</option>
+                                    <option value="Entertainment">{t.catEntertainment}</option>
+                                    <option value="Software">{t.catSoftware}</option>
+                                    <option value="Health">{t.catHealth}</option>
+                                    <option value="Education">{t.catEducation}</option>
+                                    <option value="News">{t.catNews}</option>
+                                    <option value="Gaming">{t.catGaming}</option>
+                                    <option value="Music">{t.catMusic}</option>
+                                    <option value="Cloud Storage">{t.catCloud}</option>
+                                    <option value="Other">{t.catOther}</option>
                                 </select>
                             </div>
                             <div className="form-group">
-                                <label>Next Payment Date</label>
-                                <input
-                                    type="date"
+                                <label>{t.nextPaymentDate}</label>
+                                <DateInput
                                     value={newSubscription.nextPayment}
                                     onChange={(e) => setNewSubscription({...newSubscription, nextPayment: e.target.value})}
                                     required
@@ -452,10 +455,10 @@ export const SubscriptionsPage = () => {
 
                         <div className="form-actions">
                             <button type="button" className="btn-secondary" onClick={() => setShowAddForm(false)}>
-                                Cancel
+                                {t.cancel}
                             </button>
                             <button type="submit" className="btn-primary">
-                                Add Subscription
+                                {t.addSubBtn}
                             </button>
                         </div>
                     </form>
@@ -465,26 +468,26 @@ export const SubscriptionsPage = () => {
             {/* Summary Cards */}
             <div className="rc-stats">
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Monthly Total</span>
+                    <span className="rc-stat-label">{t.monthlyTotal}</span>
                     <span className="rc-stat-value">{formatMoney(totalMonthlyCost)}</span>
                 </div>
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Active Subscriptions</span>
+                    <span className="rc-stat-label">{t.activeSubs}</span>
                     <span className="rc-stat-value">{activeSubs.length}</span>
                 </div>
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Zombie Subscriptions</span>
+                    <span className="rc-stat-label">{t.zombieCount}</span>
                     <span className="rc-stat-value">{zombieSubs.length}</span>
                 </div>
                 <div className="rc-stat">
-                    <span className="rc-stat-label">Potential Monthly Savings</span>
+                    <span className="rc-stat-label">{t.potentialSavings}</span>
                     <span className="rc-stat-value">{formatMoney(savings)}</span>
                 </div>
             </div>
 
             {/* Feature 6: Subscription Trend Analytics */}
             <section className="su-panel">
-                <h3 className="su-panel-title">6-Month Spending Trend</h3>
+                <h3 className="su-panel-title">{t.trendTitle}</h3>
                 {trends.some(t => t.amount > 0) ? (
                     <div className="su-trend">
                         {trends.map((trend, idx) => {
@@ -502,8 +505,7 @@ export const SubscriptionsPage = () => {
                     </div>
                 ) : (
                     <p className="su-muted">
-                        No subscription payments recorded in the last 6 months yet. Payments you log with Pay on the Recurring page,
-                        and expenses from these providers, will show here.
+                        {t.trendEmpty}
                     </p>
                 )}
             </section>
@@ -511,11 +513,11 @@ export const SubscriptionsPage = () => {
             {/* Feature 7: Consolidation Suggestions */}
             {consolidationSuggestions().length > 0 && (
                 <div className="su-note warn">
-                    <h4>AI Consolidation Opportunity</h4>
+                    <h4>{t.consolidationTitle}</h4>
                     {consolidationSuggestions().map((suggestion, idx) => (
                         <p key={idx}>
-                            <strong>{suggestion.category}:</strong> You have {suggestion.count} subscriptions costing {formatMoney(suggestion.totalCost)}/month.
-                            Consolidating could save <strong>{formatMoney(suggestion.potentialSavings)}/month</strong>.
+                            <strong>{suggestion.category}:</strong> {fillText(t.consolidationLine, { count: suggestion.count, cost: formatMoney(suggestion.totalCost) })}
+                            {' '}{t.consolidationAfter} <strong>{formatMoney(suggestion.potentialSavings)}/month</strong>.
                         </p>
                     ))}
                 </div>
@@ -525,11 +527,11 @@ export const SubscriptionsPage = () => {
             {zombieSubs.length > 0 && (
                 <div className="su-note bad su-zombie">
                     <div>
-                        <h4>Zombie Subscriptions Detected!</h4>
-                        <p>You have {zombieSubs.length} subscriptions you haven't used in 3+ months. Cancel them to save {formatMoney(savings)}/month.</p>
+                        <h4>{t.zombieTitle}</h4>
+                        <p>{fillText(t.zombieBody, { count: zombieSubs.length, amount: formatMoney(savings) })}</p>
                     </div>
                     <button className="su-btn danger" onClick={handleCancelAllZombies}>
-                        Cancel All Zombies
+                        {t.cancelAllZombies}
                     </button>
                 </div>
             )}
@@ -540,11 +542,11 @@ export const SubscriptionsPage = () => {
                     const usageStatus = getUsageStatus(subscription);
                     const insightData = subscription._id ? insightsMap[subscription._id] : null;
                     const insight = insightData?.insight
-                        || (insightsStatus === 'loading' ? 'Loading AI insight...' : 'AI insight is not available right now. Please try again later.');
+                        || (insightsStatus === 'loading' ? t.loadingInsight : t.insightUnavailable);
                     const renewalRisk = getRenewalRisk(subscription);
                     const dueStatus = getDueStatus(subscription);
                     const monthlyAmount = subscription.frequency === 'yearly' ? subscription.amount / 12 : subscription.amount;
-                    const usageTone = usageStatus.status === 'Actively Used' ? 'good' : usageStatus.status === 'Rarely Used' ? 'warn' : 'bad';
+                    const usageTone = usageStatus.status === t.stActive ? 'good' : usageStatus.status === t.stRarely ? 'warn' : 'bad';
 
                     return (
                         <article key={subscription._id} className={`su-card ${renewalRisk.risk || dueStatus.overdue ? 'alert' : ''}`}>
@@ -556,8 +558,7 @@ export const SubscriptionsPage = () => {
                             {/* Payment date has passed */}
                             {dueStatus.overdue && (
                                 <div className="su-banner">
-                                    Payment overdue: was due {new Date(subscription.nextPayment).toLocaleDateString('en-LK')} ({dueStatus.label.toLowerCase()}).
-                                    Log the payment on the Recurring page, or cancel if you no longer use it.
+                                    {fillText(t.overdueBanner, { date: new Date(subscription.nextPayment).toLocaleDateString('en-LK'), label: dueStatus.label.toLowerCase() })}
                                 </div>
                             )}
 
@@ -578,16 +579,16 @@ export const SubscriptionsPage = () => {
                             {/* Cost & Category Row */}
                             <div className="su-facts">
                                 <div>
-                                    <div className="su-fact-label">Cost</div>
+                                    <div className="su-fact-label">{t.cost}</div>
                                     <div className="su-fact-value big">{formatMoney(monthlyAmount)}</div>
-                                    <div className="su-fact-sub">/month</div>
+                                    <div className="su-fact-sub">{t.perMonth}</div>
                                 </div>
                                 <div>
-                                    <div className="su-fact-label">Category</div>
+                                    <div className="su-fact-label">{t.categoryLabel}</div>
                                     <div className="su-fact-value">{subscription.category}</div>
                                 </div>
                                 <div>
-                                    <div className="su-fact-label">Next Renewal</div>
+                                    <div className="su-fact-label">{t.nextRenewal}</div>
                                     <div className="su-fact-value" style={{ color: dueStatus.overdue ? '#ef4444' : undefined }}>{formatDate(subscription.nextPayment)}</div>
                                     <div className="su-fact-sub" style={{ color: dueStatus.color }}>{dueStatus.label}</div>
                                 </div>
@@ -595,29 +596,29 @@ export const SubscriptionsPage = () => {
 
                             {/* AI Insight Card - Feature 3 */}
                             <div className="su-insight">
-                                <strong>AI Insight:</strong> {insight}
+                                <strong>{t.aiInsight}</strong> {insight}
                             </div>
 
                             {/* Impact Summary - Feature 9 */}
                             <div className="su-impact">
-                                <strong>If you cancel:</strong>
+                                <strong>{t.ifCancel}</strong>
                                 <ul>
-                                    <li>Save {formatMoney(monthlyAmount)}/month</li>
-                                    {monthlyIncome && <li>Frees up {((monthlyAmount / monthlyIncome) * 100).toFixed(1)}% of your monthly income</li>}
-                                    <li>Annual savings: {formatMoney((monthlyAmount * 12))}</li>
+                                    <li>{fillText(t.saveMonthly, { amount: formatMoney(monthlyAmount) })}</li>
+                                    {monthlyIncome && <li>{fillText(t.freesUp, { pct: ((monthlyAmount / monthlyIncome) * 100).toFixed(1) })}</li>}
+                                    <li>{fillText(t.annualSavings, { amount: formatMoney((monthlyAmount * 12)) })}</li>
                                 </ul>
                             </div>
 
                             {/* Action Buttons */}
                             <div className="su-actions">
                                 <button className="btn-primary btn-sm" onClick={() => handleFindAlternative(subscription)}>
-                                    View Alternatives
+                                    {t.viewAlternatives}
                                 </button>
-                                <button className="btn-secondary btn-sm" onClick={() => notify.info('Downgrade is coming soon.')}>
-                                    Downgrade
+                                <button className="btn-secondary btn-sm" onClick={() => notify.info(t.downgradeSoon)}>
+                                    {t.downgrade}
                                 </button>
                                 <button className="btn-secondary btn-sm" onClick={() => handleCancelSubscription(subscription._id!)}>
-                                    Cancel
+                                    {t.cancelBtn}
                                 </button>
                             </div>
                         </article>
@@ -628,8 +629,8 @@ export const SubscriptionsPage = () => {
             {activeSubs.length === 0 && (
                 <div className="empty-state">
                     <div className="empty-icon" style={{ display: 'none' }}></div>
-                    <h3>No Subscriptions Found</h3>
-                    <p>We'll automatically detect recurring payments from your transactions</p>
+                    <h3>{t.noSubs}</h3>
+                    <p>{t.noSubsSub}</p>
                 </div>
             )}
 
@@ -637,20 +638,20 @@ export const SubscriptionsPage = () => {
             {cancelledSubs.length > 0 && (
                 <section className="su-panel su-cancelled">
                     <h3 className="su-panel-title">
-                        Cancelled Subscriptions ({cancelledSubs.length})
+                        {fillText(t.cancelledTitle, { n: cancelledSubs.length })}
                     </h3>
                     {cancelledSubs.map(sub => (
                         <div key={sub._id} className="su-cancelled-row">
                             <div>
                                 <div className="su-cancelled-name">{sub.name}</div>
                                 <div className="su-cancelled-meta">
-                                    {sub.provider} · {formatMoney(sub.amount)}/{sub.frequency === 'yearly' ? 'year' : 'month'}
-                                    {sub.cancelledAt && ` · Cancelled ${formatDate(sub.cancelledAt)}`}
+                                    {sub.provider} · {formatMoney(sub.amount)}/{sub.frequency === 'yearly' ? t.perYear : t.perMonthShort}
+                                    {sub.cancelledAt && ` · ${fillText(t.cancelledOn, { date: formatDate(sub.cancelledAt) })}`}
                                     {sub.cancelReason && ` · ${CANCEL_REASON_LABELS[sub.cancelReason] || sub.cancelReason}`}
                                 </div>
                             </div>
                             <button className="btn-secondary su-restore-btn" onClick={() => handleRestoreSubscription(sub)}>
-                                Restore
+                                {t.restore}
                             </button>
                         </div>
                     ))}
@@ -668,8 +669,8 @@ export const SubscriptionsPage = () => {
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div className="gl-modal-head">
-                            <h2 id="alternatives-title">Cheaper Alternatives for {selectedSubscription.name}</h2>
-                            <button type="button" className="gl-modal-close" onClick={closeAlternativesModal} aria-label="Close" title="Close">
+                            <h2 id="alternatives-title">{fillText(t.altTitle, { name: selectedSubscription.name })}</h2>
+                            <button type="button" className="gl-modal-close" onClick={closeAlternativesModal} aria-label={t.close} title={t.close}>
                                 ×
                             </button>
                         </div>
@@ -686,9 +687,9 @@ export const SubscriptionsPage = () => {
                                                 <table className="su-table">
                                                     <thead>
                                                         <tr>
-                                                            <th>Alternative</th>
-                                                            <th className="center">Price</th>
-                                                            <th className="right">Savings</th>
+                                                            <th>{t.colAlternative}</th>
+                                                            <th className="center">{t.colPrice}</th>
+                                                            <th className="right">{t.colSavings}</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -702,7 +703,7 @@ export const SubscriptionsPage = () => {
                                                                     {formatMoney(alt.price)}
                                                                 </td>
                                                                 <td className="right strong su-saving">
-                                                                    {alt.savings > 0 ? `+${formatMoney(alt.savings)}` : 'N/A'}
+                                                                    {alt.savings > 0 ? `+${formatMoney(alt.savings)}` : t.altNA}
                                                                 </td>
                                                             </tr>
                                                         ))}
@@ -712,10 +713,10 @@ export const SubscriptionsPage = () => {
 
                                             <div className="gl-modal-actions su-modal-actions">
                                                 <button className="btn-secondary" onClick={closeAlternativesModal}>
-                                                    Close
+                                                    {t.close}
                                                 </button>
-                                                <button className="btn-primary" onClick={() => notify.info('Switch plan is coming soon.')}>
-                                                    Switch Plan
+                                                <button className="btn-primary" onClick={() => notify.info(t.switchSoon)}>
+                                                    {t.switchPlan}
                                                 </button>
                                             </div>
                                         </div>
@@ -723,12 +724,12 @@ export const SubscriptionsPage = () => {
                                         <div>
                                             <p className="su-modal-text">
                                                 {insightsStatus === 'failed'
-                                                    ? 'Cheaper alternatives could not be loaded right now. Please try again later.'
-                                                    : 'No cheaper alternatives available at this time.'}
+                                                    ? t.altFailed
+                                                    : t.altNone}
                                             </p>
                                             <div className="gl-modal-actions su-modal-actions">
                                                 <button type="button" className="btn-secondary" onClick={closeAlternativesModal}>
-                                                    Close
+                                                    {t.close}
                                                 </button>
                                             </div>
                                         </div>
@@ -745,12 +746,12 @@ export const SubscriptionsPage = () => {
                 <div className="su-overlay">
                     <div className="gl-modal gl-form" role="dialog" aria-modal="true" aria-labelledby="cancel-sub-title">
                         <div className="gl-modal-head">
-                            <h2 id="cancel-sub-title">Cancel {selectedSubscription.name}?</h2>
+                            <h2 id="cancel-sub-title">{fillText(t.cancelTitle, { name: selectedSubscription.name })}</h2>
                             <button
                                 type="button"
                                 className="gl-modal-close"
-                                aria-label="Close"
-                                title="Close"
+                                aria-label={t.close}
+                                title={t.close}
                                 onClick={() => {
                                     setShowCancelModal(false);
                                     setSelectedSubscription(null);
@@ -763,28 +764,28 @@ export const SubscriptionsPage = () => {
 
                         {/* Feature 9: Impact Summary */}
                         <div className="su-impact su-impact-modal">
-                            <strong>Cancelling this will:</strong>
+                            <strong>{t.cancelWill}</strong>
                             <ul>
-                                <li>Save {formatMoney((selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount))}/month</li>
-                                {monthlyIncome && <li>Free up {(((selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount) / monthlyIncome) * 100).toFixed(1)}% of your monthly income</li>}
-                                <li>Annual savings: {formatMoney(((selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount) * 12))}</li>
+                                <li>{fillText(t.saveMonthly, { amount: formatMoney((selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount)) })}</li>
+                                {monthlyIncome && <li>{fillText(t.freesUp, { pct: (((selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount) / monthlyIncome) * 100).toFixed(1) })}</li>}
+                                <li>{fillText(t.annualSavings, { amount: formatMoney(((selectedSubscription.frequency === 'yearly' ? selectedSubscription.amount / 12 : selectedSubscription.amount) * 12)) })}</li>
                             </ul>
                         </div>
 
                         {/* Feature 8: Cancel Reason Tracking */}
                         <div className="form-group">
-                            <label htmlFor="cancel-reason">Why are you cancelling? (optional)</label>
+                            <label htmlFor="cancel-reason">{t.reasonLabel}</label>
                             <select
                                 id="cancel-reason"
                                 value={cancelReason}
                                 onChange={(e) => setCancelReason(e.target.value)}
                             >
-                                <option value="">Select a reason...</option>
-                                <option value="too-expensive">Too expensive</option>
-                                <option value="not-used">Not using it</option>
-                                <option value="found-alternative">Found a cheaper alternative</option>
-                                <option value="temporary-pause">Temporary pause</option>
-                                <option value="other">Other</option>
+                                <option value="">{t.selectReason}</option>
+                                <option value="too-expensive">{t.reasonExpensive}</option>
+                                <option value="not-used">{t.reasonNotUsed}</option>
+                                <option value="found-alternative">{t.reasonAlt}</option>
+                                <option value="temporary-pause">{t.reasonPause}</option>
+                                <option value="other">{t.reasonOther}</option>
                             </select>
                         </div>
 
@@ -797,10 +798,10 @@ export const SubscriptionsPage = () => {
                                     setCancelReason('');
                                 }}
                             >
-                                Keep Subscription
+                                {t.keepSub}
                             </button>
                             <button className="gl-delete-btn" onClick={confirmCancelSubscription}>
-                                Confirm Cancel
+                                {t.confirmCancel}
                             </button>
                         </div>
                     </div>

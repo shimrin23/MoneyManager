@@ -1,3 +1,4 @@
+import { DateInput } from '../components/DateInput';
 import { formatDate, formatDateTime, formatMoney } from '../utils/appFormat';
 import { useState, useEffect } from 'react';
 import { apiClient } from '../api/client';
@@ -229,8 +230,7 @@ export const LoansPage = () => {
                         <div className="form-row">
                             <div className="form-group">
                                 <label>Next Due Date</label>
-                                <input
-                                    type="date"
+                                <DateInput
                                     value={newLoan.nextDueDate}
                                     onChange={(e) => setNewLoan({...newLoan, nextDueDate: e.target.value})}
                                     required
