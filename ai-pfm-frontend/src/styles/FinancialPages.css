@@ -3572,3 +3572,16 @@
 .fin-page .fin-actions > button { height: 40px; min-height: 40px; width: auto; padding: 0 18px; font-size: 14px; font-weight: 600; line-height: 1; border-radius: 10px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; margin: 0; }
 .fin-page .page-header { align-items: center; }
 .fin-page .fin-alert { align-items: center; }
+
+/* Loans and Fixed Deposits: summary boxes with a coloured side bar, like the executive summary cards */
+.loans-page .rc-stat,
+.fd-page .rc-stat { position: relative; gap: 6px; padding: 18px 20px 18px 24px; background: var(--color-surface); border: 1px solid var(--color-border-2); border-left: 4px solid #6366f1; border-radius: 12px; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06); min-width: 0; }
+.loans-page .rc-stat-label,
+.fd-page .rc-stat-label { font-size: 13px; font-weight: 500; color: var(--text-muted); }
+.loans-page .rc-stat-value,
+.fd-page .rc-stat-value { font-size: clamp(20px, 2.1vw, 27px); font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; color: var(--text); overflow-wrap: anywhere; }
+[data-theme='dark'] .loans-page .rc-stat,
+[data-theme='dark'] .fd-page .rc-stat { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35); }
+
+/* Loans: the paid percentage bar is green, matching the positive indicators on the Financial Health page */
+.loans-page .gl-bar > span { background: #10b981; }

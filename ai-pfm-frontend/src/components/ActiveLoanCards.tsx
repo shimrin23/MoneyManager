@@ -45,8 +45,34 @@ const ActiveLoanCards: FC<ActiveLoanCardsProps> = ({
         );
     }
 
+    const totalRemaining = activeLoan.reduce((sum, l) => sum + Number(l.remainingAmount || 0), 0);
+    const totalEmi = activeLoan.reduce((sum, l) => sum + Number(l.monthlyInstallment || 0), 0);
+    const nextDue = activeLoan
+        .map(l => new Date(l.nextDueDate))
+        .filter(d => !Number.isNaN(d.getTime()))
+        .sort((a, b) => a.getTime() - b.getTime())[0];
+
     return (
         <div className="fin-section">
+            <div className="rc-stats">
+                <div className="rc-stat">
+                    <span className="rc-stat-label">{t.activeLoans}</span>
+                    <span className="rc-stat-value">{activeLoan.length}</span>
+                </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">{t.remainingAmount}</span>
+                    <span className="rc-stat-value">{formatMoney(totalRemaining)}</span>
+                </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">{t.monthlyEmi}</span>
+                    <span className="rc-stat-value">{formatMoney(totalEmi)}</span>
+                </div>
+                <div className="rc-stat">
+                    <span className="rc-stat-label">{t.nextDue}</span>
+                    <span className="rc-stat-value">{nextDue ? formatDate(nextDue) : '—'}</span>
+                </div>
+            </div>
+
             <h3 className="su-panel-title">{t.activeLoans}</h3>
             <div className="fin-grid">
                 {activeLoan.map((loan) => {
