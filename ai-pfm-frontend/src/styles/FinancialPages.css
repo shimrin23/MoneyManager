@@ -3573,15 +3573,50 @@
 .fin-page .page-header { align-items: center; }
 .fin-page .fin-alert { align-items: center; }
 
-/* Loans and Fixed Deposits: summary boxes with a coloured side bar, like the executive summary cards */
-.loans-page .rc-stat,
-.fd-page .rc-stat { position: relative; gap: 6px; padding: 18px 20px 18px 24px; background: var(--color-surface); border: 1px solid var(--color-border-2); border-left: 4px solid #6366f1; border-radius: 12px; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06); min-width: 0; }
-.loans-page .rc-stat-label,
-.fd-page .rc-stat-label { font-size: 13px; font-weight: 500; color: var(--text-muted); }
-.loans-page .rc-stat-value,
-.fd-page .rc-stat-value { font-size: clamp(20px, 2.1vw, 27px); font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; color: var(--text); overflow-wrap: anywhere; }
-[data-theme='dark'] .loans-page .rc-stat,
-[data-theme='dark'] .fd-page .rc-stat { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35); }
+/* Site-wide summary boxes: coloured side bar, soft shadow, small muted label and a large bold value
+   (Cash Flow, Subscriptions, Leases, Pawning, Loans, Fixed Deposits, Cards, Budgets, Anomalies, Dashboard, Recommendations) */
+.rc-stats .rc-stat,
+.cc-stats-grid .cc-stat,
+.sb-stats .sb-stat,
+.an-stats .an-stat,
+.db-stats .db-stat,
+.rec-summary-grid .rec-stat-card { position: relative; min-width: 0; padding: 18px 20px 18px 24px; background: var(--color-surface); border: 1px solid var(--color-border-2); border-left: 4px solid #6366f1; border-radius: 12px; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06); }
+.rc-stats .rc-stat-label,
+.cc-stats-grid .cc-stat-label,
+.sb-stats .sb-stat-label,
+.an-stats .an-stat-label,
+.db-stats .db-stat-l { font-size: 13px; font-weight: 500; color: var(--text-muted); }
+.rc-stats .rc-stat-value,
+.cc-stats-grid .cc-stat-value,
+.sb-stats .sb-stat-value,
+.an-stats .an-stat-value,
+.db-stats .db-stat-v { font-size: clamp(20px, 2.1vw, 27px); font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; }
+.rc-stats .rc-stat-value,
+.cc-stats-grid .cc-stat-value,
+.sb-stats .sb-stat-value,
+.an-stats .an-stat-value { overflow-wrap: anywhere; }
+@media (max-width: 767px) {
+    .rc-stats .rc-stat,
+    .cc-stats-grid .cc-stat,
+    .an-stats .an-stat,
+    .db-stats .db-stat,
+    .rec-summary-grid .rec-stat-card { padding: 12px 12px 12px 16px; }
+    .rc-stats .rc-stat-value,
+    .cc-stats-grid .cc-stat-value,
+    .an-stats .an-stat-value,
+    .db-stats .db-stat-v { font-size: 19px; }
+    .db-stats .db-stat-l { font-size: 11.5px; }
+}
+/* Recommendation boxes keep their meaning: indigo = pending, green = accepted, amber = savings */
+.rec-summary-grid .rec-stat-card.accepted { border-left-color: #10b981; }
+.rec-summary-grid .rec-stat-card.savings { border-left-color: #f59e0b; }
+[data-theme='dark'] .rc-stats .rc-stat,
+[data-theme='dark'] .cc-stats-grid .cc-stat,
+[data-theme='dark'] .sb-stats .sb-stat,
+[data-theme='dark'] .an-stats .an-stat,
+[data-theme='dark'] .db-stats .db-stat,
+[data-theme='dark'] .rec-summary-grid .rec-stat-card { box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35); }
 
-/* Loans: the paid percentage bar is green, matching the positive indicators on the Financial Health page */
-.loans-page .gl-bar > span { background: #10b981; }
+/* Loans and Fixed Deposits: the paid / progress bar is green, matching the positive indicators on the Financial Health page */
+.loans-page .gl-bar > span,
+.fd-page .gl-bar > span { background: #10b981; }
