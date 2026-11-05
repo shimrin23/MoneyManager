@@ -12,7 +12,7 @@ export interface UserPagesText {
   profTitle: string; profSubtitle: string;
   profPersonal: string; profFullName: string; profEmail: string; profPhone: string; profDob: string;
   profAdditional: string; profAddress: string; profOccupation: string; profIncome: string;
-  profCancel: string; profSave: string; profSaving: string;
+  profCancel: string; profSave: string; profSaving: string; save: string;
   profUpdated: string; profUpdateFailed: string;
   profPlaceName: string; profPlaceEmail: string; profPlaceDob: string; profPlaceAddress: string; profPlaceOcc: string;
   profChangeAvatar: string;
@@ -69,7 +69,7 @@ const en: UserPagesText = {
   profPhone: 'Phone Number', profDob: 'Date of Birth',
   profAdditional: 'Additional Details', profAddress: 'Address', profOccupation: 'Occupation',
   profIncome: 'Monthly Income (LKR)',
-  profCancel: 'Cancel', profSave: 'Save Changes', profSaving: 'Saving...',
+  profCancel: 'Cancel', save: 'Save', profSave: 'Save Changes', profSaving: 'Saving...',
   profUpdated: 'Profile updated successfully!', profUpdateFailed: 'Failed to update profile',
   profPlaceName: 'Enter your full name', profPlaceEmail: 'Enter your email',
   profPlaceDob: 'Select your date of birth', profPlaceAddress: 'Enter your address',
@@ -170,7 +170,7 @@ const si: UserPagesText = {
   profPhone: 'දුරකථන අංකය', profDob: 'උපන් දිනය',
   profAdditional: 'අමතර විස්තර', profAddress: 'ලිපිනය', profOccupation: 'රැකියාව',
   profIncome: 'මාසික ආදායම (LKR)',
-  profCancel: 'අවලංගු කරන්න', profSave: 'වෙනස්කම් සුරකින්න', profSaving: 'සුරකිමින්...',
+  profCancel: 'අවලංගු කරන්න', save: 'සුරකින්න', profSave: 'වෙනස්කම් සුරකින්න', profSaving: 'සුරකිමින්...',
   profUpdated: 'පැතිකඩ සාර්ථකව යාවත්කාලීන කරන ලදී!', profUpdateFailed: 'පැතිකඩ යාවත්කාලීන කිරීමට නොහැකි විය',
   profPlaceName: 'ඔබේ සම්පූර්ණ නම ඇතුළත් කරන්න', profPlaceEmail: 'ඔබේ ඊමේල් ලිපිනය ඇතුළත් කරන්න',
   profPlaceDob: 'ඔබේ උපන් දිනය තෝරන්න', profPlaceAddress: 'ඔබේ ලිපිනය ඇතුළත් කරන්න',
@@ -271,7 +271,7 @@ const ta: UserPagesText = {
   profPhone: 'தொலைபேசி எண்', profDob: 'பிறந்த தேதி',
   profAdditional: 'கூடுதல் விவரங்கள்', profAddress: 'முகவரி', profOccupation: 'தொழில்',
   profIncome: 'மாத வருமானம் (LKR)',
-  profCancel: 'ரத்துசெய்', profSave: 'மாற்றங்களைச் சேமி', profSaving: 'சேமிக்கிறது...',
+  profCancel: 'ரத்துசெய்', save: 'சேமி', profSave: 'மாற்றங்களைச் சேமி', profSaving: 'சேமிக்கிறது...',
   profUpdated: 'சுயவிவரம் வெற்றிகரமாகப் புதுப்பிக்கப்பட்டது!', profUpdateFailed: 'சுயவிவரத்தைப் புதுப்பிக்க முடியவில்லை',
   profPlaceName: 'உங்கள் முழு பெயரை உள்ளிடவும்', profPlaceEmail: 'உங்கள் மின்னஞ்சலை உள்ளிடவும்',
   profPlaceDob: 'உங்கள் பிறந்த தேதியைத் தேர்ந்தெடுக்கவும்', profPlaceAddress: 'உங்கள் முகவரியை உள்ளிடவும்',

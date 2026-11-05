@@ -630,8 +630,9 @@ function AppShell() {
               : <Signup />
           } />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          {/* A reset link (with a token) always opens the reset form, even if another account is logged in on this browser */}
           <Route path="/reset-password" element={
-            isAuthenticated
+            isAuthenticated && !new URLSearchParams(location.search).get('token')
               ? <Navigate to="/dashboard" replace />
               : <ResetPassword />
           } />

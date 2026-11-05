@@ -21,6 +21,24 @@ const MAX_FAILED_LOGINS = 7;
 const LOCK_MINUTES = 15;
 
 // Emails are stored and compared in lower case (AUT-004)
+// Passwords the account used recently cannot be chosen again
+const PASSWORD_HISTORY_SIZE = 5;
+const REUSED_PASSWORD_MESSAGE = 'You have used this password before. Please choose a new password.';
+
+const usedBefore = async (user: any, password: string): Promise<boolean> => {
+    const hashes = [user.passwordHash, ...(user.passwordHistory || [])].filter(Boolean);
+    for (const hash of hashes) {
+        if (await bcrypt.compare(password, hash)) return true;
+    }
+    return false;
+};
+
+// Call before replacing the password hash: the old hash moves into the history
+const rememberPassword = (user: any) => {
+    if (!user.passwordHash) return;
+    user.passwordHistory = [user.passwordHash, ...(user.passwordHistory || [])].slice(0, PASSWORD_HISTORY_SIZE);
+};
+
 const normalizeEmail = (value: unknown): string =>
     typeof value === 'string' ? value.trim().toLowerCase() : '';
 
@@ -321,11 +339,16 @@ export default class AuthController {
             const user = await User.findOne({
                 resetPasswordToken: token,
                 resetPasswordExpires: { $gt: new Date() }
-            });
+            }).select('+passwordHistory');
 
             if (!user) {
                 return res.status(400).json({ error: "Password reset link is invalid or has expired." });
             }
+
+            if (await usedBefore(user, password)) {
+                return res.status(400).json({ error: REUSED_PASSWORD_MESSAGE });
+            }
+            rememberPassword(user);
 
             // Hash the new password
             const salt = await bcrypt.genSalt(10);
@@ -653,7 +676,7 @@ export default class AuthController {
                 return res.status(400).json({ error: 'Password must be at least 8 characters and include a letter and a number' });
             }
 
-            const user = await User.findById(userId);
+            const user = await User.findById(userId).select('+passwordHistory');
             if (!user || !user.passwordHash) {
                 return res.status(400).json({ error: 'This account has no password set. Use Continue with Google or Forgot password.' });
             }
@@ -663,10 +686,10 @@ export default class AuthController {
                 return res.status(400).json({ error: 'Current password is incorrect' });
             }
 
-            const isSameAsCurrent = await bcrypt.compare(newPassword, user.passwordHash);
-            if (isSameAsCurrent) {
-                return res.status(400).json({ error: 'New password must be different from the current password' });
+            if (await usedBefore(user, newPassword)) {
+                return res.status(400).json({ error: REUSED_PASSWORD_MESSAGE });
             }
+            rememberPassword(user);
 
             const salt = await bcrypt.genSalt(10);
             user.passwordHash = await bcrypt.hash(newPassword, salt);

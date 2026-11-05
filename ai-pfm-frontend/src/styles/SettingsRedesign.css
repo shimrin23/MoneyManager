@@ -782,3 +782,52 @@
 .settings-page .st-input {
   font-size: 13.5px;
 }
+
+/* Default transaction type: a short dropdown instead of the full width of the card */
+.settings-page .st-field-short {
+  width: 220px;
+  max-width: 220px;
+}
+
+.settings-page .st-field-short > .st-field,
+.settings-page .st-field-short .st-input {
+  width: 100%;
+}
+
+/* Profile visibility card: narrower, with the Save button on the right of the dropdown */
+.settings-page .st-narrow {
+  width: 100%;
+}
+
+.settings-page .st-visibility-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settings-page .st-visibility-row .st-grid {
+  flex: 0 0 370px;
+  width: 370px;
+  min-width: 0;
+}
+
+.settings-page .st-visibility-row > button {
+  height: 38px;
+  min-width: 140px;
+  padding: 0 18px;
+  white-space: nowrap;
+  width: auto;
+  color: #fff !important;
+  flex: 0 0 auto;
+}
+
+.settings-page .st-visibility-row > button:disabled {
+  opacity: 0.5;
+  box-shadow: none;
+}
+
+/* Profile Visibility Save button: no spinner ring while it is disabled */
+.settings-page .st-visibility-row > button:disabled::after {
+  display: none;
+}
