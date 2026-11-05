@@ -383,8 +383,11 @@ export const SettingsPage = () => {
                                 </SetSelect>
                                 <SetSelect label={t.timezone} value={appSettings.timezone} onChange={(e) => setAppSettings(prev => ({ ...prev, timezone: e.target.value }))}>
                                     <option value="Asia/Colombo">Asia/Colombo</option>
+                                    <option value="Asia/Kolkata">Asia/Kolkata</option>
                                     <option value="America/New_York">America/New_York</option>
+                                    <option value="America/Toronto">America/Toronto</option>
                                     <option value="Europe/London">Europe/London</option>
+                                    <option value="Europe/Paris">Europe/Paris</option>
                                     <option value="Asia/Tokyo">Asia/Tokyo</option>
                                     <option value="Australia/Sydney">Australia/Sydney</option>
                                 </SetSelect>
@@ -393,30 +396,24 @@ export const SettingsPage = () => {
 
                         <SetCard title={t.appearance}>
                             <div className="st-grid">
+                                <div className="st-field-short">
                                 <SetSelect label={t.dashLayout} value={appSettings.dashboardLayout} onChange={(e) => setAppSettings(prev => ({ ...prev, dashboardLayout: e.target.value as 'compact' | 'detailed' | 'minimal' }))}>
                                     <option value="compact">{t.layoutCompact}</option>
                                     <option value="detailed">{t.layoutDetailed}</option>
                                     <option value="minimal">{t.layoutMinimal}</option>
                                 </SetSelect>
-                                <SetSelect label={t.chartType} value={appSettings.chartType} onChange={(e) => setAppSettings(prev => ({ ...prev, chartType: e.target.value as 'line' | 'bar' | 'pie' }))}>
-                                    <option value="line">{t.chartLine}</option>
-                                    <option value="bar">{t.chartBar}</option>
-                                    <option value="pie">{t.chartPie}</option>
-                                </SetSelect>
+                                </div>
                             </div>
                         </SetCard>
 
                         <SetCard title={t.defaultBehavior}>
                             <div className="st-grid">
+                                <div className="st-field-short">
                                 <SetSelect label={t.defTxType} value={appSettings.defaultTransactionType} onChange={(e) => setAppSettings(prev => ({ ...prev, defaultTransactionType: e.target.value as 'expense' | 'income' }))}>
                                     <option value="expense">{t.txExpense}</option>
                                     <option value="income">{t.txIncome}</option>
                                 </SetSelect>
-                                <SetSelect label={t.catSort} value={appSettings.categoryOrder} onChange={(e) => setAppSettings(prev => ({ ...prev, categoryOrder: e.target.value as 'alphabetical' | 'frequency' | 'custom' }))}>
-                                    <option value="alphabetical">{t.sortAlpha}</option>
-                                    <option value="frequency">{t.sortFreq}</option>
-                                    <option value="custom">{t.sortCustom}</option>
-                                </SetSelect>
+                                </div>
                             </div>
                         </SetCard>
                     </>

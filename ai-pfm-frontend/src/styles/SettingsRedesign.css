@@ -782,3 +782,14 @@
 .settings-page .st-input {
   font-size: 13.5px;
 }
+
+/* Default transaction type: a short dropdown instead of the full width of the card */
+.settings-page .st-field-short {
+  width: 220px;
+  max-width: 220px;
+}
+
+.settings-page .st-field-short > .st-field,
+.settings-page .st-field-short .st-input {
+  width: 100%;
+}
