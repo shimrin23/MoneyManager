@@ -69,8 +69,17 @@ export const AIAssistant = ({ open = false, onOpenChange }: AIAssistantProps) =>
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
 
+    // When a reply arrives, start reading from the beginning of that reply (not the bottom of the chat)
     useEffect(() => {
-        scrollToBottom();
+        const list = messagesEndRef.current?.parentElement;
+        const replies = list?.querySelectorAll<HTMLElement>('.message-wrapper.ai-message');
+        const last = replies && replies.length > 0 ? replies[replies.length - 1] : null;
+        if (list && last) {
+            const top = last.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop;
+            list.scrollTo({ top, behavior: 'smooth' });
+        } else {
+            scrollToBottom();
+        }
     }, [messages]);
 
     const handleAskQuestion = async (e: React.FormEvent) => {
