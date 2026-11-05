@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { apiClient } from './api/client';
 import { saveAppPrefs, setRates, type AppPrefs } from './utils/appFormat';
 import { 
@@ -177,7 +177,31 @@ function AppShell() {
   const [token, setToken] = useState(() => localStorage.getItem('token'));
   const [role, setRole] = useState<UserRole>(getRole);
   const [showAddTransactionModal, setShowAddTransactionModal] = useState(false);
-  const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(false);
+  // The AI Coach stays open across a browser refresh in the same tab
+  const [isAiAssistantOpen, setIsAiAssistantOpen] = useState(() => {
+    try {
+      return sessionStorage.getItem('ai-coach-open') === '1';
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    try {
+      if (isAiAssistantOpen) sessionStorage.setItem('ai-coach-open', '1');
+      else sessionStorage.removeItem('ai-coach-open');
+    } catch {
+      // storage can be blocked; the panel then simply starts closed after a refresh
+    }
+  }, [isAiAssistantOpen]);
+  // Going to another page (for example with the phone back button) closes the AI Coach panel.
+  // The first render is skipped so a refresh on the same page keeps it open.
+  const lastAiPath = useRef(location.pathname);
+  useEffect(() => {
+    if (lastAiPath.current !== location.pathname) {
+      lastAiPath.current = location.pathname;
+      setIsAiAssistantOpen(false);
+    }
+  }, [location.pathname]);
   const [theme, setTheme] = useState<'dark' | 'light'>(() =>
     localStorage.getItem('theme') === 'light' ? 'light' : 'dark'
   );
@@ -250,6 +274,13 @@ function AppShell() {
   useEffect(() => {
     document.documentElement.setAttribute('lang', lang);
   }, [lang]);
+
+  // Header theme toggle: remember the choice on the device and on the account, so a refresh keeps it
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    apiClient.put('/settings/app', { theme: next }).catch(() => {});
+  };
 
   const switchLang = (l: Language) => {
     setLang(l);
@@ -448,7 +479,7 @@ function AppShell() {
                   </button>
                 ))}
               </div>
-              <UserHeader theme={theme} onToggleTheme={() => setTheme(p => p === 'dark' ? 'light' : 'dark')} />
+              <UserHeader theme={theme} onToggleTheme={toggleTheme} />
             </div>
           </nav>
 
@@ -518,7 +549,7 @@ function AppShell() {
               {isCustomer && (
                 <button
                   className="header-action-btn"
-                  onClick={() => setTheme(p => p === 'dark' ? 'light' : 'dark')}
+                  onClick={toggleTheme}
                   aria-label="Toggle Theme"
                   title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
                 >
