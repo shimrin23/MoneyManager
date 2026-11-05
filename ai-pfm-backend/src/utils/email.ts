@@ -147,3 +147,42 @@ export const sendResetPasswordEmail = async (email: string, token: string) => {
         console.error('❌ Error sending password reset email via Resend:', error.response?.data || error.message);
     }
 };
+
+// Sends a notification (alert or report) by email. Skipped quietly when Resend is not configured.
+export const sendNotificationEmail = async (email: string, title: string, message: string, link?: string) => {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey || apiKey.startsWith('your_') || apiKey === '') {
+        return;
+    }
+
+    const linkHtml = link
+        ? `<div style="text-align: center; margin: 28px 0;"><a href="${getFrontendUrl()}${link}" style="background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; padding: 12px 28px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600;">Open MoneyManager</a></div>`
+        : '';
+
+    try {
+        await axios.post(
+            'https://api.resend.com/emails',
+            {
+                from: process.env.MAIL_FROM || 'MoneyManager <no-reply@snis.app>',
+                to: [email],
+                subject: `${title} - MoneyManager`,
+                html: `
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #0f172a; color: #f1f5f9; border-radius: 12px; border: 1px solid rgba(255,255,255,0.08);">
+                        <h2 style="color: #818cf8; text-align: center; margin-bottom: 24px;">${title}</h2>
+                        <p>${message}</p>
+                        ${linkHtml}
+                        <p style="color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-top: 32px;">You receive this because Email Notifications is on in your MoneyManager settings.</p>
+                    </div>
+                `,
+            },
+            {
+                headers: {
+                    Authorization: `Bearer ${apiKey}`,
+                    'Content-Type': 'application/json',
+                },
+            }
+        );
+    } catch (error: any) {
+        console.error('❌ Error sending notification email via Resend:', error.response?.data || error.message);
+    }
+};

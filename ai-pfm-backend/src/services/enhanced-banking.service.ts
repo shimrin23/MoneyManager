@@ -358,7 +358,7 @@ export class EnhancedBankingIntegration {
                 message,
                 link: '/anomalies',
                 actionRequired: true
-            });
+            }, 'transactionAlerts');
         } catch (e) {
             console.error('[EnhancedBankingIntegration] Failed to persist real-time alert:', (e as any)?.message || e);
         }

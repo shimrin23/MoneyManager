@@ -7,6 +7,8 @@ import mongoose from 'mongoose';
 import app from './index'; 
 import config from './config'; 
 import './jobs/sync.bank';
+import { startReportJobs } from './services/notification.service';
+startReportJobs();
 
 const server = createServer(app);
 const PORT: number = Number(process.env.PORT) || 5000;

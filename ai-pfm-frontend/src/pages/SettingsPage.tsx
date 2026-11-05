@@ -159,8 +159,22 @@ export const SettingsPage = () => {
     const t = USER_T[useAdminLang()];
     const location = useLocation();
     // Other pages can open a specific tab by passing { tab } in navigation state
-    const initialTab = (location.state as { tab?: 'general' | 'notifications' | 'privacy' | 'advanced' } | null)?.tab ?? 'general';
+    // The tab is kept in the browser tab's session, so a refresh stays on the same tab
+    const savedTab = (() => { try { return sessionStorage.getItem('settings-tab'); } catch { return null; } })();
+    const initialTab = ((location.state as { tab?: 'general' | 'notifications' | 'privacy' | 'advanced' } | null)?.tab
+        ?? (['general', 'notifications', 'privacy', 'advanced'].includes(savedTab ?? '') ? savedTab : null)
+        ?? 'general') as 'general' | 'notifications' | 'privacy' | 'advanced';
     const [activeTab, setActiveTab] = useState<'general' | 'notifications' | 'privacy' | 'advanced'>(initialTab);
+    useEffect(() => {
+        try { sessionStorage.setItem('settings-tab', activeTab); } catch { /* storage may be blocked */ }
+    }, [activeTab]);
+    // A tab passed by a link is used once; clear it from the page history so a refresh uses the tab the user last chose
+    useEffect(() => {
+        if ((location.state as { tab?: string } | null)?.tab) {
+            navigate(location.pathname + location.search, { replace: true, state: null });
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
     const [loading, setLoading] = useState(false);
     const [saveStatus, setSaveStatus] = useState<'ok' | 'fail' | 'cancelled' | ''>('');
     // Last saved values, so Cancel can throw away unsaved edits
@@ -202,6 +216,9 @@ export const SettingsPage = () => {
         profileVisibility: 'private',
         activityTracking: true
     });
+
+    // Profile Visibility is chosen first and only saved when the Save button is pressed
+    const [visibilityDraft, setVisibilityDraft] = useState<PrivacySettings['profileVisibility'] | null>(null);
 
     // Currency and language names are kept as they are written in their own language.
     const currencyOptions = [
@@ -246,6 +263,23 @@ export const SettingsPage = () => {
             setLoading(false);
         }
     };
+
+    // Notifications and Privacy switches save as soon as they change, so those tabs have no Save button
+    useEffect(() => {
+        if (!savedSettings) return;
+        if (JSON.stringify(notificationSettings) === JSON.stringify(savedSettings.notifications)) return;
+        apiClient.put('/settings/notifications', notificationSettings)
+            .then(() => setSavedSettings(prev => prev && { ...prev, notifications: { ...notificationSettings } }))
+            .catch(() => setNotificationSettings({ ...savedSettings.notifications }));
+    }, [notificationSettings]);
+
+    useEffect(() => {
+        if (!savedSettings) return;
+        if (JSON.stringify(privacySettings) === JSON.stringify(savedSettings.privacy)) return;
+        apiClient.put('/settings/privacy', privacySettings)
+            .then(() => setSavedSettings(prev => prev && { ...prev, privacy: { ...privacySettings } }))
+            .catch(() => setPrivacySettings({ ...savedSettings.privacy }));
+    }, [privacySettings]);
 
     const saveSettings = async () => {
         setLoading(true);
@@ -434,7 +468,6 @@ export const SettingsPage = () => {
 
                         <SetCard title={t.secSystem}>
                             <SetToggle label={t.secAlerts} desc={`${t.secAlertsSub} (Required, always on)`} checked disabled />
-                            <SetToggle label={t.marketing} desc={t.marketingSub} checked={notificationSettings.marketingEmails} onChange={(e) => setNotificationSettings(prev => ({ ...prev, marketingEmails: e.target.checked }))} />
                         </SetCard>
 
                         <SetCard title={t.delivery}>
@@ -454,16 +487,32 @@ export const SettingsPage = () => {
                             <SetToggle label={t.activityTracking} desc={t.activityTrackingSub} checked={privacySettings.activityTracking} onChange={(e) => setPrivacySettings(prev => ({ ...prev, activityTracking: e.target.checked }))} />
                         </SetCard>
 
-                        <SetCard title={t.profilePrivacy}>
-                            <div className="st-grid">
-                                <SetSelect label={t.profVisibility} value={privacySettings.profileVisibility} onChange={(e) => setPrivacySettings(prev => ({ ...prev, profileVisibility: e.target.value as 'private' | 'public' | 'friends' }))}>
-                                    <option value="private">{t.visPrivate}</option>
-                                    <option value="friends">{t.visFriends}</option>
-                                    <option value="public">{t.visPublic}</option>
-                                </SetSelect>
-                            </div>
-                            <p className="st-hint">{t.visSub}</p>
-                        </SetCard>
+                        <div className="st-narrow">
+                            <SetCard title={t.profilePrivacy}>
+                                <div className="st-visibility-row">
+                                    <div className="st-grid">
+                                        <SetSelect label={t.profVisibility} value={visibilityDraft ?? privacySettings.profileVisibility} onChange={(e) => setVisibilityDraft(e.target.value as 'private' | 'public' | 'friends')}>
+                                            <option value="private">{t.visPrivate}</option>
+                                            <option value="friends">{t.visFriends}</option>
+                                            <option value="public">{t.visPublic}</option>
+                                        </SetSelect>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="btn-primary"
+                                        disabled={visibilityDraft === null || visibilityDraft === privacySettings.profileVisibility}
+                                        onClick={() => {
+                                            if (visibilityDraft === null) return;
+                                            setPrivacySettings(prev => ({ ...prev, profileVisibility: visibilityDraft }));
+                                            setVisibilityDraft(null);
+                                        }}
+                                    >
+                                        {t.save}
+                                    </button>
+                                </div>
+                                <p className="st-hint">{t.visSub}</p>
+                            </SetCard>
+                        </div>
 
                         <div className="st-note">
                             <h4>{t.privacyMatters}</h4>
@@ -509,7 +558,7 @@ export const SettingsPage = () => {
                 )}
             </div>
 
-            {activeTab !== 'advanced' && (
+            {activeTab === 'general' && (
                 <div className="st-actions">
                     <button type="button" className="btn-secondary" onClick={handleCancel}>
                         {t.cancel}

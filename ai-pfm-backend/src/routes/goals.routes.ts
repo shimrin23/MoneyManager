@@ -124,7 +124,7 @@ router.put('/:id', async (req: Request, res: Response) => {
                 title: 'Goal achieved',
                 message: `Congratulations! You reached your goal "${goal.title}".`,
                 link: '/goals'
-            });
+            }, 'goalReminders');
         }
         res.json({ goal });
     } catch (error) {
@@ -188,7 +188,7 @@ router.post('/:id/progress', async (req: Request, res: Response) => {
                 title: 'Goal achieved',
                 message: `Congratulations! You reached your goal "${goal.title}".`,
                 link: '/goals'
-            });
+            }, 'goalReminders');
         }
         res.json({ goal });
     } catch (error) {
