@@ -1234,3 +1234,61 @@ canvas {
   line-height: 1.25;
   padding: 6px 8px;
 }
+
+/* Phones: card button rows wrap into as many rows as needed. Labels break onto two lines and the card grows taller, so nothing spills outside the card */
+@media (max-width: 767px) {
+  .cc-actions,
+  .su-actions,
+  .sb-actions,
+  .gl-actions,
+  .gl-actions.lease-card-actions,
+  .gl-actions.goal-actions,
+  .gl-actions.fd-card-actions,
+  .gl-actions.pawn-card-actions,
+  .gl-actions.loan-card-actions {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)) !important;
+    gap: 8px !important;
+    flex-wrap: nowrap;
+  }
+
+  .cc-actions > button,
+  .su-actions > button,
+  .sb-actions > button,
+  .gl-actions > button {
+    width: 100%;
+    min-width: 0;
+    height: auto !important;
+    min-height: 36px;
+    padding: 8px 6px !important;
+    white-space: normal !important;
+    line-height: 1.25;
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+/* Phones: AI Coach opens as a full-screen layer above the page, and its header with reset and close buttons stays visible */
+@media (max-width: 767px) {
+  .ai-modal-overlay {
+    z-index: 1000 !important;
+  }
+
+  .ai-modal-content {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .ai-modal-header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 12px 14px;
+  }
+}
