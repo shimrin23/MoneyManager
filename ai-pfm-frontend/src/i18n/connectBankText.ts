@@ -6,7 +6,7 @@ import { type AdminLang } from './adminText';
 export interface ConnectBankText {
   title: string; step1: string; step2: string; guide: Record<string, string>;
   dropActive: string; dropDefault: string; dropHint: string;
-  processing: string; importBtn: string; sampleBtn: string;
+  processing: string; importBtn: string;
   successTitle: string; parsed: string; added: string; skippedDup: string; invalidRows: string; refreshed: string;
   skippedTitle: string; rowLabel: string;
   errNotCsv: string; errEmpty: string; errTooLarge: string; errHeaderOnly: string; errRead: string;
@@ -25,7 +25,7 @@ const en: ConnectBankText = {
   },
   dropActive: 'Drop the CSV file here', dropDefault: 'Click to upload or drag & drop CSV',
   dropHint: 'Supports Commercial Bank, HNB, Sampath, BOC, FriMi & generic CSV statements (up to 5 MB)',
-  processing: 'Processing Statement…', importBtn: 'Import Statement', sampleBtn: 'Load Sample ComBank CSV',
+  processing: 'Processing Statement…', importBtn: 'Import Statement',
   successTitle: '✓ Statement Imported Successfully!', parsed: 'Parsed transactions:', added: 'Added to your account:',
   skippedDup: 'Skipped duplicate records:', invalidRows: "Rows that couldn't be read:",
   refreshed: 'Your Dashboard, Transactions, and Spending Trends have now been refreshed with this data.',
@@ -52,7 +52,7 @@ const si: ConnectBankText = {
   },
   dropActive: 'CSV ගොනුව මෙහි දමන්න', dropDefault: 'CSV උඩුගත කිරීමට ක්ලික් කරන්න හෝ ඇද දමන්න',
   dropHint: 'Commercial Bank, HNB, Sampath, BOC, FriMi සහ සාමාන්‍ය CSV ප්‍රකාශ (MB 5 දක්වා) සහාය දක්වයි',
-  processing: 'ප්‍රකාශය සකසමින්…', importBtn: 'ප්‍රකාශය ආයාත කරන්න', sampleBtn: 'ComBank නියැදි CSV පූරණය කරන්න',
+  processing: 'ප්‍රකාශය සකසමින්…', importBtn: 'ප්‍රකාශය ආයාත කරන්න',
   successTitle: '✓ ප්‍රකාශය සාර්ථකව ආයාත කෙරින!', parsed: 'විශ්ලේෂණය කළ ගනුදෙනු:', added: 'ඔබේ ගිණුමට එකතු කළ:',
   skippedDup: 'අනුපිටපත් වාර්තා මඟ හැරිණි:', invalidRows: 'කියවිය නොහැකි පේළි:',
   refreshed: 'ඔබේ උපකරණ පුවරුව, ගනුදෙනු සහ වියදම් ප්‍රවණතා දැන් මෙම දත්ත සමඟ නැවුම් කර ඇත.',
@@ -79,7 +79,7 @@ const ta: ConnectBankText = {
   },
   dropActive: 'CSV கோப்பை இங்கே விடவும்', dropDefault: 'பதிவேற்ற கிளிக் செய்யவும் அல்லது இழுத்து விடவும்',
   dropHint: 'Commercial Bank, HNB, Sampath, BOC, FriMi மற்றும் பொதுவான CSV அறிக்கைகளை ஆதரிக்கிறது (5 MB வரை)',
-  processing: 'அறிக்கை செயலாக்கப்படுகிறது…', importBtn: 'அறிக்கையை இறக்குமதி செய்', sampleBtn: 'ComBank மாதிரி CSV ஏற்று',
+  processing: 'அறிக்கை செயலாக்கப்படுகிறது…', importBtn: 'அறிக்கையை இறக்குமதி செய்',
   successTitle: '✓ அறிக்கை வெற்றிகரமாக இறக்குமதி செய்யப்பட்டது!', parsed: 'பகுக்கப்பட்ட பரிவர்த்தனைகள்:', added: 'உங்கள் கணக்கில் சேர்க்கப்பட்டவை:',
   skippedDup: 'தவிர்க்கப்பட்ட நகல் பதிவுகள்:', invalidRows: 'படிக்க முடியாத வரிசைகள்:',
   refreshed: 'உங்கள் டாஷ்போர்டு, பரிவர்த்தனைகள் மற்றும் செலவு போக்குகள் இந்தத் தரவுடன் இப்போது புதுப்பிக்கப்பட்டன.',

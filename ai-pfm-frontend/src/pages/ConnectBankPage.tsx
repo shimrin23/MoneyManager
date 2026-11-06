@@ -200,24 +200,6 @@ export const ConnectBankPage = () => {
         }
     };
 
-    // Sample statement generator for quick user testing
-    const loadSampleStatement = () => {
-        const sampleCSV = `Date,Description,Withdrawal (Debit),Deposit (Credit),Balance
-01/10/2024,SALARY DEPOSIT - TECH CORP,,150000.00,150000.00
-02/10/2024,KEELLS SUPER COLOMBO 03,4250.00,,145750.00
-03/10/2024,DIALOG AXIATA BILL PAYMENT,2500.00,,143250.00
-04/10/2024,UBER LANKA TRIP RIDE,1200.00,,142050.00
-05/10/2024,LANKA IOC FUEL SHED,5000.00,,137050.00
-06/10/2024,CEB ELECTRICITY BILL,3800.00,,133250.00
-07/10/2024,DARAZ ONLINE PURCHASE,4990.00,,128260.00`;
-
-        setFileContent(sampleCSV);
-        setSelectedFile(new File([sampleCSV], 'sample_combank_statement.csv', { type: 'text/csv' }));
-        setErrorMsg(null);
-        setImportSuccess(null);
-        setSkippedRows([]);
-    };
-
     return (
         <div className="page-container connect-bank-page">
             <div className="page-header" style={{ marginBottom: '1.5rem' }}>
@@ -317,14 +299,6 @@ export const ConnectBankPage = () => {
                             disabled={!fileContent || uploading}
                         >
                             {uploading ? t.processing : t.importBtn}
-                        </button>
-
-                        <button
-                            type="button"
-                            className="btn-secondary cb-btn"
-                            onClick={loadSampleStatement}
-                        >
-                            {t.sampleBtn}
                         </button>
                     </div>
 
