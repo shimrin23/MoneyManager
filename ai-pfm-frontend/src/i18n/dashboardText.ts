@@ -21,7 +21,7 @@ export interface DashboardText {
   subscriptionsTitle: string; recurringDetected: string; viewCashFlow: string;
   openAiCoach: string; openAiAria: string;
   recurringSubscriptions: string; detectedFromHistory: string; noneFound: string;
-  spendingTrends: string; loadingCharts: string; viewSmartBudgets: string; samplePreview: string;
+  spendingTrends: string; loadingCharts: string; viewSmartBudgets: string;
 }
 
 const en: DashboardText = {
@@ -72,7 +72,6 @@ const en: DashboardText = {
   spendingTrends: 'Spending Trends',
   loadingCharts: 'Loading charts…',
   viewSmartBudgets: 'View smart budgets',
-  samplePreview: 'Sample Preview',
 };
 
 const si: DashboardText = {
@@ -123,7 +122,6 @@ const si: DashboardText = {
   spendingTrends: 'වියදම් ප්‍රවණතා',
   loadingCharts: 'ප්‍රස්තාර පූරණය වෙමින්…',
   viewSmartBudgets: 'චතුර අයවැය බලන්න',
-  samplePreview: 'නිදර්ශන පෙරදසුන',
 };
 
 const ta: DashboardText = {
@@ -174,7 +172,6 @@ const ta: DashboardText = {
   spendingTrends: 'செலவுப் போக்குகள்',
   loadingCharts: 'வரைபடங்கள் ஏற்றப்படுகின்றன…',
   viewSmartBudgets: 'ஸ்மார்ட் பட்ஜெட்டைப் பார்க்கவும்',
-  samplePreview: 'மாதிரி முன்னோட்டம்',
 };
 
 export const DASHBOARD_T: Record<AdminLang, DashboardText> = { en, si, ta };

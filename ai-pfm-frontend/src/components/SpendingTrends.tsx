@@ -53,14 +53,6 @@ export const PieChart = ({ data }: { data: { category: string; value: number }[]
     );
 };
 
-const DEFAULT_TRENDS = [
-    { category: 'Food & Dining', value: 28500 },
-    { category: 'Shopping', value: 16500 },
-    { category: 'Transport', value: 9800 },
-    { category: 'Entertainment', value: 12000 },
-    { category: 'Utilities', value: 7500 },
-];
-
 // Line chart of spending by category (the Bar and Pie charts are above)
 export const LineChart = ({ data }: { data: { category: string; value: number }[] }) => {
     const width = 400;
@@ -95,8 +87,7 @@ export const LineChart = ({ data }: { data: { category: string; value: number }[
 export const SpendingTrends = () => {
     const navigate = useNavigate();
     const t = DASHBOARD_T[useAdminLang()];
-    const [chartData, setChartData] = useState<{ category: string; value: number }[]>(DEFAULT_TRENDS);
-    const [isDemo, setIsDemo] = useState(false);
+    const [chartData, setChartData] = useState<{ category: string; value: number }[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -118,17 +109,10 @@ export const SpendingTrends = () => {
                     value
                 })).sort((a, b) => b.value - a.value);
 
-                if (chartDataFormatted.length > 0) {
-                    setChartData(chartDataFormatted);
-                    setIsDemo(false);
-                } else {
-                    setChartData(DEFAULT_TRENDS);
-                    setIsDemo(true);
-                }
+                setChartData(chartDataFormatted);
             } catch (error) {
                 console.error('Failed to fetch transactions for trends:', error);
-                setChartData(DEFAULT_TRENDS);
-                setIsDemo(true);
+                setChartData([]);
             } finally {
                 setLoading(false);
             }
@@ -156,13 +140,18 @@ export const SpendingTrends = () => {
         >
             <div className="sp-head">
                 <h3 className="section-title">{t.spendingTrends}</h3>
-                {isDemo && <span className="sp-badge">{t.samplePreview}</span>}
             </div>
             {/* Amounts per category on the left, share of spending on the right */}
-            <div className="sp-body">
-                <BarChart data={chartData} />
-                <PieChart data={chartData} />
-            </div>
+            {chartData.length > 0 ? (
+                <div className="sp-body">
+                    <BarChart data={chartData} />
+                    <PieChart data={chartData} />
+                </div>
+            ) : (
+                <div style={{ textAlign: 'center', padding: '2.5rem 1rem', color: 'var(--text-secondary)', flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <p style={{ margin: 0, fontSize: '0.95rem' }}>{t.noTransactionsYet}</p>
+                </div>
+            )}
         </div>
     );
 };
