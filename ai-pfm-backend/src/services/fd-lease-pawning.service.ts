@@ -107,7 +107,10 @@ export const applyMaturity = (fd: FDState, now: Date) => {
     if (fd.status !== 'active' || new Date(fd.maturityDate).getTime() > now.getTime()) return null;
     if (!fd.autoRenewal) return { status: 'matured' };
 
-    let current: FDState = { ...fd };
+    // A Mongoose document keeps its fields on the prototype, so spreading it would lose every field.
+    // Read the plain values first; a plain object is used as it is.
+    const doc = fd as FDState & { toObject?: () => FDState };
+    let current: FDState = typeof doc.toObject === 'function' ? doc.toObject() : { ...fd };
     // Renew term by term until the current term ends in the future (capped for safety)
     for (let i = 0; i < 200 && new Date(current.maturityDate).getTime() <= now.getTime(); i++) {
         current = { ...current, ...renewFD(current, new Date(current.maturityDate)) };

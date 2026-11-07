@@ -10,6 +10,7 @@ import {
   validateLeaseInput,
   validatePawnInput,
 } from '../../src/services/fd-lease-pawning.service';
+import FixedDeposit from '../../src/schemas/fixedDeposit.schema';
 
 const fd = (overrides: Record<string, unknown> = {}) => ({
   principalAmount: 100000, interestRate: 12, tenure: 12, tenureUnit: 'months',
@@ -80,6 +81,20 @@ describe('Fixed deposits', () => {
       status: 'active', principalAmount: 112000, maturityAmount: 125440,
       startDate: new Date(2026, 9, 1), maturityDate: new Date(2027, 9, 1),
     });
+  });
+
+  it('rolls over an auto-renewal FD that is a real Mongoose document (as the routes pass it)', () => {
+    const start = new Date(2025, 8, 7);
+    const terms = calculateFD(200000, 9, 12, start);
+    const doc = new FixedDeposit({
+      userId: 'u1', bank: 'Sampath Bank', principalAmount: 200000, interestRate: 9, tenure: 12, tenureUnit: 'months',
+      startDate: start, maturityDate: terms.maturityDate, maturityAmount: terms.maturityAmount,
+      interestEarned: terms.interestEarned, type: 'Goal-Linked', autoRenewal: true, status: 'active',
+    });
+    const changes = applyMaturity(doc, new Date(2026, 10, 7));
+    expect(changes).toMatchObject({ status: 'active', principalAmount: 218000, interestEarned: 19620, maturityAmount: 237620 });
+    doc.set(changes!);
+    expect(doc.validateSync()).toBeUndefined();
   });
 
   it('renewing starts a new term with a new maturity date', () => {
